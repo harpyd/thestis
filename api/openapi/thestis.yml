@@ -1,0 +1,88 @@
+openapi: 3.0.3
+info:
+  title: Thestis API
+  description: Thestis is a service for auto tests with a declarative description of tests
+  version: 0.0.1
+servers:
+  - url: 'https://{hostname}/v1'
+
+paths:
+  /scenario:
+    post:
+      tags:
+        - scenario
+      operationId: loadScenarioMetadata
+      requestBody:
+        description: create test scenario metadata
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoadScenarioMetadataRequest'
+      responses:
+        201:
+          description: scenario is executed
+          headers:
+            Content-Location:
+              description: created executing scenario metadata url
+              schema:
+                type: string
+        400:
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /scenario/{id}/source:
+    post:
+      tags:
+        - scenario
+      operationId: pushScenarioSource
+      requestBody:
+        description: push declarative scenario source
+        required: true
+        content:
+          application/x-yaml:
+            schema:
+              $ref: '#/components/schemas/PushScenarioSourceRequest'
+      responses:
+        201:
+          description: scenario source uploaded
+          headers:
+            Content-Location:
+              description: uploaded scenario source url
+              schema:
+                type: string
+        400:
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+
+
+components:
+  schemas:
+    Error:
+      type: object
+      required: [ slug, details ]
+      properties:
+        slug:
+          type: string
+        details:
+          type: string
+
+    LoadScenarioMetadataRequest:
+      type: object
+      properties:
+        some:
+          type: string
+
+    PushScenarioSourceRequest:
+      type: string
+      format: binary
+
+
