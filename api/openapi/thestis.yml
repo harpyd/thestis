@@ -11,20 +11,22 @@ paths:
     post:
       tags:
         - scenario
+        - metadata
       operationId: loadScenarioMetadata
+      summary: create test scenario metadata
       requestBody:
-        description: create test scenario metadata
+        description: scenario metadata
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoadScenarioMetadataRequest'
+              $ref: '#/components/schemas/ScenarioMetadataRequest'
       responses:
         201:
-          description: scenario is executed
+          description: scenario metadata is created
           headers:
             Content-Location:
-              description: created executing scenario metadata url
+              description: created scenario metadata url
               schema:
                 type: string
         400:
@@ -34,18 +36,57 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /scenario/{id}/source:
+  /scenario/{scenarioID}:
+    get:
+      tags:
+        - scenario
+        - metadata
+      operationId: getScenarioMetadata
+      summary: get test scenario metadata
+      parameters:
+        - in: path
+          name: scenarioID
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: scenario metadata id
+      responses:
+        200:
+          description: previously created scenario metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioMetadataResponse'
+        404:
+          description: scenario metadata not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /scenario/{scenarioID}/source:
     post:
       tags:
         - scenario
+        - source
       operationId: pushScenarioSource
+      summary: push declarative test scenario source
+      parameters:
+        - in: path
+          name: scenarioID
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: scenario metadata id
       requestBody:
-        description: push declarative scenario source
+        description: declarative scenario source
         required: true
         content:
           application/x-yaml:
             schema:
-              $ref: '#/components/schemas/PushScenarioSourceRequest'
+              $ref: '#/components/schemas/ScenarioSource'
       responses:
         201:
           description: scenario source uploaded
@@ -60,29 +101,155 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        404:
+          description: scenario metadata not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
+    get:
+      tags:
+        - scenario
+        - source
+      operationId: getScenarioSource
+      summary: get declarative test scenario source
+      parameters:
+        - in: path
+          name: scenarioID
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: scenario metadata id
+      responses:
+        200:
+          description: previously pushed scenario source
+          content:
+            application/x-yaml:
+              schema:
+                $ref: '#/components/schemas/ScenarioSource'
+        404:
+          description: scenario metadata or source not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
+  /scenario/{scenarioID}/performance:
+    post:
+      tags:
+        - scenario
+        - performance
+      operationId: performScenario
+      summary: start test scenario performing
+      parameters:
+        - in: path
+          name: scenarioID
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: scenario metadata id
+      responses:
+        201:
+          description: scenario performance url
+          headers:
+            Content-Location:
+              description: created scenario performance url
+              schema:
+                type: string
+        400:
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: scenario metadata not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /scenario/{scenarioID}/performance/{performanceID}:
+    get:
+      tags:
+        - scenario
+        - performance
+      operationId: getScenarioPerformance
+      summary: get current state of test scenario performance
+      parameters:
+        - in: path
+          name: scenarioID
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: scenario metadata id
+        - in: path
+          name: performanceID
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: scenario performance id
+      responses:
+        200:
+          description: current state of scenario performance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScenarioPerformanceState'
+        404:
+          description: scenario metadata or performance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 
 components:
   schemas:
     Error:
       type: object
-      required: [ slug, details ]
+      required:
+        - slug
+        - details
       properties:
         slug:
-          type: string
+          $ref: '#/components/schemas/Slug'
         details:
           type: string
 
-    LoadScenarioMetadataRequest:
+    Slug:
+      type: string
+      enum:
+        - metadata-not-found
+        - source-not-found
+        - performance-not-found
+        - invalid-json
+
+    ScenarioMetadataRequest:
       type: object
       properties:
         some:
           type: string
 
-    PushScenarioSourceRequest:
+    ScenarioMetadataResponse:
+      type: object
+      properties:
+        some:
+          type: string
+
+    ScenarioSource:
       type: string
       format: binary
+
+    ScenarioPerformanceState:
+      type: object
+      properties:
+        some:
+          type: string
 
 
