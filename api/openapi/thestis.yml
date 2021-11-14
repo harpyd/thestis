@@ -7,26 +7,26 @@ servers:
   - url: 'https://{hostname}/v1'
 
 paths:
-  /scenario:
+  /specification:
     post:
       tags:
-        - scenario
+        - specification
         - metadata
-      operationId: loadScenarioMetadata
-      summary: create test scenario metadata
+      operationId: loadSpecificationMetadata
+      summary: create test specification metadata
       requestBody:
-        description: scenario metadata
+        description: specification metadata
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ScenarioMetadataRequest'
+              $ref: '#/components/schemas/SpecificationMetadataRequest'
       responses:
         201:
-          description: scenario metadata is created
+          description: specification metadata is created
           headers:
             Content-Location:
-              description: created scenario metadata url
+              description: created specification metadata url
               schema:
                 type: string
         400:
@@ -36,63 +36,63 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /scenario/{scenarioID}:
+  /specification/{specificationID}:
     get:
       tags:
-        - scenario
+        - specification
         - metadata
-      operationId: getScenarioMetadata
-      summary: get test scenario metadata
+      operationId: getSpecificationMetadata
+      summary: get test specification metadata
       parameters:
         - in: path
-          name: scenarioID
+          name: specificationID
           schema:
             type: string
             format: uuid
           required: true
-          description: scenario metadata id
+          description: specification metadata id
       responses:
         200:
-          description: previously created scenario metadata
+          description: previously created specification metadata
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ScenarioMetadataResponse'
+                $ref: '#/components/schemas/SpecificationMetadataResponse'
         404:
-          description: scenario metadata not found
+          description: specification metadata not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /scenario/{scenarioID}/source:
+  /specification/{specificationID}/source:
     post:
       tags:
-        - scenario
+        - specification
         - source
-      operationId: pushScenarioSource
-      summary: push declarative test scenario source
+      operationId: pushSpecificationSource
+      summary: push declarative test specification source
       parameters:
         - in: path
-          name: scenarioID
+          name: specificationID
           schema:
             type: string
             format: uuid
           required: true
-          description: scenario metadata id
+          description: specification metadata id
       requestBody:
-        description: declarative scenario source
+        description: declarative specification source
         required: true
         content:
           application/x-yaml:
             schema:
-              $ref: '#/components/schemas/ScenarioSource'
+              $ref: '#/components/schemas/SpecificationSource'
       responses:
         201:
-          description: scenario source uploaded
+          description: specification source uploaded
           headers:
             Content-Location:
-              description: uploaded scenario source url
+              description: uploaded specification source url
               schema:
                 type: string
         400:
@@ -102,7 +102,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         404:
-          description: scenario metadata not found
+          description: specification metadata not found
           content:
             application/json:
               schema:
@@ -110,53 +110,53 @@ paths:
 
     get:
       tags:
-        - scenario
+        - specification
         - source
-      operationId: getScenarioSource
-      summary: get declarative test scenario source
+      operationId: getSpecificationSource
+      summary: get declarative test specification source
       parameters:
         - in: path
-          name: scenarioID
+          name: specificationID
           schema:
             type: string
             format: uuid
           required: true
-          description: scenario metadata id
+          description: specification metadata id
       responses:
         200:
-          description: previously pushed scenario source
+          description: previously pushed specification source
           content:
             application/x-yaml:
               schema:
-                $ref: '#/components/schemas/ScenarioSource'
+                $ref: '#/components/schemas/SpecificationSource'
         404:
-          description: scenario metadata or source not found
+          description: specification metadata or source not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /scenario/{scenarioID}/performance:
+  /specification/{specificationID}/performance:
     post:
       tags:
-        - scenario
+        - specification
         - performance
-      operationId: performScenario
-      summary: start test scenario performing
+      operationId: performSpecification
+      summary: start test specification performing
       parameters:
         - in: path
-          name: scenarioID
+          name: specificationID
           schema:
             type: string
             format: uuid
           required: true
-          description: scenario metadata id
+          description: specification metadata id
       responses:
         201:
-          description: scenario performance url
+          description: specification performance url
           headers:
             Content-Location:
-              description: created scenario performance url
+              description: created specification performance url
               schema:
                 type: string
         400:
@@ -166,43 +166,43 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         404:
-          description: scenario metadata not found
+          description: specification metadata not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /scenario/{scenarioID}/performance/{performanceID}:
+  /specification/{specificationID}/performance/{performanceID}:
     get:
       tags:
-        - scenario
+        - specification
         - performance
-      operationId: getScenarioPerformance
-      summary: get current state of test scenario performance
+      operationId: getSpecificationPerformance
+      summary: get current state of test specification performance
       parameters:
         - in: path
-          name: scenarioID
+          name: specificationID
           schema:
             type: string
             format: uuid
           required: true
-          description: scenario metadata id
+          description: specification metadata id
         - in: path
           name: performanceID
           schema:
             type: string
             format: uuid
           required: true
-          description: scenario performance id
+          description: specification performance id
       responses:
         200:
-          description: current state of scenario performance
+          description: current state of specification performance
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ScenarioPerformanceState'
+                $ref: '#/components/schemas/SpecificationPerformanceState'
         404:
-          description: scenario metadata or performance not found
+          description: specification metadata or performance not found
           content:
             application/json:
               schema:
@@ -230,23 +230,23 @@ components:
         - performance-not-found
         - invalid-json
 
-    ScenarioMetadataRequest:
+    SpecificationMetadataRequest:
       type: object
       properties:
         some:
           type: string
 
-    ScenarioMetadataResponse:
+    SpecificationMetadataResponse:
       type: object
       properties:
         some:
           type: string
 
-    ScenarioSource:
+    SpecificationSource:
       type: string
       format: binary
 
-    ScenarioPerformanceState:
+    SpecificationPerformanceState:
       type: object
       properties:
         some:
