@@ -1,0 +1,622 @@
+openapi: 3.0.3
+info:
+  title: Thestis API
+  description: Thestis is a service for auto tests with a declarative description of tests
+  version: 0.0.1
+servers:
+  - url: 'https://{hostname}/v1'
+
+paths:
+  /specifications:
+    post:
+      tags:
+        - specifications
+        - metadata
+      operationId: loadSpecificationMetadata
+      summary: Creates test specification metadata.
+      requestBody:
+        description: Specification metadata to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoadSpecificationMetadataRequest'
+      responses:
+        201:
+          description: Specification metadata is created.
+          headers:
+            Content-Location:
+              description: Created specification metadata url.
+              schema:
+                type: string
+        400:
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - specifications
+        - metadata
+      operationId: getSpecificationMetadatas
+      summary: Returns test specification matadatas.
+      responses:
+        200:
+          description: Found previously created specification metadatas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommonSpecificationMetadataResponse'
+
+  /specifications/{specificationID}:
+    get:
+      tags:
+        - specifications
+        - metadata
+      operationId: getSpecificationMetadata
+      summary: Returns test specification metadata.
+      parameters:
+        - in: path
+          name: specificationID
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: Specification metadata id.
+      responses:
+        200:
+          description: Previously created specification metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecificationMetadataResponse'
+        404:
+          description: Specification metadata not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /specifications/{specificationID}/source:
+    post:
+      tags:
+        - specifications
+        - source
+      operationId: pushSpecificationSource
+      summary: Pushes declarative test specification source.
+      parameters:
+        - in: path
+          name: specificationID
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: Specification metadata id.
+      requestBody:
+        description: Declarative specification source.
+        required: true
+        content:
+          application/x-yaml:
+            schema:
+              $ref: '#/components/schemas/SpecificationSource'
+      responses:
+        201:
+          description: Specification source uploaded.
+          headers:
+            Content-Location:
+              description: Uploaded specification source url.
+              schema:
+                type: string
+        400:
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Specification metadata not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags:
+        - specifications
+        - source
+      operationId: getSpecificationSource
+      summary: Returns declarative test specification source.
+      parameters:
+        - in: path
+          name: specificationID
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: Specification metadata id.
+      responses:
+        200:
+          description: Previously pushed specification source.
+          content:
+            application/x-yaml:
+              schema:
+                $ref: '#/components/schemas/SpecificationSource'
+        404:
+          description: Specification metadata or source not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /specifications/{specificationID}/performance:
+    post:
+      tags:
+        - specifications
+        - performance
+      operationId: performSpecification
+      summary: Starts test specification performing.
+      parameters:
+        - in: path
+          name: specificationID
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: Specification metadata id.
+      requestBody:
+        description: >
+          Stories and scenarios to perform.
+          If there are no stories, then all stories of specification will be performed.
+          If there are no scenarios in story, then all scenarios of story will be performed.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSpecificationPerformanceRequest'
+      responses:
+        201:
+          description: Specification performance url.
+          headers:
+            Content-Location:
+              description: Created specification performance url.
+              schema:
+                type: string
+        400:
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Specification metadata not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /specifications/{specificationID}/performance/{performanceID}:
+    get:
+      tags:
+        - specifications
+        - performance
+      operationId: getSpecificationPerformance
+      summary: Returns current state of test specification performance.
+      parameters:
+        - in: path
+          name: specificationID
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: Specification metadata id.
+        - in: path
+          name: performanceID
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: Specification performance id.
+      responses:
+        200:
+          description: Current state of specification performance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpecificationPerformanceResponse'
+        404:
+          description: Specification metadata or performance not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - slug
+        - details
+      properties:
+        slug:
+          $ref: '#/components/schemas/ErrorSlug'
+        details:
+          type: string
+
+    ErrorSlug:
+      type: string
+      enum:
+        - metadata-not-found
+        - source-not-found
+        - performance-not-found
+        - invalid-json
+
+    StartSpecificationPerformanceRequest:
+      type: object
+      properties:
+        stories:
+          type: array
+          items:
+            type: object
+            required:
+              - slug
+            properties:
+              slug:
+                type: string
+              scenarios:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - slug
+                  properties:
+                    slug:
+                      type: string
+
+    SpecificationPerformanceResponse:
+      type: object
+      properties:
+        state:
+          $ref: '#/components/schemas/PerformanceState'
+        storiesPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoryPerformance'
+      example:
+        state: PERFORMING_ERROR
+        storiesPerformance:
+          - slug: sell-horns-and-hooves
+            state: PERFORMING_FAILED
+            scenariosPerformance:
+              - slug: sell-existing-horns-and-hooves
+                state: PERFORMING_FAILED
+                thesesPerformance:
+                  - slug: deliver-horns
+                    state: PERFORMING_PASSED
+                  - slug: deliver-hooves
+                    state: PERFORMING_PASSED
+                  - slug: sell-horns-and-hooves
+                    state: PERFORMING_PASSED
+                  - slug: get-sold-products
+                    state: PERFORMING_PASSED
+                  - slug: check-sold-products
+                    state: PERFORMING_FAILED
+                    failDetails: expected=[103, 21] is not equal to actual=[103, 20]
+
+    StoryPerformance:
+      type: object
+      required:
+        - slug
+        - state
+      properties:
+        slug:
+          type: string
+        state:
+          $ref: '#/components/schemas/PerformanceState'
+        scenariosPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioPerformance'
+
+    ScenarioPerformance:
+      type: object
+      required:
+        - slug
+        - state
+      properties:
+        slug:
+          type: string
+        state:
+          $ref: '#/components/schemas/PerformanceState'
+        thesesPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThesisPerformance'
+
+    ThesisPerformance:
+      type: object
+      required:
+        - slug
+        - state
+      properties:
+        slug:
+          type: string
+        state:
+          $ref: '#/components/schemas/PerformanceState'
+        errorDetails:
+          type: string
+        failDetails:
+          type: string
+
+    PerformanceState:
+      type: string
+      enum:
+        - NOT_PERFORMED
+        - PERFORMING
+        - PERFORMING_ERROR
+        - PERFORMING_PASSED
+        - PERFORMING_FAILED
+
+    LoadSpecificationMetadataRequest:
+      type: object
+      required:
+        - viewName
+      properties:
+        viewName:
+          type: string
+        summary:
+          type: string
+
+    SpecificationMetadataResponse:
+      allOf:
+        - $ref: '#/components/schemas/CommonSpecificationMetadataResponse'
+        - type: object
+          properties:
+            specification:
+              $ref: '#/components/schemas/Specification'
+      example:
+        id: 97fa5216-fec5-466a-b86d-32c4228c757f
+        viewName: horns-and-hoovies test No 1
+        summary: selling test
+        specification:
+          author: Djerys
+          title: horns-and-hooves API test
+          description: declarative auto tests for horns-and-hooves API
+          stories:
+            - slug: sell-horns-and-hooves
+              description: test for selling horns and hooves
+              asA: seller
+              inOrderTo: make sure that the product is being sold
+              wantTo: sell horns and hooves on the test market place
+              scenarios:
+                - slug: sell-existing-horns-and-hooves
+                  description: sell horns and hooves when they are in stock
+                  theses:
+                    - slug: deliver-horns
+                      given: horns delivered to the warehouse
+                      http:
+                        method: POST
+                        url: https://api.warehouse/v1/horns
+                        request:
+                          contentType: application/json
+                          body:
+                            producer: Horns Inc.
+                            deliveryNumber: 123456
+                            code: HRN-3134141
+                            batchSize: 103
+                        response:
+                          allowedCodes: [ 201 ]
+                          allowedContentType: application/json
+                    - slug: deliver-hooves
+                      given: hooves delivered to the warehouse
+                      http:
+                        method: POST
+                        url: https://api.warehouse/v1/hooves
+                        request:
+                          contentType: application/json
+                          body:
+                            producer: Hooves Inc.
+                            deliveryNumber: 654321
+                            code: HVS-3123313
+                            batchSize: 313
+                        response:
+                          allowedCodes: [ 201 ]
+                          allowedContentType: application/json
+                    - slug: sell-horns-and-hooves
+                      when: selling horns and hooves
+                      http:
+                        method: POST
+                        url: https://api.warehouse/v1/sold
+                        request:
+                          contentType: application/json
+                          body:
+                            products:
+                              - code: HRN-3134141
+                                itemsCount: 103
+                                itemPrice: 1000
+                              - code: HVS-3123313
+                                itemsCount: 20
+                                itemPrice: 1003
+                        response:
+                          allowedCodes: [ 201 ]
+                          allowedContentType: application/json
+                    - slug: get-sold-products
+                      then: get sold products
+                      http:
+                        method: GET
+                        url: https://api.warehouse/v1/{{sell-horn-and-hooves.response.headers.Content-Location}}
+                        response:
+                          allowedCodes: [ 200 ]
+                          allowedContentType: application/json
+                    - slug: check-sold-products
+                      then: check that products added to sold products
+                      assertion:
+                        type: JSON
+                        with: JSONPATH
+                        assert:
+                          - actual: get-sold-products.response.body.products..itemsCount
+                            expected: [ 103, 21 ]
+
+    CommonSpecificationMetadataResponse:
+      type: object
+      required:
+        - id
+        - viewName
+      properties:
+        id:
+          type: string
+          format: uuid
+        viewName:
+          type: string
+        summary:
+          type: string
+
+    Specification:
+      type: object
+      properties:
+        author:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        stories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Story'
+
+    Story:
+      type: object
+      required:
+        - slug
+      properties:
+        slug:
+          type: string
+        description:
+          type: string
+        asA:
+          type: string
+        inOrderTo:
+          type: string
+        wantTo:
+          type: string
+        scenarios:
+          type: array
+          items:
+            $ref: '#/components/schemas/Scenario'
+
+    Scenario:
+      type: object
+      required:
+        - slug
+      properties:
+        slug:
+          type: string
+        description:
+          type: string
+        theses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Thesis'
+
+    Thesis:
+      type: object
+      required:
+        - slug
+      properties:
+        slug:
+          type: string
+        given:
+          type: string
+        when:
+          type: string
+        then:
+          type: string
+        after:
+          type: array
+          items:
+            type: string
+        http:
+          $ref: '#/components/schemas/HttpAction'
+        assertion:
+          $ref: '#/components/schemas/AssertionAction'
+
+    HttpAction:
+      type: object
+      required:
+        - method
+        - url
+        - allowedResponseCodes
+      properties:
+        method:
+          $ref: '#/components/schemas/HttpMethod'
+        url:
+          type: string
+        request:
+          type: object
+          properties:
+            contentType:
+              type: string
+            body:
+              type: object
+        response:
+          type: object
+          properties:
+            allowedCodes:
+              type: array
+              items:
+                type: integer
+            allowedContentType:
+              type: string
+
+    HttpMethod:
+      type: string
+      enum:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+        - TRACE
+        - CONNECT
+        - HEAD
+
+    AssertionAction:
+      type: object
+      properties:
+        'type':
+          $ref: '#/components/schemas/AssertionType'
+        with:
+          $ref: '#/components/schemas/AssertionMethod'
+        assert:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assertion'
+
+    AssertionType:
+      type: string
+      enum:
+        - JSON
+
+    AssertionMethod:
+      type: string
+      enum:
+        - JSONPATH
+
+    Assertion:
+      type: object
+      required:
+        - actual
+        - expected
+      properties:
+        actual:
+          type: string
+        expected:
+          type: string
+
+    SpecificationSource:
+      type: string
+      format: binary
