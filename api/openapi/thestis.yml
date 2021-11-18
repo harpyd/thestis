@@ -13,24 +13,24 @@ paths:
         - specifications
         - metadata
       operationId: loadSpecificationMetadata
-      summary: create test specification metadata
+      summary: Creates test specification metadata.
       requestBody:
-        description: specification metadata
+        description: Specification metadata to create.
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SpecificationMetadataRequest'
+              $ref: '#/components/schemas/LoadSpecificationMetadataRequest'
       responses:
         201:
-          description: specification metadata is created
+          description: Specification metadata is created.
           headers:
             Content-Location:
-              description: created specification metadata url
+              description: Created specification metadata url.
               schema:
                 type: string
         400:
-          description: bad request
+          description: Bad request.
           content:
             application/json:
               schema:
@@ -40,10 +40,10 @@ paths:
         - specifications
         - metadata
       operationId: getSpecificationMetadatas
-      summary: get test specification matadatas
+      summary: Returns test specification matadatas.
       responses:
         200:
-          description: found previously created specification metadatas
+          description: Found previously created specification metadatas.
           content:
             application/json:
               schema:
@@ -57,7 +57,7 @@ paths:
         - specifications
         - metadata
       operationId: getSpecificationMetadata
-      summary: get test specification metadata
+      summary: Returns test specification metadata.
       parameters:
         - in: path
           name: specificationID
@@ -65,16 +65,16 @@ paths:
             type: string
             format: uuid
           required: true
-          description: specification metadata id
+          description: Specification metadata id.
       responses:
         200:
-          description: previously created specification metadata
+          description: Previously created specification metadata.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SpecificationMetadataResponse'
         404:
-          description: specification metadata not found
+          description: Specification metadata not found.
           content:
             application/json:
               schema:
@@ -86,7 +86,7 @@ paths:
         - specifications
         - source
       operationId: pushSpecificationSource
-      summary: push declarative test specification source
+      summary: Pushes declarative test specification source.
       parameters:
         - in: path
           name: specificationID
@@ -94,9 +94,9 @@ paths:
             type: string
             format: uuid
           required: true
-          description: specification metadata id
+          description: Specification metadata id.
       requestBody:
-        description: declarative specification source
+        description: Declarative specification source.
         required: true
         content:
           application/x-yaml:
@@ -104,20 +104,20 @@ paths:
               $ref: '#/components/schemas/SpecificationSource'
       responses:
         201:
-          description: specification source uploaded
+          description: Specification source uploaded.
           headers:
             Content-Location:
-              description: uploaded specification source url
+              description: Uploaded specification source url.
               schema:
                 type: string
         400:
-          description: bad request
+          description: Bad request.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         404:
-          description: specification metadata not found
+          description: Specification metadata not found.
           content:
             application/json:
               schema:
@@ -128,7 +128,7 @@ paths:
         - specifications
         - source
       operationId: getSpecificationSource
-      summary: get declarative test specification source
+      summary: Returns declarative test specification source.
       parameters:
         - in: path
           name: specificationID
@@ -136,16 +136,16 @@ paths:
             type: string
             format: uuid
           required: true
-          description: specification metadata id
+          description: Specification metadata id.
       responses:
         200:
-          description: previously pushed specification source
+          description: Previously pushed specification source.
           content:
             application/x-yaml:
               schema:
                 $ref: '#/components/schemas/SpecificationSource'
         404:
-          description: specification metadata or source not found
+          description: Specification metadata or source not found.
           content:
             application/json:
               schema:
@@ -157,7 +157,7 @@ paths:
         - specifications
         - performance
       operationId: performSpecification
-      summary: start test specification performing
+      summary: Starts test specification performing.
       parameters:
         - in: path
           name: specificationID
@@ -165,7 +165,16 @@ paths:
             type: string
             format: uuid
           required: true
-          description: specification metadata id
+          description: Specification metadata id.
+      requestBody:
+        description: >
+          Stories and scenarios to perform.
+          If there are no stories, then all stories of specification will be performed.
+          If there are no scenarios in story, then all scenarios of story will be performed.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSpecificationPerformanceRequest'
       responses:
         201:
           description: specification performance url
@@ -215,14 +224,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SpecificationPerformanceState'
+                $ref: '#/components/schemas/SpecificationPerformanceResponse'
         404:
           description: specification metadata or performance not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
 
 components:
   schemas:
@@ -245,7 +253,90 @@ components:
         - performance-not-found
         - invalid-json
 
-    SpecificationMetadataRequest:
+    StartSpecificationPerformanceRequest:
+      type: object
+      properties:
+        stories:
+          type: array
+          items:
+            type: object
+            required:
+              - slug
+            properties:
+              slug:
+                type: string
+              scenarios:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - slug
+                  properties:
+                    slug:
+                      type: string
+
+    SpecificationPerformanceResponse:
+      type: object
+      properties:
+        state:
+          $ref: '#/components/schemas/PerformanceState'
+        storiesPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoryPerformance'
+
+    StoryPerformance:
+      type: object
+      required:
+        - slug
+        - state
+      properties:
+        slug:
+          type: string
+        state:
+          $ref: '#/components/schemas/PerformanceState'
+        scenariosPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioPerformance'
+
+    ScenarioPerformance:
+      type: object
+      required:
+        - slug
+        - state
+      properties:
+        slug:
+          type: string
+        state:
+          $ref: '#/components/schemas/PerformanceState'
+        thesesPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThesisPerformance'
+
+    ThesisPerformance:
+      type: object
+      required:
+        - slug
+        - state
+      properties:
+        slug:
+          type: string
+        state:
+          $ref: '#/components/schemas/PerformanceState'
+        errorDetails:
+          type: string
+
+    PerformanceState:
+      type: string
+      enum:
+        - NOT_PERFORMED
+        - PERFORMING
+        - PERFORMING_ERROR
+        - PERFORMED
+
+    LoadSpecificationMetadataRequest:
       type: object
       required:
         - viewName
@@ -506,11 +597,3 @@ components:
     SpecificationSource:
       type: string
       format: binary
-
-    SpecificationPerformanceState:
-      type: object
-      properties:
-        some:
-          type: string
-
-
