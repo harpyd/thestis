@@ -35,6 +35,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    get:
+      tags:
+        - specifications
+        - metadata
+      operationId: getSpecificationMetadatas
+      summary: get test specification matadatas
+      responses:
+        200:
+          description: found previously created specification metadatas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommonSpecificationMetadataResponse'
 
   /specifications/{specificationID}:
     get:
@@ -218,11 +233,11 @@ components:
         - details
       properties:
         slug:
-          $ref: '#/components/schemas/Slug'
+          $ref: '#/components/schemas/ErrorSlug'
         details:
           type: string
 
-    Slug:
+    ErrorSlug:
       type: string
       enum:
         - metadata-not-found
@@ -232,17 +247,260 @@ components:
 
     SpecificationMetadataRequest:
       type: object
+      required:
+        - viewName
       properties:
-        title:
+        viewName:
+          type: string
+        summary:
           type: string
 
     SpecificationMetadataResponse:
+      allOf:
+        - $ref: '#/components/schemas/CommonSpecificationMetadataResponse'
+        - type: object
+          properties:
+            specification:
+              $ref: '#/components/schemas/Specification'
+      example:
+        id: 97fa5216-fec5-466a-b86d-32c4228c757f
+        viewName: horns-and-hoovies test No 1
+        summary: selling test
+        specification:
+          author: Djerys
+          title: horns-and-hooves API test
+          description: declarative auto tests for horns-and-hooves API
+          stories:
+            - slug: sell-horns-and-hooves
+              description: test for selling horns and hooves
+              asA: seller
+              inOrderTo: make sure that the product is being sold
+              wantTo: sell horns and hooves on the test market place
+              scenarios:
+                - slug: sell-existing-horns-and-hooves
+                  description: sell horns and hooves when they are in stock
+                  theses:
+                    - slug: deliver-horns
+                      given: horns delivered to the warehouse
+                      http:
+                        method: POST
+                        url: https://api.warehouse/v1/horns
+                        request:
+                          contentType: application/json
+                          body:
+                            producer: Horns Inc.
+                            deliveryNumber: 123456
+                            code: HRN-3134141
+                            batchSize: 103
+                        response:
+                          allowedCodes: [ 201 ]
+                          allowedContentType: application/json
+                    - slug: deliver-hooves
+                      given: hooves delivered to the warehouse
+                      http:
+                        method: POST
+                        url: https://api.warehouse/v1/hooves
+                        request:
+                          contentType: application/json
+                          body:
+                            producer: Hooves Inc.
+                            deliveryNumber: 654321
+                            code: HVS-3123313
+                            batchSize: 313
+                        response:
+                          allowedCodes: [ 201 ]
+                          allowedContentType: application/json
+                    - slug: sell-horns-and-hooves
+                      when: selling horns and hooves
+                      http:
+                        method: POST
+                        url: https://api.warehouse/v1/sold
+                        request:
+                          contentType: application/json
+                          body:
+                            products:
+                              - code: HRN-3134141
+                                itemsCount: 103
+                                itemPrice: 1000
+                              - code: HVS-3123313
+                                itemsCount: 20
+                                itemPrice: 1003
+                        response:
+                          allowedCodes: [ 201 ]
+                          allowedContentType: application/json
+                    - slug: get-sold-products
+                      then: get sold products
+                      http:
+                        method: GET
+                        url: https://api.warehouse/v1/{{sell-horn-and-hooves.response.headers.Content-Location}}
+                        response:
+                          allowedCodes: [ 200 ]
+                          allowedContentType: application/json
+                    - slug: check-sold-products
+                      then: check that products added to sold products
+                      assertion:
+                        type: JSON
+                        with: JSONPATH
+                        assert:
+                          - actual: get-sold-products.response.body.products..itemsCount
+                            expected: [ 103, 20 ]
+
+    CommonSpecificationMetadataResponse:
       type: object
+      required:
+        - id
+        - viewName
       properties:
         id:
           type: string
           format: uuid
+        viewName:
+          type: string
+        summary:
+          type: string
+
+    Specification:
+      type: object
+      properties:
+        author:
+          type: string
         title:
+          type: string
+        description:
+          type: string
+        stories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Story'
+
+    Story:
+      type: object
+      required:
+        - slug
+      properties:
+        slug:
+          type: string
+        description:
+          type: string
+        asA:
+          type: string
+        inOrderTo:
+          type: string
+        wantTo:
+          type: string
+        scenarios:
+          type: array
+          items:
+            $ref: '#/components/schemas/Scenario'
+
+    Scenario:
+      type: object
+      required:
+        - slug
+      properties:
+        slug:
+          type: string
+        description:
+          type: string
+        theses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Thesis'
+
+    Thesis:
+      type: object
+      required:
+        - slug
+      properties:
+        slug:
+          type: string
+        given:
+          type: string
+        when:
+          type: string
+        then:
+          type: string
+        after:
+          type: array
+          items:
+            type: string
+        http:
+          $ref: '#/components/schemas/HttpAction'
+        assertion:
+          $ref: '#/components/schemas/AssertionAction'
+
+    HttpAction:
+      type: object
+      required:
+        - method
+        - url
+        - allowedResponseCodes
+      properties:
+        method:
+          $ref: '#/components/schemas/HttpMethod'
+        url:
+          type: string
+        request:
+          type: object
+          properties:
+            contentType:
+              type: string
+            body:
+              type: object
+        response:
+          type: object
+          properties:
+            allowedCodes:
+              type: array
+              items:
+                type: integer
+            allowedContentType:
+              type: string
+
+    HttpMethod:
+      type: string
+      enum:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+        - TRACE
+        - CONNECT
+        - HEAD
+
+    AssertionAction:
+      type: object
+      properties:
+        'type':
+          $ref: '#/components/schemas/AssertionType'
+        with:
+          $ref: '#/components/schemas/AssertionMethod'
+        assert:
+          type: array
+          items:
+            $ref: '#/components/schemas/Assertion'
+
+    AssertionType:
+      type: string
+      enum:
+        - JSON
+
+    AssertionMethod:
+      type: string
+      enum:
+        - JSONPATH
+
+    Assertion:
+      type: object
+      required:
+        - actual
+        - expected
+      properties:
+        actual:
+          type: string
+        expected:
           type: string
 
     SpecificationSource:
