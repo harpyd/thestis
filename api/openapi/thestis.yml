@@ -233,13 +233,16 @@ components:
     SpecificationMetadataRequest:
       type: object
       properties:
-        some:
+        title:
           type: string
 
     SpecificationMetadataResponse:
       type: object
       properties:
-        some:
+        id:
+          type: string
+          format: uuid
+        title:
           type: string
 
     SpecificationSource:
