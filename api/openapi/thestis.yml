@@ -177,20 +177,20 @@ paths:
               $ref: '#/components/schemas/StartSpecificationPerformanceRequest'
       responses:
         201:
-          description: specification performance url
+          description: Specification performance url.
           headers:
             Content-Location:
-              description: created specification performance url
+              description: Created specification performance url.
               schema:
                 type: string
         400:
-          description: bad request
+          description: Bad request.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         404:
-          description: specification metadata not found
+          description: Specification metadata not found.
           content:
             application/json:
               schema:
@@ -202,7 +202,7 @@ paths:
         - specifications
         - performance
       operationId: getSpecificationPerformance
-      summary: get current state of test specification performance
+      summary: Returns current state of test specification performance.
       parameters:
         - in: path
           name: specificationID
@@ -210,23 +210,23 @@ paths:
             type: string
             format: uuid
           required: true
-          description: specification metadata id
+          description: Specification metadata id.
         - in: path
           name: performanceID
           schema:
             type: string
             format: uuid
           required: true
-          description: specification performance id
+          description: Specification performance id.
       responses:
         200:
-          description: current state of specification performance
+          description: Current state of specification performance.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SpecificationPerformanceResponse'
         404:
-          description: specification metadata or performance not found
+          description: Specification metadata or performance not found.
           content:
             application/json:
               schema:
@@ -284,6 +284,26 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StoryPerformance'
+      example:
+        state: PERFORMING_ERROR
+        storiesPerformance:
+          - slug: sell-horns-and-hooves
+            state: PERFORMING_FAILED
+            scenariosPerformance:
+              - slug: sell-existing-horns-and-hooves
+                state: PERFORMING_FAILED
+                thesesPerformance:
+                  - slug: deliver-horns
+                    state: PERFORMING_PASSED
+                  - slug: deliver-hooves
+                    state: PERFORMING_PASSED
+                  - slug: sell-horns-and-hooves
+                    state: PERFORMING_PASSED
+                  - slug: get-sold-products
+                    state: PERFORMING_PASSED
+                  - slug: check-sold-products
+                    state: PERFORMING_FAILED
+                    failDetails: expected=[103, 21] is not equal to actual=[103, 20]
 
     StoryPerformance:
       type: object
@@ -327,6 +347,8 @@ components:
           $ref: '#/components/schemas/PerformanceState'
         errorDetails:
           type: string
+        failDetails:
+          type: string
 
     PerformanceState:
       type: string
@@ -334,7 +356,8 @@ components:
         - NOT_PERFORMED
         - PERFORMING
         - PERFORMING_ERROR
-        - PERFORMED
+        - PERFORMING_PASSED
+        - PERFORMING_FAILED
 
     LoadSpecificationMetadataRequest:
       type: object
@@ -434,7 +457,7 @@ components:
                         with: JSONPATH
                         assert:
                           - actual: get-sold-products.response.body.products..itemsCount
-                            expected: [ 103, 20 ]
+                            expected: [ 103, 21 ]
 
     CommonSpecificationMetadataResponse:
       type: object
