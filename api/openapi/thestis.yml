@@ -7,10 +7,10 @@ servers:
   - url: 'https://{hostname}/v1'
 
 paths:
-  /specification:
+  /specifications:
     post:
       tags:
-        - specification
+        - specifications
         - metadata
       operationId: loadSpecificationMetadata
       summary: create test specification metadata
@@ -36,10 +36,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /specification/{specificationID}:
+  /specifications/{specificationID}:
     get:
       tags:
-        - specification
+        - specifications
         - metadata
       operationId: getSpecificationMetadata
       summary: get test specification metadata
@@ -65,10 +65,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /specification/{specificationID}/source:
+  /specifications/{specificationID}/source:
     post:
       tags:
-        - specification
+        - specifications
         - source
       operationId: pushSpecificationSource
       summary: push declarative test specification source
@@ -110,7 +110,7 @@ paths:
 
     get:
       tags:
-        - specification
+        - specifications
         - source
       operationId: getSpecificationSource
       summary: get declarative test specification source
@@ -136,10 +136,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /specification/{specificationID}/performance:
+  /specifications/{specificationID}/performance:
     post:
       tags:
-        - specification
+        - specifications
         - performance
       operationId: performSpecification
       summary: start test specification performing
@@ -172,10 +172,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /specification/{specificationID}/performance/{performanceID}:
+  /specifications/{specificationID}/performance/{performanceID}:
     get:
       tags:
-        - specification
+        - specifications
         - performance
       operationId: getSpecificationPerformance
       summary: get current state of test specification performance
