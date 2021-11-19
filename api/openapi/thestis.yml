@@ -285,7 +285,7 @@ components:
           items:
             $ref: '#/components/schemas/StoryPerformance'
       example:
-        state: PERFORMING_ERROR
+        state: PERFORMING_FAILED
         storiesPerformance:
           - slug: sell-horns-and-hooves
             state: PERFORMING_FAILED
