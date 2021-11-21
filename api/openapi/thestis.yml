@@ -452,6 +452,8 @@ components:
                           allowedContentType: application/json
                     - slug: check-sold-products
                       then: check that products added to sold products
+                      after:
+                        - get-sold-products
                       assertion:
                         type: JSON
                         with: JSONPATH
