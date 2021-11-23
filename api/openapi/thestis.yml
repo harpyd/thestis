@@ -287,21 +287,21 @@ components:
       example:
         state: PERFORMING_FAILED
         storiesPerformance:
-          - slug: sell-horns-and-hooves
+          - slug: sellHornsAndHooves
             state: PERFORMING_FAILED
             scenariosPerformance:
-              - slug: sell-existing-horns-and-hooves
+              - slug: sellExistingHornsAndHooves
                 state: PERFORMING_FAILED
                 thesesPerformance:
-                  - slug: deliver-horns
+                  - slug: deliverHorns
                     state: PERFORMING_PASSED
-                  - slug: deliver-hooves
+                  - slug: deliverHooves
                     state: PERFORMING_PASSED
-                  - slug: sell-horns-and-hooves
+                  - slug: sellHornsAndHooves
                     state: PERFORMING_PASSED
-                  - slug: get-sold-products
+                  - slug: getSoldProducts
                     state: PERFORMING_PASSED
-                  - slug: check-sold-products
+                  - slug: checkSoldProducts
                     state: PERFORMING_FAILED
                     failDetails: expected=[103, 21] is not equal to actual=[103, 20]
 
@@ -385,16 +385,16 @@ components:
           title: horns-and-hooves API test
           description: declarative auto tests for horns-and-hooves API
           stories:
-            - slug: sell-horns-and-hooves
+            - slug: sellHornsAndHoovesOnTheMarket
               description: test for selling horns and hooves
               asA: seller
               inOrderTo: make sure that the product is being sold
               wantTo: sell horns and hooves on the test market place
               scenarios:
-                - slug: sell-existing-horns-and-hooves
+                - slug: sellExistingHornsAndHooves
                   description: sell horns and hooves when they are in stock
                   theses:
-                    - slug: deliver-horns
+                    - slug: deliverHorns
                       given: horns delivered to the warehouse
                       http:
                         method: POST
@@ -409,7 +409,7 @@ components:
                         response:
                           allowedCodes: [ 201 ]
                           allowedContentType: application/json
-                    - slug: deliver-hooves
+                    - slug: deliverHooves
                       given: hooves delivered to the warehouse
                       http:
                         method: POST
@@ -424,7 +424,7 @@ components:
                         response:
                           allowedCodes: [ 201 ]
                           allowedContentType: application/json
-                    - slug: sell-horns-and-hooves
+                    - slug: sellHornsAndHooves
                       when: selling horns and hooves
                       http:
                         method: POST
@@ -442,23 +442,23 @@ components:
                         response:
                           allowedCodes: [ 201 ]
                           allowedContentType: application/json
-                    - slug: get-sold-products
+                    - slug: getSoldProducts
                       then: get sold products
                       http:
                         method: GET
-                        url: https://api.warehouse/v1/{{sell-horn-and-hooves.response.headers.Content-Location}}
+                        url: https://api.warehouse/v1/{{sellHornsAndHooves.response.headers.Content-Location}}
                         response:
                           allowedCodes: [ 200 ]
                           allowedContentType: application/json
-                    - slug: check-sold-products
+                    - slug: checkSoldProducts
                       then: check that products added to sold products
                       after:
-                        - get-sold-products
+                        - getSoldProducts
                       assertion:
                         type: JSON
                         with: JSONPATH
                         assert:
-                          - actual: get-sold-products.response.body.products..itemsCount
+                          - actual: getSoldProducts.response.body.products..itemsCount
                             expected: [ 103, 21 ]
 
     CommonSpecificationMetadataResponse:

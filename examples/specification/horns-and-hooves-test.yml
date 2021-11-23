@@ -4,56 +4,56 @@ title: horns-and-hooves API test
 description: declarative auto tests for horns-and-hooves API
 
 stories:
-  sell-horns-and-hooves:
+  sellHornsAndHoovesOnTheMarket:
     description: test for selling horns and hooves
-    as-a: seller
-    in-order-to: make sure that the product is being sold
-    want-to: sell horns and hooves on the test market place
+    asA: seller
+    inOrderTo: make sure that the product is being sold
+    wantTo: sell horns and hooves on the test market place
     scenarios:
-      sell-existing-horns-and-hooves:
+      sellExistingHornsAndHooves:
         description: sell horns and hooves when they are in stock
         theses:
-          deliver-horns:
+          deliverHorns:
             given: horns delivered to the warehouse
             http:
               method: POST
               url: https://api.warehouse/v1/horns
               request:
-                content-type: application/json
+                contentType: application/json
                 body:
                   producer: Horns Inc.
                   deliveryNumber: 123456
                   code: HRN-3134141
                   batchSize: 103
               response:
-                allowed-codes:
+                allowedCodes:
                   - 201
-                allowed-content-type: application/json
+                allowedContentType: application/json
 
-          deliver-hooves:
+          deliverHooves:
             given: hooves delivered to the warehouse
             http:
               method: POST
               url: https://api.warehouse/v1/hooves
               request:
-                content-type: application/json
+                contentType: application/json
                 body:
                   producer: Hooves Inc.
                   deliveryNumber: 654321
                   code: HVS-3123313
                   batchSize: 313
               response:
-                allowed-codes:
+                allowedCodes:
                   - 201
-                allowed-content-type: application/json
+                allowedContentType: application/json
 
-          sell-horns-and-hooves:
+          sellHornsAndHooves:
             when: selling horns and hooves
             http:
               method: POST
               url: https://api.warehouse/v1/sold
               request:
-                content-type: application/json
+                contentType: application/json
                 body:
                   products:
                     - code: HRN-3134141
@@ -63,26 +63,26 @@ stories:
                       itemsCount: 20
                       itemPrice: 1003
               response:
-                allowed-codes:
+                allowedCodes:
                   - 201
-                allowed-content-type: application/json
+                allowedContentType: application/json
 
-          get-sold-products:
+          getSoldProducts:
             then: get sold products
             http:
               method: GET
-              url: https://api.warehouse/v1/{{sell-horn-and-hooves.response.headers.Content-Location}}
+              url: https://api.warehouse/v1/{{sellHornsAndHooves.response.headers.Content-Location}}
               response:
-                allowed-codes:
+                allowedCodes:
                   - 200
-                allowed-content-type: application/json
+                allowedContentType: application/json
 
-          check-sold-products:
+          checkSoldProducts:
             then: check that products added to sold products
             after:
-              - get-sold-products
+              - getSoldProducts
             assertion:
               type: JSON
               with: JSONPATH
               assert:
-                'get-sold-products.response.body.products..itemsCount': [ 103, 21 ]
+                'getSoldProducts.response.body.products..itemsCount': [ 103, 21 ]
