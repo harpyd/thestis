@@ -7,14 +7,21 @@ import (
 )
 
 const (
-	Given Keyword = "Given"
-	When  Keyword = "When"
-	Then  Keyword = "Then"
+	UnknownKeyword Keyword = ""
+	Given          Keyword = "Given"
+	When           Keyword = "When"
+	Then           Keyword = "Then"
 )
 
-const JSON AssertionType = "JSON"
+const (
+	UnknownAssertionType AssertionType = ""
+	JSON                 AssertionType = "JSON"
+)
 
-const JSONPath AssertionMethod = "JSONPATH"
+const (
+	UnknownAssertionMethod AssertionMethod = ""
+	JSONPath               AssertionMethod = "JSONPATH"
+)
 
 type (
 	Specification struct {
@@ -259,20 +266,20 @@ func (t Thesis) Statement() Statement {
 	return t.statement
 }
 
-func (s Statement) Keyword() Keyword {
-	return s.keyword
-}
-
-func (s Statement) Behavior() string {
-	return s.behavior
-}
-
 func (t Thesis) HTTP() HTTP {
 	return t.http
 }
 
 func (t Thesis) Assertion() Assertion {
 	return t.assertion
+}
+
+func (s Statement) Keyword() Keyword {
+	return s.keyword
+}
+
+func (s Statement) Behavior() string {
+	return s.behavior
 }
 
 func (h HTTP) Method() string {
