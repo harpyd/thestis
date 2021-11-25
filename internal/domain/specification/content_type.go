@@ -2,4 +2,7 @@ package specification
 
 type ContentType string
 
-const ApplicationJSON ContentType = "application/json"
+const (
+	UnknownContentType ContentType = ""
+	ApplicationJSON    ContentType = "application/json"
+)
