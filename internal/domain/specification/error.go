@@ -93,3 +93,23 @@ func IsUnknownKeywordError(err error) bool {
 func (e unknownKeywordError) Error() string {
 	return fmt.Sprintf("unknown keyword %s", e.keyword)
 }
+
+type unknownContentTypeError struct {
+	contentType string
+}
+
+func NewUnknownContentTypeError(contentType string) error {
+	return errors.WithStack(unknownContentTypeError{
+		contentType: contentType,
+	})
+}
+
+func IsUnknownContentTypeError(err error) bool {
+	var uerr unknownContentTypeError
+
+	return errors.As(err, &uerr)
+}
+
+func (e unknownContentTypeError) Error() string {
+	return fmt.Sprintf("unknown content type %s", e.contentType)
+}

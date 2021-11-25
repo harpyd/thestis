@@ -162,3 +162,34 @@ func TestIsUnknownKeywordError(t *testing.T) {
 		})
 	}
 }
+
+func TestIsUnknownContentTypeError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name                      string
+		Err                       error
+		IsUnknownContentTypeError bool
+	}{
+		{
+			Name:                      "unknown_content_type_error_is_unknown_content_type_error",
+			Err:                       specification.NewUnknownContentTypeError("some/content"),
+			IsUnknownContentTypeError: true,
+		},
+		{
+			Name:                      "another_error_isnt_unknown_content_type_error",
+			Err:                       specification.NewNoStoryError("some/content"),
+			IsUnknownContentTypeError: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsUnknownContentTypeError, specification.IsUnknownContentTypeError(c.Err))
+		})
+	}
+}

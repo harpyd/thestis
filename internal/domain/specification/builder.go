@@ -24,6 +24,14 @@ type (
 	AssertionBuilder struct {
 		Assertion
 	}
+
+	HTTPRequestBuilder struct {
+		HTTPRequest
+	}
+
+	HTTPResponseBuilder struct {
+		HTTPResponse
+	}
 )
 
 func NewBuilder() *Builder {
@@ -176,4 +184,44 @@ func (b *HTTPBuilder) WithURL(url string) *HTTPBuilder {
 	b.url = url
 
 	return b
+}
+
+func (b *HTTPBuilder) WithRequest(buildFn func(b *HTTPRequestBuilder)) *HTTPBuilder {
+	rb := NewHTTPRequestBuilder()
+	buildFn(rb)
+
+	b.request = rb.Build()
+
+	return b
+}
+
+func (b *HTTPBuilder) WithResponse(buildFn func(b *HTTPResponseBuilder)) *HTTPBuilder {
+	rb := NewHTTPResponseBuilder()
+	buildFn(rb)
+
+	b.response = rb.Build()
+
+	return b
+}
+
+func NewHTTPRequestBuilder() *HTTPRequestBuilder {
+	return &HTTPRequestBuilder{}
+}
+
+func (b *HTTPRequestBuilder) Build() HTTPRequest {
+	return b.HTTPRequest
+}
+
+func (b *HTTPRequestBuilder) WithContentType(contentType string) *HTTPRequestBuilder {
+	b.contentType, _ = newContentTypeFromString(contentType)
+
+	return b
+}
+
+func NewHTTPResponseBuilder() *HTTPResponseBuilder {
+	return &HTTPResponseBuilder{}
+}
+
+func (b *HTTPResponseBuilder) Build() HTTPResponse {
+	return b.HTTPResponse
 }
