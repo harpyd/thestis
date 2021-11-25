@@ -1,6 +1,8 @@
 package specification
 
 import (
+	"strings"
+
 	"go.uber.org/multierr"
 
 	"github.com/harpyd/thestis/pkg/deepcopy"
@@ -272,6 +274,31 @@ func (t Thesis) HTTP() HTTP {
 
 func (t Thesis) Assertion() Assertion {
 	return t.assertion
+}
+
+func newStatement(keyword string, behavior string) (Statement, error) {
+	kw, err := newKeywordFromString(keyword)
+	if err != nil {
+		return Statement{}, err
+	}
+
+	return Statement{
+		keyword:  kw,
+		behavior: behavior,
+	}, nil
+}
+
+func newKeywordFromString(kw string) (Keyword, error) {
+	switch strings.ToLower(kw) {
+	case "given":
+		return Given, nil
+	case "when":
+		return When, nil
+	case "then":
+		return Then, nil
+	}
+
+	return UnknownKeyword, NewUnknownKeywordError(kw)
 }
 
 func (s Statement) Keyword() Keyword {
