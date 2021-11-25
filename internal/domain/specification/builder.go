@@ -163,7 +163,7 @@ func (b *HTTPBuilder) Build() HTTP {
 }
 
 func (b *HTTPBuilder) WithMethod(method string) *HTTPBuilder {
-	b.method = method
+	b.method, _ = newHTTPMethodFromString(method)
 
 	return b
 }

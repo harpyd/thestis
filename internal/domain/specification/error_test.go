@@ -100,3 +100,34 @@ func TestIsNoThesisError(t *testing.T) {
 		})
 	}
 }
+
+func TestIsUnknownHTTPMethodError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name                     string
+		Err                      error
+		IsUnknownHTTPMethodError bool
+	}{
+		{
+			Name:                     "unknown_http_method_error_is_unknown_http_method_error",
+			Err:                      specification.NewUnknownHTTPMethodError("POZT"),
+			IsUnknownHTTPMethodError: true,
+		},
+		{
+			Name:                     "another_error_isnt_unknown_http_method_error",
+			Err:                      specification.NewNoThesisError("POZT"),
+			IsUnknownHTTPMethodError: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsUnknownHTTPMethodError, specification.IsUnknownHTTPMethodError(c.Err))
+		})
+	}
+}

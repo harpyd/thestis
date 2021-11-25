@@ -43,7 +43,7 @@ type (
 	}
 
 	HTTP struct {
-		method   string
+		method   HTTPMethod
 		url      string
 		request  HTTPRequest
 		response HTTPResponse
@@ -270,7 +270,7 @@ func (s Statement) Behavior() string {
 	return s.behavior
 }
 
-func (h HTTP) Method() string {
+func (h HTTP) Method() HTTPMethod {
 	return h.method
 }
 

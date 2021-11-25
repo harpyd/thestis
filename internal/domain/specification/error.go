@@ -55,3 +55,23 @@ func IsNoThesisError(err error) bool {
 func (e noElemWithSlugError) Error() string {
 	return fmt.Sprintf("no %s with slug %s", e.elemName, e.slug)
 }
+
+type unknownHTTPMethodError struct {
+	method string
+}
+
+func NewUnknownHTTPMethodError(method string) error {
+	return errors.WithStack(unknownHTTPMethodError{
+		method: method,
+	})
+}
+
+func IsUnknownHTTPMethodError(err error) bool {
+	var uerr unknownHTTPMethodError
+
+	return errors.As(err, &uerr)
+}
+
+func (e unknownHTTPMethodError) Error() string {
+	return fmt.Sprintf("unknown HTTP method %s", e.method)
+}
