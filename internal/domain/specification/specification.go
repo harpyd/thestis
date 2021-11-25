@@ -60,7 +60,6 @@ type (
 	}
 
 	Assertion struct {
-		typeOf  AssertionType
 		method  AssertionMethod
 		asserts []Assert
 	}
@@ -289,10 +288,6 @@ func (r HTTPResponse) AllowedCodes() []int {
 
 func (r HTTPResponse) AllowedContentType() ContentType {
 	return r.allowedContentType
-}
-
-func (a Assertion) Type() AssertionType {
-	return a.typeOf
 }
 
 func (a Assertion) Method() AssertionMethod {

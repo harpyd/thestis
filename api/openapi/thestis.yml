@@ -455,7 +455,6 @@ components:
                       after:
                         - getSoldProducts
                       assertion:
-                        type: JSON
                         with: JSONPATH
                         assert:
                           - actual: getSoldProducts.response.body.products..itemsCount
@@ -589,19 +588,12 @@ components:
     AssertionAction:
       type: object
       properties:
-        'type':
-          $ref: '#/components/schemas/AssertionType'
         with:
           $ref: '#/components/schemas/AssertionMethod'
         assert:
           type: array
           items:
             $ref: '#/components/schemas/Assertion'
-
-    AssertionType:
-      type: string
-      enum:
-        - JSON
 
     AssertionMethod:
       type: string

@@ -82,7 +82,6 @@ stories:
             after:
               - getSoldProducts
             assertion:
-              type: JSON
               with: JSONPATH
               assert:
                 'getSoldProducts.response.body.products..itemsCount': [ 103, 21 ]
