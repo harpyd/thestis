@@ -6,6 +6,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var ErrUnknownKeyword = errors.New("unknown keyword")
+
 type noElemWithSlugError struct {
 	elemName string
 	slug     string
@@ -52,24 +54,4 @@ func IsNoThesisError(err error) bool {
 
 func (e noElemWithSlugError) Error() string {
 	return fmt.Sprintf("no %s with slug %s", e.elemName, e.slug)
-}
-
-type unknownKeywordError struct {
-	keyword string
-}
-
-func NewUnknownKeywordError(keyword string) error {
-	return errors.WithStack(unknownKeywordError{
-		keyword: keyword,
-	})
-}
-
-func IsUnknownKeywordError(err error) bool {
-	var uerr unknownKeywordError
-
-	return errors.As(err, &uerr)
-}
-
-func (e unknownKeywordError) Error() string {
-	return fmt.Sprintf("unknown keword %s", e.keyword)
 }

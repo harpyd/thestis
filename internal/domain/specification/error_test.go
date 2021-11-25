@@ -100,34 +100,3 @@ func TestIsNoThesisError(t *testing.T) {
 		})
 	}
 }
-
-func TestIsUnknownKeywordError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name                  string
-		Err                   error
-		IsUnknownKeywordError bool
-	}{
-		{
-			Name:                  "unknown_keyword_error_is_unknown_keyword_error",
-			Err:                   specification.NewUnknownKeywordError("tzen"),
-			IsUnknownKeywordError: true,
-		},
-		{
-			Name:                  "another_error_isnt_unknown_keyword_error",
-			Err:                   specification.NewNoThesisError("thez"),
-			IsUnknownKeywordError: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsUnknownKeywordError, specification.IsUnknownKeywordError(c.Err))
-		})
-	}
-}
