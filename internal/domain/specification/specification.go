@@ -6,23 +6,6 @@ import (
 	"github.com/harpyd/thestis/pkg/deepcopy"
 )
 
-const (
-	UnknownKeyword Keyword = ""
-	Given          Keyword = "Given"
-	When           Keyword = "When"
-	Then           Keyword = "Then"
-)
-
-const (
-	UnknownAssertionType AssertionType = ""
-	JSON                 AssertionType = "JSON"
-)
-
-const (
-	UnknownAssertionMethod AssertionMethod = ""
-	JSONPath               AssertionMethod = "JSONPATH"
-)
-
 type (
 	Specification struct {
 		id          string
@@ -59,8 +42,6 @@ type (
 		behavior string
 	}
 
-	Keyword string
-
 	HTTP struct {
 		method   string
 		url      string
@@ -83,10 +64,6 @@ type (
 		method  AssertionMethod
 		asserts []Assert
 	}
-
-	AssertionType string
-
-	AssertionMethod string
 
 	Assert struct {
 		expected string
