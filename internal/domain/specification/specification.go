@@ -50,13 +50,13 @@ type (
 	}
 
 	HTTPRequest struct {
-		contentType string
+		contentType ContentType
 		body        map[string]interface{}
 	}
 
 	HTTPResponse struct {
 		allowedCodes       []int
-		allowedContentType string
+		allowedContentType ContentType
 	}
 
 	Assertion struct {
@@ -286,7 +286,7 @@ func (h HTTP) Response() HTTPResponse {
 	return h.response
 }
 
-func (r HTTPRequest) ContentType() string {
+func (r HTTPRequest) ContentType() ContentType {
 	return r.contentType
 }
 
@@ -298,7 +298,7 @@ func (r HTTPResponse) AllowedCodes() []int {
 	return deepcopy.IntSlice(r.allowedCodes)
 }
 
-func (r HTTPResponse) AllowedContentType() string {
+func (r HTTPResponse) AllowedContentType() ContentType {
 	return r.allowedContentType
 }
 
