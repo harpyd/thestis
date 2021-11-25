@@ -131,3 +131,34 @@ func TestIsUnknownHTTPMethodError(t *testing.T) {
 		})
 	}
 }
+
+func TestIsUnknownKeywordError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name                  string
+		Err                   error
+		IsUnknownKeywordError bool
+	}{
+		{
+			Name:                  "unknown_keyword_error_is_unknown_keyword_error",
+			Err:                   specification.NewUnknownKeywordError("zen"),
+			IsUnknownKeywordError: true,
+		},
+		{
+			Name:                  "another_error_isnt_unknown_keyword_error",
+			Err:                   specification.NewUnknownHTTPMethodError("zen"),
+			IsUnknownKeywordError: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsUnknownKeywordError, specification.IsUnknownKeywordError(c.Err))
+		})
+	}
+}

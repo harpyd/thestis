@@ -6,8 +6,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrUnknownKeyword = errors.New("unknown keyword")
-
 type noElemWithSlugError struct {
 	elemName string
 	slug     string
@@ -74,4 +72,24 @@ func IsUnknownHTTPMethodError(err error) bool {
 
 func (e unknownHTTPMethodError) Error() string {
 	return fmt.Sprintf("unknown HTTP method %s", e.method)
+}
+
+type unknownKeywordError struct {
+	keyword string
+}
+
+func NewUnknownKeywordError(keyword string) error {
+	return errors.WithStack(unknownKeywordError{
+		keyword: keyword,
+	})
+}
+
+func IsUnknownKeywordError(err error) bool {
+	var uerr unknownKeywordError
+
+	return errors.As(err, &uerr)
+}
+
+func (e unknownKeywordError) Error() string {
+	return fmt.Sprintf("unknown keyword %s", e.keyword)
 }

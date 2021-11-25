@@ -139,8 +139,12 @@ func (b *ThesisBuilder) Build(slug string) Thesis {
 	return b.Thesis
 }
 
-func (b *ThesisBuilder) WithStatement(keyword Keyword, behavior string) *ThesisBuilder {
-	b.statement, _ = newStatement(keyword, behavior)
+func (b *ThesisBuilder) WithStatement(keyword string, behavior string) *ThesisBuilder {
+	kw, _ := newKeywordFromString(keyword)
+	b.statement = Statement{
+		keyword:  kw,
+		behavior: behavior,
+	}
 
 	return b
 }

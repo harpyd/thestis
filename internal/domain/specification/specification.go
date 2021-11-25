@@ -251,17 +251,6 @@ func (t Thesis) Assertion() Assertion {
 	return t.assertion
 }
 
-func newStatement(keyword Keyword, behavior string) (Statement, error) {
-	if keyword == UnknownKeyword {
-		return Statement{}, ErrUnknownKeyword
-	}
-
-	return Statement{
-		keyword:  keyword,
-		behavior: behavior,
-	}, nil
-}
-
 func (s Statement) Keyword() Keyword {
 	return s.keyword
 }
