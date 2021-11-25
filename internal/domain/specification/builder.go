@@ -1,5 +1,7 @@
 package specification
 
+import "github.com/harpyd/thestis/pkg/deepcopy"
+
 type (
 	Builder struct {
 		Specification
@@ -157,11 +159,34 @@ func (b *ThesisBuilder) WithStatement(keyword string, behavior string) *ThesisBu
 	return b
 }
 
+func (b *ThesisBuilder) WithAssertion(buildFn func(b *AssertionBuilder)) *ThesisBuilder {
+	ab := NewAssertionBuilder()
+	buildFn(ab)
+
+	b.assertion = ab.Build()
+
+	return b
+}
+
 func (b *ThesisBuilder) WithHTTP(buildFn func(b *HTTPBuilder)) *ThesisBuilder {
 	hb := NewHTTPBuilder()
 	buildFn(hb)
 
 	b.http = hb.Build()
+
+	return b
+}
+
+func NewAssertionBuilder() *AssertionBuilder {
+	return &AssertionBuilder{}
+}
+
+func (b *AssertionBuilder) Build() Assertion {
+	return b.Assertion
+}
+
+func (b *AssertionBuilder) WithMethod(method string) *AssertionBuilder {
+	b.method, _ = newAssertionMethodFromString(method)
 
 	return b
 }
@@ -218,10 +243,28 @@ func (b *HTTPRequestBuilder) WithContentType(contentType string) *HTTPRequestBui
 	return b
 }
 
+func (b *HTTPRequestBuilder) WithBody(body map[string]interface{}) *HTTPRequestBuilder {
+	b.body = deepcopy.StringInterfaceMap(body)
+
+	return b
+}
+
 func NewHTTPResponseBuilder() *HTTPResponseBuilder {
 	return &HTTPResponseBuilder{}
 }
 
 func (b *HTTPResponseBuilder) Build() HTTPResponse {
 	return b.HTTPResponse
+}
+
+func (b *HTTPResponseBuilder) WithAllowedCodes(allowedCodes []int) *HTTPResponseBuilder {
+	b.allowedCodes = deepcopy.IntSlice(allowedCodes)
+
+	return b
+}
+
+func (b *HTTPResponseBuilder) WithAllowedContentType(allowedContentType string) *HTTPResponseBuilder {
+	b.allowedContentType, _ = newContentTypeFromString(allowedContentType)
+
+	return b
 }

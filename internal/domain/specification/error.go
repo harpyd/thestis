@@ -113,3 +113,23 @@ func IsUnknownContentTypeError(err error) bool {
 func (e unknownContentTypeError) Error() string {
 	return fmt.Sprintf("unknown content type %s", e.contentType)
 }
+
+type unknownAssertionMethodError struct {
+	method string
+}
+
+func NewUnknownAssertionMethodError(method string) error {
+	return errors.WithStack(unknownAssertionMethodError{
+		method: method,
+	})
+}
+
+func IsUnknownAssertionMethodError(err error) bool {
+	var uerr unknownAssertionMethodError
+
+	return errors.As(err, &uerr)
+}
+
+func (e unknownAssertionMethodError) Error() string {
+	return fmt.Sprintf("unknown assertion method %s", e.method)
+}

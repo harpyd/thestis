@@ -193,3 +193,38 @@ func TestIsUnknownContentTypeError(t *testing.T) {
 		})
 	}
 }
+
+func TestIsUnknownAssertionMethodError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name                          string
+		Err                           error
+		IsUnknownAssertionMethodError bool
+	}{
+		{
+			Name:                          "unknown_assertion_method_error_is_unknown_assertion_method_error",
+			Err:                           specification.NewUnknownAssertionMethodError("jzonpad"),
+			IsUnknownAssertionMethodError: true,
+		},
+		{
+			Name:                          "another_error_isnt_unknown_assertion_method_error",
+			Err:                           specification.NewUnknownKeywordError("jzonpad"),
+			IsUnknownAssertionMethodError: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(
+				t,
+				c.IsUnknownAssertionMethodError,
+				specification.IsUnknownAssertionMethodError(c.Err),
+			)
+		})
+	}
+}
