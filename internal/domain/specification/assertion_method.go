@@ -14,5 +14,5 @@ func newAssertionMethodFromString(method string) (AssertionMethod, error) {
 		return JSONPath, nil
 	}
 
-	return UnknownAssertionMethod, NewUnknownAssertionMethodError(method)
+	return UnknownAssertionMethod, NewNotAllowedAssertionMethodError(method)
 }

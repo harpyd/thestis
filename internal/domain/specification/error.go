@@ -54,63 +54,63 @@ func (e noElemWithSlugError) Error() string {
 	return fmt.Sprintf("no %s with slug `%s`", e.elemName, e.slug)
 }
 
-type unknownElemError struct {
+type notAllowedElemError struct {
 	elemName string
 	unknown  string
 }
 
-func NewUnknownHTTPMethodError(method string) error {
-	return errors.WithStack(unknownElemError{
+func NewNotAllowedHTTPMethodError(method string) error {
+	return errors.WithStack(notAllowedElemError{
 		elemName: "HTTP method",
 		unknown:  method,
 	})
 }
 
-func IsUnknownHTTPMethodError(err error) bool {
-	var uerr unknownElemError
+func IsNotAllowedHTTPMethodError(err error) bool {
+	var uerr notAllowedElemError
 
 	return errors.As(err, &uerr) && uerr.elemName == "HTTP method"
 }
 
-func NewUnknownKeywordError(keyword string) error {
-	return errors.WithStack(unknownElemError{
+func NewNotAllowedKeywordError(keyword string) error {
+	return errors.WithStack(notAllowedElemError{
 		elemName: "keyword",
 		unknown:  keyword,
 	})
 }
 
-func IsUnknownKeywordError(err error) bool {
-	var uerr unknownElemError
+func IsNotAllowedKeywordError(err error) bool {
+	var uerr notAllowedElemError
 
 	return errors.As(err, &uerr) && uerr.elemName == "keyword"
 }
 
-func NewUnknownContentTypeError(contentType string) error {
-	return errors.WithStack(unknownElemError{
+func NewNotAllowedContentTypeError(contentType string) error {
+	return errors.WithStack(notAllowedElemError{
 		elemName: "content type",
 		unknown:  contentType,
 	})
 }
 
-func IsUnknownContentTypeError(err error) bool {
-	var uerr unknownElemError
+func IsNotAllowedContentTypeError(err error) bool {
+	var uerr notAllowedElemError
 
 	return errors.As(err, &uerr) && uerr.elemName == "content type"
 }
 
-func NewUnknownAssertionMethodError(method string) error {
-	return errors.WithStack(unknownElemError{
+func NewNotAllowedAssertionMethodError(method string) error {
+	return errors.WithStack(notAllowedElemError{
 		elemName: "assertion method",
 		unknown:  method,
 	})
 }
 
-func IsUnknownAssertionMethodError(err error) bool {
-	var uerr unknownElemError
+func IsNotAllowedAssertionMethodError(err error) bool {
+	var uerr notAllowedElemError
 
 	return errors.As(err, &uerr) && uerr.elemName == "assertion method"
 }
 
-func (e unknownElemError) Error() string {
-	return fmt.Sprintf("unknown %s `%s`", e.elemName, e.unknown)
+func (e notAllowedElemError) Error() string {
+	return fmt.Sprintf("%s `%s` not allowed", e.elemName, e.unknown)
 }

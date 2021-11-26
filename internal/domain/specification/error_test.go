@@ -101,23 +101,23 @@ func TestIsNoThesisError(t *testing.T) {
 	}
 }
 
-func TestIsUnknownHTTPMethodError(t *testing.T) {
+func TestIsNotAllowedHTTPMethodError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name                     string
-		Err                      error
-		IsUnknownHTTPMethodError bool
+		Name  string
+		Err   error
+		IsErr bool
 	}{
 		{
-			Name:                     "unknown_http_method_error_is_unknown_http_method_error",
-			Err:                      specification.NewUnknownHTTPMethodError("POZT"),
-			IsUnknownHTTPMethodError: true,
+			Name:  "not_allowed_http_method_error_is_not_allowed_http_method_error",
+			Err:   specification.NewNotAllowedHTTPMethodError("POZT"),
+			IsErr: true,
 		},
 		{
-			Name:                     "another_error_isnt_unknown_http_method_error",
-			Err:                      specification.NewNoThesisError("POZT"),
-			IsUnknownHTTPMethodError: false,
+			Name:  "another_error_isnt_not_allowed_http_method_error",
+			Err:   specification.NewNoThesisError("POZT"),
+			IsErr: false,
 		},
 	}
 
@@ -127,28 +127,28 @@ func TestIsUnknownHTTPMethodError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsUnknownHTTPMethodError, specification.IsUnknownHTTPMethodError(c.Err))
+			require.Equal(t, c.IsErr, specification.IsNotAllowedHTTPMethodError(c.Err))
 		})
 	}
 }
 
-func TestIsUnknownKeywordError(t *testing.T) {
+func TestIsNotAllowedKeywordError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name                  string
-		Err                   error
-		IsUnknownKeywordError bool
+		Name  string
+		Err   error
+		IsErr bool
 	}{
 		{
-			Name:                  "unknown_keyword_error_is_unknown_keyword_error",
-			Err:                   specification.NewUnknownKeywordError("zen"),
-			IsUnknownKeywordError: true,
+			Name:  "not_allowed_keyword_error_is_not_allowed_keyword_error",
+			Err:   specification.NewNotAllowedKeywordError("zen"),
+			IsErr: true,
 		},
 		{
-			Name:                  "another_error_isnt_unknown_keyword_error",
-			Err:                   specification.NewUnknownHTTPMethodError("zen"),
-			IsUnknownKeywordError: false,
+			Name:  "another_error_isnt_not_allowed_keyword_error",
+			Err:   specification.NewNotAllowedHTTPMethodError("zen"),
+			IsErr: false,
 		},
 	}
 
@@ -158,28 +158,28 @@ func TestIsUnknownKeywordError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsUnknownKeywordError, specification.IsUnknownKeywordError(c.Err))
+			require.Equal(t, c.IsErr, specification.IsNotAllowedKeywordError(c.Err))
 		})
 	}
 }
 
-func TestIsUnknownContentTypeError(t *testing.T) {
+func TestIsNotAllowedContentTypeError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name                      string
-		Err                       error
-		IsUnknownContentTypeError bool
+		Name  string
+		Err   error
+		IsErr bool
 	}{
 		{
-			Name:                      "unknown_content_type_error_is_unknown_content_type_error",
-			Err:                       specification.NewUnknownContentTypeError("some/content"),
-			IsUnknownContentTypeError: true,
+			Name:  "not_allowed_content_type_error_is_not_allowed_content_type_error",
+			Err:   specification.NewNotAllowedContentTypeError("some/content"),
+			IsErr: true,
 		},
 		{
-			Name:                      "another_error_isnt_unknown_content_type_error",
-			Err:                       specification.NewNoStoryError("some/content"),
-			IsUnknownContentTypeError: false,
+			Name:  "another_error_isnt_not_allowed_content_type_error",
+			Err:   specification.NewNoStoryError("some/content"),
+			IsErr: false,
 		},
 	}
 
@@ -189,28 +189,28 @@ func TestIsUnknownContentTypeError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsUnknownContentTypeError, specification.IsUnknownContentTypeError(c.Err))
+			require.Equal(t, c.IsErr, specification.IsNotAllowedContentTypeError(c.Err))
 		})
 	}
 }
 
-func TestIsUnknownAssertionMethodError(t *testing.T) {
+func TestIsNotAllowedAssertionMethodError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name                          string
-		Err                           error
-		IsUnknownAssertionMethodError bool
+		Name  string
+		Err   error
+		IsErr bool
 	}{
 		{
-			Name:                          "unknown_assertion_method_error_is_unknown_assertion_method_error",
-			Err:                           specification.NewUnknownAssertionMethodError("jzonpad"),
-			IsUnknownAssertionMethodError: true,
+			Name:  "not_allowed_assertion_method_error_is_not_allowed_assertion_method_error",
+			Err:   specification.NewNotAllowedAssertionMethodError("jzonpad"),
+			IsErr: true,
 		},
 		{
-			Name:                          "another_error_isnt_unknown_assertion_method_error",
-			Err:                           specification.NewUnknownKeywordError("jzonpad"),
-			IsUnknownAssertionMethodError: false,
+			Name:  "another_error_isnt_not_allowed_assertion_method_error",
+			Err:   specification.NewNotAllowedKeywordError("jzonpad"),
+			IsErr: false,
 		},
 	}
 
@@ -220,11 +220,7 @@ func TestIsUnknownAssertionMethodError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(
-				t,
-				c.IsUnknownAssertionMethodError,
-				specification.IsUnknownAssertionMethodError(c.Err),
-			)
+			require.Equal(t, c.IsErr, specification.IsNotAllowedAssertionMethodError(c.Err))
 		})
 	}
 }

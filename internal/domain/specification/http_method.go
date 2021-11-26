@@ -39,5 +39,9 @@ func newHTTPMethodFromString(method string) (HTTPMethod, error) {
 		return HEAD, nil
 	}
 
-	return UnknownHTTPMethod, NewUnknownHTTPMethodError(method)
+	return UnknownHTTPMethod, NewNotAllowedHTTPMethodError(method)
+}
+
+func (m HTTPMethod) String() string {
+	return string(m)
 }

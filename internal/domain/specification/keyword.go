@@ -21,5 +21,5 @@ func newKeywordFromString(keyword string) (Keyword, error) {
 		return Then, nil
 	}
 
-	return UnknownKeyword, NewUnknownKeywordError(keyword)
+	return UnknownKeyword, NewNotAllowedKeywordError(keyword)
 }

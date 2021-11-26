@@ -18,5 +18,5 @@ func newContentTypeFromString(contentType string) (ContentType, error) {
 		return ApplicationXML, nil
 	}
 
-	return UnknownContentType, NewUnknownContentTypeError(contentType)
+	return UnknownContentType, NewNotAllowedContentTypeError(contentType)
 }
