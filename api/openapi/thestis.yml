@@ -397,9 +397,9 @@ components:
                     - slug: deliverHorns
                       given: horns delivered to the warehouse
                       http:
-                        method: POST
-                        url: https://api.warehouse/v1/horns
                         request:
+                          method: POST
+                          url: https://api.warehouse/v1/horns
                           contentType: application/json
                           body:
                             producer: Horns Inc.
@@ -412,9 +412,9 @@ components:
                     - slug: deliverHooves
                       given: hooves delivered to the warehouse
                       http:
-                        method: POST
-                        url: https://api.warehouse/v1/hooves
                         request:
+                          method: POST
+                          url: https://api.warehouse/v1/horns
                           contentType: application/json
                           body:
                             producer: Hooves Inc.
@@ -427,9 +427,9 @@ components:
                     - slug: sellHornsAndHooves
                       when: selling horns and hooves
                       http:
-                        method: POST
-                        url: https://api.warehouse/v1/sold
                         request:
+                          method: POST
+                          url: https://api.warehouse/v1/sold
                           contentType: application/json
                           body:
                             products:
@@ -445,8 +445,9 @@ components:
                     - slug: getSoldProducts
                       then: get sold products
                       http:
-                        method: GET
-                        url: https://api.warehouse/v1/{{sellHornsAndHooves.response.headers.Content-Location}}
+                        request:
+                          method: GET
+                          url: https://api.warehouse/v1/{{sellHornsAndHooves.response.headers.Content-Location}}
                         response:
                           allowedCodes: [ 200 ]
                           allowedContentType: application/json
@@ -546,24 +547,25 @@ components:
 
     HttpAction:
       type: object
-      required:
-        - method
-        - url
-        - allowedResponseCodes
       properties:
-        method:
-          $ref: '#/components/schemas/HttpMethod'
-        url:
-          type: string
         request:
           type: object
+          required:
+            - method
+            - url
           properties:
+            method:
+              $ref: '#/components/schemas/HttpMethod'
+            url:
+              type: string
             contentType:
               type: string
             body:
               type: object
         response:
           type: object
+          required:
+            - allowedCodes
           properties:
             allowedCodes:
               type: array

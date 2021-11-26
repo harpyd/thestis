@@ -252,20 +252,6 @@ func (b *HTTPBuilder) Build() (HTTP, error) {
 	return b.HTTP, b.err
 }
 
-func (b *HTTPBuilder) WithMethod(method string) *HTTPBuilder {
-	m, err := newHTTPMethodFromString(method)
-	b.method = m
-	b.err = multierr.Append(b.err, err)
-
-	return b
-}
-
-func (b *HTTPBuilder) WithURL(url string) *HTTPBuilder {
-	b.url = url
-
-	return b
-}
-
 func (b *HTTPBuilder) WithRequest(buildFn func(b *HTTPRequestBuilder)) *HTTPBuilder {
 	rb := NewHTTPRequestBuilder()
 	buildFn(rb)
@@ -294,6 +280,20 @@ func NewHTTPRequestBuilder() *HTTPRequestBuilder {
 
 func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
 	return b.HTTPRequest, b.err
+}
+
+func (b *HTTPRequestBuilder) WithMethod(method string) *HTTPRequestBuilder {
+	m, err := newHTTPMethodFromString(method)
+	b.method = m
+	b.err = multierr.Append(b.err, err)
+
+	return b
+}
+
+func (b *HTTPRequestBuilder) WithURL(url string) *HTTPRequestBuilder {
+	b.url = url
+
+	return b
 }
 
 func (b *HTTPRequestBuilder) WithContentType(contentType string) *HTTPRequestBuilder {

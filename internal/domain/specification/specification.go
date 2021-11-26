@@ -43,13 +43,13 @@ type (
 	}
 
 	HTTP struct {
-		method   HTTPMethod
-		url      string
 		request  HTTPRequest
 		response HTTPResponse
 	}
 
 	HTTPRequest struct {
+		method      HTTPMethod
+		url         string
 		contentType ContentType
 		body        map[string]interface{}
 	}
@@ -258,20 +258,20 @@ func (s Statement) Behavior() string {
 	return s.behavior
 }
 
-func (h HTTP) Method() HTTPMethod {
-	return h.method
-}
-
-func (h HTTP) URL() string {
-	return h.url
-}
-
 func (h HTTP) Request() HTTPRequest {
 	return h.request
 }
 
 func (h HTTP) Response() HTTPResponse {
 	return h.response
+}
+
+func (r HTTPRequest) Method() HTTPMethod {
+	return r.method
+}
+
+func (r HTTPRequest) URL() string {
+	return r.url
 }
 
 func (r HTTPRequest) ContentType() ContentType {

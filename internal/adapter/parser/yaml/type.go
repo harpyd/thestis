@@ -31,13 +31,13 @@ type (
 	}
 
 	httpSchema struct {
-		Method   string             `yaml:"method"`
-		URL      string             `yaml:"url"`
 		Request  httpRequestSchema  `yaml:"request"`
 		Response httpResponseSchema `yaml:"response"`
 	}
 
 	httpRequestSchema struct {
+		Method      string                 `yaml:"method"`
+		URL         string                 `yaml:"url"`
 		ContentType string                 `yaml:"contentType"`
 		Body        map[string]interface{} `yaml:"body"`
 	}
