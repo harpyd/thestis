@@ -51,85 +51,66 @@ func IsNoThesisError(err error) bool {
 }
 
 func (e noElemWithSlugError) Error() string {
-	return fmt.Sprintf("no %s with slug %s", e.elemName, e.slug)
+	return fmt.Sprintf("no %s with slug `%s`", e.elemName, e.slug)
 }
 
-type unknownHTTPMethodError struct {
-	method string
+type unknownElemError struct {
+	elemName string
+	unknown  string
 }
 
 func NewUnknownHTTPMethodError(method string) error {
-	return errors.WithStack(unknownHTTPMethodError{
-		method: method,
+	return errors.WithStack(unknownElemError{
+		elemName: "HTTP method",
+		unknown:  method,
 	})
 }
 
 func IsUnknownHTTPMethodError(err error) bool {
-	var uerr unknownHTTPMethodError
+	var uerr unknownElemError
 
-	return errors.As(err, &uerr)
-}
-
-func (e unknownHTTPMethodError) Error() string {
-	return fmt.Sprintf("unknown HTTP method %s", e.method)
-}
-
-type unknownKeywordError struct {
-	keyword string
+	return errors.As(err, &uerr) && uerr.elemName == "HTTP method"
 }
 
 func NewUnknownKeywordError(keyword string) error {
-	return errors.WithStack(unknownKeywordError{
-		keyword: keyword,
+	return errors.WithStack(unknownElemError{
+		elemName: "keyword",
+		unknown:  keyword,
 	})
 }
 
 func IsUnknownKeywordError(err error) bool {
-	var uerr unknownKeywordError
+	var uerr unknownElemError
 
-	return errors.As(err, &uerr)
-}
-
-func (e unknownKeywordError) Error() string {
-	return fmt.Sprintf("unknown keyword %s", e.keyword)
-}
-
-type unknownContentTypeError struct {
-	contentType string
+	return errors.As(err, &uerr) && uerr.elemName == "keyword"
 }
 
 func NewUnknownContentTypeError(contentType string) error {
-	return errors.WithStack(unknownContentTypeError{
-		contentType: contentType,
+	return errors.WithStack(unknownElemError{
+		elemName: "content type",
+		unknown:  contentType,
 	})
 }
 
 func IsUnknownContentTypeError(err error) bool {
-	var uerr unknownContentTypeError
+	var uerr unknownElemError
 
-	return errors.As(err, &uerr)
-}
-
-func (e unknownContentTypeError) Error() string {
-	return fmt.Sprintf("unknown content type %s", e.contentType)
-}
-
-type unknownAssertionMethodError struct {
-	method string
+	return errors.As(err, &uerr) && uerr.elemName == "content type"
 }
 
 func NewUnknownAssertionMethodError(method string) error {
-	return errors.WithStack(unknownAssertionMethodError{
-		method: method,
+	return errors.WithStack(unknownElemError{
+		elemName: "assertion method",
+		unknown:  method,
 	})
 }
 
 func IsUnknownAssertionMethodError(err error) bool {
-	var uerr unknownAssertionMethodError
+	var uerr unknownElemError
 
-	return errors.As(err, &uerr)
+	return errors.As(err, &uerr) && uerr.elemName == "assertion method"
 }
 
-func (e unknownAssertionMethodError) Error() string {
-	return fmt.Sprintf("unknown assertion method %s", e.method)
+func (e unknownElemError) Error() string {
+	return fmt.Sprintf("unknown %s `%s`", e.elemName, e.unknown)
 }
