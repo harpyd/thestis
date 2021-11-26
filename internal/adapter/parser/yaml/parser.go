@@ -27,5 +27,5 @@ func (s *SpecificationParserService) ParseSpecification(reader io.Reader) (*spec
 		WithAuthor(spec.Author).
 		WithTitle(spec.Title).
 		WithDescription(spec.Description).
-		Build(), nil
+		Build()
 }

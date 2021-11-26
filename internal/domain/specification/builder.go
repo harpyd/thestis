@@ -1,38 +1,57 @@
 package specification
 
-import "github.com/harpyd/thestis/pkg/deepcopy"
+import (
+	"github.com/harpyd/thestis/pkg/deepcopy"
+	"go.uber.org/multierr"
+)
 
 type (
 	Builder struct {
 		Specification
+
+		err error
 	}
 
 	StoryBuilder struct {
 		Story
+
+		err error
 	}
 
 	ScenarioBuilder struct {
 		Scenario
+
+		err error
 	}
 
 	ThesisBuilder struct {
 		Thesis
+
+		err error
 	}
 
 	HTTPBuilder struct {
 		HTTP
+
+		err error
 	}
 
 	AssertionBuilder struct {
 		Assertion
+
+		err error
 	}
 
 	HTTPRequestBuilder struct {
 		HTTPRequest
+
+		err error
 	}
 
 	HTTPResponseBuilder struct {
 		HTTPResponse
+
+		err error
 	}
 )
 
@@ -44,8 +63,8 @@ func NewBuilder() *Builder {
 	}
 }
 
-func (b *Builder) Build() *Specification {
-	return &b.Specification
+func (b *Builder) Build() (*Specification, error) {
+	return &b.Specification, b.err
 }
 
 func (b *Builder) WithAuthor(author string) *Builder {
@@ -70,7 +89,9 @@ func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder
 	sb := NewStoryBuilder()
 	buildFn(sb)
 
-	b.stories[slug] = sb.Build(slug)
+	story, err := sb.Build(slug)
+	b.stories[slug] = story
+	b.err = multierr.Append(b.err, err)
 
 	return b
 }
@@ -83,10 +104,10 @@ func NewStoryBuilder() *StoryBuilder {
 	}
 }
 
-func (b *StoryBuilder) Build(slug string) Story {
+func (b *StoryBuilder) Build(slug string) (Story, error) {
 	b.slug = slug
 
-	return b.Story
+	return b.Story, b.err
 }
 
 func (b *StoryBuilder) WithDescription(description string) *StoryBuilder {
@@ -117,7 +138,9 @@ func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder
 	sb := NewScenarioBuilder()
 	buildFn(sb)
 
-	b.scenarios[slug] = sb.Build(slug)
+	scenario, err := sb.Build(slug)
+	b.scenarios[slug] = scenario
+	b.err = multierr.Append(b.err, err)
 
 	return b
 }
@@ -130,10 +153,10 @@ func NewScenarioBuilder() *ScenarioBuilder {
 	}
 }
 
-func (b *ScenarioBuilder) Build(slug string) Scenario {
+func (b *ScenarioBuilder) Build(slug string) (Scenario, error) {
 	b.slug = slug
 
-	return b.Scenario
+	return b.Scenario, b.err
 }
 
 func (b *ScenarioBuilder) WithDescription(description string) *ScenarioBuilder {
@@ -146,7 +169,9 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 	tb := NewThesisBuilder()
 	buildFn(tb)
 
-	b.theses[slug] = tb.Build(slug)
+	thesis, err := tb.Build(slug)
+	b.theses[slug] = thesis
+	b.err = multierr.Append(b.err, err)
 
 	return b
 }
@@ -155,18 +180,19 @@ func NewThesisBuilder() *ThesisBuilder {
 	return &ThesisBuilder{}
 }
 
-func (b *ThesisBuilder) Build(slug string) Thesis {
+func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 	b.slug = slug
 
-	return b.Thesis
+	return b.Thesis, b.err
 }
 
 func (b *ThesisBuilder) WithStatement(keyword string, behavior string) *ThesisBuilder {
-	kw, _ := newKeywordFromString(keyword)
+	kw, err := newKeywordFromString(keyword)
 	b.statement = Statement{
 		keyword:  kw,
 		behavior: behavior,
 	}
+	b.err = multierr.Append(b.err, err)
 
 	return b
 }
@@ -175,7 +201,9 @@ func (b *ThesisBuilder) WithAssertion(buildFn func(b *AssertionBuilder)) *Thesis
 	ab := NewAssertionBuilder()
 	buildFn(ab)
 
-	b.assertion = ab.Build()
+	assertion, err := ab.Build()
+	b.assertion = assertion
+	b.err = multierr.Append(b.err, err)
 
 	return b
 }
@@ -184,7 +212,9 @@ func (b *ThesisBuilder) WithHTTP(buildFn func(b *HTTPBuilder)) *ThesisBuilder {
 	hb := NewHTTPBuilder()
 	buildFn(hb)
 
-	b.http = hb.Build()
+	http, err := hb.Build()
+	b.http = http
+	b.err = multierr.Append(b.err, err)
 
 	return b
 }
@@ -193,12 +223,14 @@ func NewAssertionBuilder() *AssertionBuilder {
 	return &AssertionBuilder{}
 }
 
-func (b *AssertionBuilder) Build() Assertion {
-	return b.Assertion
+func (b *AssertionBuilder) Build() (Assertion, error) {
+	return b.Assertion, b.err
 }
 
 func (b *AssertionBuilder) WithMethod(method string) *AssertionBuilder {
-	b.method, _ = newAssertionMethodFromString(method)
+	m, err := newAssertionMethodFromString(method)
+	b.method = m
+	b.err = multierr.Append(b.err, err)
 
 	return b
 }
@@ -216,12 +248,14 @@ func NewHTTPBuilder() *HTTPBuilder {
 	return &HTTPBuilder{}
 }
 
-func (b *HTTPBuilder) Build() HTTP {
-	return b.HTTP
+func (b *HTTPBuilder) Build() (HTTP, error) {
+	return b.HTTP, b.err
 }
 
 func (b *HTTPBuilder) WithMethod(method string) *HTTPBuilder {
-	b.method, _ = newHTTPMethodFromString(method)
+	m, err := newHTTPMethodFromString(method)
+	b.method = m
+	b.err = multierr.Append(b.err, err)
 
 	return b
 }
@@ -236,7 +270,9 @@ func (b *HTTPBuilder) WithRequest(buildFn func(b *HTTPRequestBuilder)) *HTTPBuil
 	rb := NewHTTPRequestBuilder()
 	buildFn(rb)
 
-	b.request = rb.Build()
+	request, err := rb.Build()
+	b.request = request
+	b.err = multierr.Append(b.err, err)
 
 	return b
 }
@@ -245,7 +281,9 @@ func (b *HTTPBuilder) WithResponse(buildFn func(b *HTTPResponseBuilder)) *HTTPBu
 	rb := NewHTTPResponseBuilder()
 	buildFn(rb)
 
-	b.response = rb.Build()
+	response, err := rb.Build()
+	b.response = response
+	b.err = multierr.Append(b.err, err)
 
 	return b
 }
@@ -254,12 +292,14 @@ func NewHTTPRequestBuilder() *HTTPRequestBuilder {
 	return &HTTPRequestBuilder{}
 }
 
-func (b *HTTPRequestBuilder) Build() HTTPRequest {
-	return b.HTTPRequest
+func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
+	return b.HTTPRequest, b.err
 }
 
 func (b *HTTPRequestBuilder) WithContentType(contentType string) *HTTPRequestBuilder {
-	b.contentType, _ = newContentTypeFromString(contentType)
+	ct, err := newContentTypeFromString(contentType)
+	b.contentType = ct
+	b.err = multierr.Append(b.err, err)
 
 	return b
 }
@@ -274,8 +314,8 @@ func NewHTTPResponseBuilder() *HTTPResponseBuilder {
 	return &HTTPResponseBuilder{}
 }
 
-func (b *HTTPResponseBuilder) Build() HTTPResponse {
-	return b.HTTPResponse
+func (b *HTTPResponseBuilder) Build() (HTTPResponse, error) {
+	return b.HTTPResponse, b.err
 }
 
 func (b *HTTPResponseBuilder) WithAllowedCodes(allowedCodes []int) *HTTPResponseBuilder {
@@ -285,7 +325,9 @@ func (b *HTTPResponseBuilder) WithAllowedCodes(allowedCodes []int) *HTTPResponse
 }
 
 func (b *HTTPResponseBuilder) WithAllowedContentType(allowedContentType string) *HTTPResponseBuilder {
-	b.allowedContentType, _ = newContentTypeFromString(allowedContentType)
+	act, err := newContentTypeFromString(allowedContentType)
+	b.allowedContentType = act
+	b.err = multierr.Append(b.err, err)
 
 	return b
 }
