@@ -37,7 +37,11 @@ type (
 )
 
 func NewBuilder() *Builder {
-	return &Builder{}
+	return &Builder{
+		Specification: Specification{
+			stories: make(map[string]Story),
+		},
+	}
 }
 
 func (b *Builder) Build() *Specification {
@@ -72,7 +76,11 @@ func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder
 }
 
 func NewStoryBuilder() *StoryBuilder {
-	return &StoryBuilder{}
+	return &StoryBuilder{
+		Story: Story{
+			scenarios: make(map[string]Scenario),
+		},
+	}
 }
 
 func (b *StoryBuilder) Build(slug string) Story {
@@ -115,7 +123,11 @@ func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder
 }
 
 func NewScenarioBuilder() *ScenarioBuilder {
-	return &ScenarioBuilder{}
+	return &ScenarioBuilder{
+		Scenario: Scenario{
+			theses: make(map[string]Thesis),
+		},
+	}
 }
 
 func (b *ScenarioBuilder) Build(slug string) Scenario {
@@ -187,6 +199,15 @@ func (b *AssertionBuilder) Build() Assertion {
 
 func (b *AssertionBuilder) WithMethod(method string) *AssertionBuilder {
 	b.method, _ = newAssertionMethodFromString(method)
+
+	return b
+}
+
+func (b *AssertionBuilder) WithAssert(expected string, actual interface{}) *AssertionBuilder {
+	b.asserts = append(b.asserts, Assert{
+		expected: expected,
+		actual:   deepcopy.Interface(actual),
+	})
 
 	return b
 }
