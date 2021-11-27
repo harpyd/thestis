@@ -8,7 +8,7 @@ func StringInterfaceMap(m map[string]interface{}) map[string]interface{} {
 		if ok {
 			copied[k] = StringInterfaceMap(cv)
 		} else {
-			cv[k] = v
+			copied[k] = v
 		}
 	}
 
