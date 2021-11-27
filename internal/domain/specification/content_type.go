@@ -20,3 +20,7 @@ func newContentTypeFromString(contentType string) (ContentType, error) {
 
 	return UnknownContentType, NewNotAllowedContentTypeError(contentType)
 }
+
+func (ct ContentType) String() string {
+	return string(ct)
+}
