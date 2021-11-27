@@ -16,3 +16,7 @@ func newAssertionMethodFromString(method string) (AssertionMethod, error) {
 
 	return UnknownAssertionMethod, NewNotAllowedAssertionMethodError(method)
 }
+
+func (am AssertionMethod) String() string {
+	return string(am)
+}
