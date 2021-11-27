@@ -56,6 +56,47 @@ func TestAssertionBuilder_WithMethod(t *testing.T) {
 
 func TestAssertionBuilder_WithAssert(t *testing.T) {
 	t.Parallel()
+
+	builder := specification.NewAssertionBuilder()
+	builder.WithAssert("getSomeBody.response.body.type", "product")
+	builder.WithAssert("getSomeBody.response.body.items..price", []int{2100, 1100})
+	builder.WithAssert("getSomeBody.response.body.items..amount", []int{10, 33})
+
+	assertion, err := builder.Build()
+
+	require.NoError(t, err)
+
+	asserts := assertion.Asserts()
+
+	require.Equal(t, []string{
+		"getSomeBody.response.body.type",
+		"getSomeBody.response.body.items..price",
+		"getSomeBody.response.body.items..amount",
+	}, mapAssertsToActual(asserts))
+
+	require.Equal(t, []interface{}{
+		"product",
+		[]int{2100, 1100},
+		[]int{10, 33},
+	}, mapAssertsToExpected(asserts))
+}
+
+func mapAssertsToActual(asserts []specification.Assert) []string {
+	expected := make([]string, 0, len(asserts))
+	for _, a := range asserts {
+		expected = append(expected, a.Actual())
+	}
+
+	return expected
+}
+
+func mapAssertsToExpected(asserts []specification.Assert) []interface{} {
+	actual := make([]interface{}, 0, len(asserts))
+	for _, a := range asserts {
+		actual = append(actual, a.Expected())
+	}
+
+	return actual
 }
 
 func TestHTTPBuilder_WithRequest(t *testing.T) {

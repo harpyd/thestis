@@ -235,10 +235,10 @@ func (b *AssertionBuilder) WithMethod(method string) *AssertionBuilder {
 	return b
 }
 
-func (b *AssertionBuilder) WithAssert(expected string, actual interface{}) *AssertionBuilder {
+func (b *AssertionBuilder) WithAssert(actual string, expected interface{}) *AssertionBuilder {
 	b.asserts = append(b.asserts, Assert{
+		actual:   actual,
 		expected: expected,
-		actual:   deepcopy.Interface(actual),
 	})
 
 	return b

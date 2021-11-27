@@ -65,8 +65,8 @@ type (
 	}
 
 	Assert struct {
-		expected string
-		actual   interface{}
+		actual   string
+		expected interface{}
 	}
 )
 
@@ -295,18 +295,18 @@ func (a Assertion) Method() AssertionMethod {
 }
 
 func (a Assertion) Asserts() []Assert {
-	asserts := make([]Assert, 0, len(a.asserts))
+	asserts := make([]Assert, len(a.asserts))
 	copy(asserts, a.asserts)
 
 	return asserts
 }
 
-func (a Assert) Expected() string {
-	return a.expected
+func (a Assert) Actual() string {
+	return a.actual
 }
 
-func (a Assert) Actual() interface{} {
-	return deepcopy.Interface(a.actual)
+func (a Assert) Expected() interface{} {
+	return a.expected
 }
 
 func shouldGetAll(slugs []string) bool {
