@@ -1,8 +1,9 @@
 package specification
 
 import (
-	"github.com/harpyd/thestis/pkg/deepcopy"
 	"go.uber.org/multierr"
+
+	"github.com/harpyd/thestis/pkg/deepcopy"
 )
 
 type (
