@@ -23,3 +23,7 @@ func newKeywordFromString(keyword string) (Keyword, error) {
 
 	return UnknownKeyword, NewNotAllowedKeywordError(keyword)
 }
+
+func (k Keyword) String() string {
+	return string(k)
+}
