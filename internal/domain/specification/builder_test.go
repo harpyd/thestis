@@ -9,6 +9,78 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+func TestScenarioBuilder_WithDescription(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewScenarioBuilder()
+	builder.WithDescription("description")
+
+	scenario, err := builder.Build("someScenario")
+
+	require.NoError(t, err)
+	require.Equal(t, "description", scenario.Description())
+}
+
+func TestScenarioBuilder_WithThesis(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewScenarioBuilder()
+	builder.WithThesis("getBeer", func(b *specification.ThesisBuilder) {
+		b.WithStatement("when", "get beer")
+		b.WithHTTP(func(b *specification.HTTPBuilder) {
+			b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod("GET")
+				b.WithURL("https://api/v1/products")
+			})
+			b.WithResponse(func(b *specification.HTTPResponseBuilder) {
+				b.WithAllowedCodes([]int{200})
+				b.WithAllowedContentType("application/json")
+			})
+		})
+	})
+	builder.WithThesis("checkBeer", func(b *specification.ThesisBuilder) {
+		b.WithStatement("then", "check beer")
+		b.WithAssertion(func(b *specification.AssertionBuilder) {
+			b.WithMethod("JSONPATH")
+			b.WithAssert("getSomeBody.response.body.product", "beer")
+		})
+	})
+
+	scenario, err := builder.Build("someScenario")
+
+	require.NoError(t, err)
+
+	expectedGetBeerThesis, err := specification.NewThesisBuilder().
+		WithStatement("when", "get beer").
+		WithHTTP(func(b *specification.HTTPBuilder) {
+			b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod("GET")
+				b.WithURL("https://api/v1/products")
+			})
+			b.WithResponse(func(b *specification.HTTPResponseBuilder) {
+				b.WithAllowedCodes([]int{200})
+				b.WithAllowedContentType("application/json")
+			})
+		}).
+		Build("getBeer")
+	require.NoError(t, err)
+	actualGetBeerThesis, ok := scenario.Thesis("getBeer")
+	require.True(t, ok)
+	require.Equal(t, expectedGetBeerThesis, actualGetBeerThesis)
+
+	expectedCheckBeerThesis, err := specification.NewThesisBuilder().
+		WithStatement("then", "check beer").
+		WithAssertion(func(b *specification.AssertionBuilder) {
+			b.WithMethod("jsonpath")
+			b.WithAssert("getSomeBody.response.body.product", "beer")
+		}).
+		Build("checkBeer")
+	require.NoError(t, err)
+	actualCheckBeerThesis, ok := scenario.Thesis("checkBeer")
+	require.True(t, ok)
+	require.Equal(t, expectedCheckBeerThesis, actualCheckBeerThesis)
+}
+
 func TestThesisBuilder_WithStatement(t *testing.T) {
 	t.Parallel()
 
