@@ -64,6 +64,7 @@ func TestScenarioBuilder_WithThesis(t *testing.T) {
 		}).
 		Build("getBeer")
 	require.NoError(t, err)
+
 	actualGetBeerThesis, ok := scenario.Thesis("getBeer")
 	require.True(t, ok)
 	require.Equal(t, expectedGetBeerThesis, actualGetBeerThesis)
@@ -76,6 +77,7 @@ func TestScenarioBuilder_WithThesis(t *testing.T) {
 		}).
 		Build("checkBeer")
 	require.NoError(t, err)
+
 	actualCheckBeerThesis, ok := scenario.Thesis("checkBeer")
 	require.True(t, ok)
 	require.Equal(t, expectedCheckBeerThesis, actualCheckBeerThesis)
