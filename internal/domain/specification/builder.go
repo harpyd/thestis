@@ -1,56 +1,72 @@
 package specification
 
 import (
-	"go.uber.org/multierr"
-
 	"github.com/harpyd/thestis/pkg/deepcopy"
+	"go.uber.org/multierr"
 )
 
 type (
 	Builder struct {
-		Specification
+		id          string
+		author      string
+		title       string
+		description string
+		stories     map[string]Story
 
 		err error
 	}
 
 	StoryBuilder struct {
-		Story
+		description string
+		asA         string
+		inOrderTo   string
+		wantTo      string
+		scenarios   map[string]Scenario
 
 		err error
 	}
 
 	ScenarioBuilder struct {
-		Scenario
+		description string
+		theses      map[string]Thesis
 
 		err error
 	}
 
 	ThesisBuilder struct {
-		Thesis
-
-		err error
-	}
-
-	HTTPBuilder struct {
-		HTTP
+		statement Statement
+		http      HTTP
+		assertion Assertion
 
 		err error
 	}
 
 	AssertionBuilder struct {
-		Assertion
+		method  AssertionMethod
+		asserts []Assert
+
+		err error
+	}
+
+	HTTPBuilder struct {
+		request  HTTPRequest
+		response HTTPResponse
 
 		err error
 	}
 
 	HTTPRequestBuilder struct {
-		HTTPRequest
+		method      HTTPMethod
+		url         string
+		contentType ContentType
+		body        map[string]interface{}
 
 		err error
 	}
 
 	HTTPResponseBuilder struct {
-		HTTPResponse
+		allowedCodes       []int
+		allowedContentType ContentType
 
 		err error
 	}
@@ -58,14 +74,24 @@ type (
 
 func NewBuilder() *Builder {
 	return &Builder{
-		Specification: Specification{
-			stories: make(map[string]Story),
-		},
+		stories: make(map[string]Story),
 	}
 }
 
 func (b *Builder) Build() (*Specification, error) {
-	return &b.Specification, b.err
+	spec := &Specification{
+		id:          b.id,
+		author:      b.author,
+		title:       b.title,
+		description: b.description,
+		stories:     make(map[string]Story, len(b.stories)),
+	}
+
+	for slug, story := range b.stories {
+		spec.stories[slug] = story
+	}
+
+	return spec, b.err
 }
 
 func (b *Builder) WithAuthor(author string) *Builder {
@@ -99,16 +125,25 @@ func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder
 
 func NewStoryBuilder() *StoryBuilder {
 	return &StoryBuilder{
-		Story: Story{
-			scenarios: make(map[string]Scenario),
-		},
+		scenarios: make(map[string]Scenario),
 	}
 }
 
 func (b *StoryBuilder) Build(slug string) (Story, error) {
-	b.slug = slug
+	story := Story{
+		slug:        slug,
+		description: b.description,
+		asA:         b.asA,
+		inOrderTo:   b.inOrderTo,
+		wantTo:      b.wantTo,
+		scenarios:   make(map[string]Scenario),
+	}
 
-	return b.Story, b.err
+	for slug, scenario := range b.scenarios {
+		story.scenarios[slug] = scenario
+	}
+
+	return story, b.err
 }
 
 func (b *StoryBuilder) WithDescription(description string) *StoryBuilder {
@@ -148,16 +183,22 @@ func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder
 
 func NewScenarioBuilder() *ScenarioBuilder {
 	return &ScenarioBuilder{
-		Scenario: Scenario{
-			theses: make(map[string]Thesis),
-		},
+		theses: make(map[string]Thesis),
 	}
 }
 
 func (b *ScenarioBuilder) Build(slug string) (Scenario, error) {
-	b.slug = slug
+	scenario := Scenario{
+		slug:        slug,
+		description: b.description,
+		theses:      make(map[string]Thesis),
+	}
 
-	return b.Scenario, b.err
+	for slug, thesis := range b.theses {
+		scenario.theses[slug] = thesis
+	}
+
+	return scenario, b.err
 }
 
 func (b *ScenarioBuilder) WithDescription(description string) *ScenarioBuilder {
@@ -182,9 +223,12 @@ func NewThesisBuilder() *ThesisBuilder {
 }
 
 func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
-	b.slug = slug
-
-	return b.Thesis, b.err
+	return Thesis{
+		slug:      slug,
+		statement: b.statement,
+		http:      b.http,
+		assertion: b.assertion,
+	}, b.err
 }
 
 func (b *ThesisBuilder) WithStatement(keyword string, behavior string) *ThesisBuilder {
@@ -225,7 +269,14 @@ func NewAssertionBuilder() *AssertionBuilder {
 }
 
 func (b *AssertionBuilder) Build() (Assertion, error) {
-	return b.Assertion, b.err
+	assertion := Assertion{
+		method:  b.method,
+		asserts: make([]Assert, len(b.asserts)),
+	}
+
+	copy(assertion.asserts, b.asserts)
+
+	return assertion, b.err
 }
 
 func (b *AssertionBuilder) WithMethod(method string) *AssertionBuilder {
@@ -250,7 +301,10 @@ func NewHTTPBuilder() *HTTPBuilder {
 }
 
 func (b *HTTPBuilder) Build() (HTTP, error) {
-	return b.HTTP, b.err
+	return HTTP{
+		request:  b.request,
+		response: b.response,
+	}, b.err
 }
 
 func (b *HTTPBuilder) WithRequest(buildFn func(b *HTTPRequestBuilder)) *HTTPBuilder {
@@ -280,7 +334,12 @@ func NewHTTPRequestBuilder() *HTTPRequestBuilder {
 }
 
 func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
-	return b.HTTPRequest, b.err
+	return HTTPRequest{
+		method:      b.method,
+		url:         b.url,
+		contentType: b.contentType,
+		body:        deepcopy.StringInterfaceMap(b.body),
+	}, b.err
 }
 
 func (b *HTTPRequestBuilder) WithMethod(method string) *HTTPRequestBuilder {
@@ -306,7 +365,7 @@ func (b *HTTPRequestBuilder) WithContentType(contentType string) *HTTPRequestBui
 }
 
 func (b *HTTPRequestBuilder) WithBody(body map[string]interface{}) *HTTPRequestBuilder {
-	b.body = deepcopy.StringInterfaceMap(body)
+	b.body = body
 
 	return b
 }
@@ -316,11 +375,14 @@ func NewHTTPResponseBuilder() *HTTPResponseBuilder {
 }
 
 func (b *HTTPResponseBuilder) Build() (HTTPResponse, error) {
-	return b.HTTPResponse, b.err
+	return HTTPResponse{
+		allowedCodes:       deepcopy.IntSlice(b.allowedCodes),
+		allowedContentType: b.allowedContentType,
+	}, b.err
 }
 
 func (b *HTTPResponseBuilder) WithAllowedCodes(allowedCodes []int) *HTTPResponseBuilder {
-	b.allowedCodes = deepcopy.IntSlice(allowedCodes)
+	b.allowedCodes = allowedCodes
 
 	return b
 }
