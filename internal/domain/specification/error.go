@@ -260,7 +260,7 @@ func IsNoThesisError(err error) bool {
 }
 
 func (e noElemWithSlugError) Error() string {
-	return fmt.Sprintf("no %s with slug `%s`", e.elemName, e.slug)
+	return fmt.Sprintf("no %s `%s`", e.elemName, e.slug)
 }
 
 type notAllowedElemError struct {
