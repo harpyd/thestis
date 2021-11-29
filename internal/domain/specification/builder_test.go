@@ -9,6 +9,75 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+func TestBuilder_WithAuthor(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewBuilder()
+	builder.WithAuthor("author")
+
+	spec, err := builder.Build()
+
+	require.NoError(t, err)
+	require.Equal(t, "author", spec.Author())
+}
+
+func TestBuilder_WithTitle(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewBuilder()
+	builder.WithTitle("specification")
+
+	spec, err := builder.Build()
+
+	require.NoError(t, err)
+	require.Equal(t, "specification", spec.Title())
+}
+
+func TestBuilder_WithDescription(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewBuilder()
+	builder.WithDescription("description")
+
+	spec, err := builder.Build()
+
+	require.NoError(t, err)
+	require.Equal(t, "description", spec.Description())
+}
+
+func TestBuilder_WithStory(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewBuilder()
+	builder.WithStory("firstStory", func(b *specification.StoryBuilder) {
+		b.WithDescription("this is a first story")
+	})
+	builder.WithStory("secondStory", func(b *specification.StoryBuilder) {
+		b.WithDescription("this is a second story")
+	})
+
+	spec, err := builder.Build()
+	require.NoError(t, err)
+
+	expectedFirstStory, err := specification.NewStoryBuilder().
+		WithDescription("this is a first story").
+		Build("firstStory")
+	require.NoError(t, err)
+
+	actualFirstStory, ok := spec.Story("firstStory")
+	require.True(t, ok)
+	require.Equal(t, expectedFirstStory, actualFirstStory)
+
+	expectedSecondStory, err := specification.NewStoryBuilder().
+		WithDescription("this is a second story").
+		Build("secondStory")
+	require.NoError(t, err)
+
+	actualSecondStory, ok := spec.Story("secondStory")
+	require.True(t, ok)
+	require.Equal(t, expectedSecondStory, actualSecondStory)
+}
+
 func TestStoryBuilder_WithDescription(t *testing.T) {
 	t.Parallel()
 
@@ -71,6 +140,7 @@ func TestStoryBuilder_WithScenario(t *testing.T) {
 	story, err := builder.Build("someStory")
 
 	require.NoError(t, err)
+
 	expectedFirstScenario, err := specification.NewScenarioBuilder().
 		WithDescription("this is a first scenario").
 		Build("firstScenario")
