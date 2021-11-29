@@ -9,6 +9,99 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+func TestIsStorySlugAlreadyExistsError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "story_slug_already_exists_error_is_story_slug_already_exists_error",
+			Err:       specification.NewStorySlugAlreadyExistsError("story"),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error_isnt_story_slug_already_exists_error",
+			Err:       errors.New("story"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, specification.IsStorySlugAlreadyExistsError(c.Err))
+		})
+	}
+}
+
+func TestIsScenarioSlugAlreadyExistsError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "scenario_slug_already_exists_error_is_scenario_slug_already_exists_error",
+			Err:       specification.NewScenarioSlugAlreadyExistsError("scenario"),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error_isnt_scenario_slug_already_exists_error",
+			Err:       specification.NewThesisSlugAlreadyExistsError("thesis"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, specification.IsScenarioSlugAlreadyExistsError(c.Err))
+		})
+	}
+}
+
+func TestIsThesisSlugAlreadyExistsError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "thesis_slug_already_exists_error_is_thesis_slug_already_exists_error",
+			Err:       specification.NewThesisSlugAlreadyExistsError("thesis"),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error_isnt_thesis_slug_already_exists_error",
+			Err:       errors.New("thesis"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, specification.IsThesisSlugAlreadyExistsError(c.Err))
+		})
+	}
+}
+
 func TestIsStoryEmptySlugError(t *testing.T) {
 	t.Parallel()
 

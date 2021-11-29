@@ -78,6 +78,22 @@ func TestBuilder_WithStory(t *testing.T) {
 	require.Equal(t, expectedSecondStory, actualSecondStory)
 }
 
+func TestBuilder_WithStory_when_already_exists(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewBuilder()
+	builder.WithStory("story", func(b *specification.StoryBuilder) {
+		b.WithDescription("this is a story")
+	})
+	builder.WithStory("story", func(b *specification.StoryBuilder) {
+		b.WithDescription("this is a same story")
+	})
+
+	_, err := builder.Build()
+
+	require.True(t, specification.IsStorySlugAlreadyExistsError(err))
+}
+
 func TestStoryBuilder_Build_slug(t *testing.T) {
 	t.Parallel()
 
@@ -202,6 +218,22 @@ func TestStoryBuilder_WithScenario(t *testing.T) {
 	require.Equal(t, expectedSecondScenario, actualSecondScenario)
 }
 
+func TestStoryBuilder_WithScenario_when_already_exists(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewStoryBuilder()
+	builder.WithScenario("scenario", func(b *specification.ScenarioBuilder) {
+		b.WithDescription("this is a scenario")
+	})
+	builder.WithScenario("scenario", func(b *specification.ScenarioBuilder) {
+		b.WithDescription("this is a same scenario")
+	})
+
+	_, err := builder.Build("story")
+
+	require.True(t, specification.IsScenarioSlugAlreadyExistsError(err))
+}
+
 func TestScenarioBuilder_Build_slug(t *testing.T) {
 	t.Parallel()
 
@@ -316,6 +348,18 @@ func TestScenarioBuilder_WithThesis(t *testing.T) {
 	actualCheckBeerThesis, ok := scenario.Thesis("checkBeer")
 	require.True(t, ok)
 	require.Equal(t, expectedCheckBeerThesis, actualCheckBeerThesis)
+}
+
+func TestScenarioBuilder_WithThesis2(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewScenarioBuilder()
+	builder.WithThesis("thesis", func(b *specification.ThesisBuilder) {})
+	builder.WithThesis("thesis", func(b *specification.ThesisBuilder) {})
+
+	_, err := builder.Build("scenario")
+
+	require.True(t, specification.IsThesisSlugAlreadyExistsError(err))
 }
 
 func TestThesisBuilder_Build_slug(t *testing.T) {

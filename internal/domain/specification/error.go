@@ -19,6 +19,54 @@ const (
 	assertionMethod = "assertionMethod"
 )
 
+type elemSlugAlreadyExistsError struct {
+	elemName string
+	slug     string
+}
+
+func NewStorySlugAlreadyExistsError(slug string) error {
+	return errors.WithStack(elemSlugAlreadyExistsError{
+		elemName: story,
+		slug:     slug,
+	})
+}
+
+func IsStorySlugAlreadyExistsError(err error) bool {
+	var aerr elemSlugAlreadyExistsError
+
+	return errors.As(err, &aerr) && aerr.elemName == story
+}
+
+func NewScenarioSlugAlreadyExistsError(slug string) error {
+	return errors.WithStack(elemSlugAlreadyExistsError{
+		elemName: scenario,
+		slug:     slug,
+	})
+}
+
+func IsScenarioSlugAlreadyExistsError(err error) bool {
+	var aerr elemSlugAlreadyExistsError
+
+	return errors.As(err, &aerr) && aerr.elemName == scenario
+}
+
+func NewThesisSlugAlreadyExistsError(slug string) error {
+	return errors.WithStack(elemSlugAlreadyExistsError{
+		elemName: thesis,
+		slug:     slug,
+	})
+}
+
+func IsThesisSlugAlreadyExistsError(err error) bool {
+	var aerr elemSlugAlreadyExistsError
+
+	return errors.As(err, &aerr) && aerr.elemName == thesis
+}
+
+func (e elemSlugAlreadyExistsError) Error() string {
+	return fmt.Sprintf("`%s` %s already exists", e.slug, e.elemName)
+}
+
 type emptyElemSlugError struct {
 	elemName string
 }

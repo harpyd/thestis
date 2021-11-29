@@ -117,6 +117,12 @@ func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder
 	sb := NewStoryBuilder()
 	buildFn(sb)
 
+	if _, ok := b.stories[slug]; ok {
+		b.err = multierr.Append(b.err, NewStorySlugAlreadyExistsError(slug))
+
+		return b
+	}
+
 	story, err := sb.Build(slug)
 	b.stories[slug] = story
 	b.err = multierr.Append(b.err, err)
@@ -179,6 +185,12 @@ func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder
 	sb := NewScenarioBuilder()
 	buildFn(sb)
 
+	if _, ok := b.scenarios[slug]; ok {
+		b.err = multierr.Append(b.err, NewScenarioSlugAlreadyExistsError(slug))
+
+		return b
+	}
+
 	scenario, err := sb.Build(slug)
 	b.scenarios[slug] = scenario
 	b.err = multierr.Append(b.err, err)
@@ -219,6 +231,12 @@ func (b *ScenarioBuilder) WithDescription(description string) *ScenarioBuilder {
 func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)) *ScenarioBuilder {
 	tb := NewThesisBuilder()
 	buildFn(tb)
+
+	if _, ok := b.theses[slug]; ok {
+		b.err = multierr.Append(b.err, NewThesisSlugAlreadyExistsError(slug))
+
+		return b
+	}
 
 	thesis, err := tb.Build(slug)
 	b.theses[slug] = thesis
