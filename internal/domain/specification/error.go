@@ -6,6 +6,167 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	story    = "story"
+	scenario = "scenario"
+	thesis   = "thesis"
+)
+
+const (
+	httpMethod      = "HTTP method"
+	keyword         = "keyword"
+	contentType     = "contentType"
+	assertionMethod = "assertionMethod"
+)
+
+type emptyElemSlugError struct {
+	elemName string
+}
+
+func NewStoryEmptySlugError() error {
+	return errors.WithStack(emptyElemSlugError{
+		elemName: story,
+	})
+}
+
+func IsStoryEmptySlugError(err error) bool {
+	var eerr emptyElemSlugError
+
+	return errors.As(err, &eerr) && eerr.elemName == story
+}
+
+func NewScenarioEmptySlugError() error {
+	return errors.WithStack(emptyElemSlugError{
+		elemName: "scenario",
+	})
+}
+
+func IsScenarioEmptySlugError(err error) bool {
+	var eerr emptyElemSlugError
+
+	return errors.As(err, &eerr) && eerr.elemName == scenario
+}
+
+func NewThesisEmptySlugError() error {
+	return errors.WithStack(emptyElemSlugError{
+		elemName: "thesis",
+	})
+}
+
+func IsThesisEmptySlugError(err error) bool {
+	var eerr emptyElemSlugError
+
+	return errors.As(err, &eerr) && eerr.elemName == thesis
+}
+
+func (e emptyElemSlugError) Error() string {
+	return fmt.Sprintf("empty %s slug", e.elemName)
+}
+
+type buildSpecificationError struct {
+	err error
+}
+
+func NewBuildSpecificationError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(buildSpecificationError{
+		err: err,
+	})
+}
+
+func IsBuildSpecificationError(err error) bool {
+	var berr buildSpecificationError
+
+	return errors.As(err, &berr)
+}
+
+func (e buildSpecificationError) Cause() error {
+	return e.err
+}
+
+func (e buildSpecificationError) Unwrap() error {
+	return e.err
+}
+
+func (e buildSpecificationError) Error() string {
+	return fmt.Sprintf("specification: %s", e.err)
+}
+
+type buildSlugElemError struct {
+	elemName string
+	slug     string
+	err      error
+}
+
+func NewBuildStoryError(err error, slug string) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(buildSlugElemError{
+		elemName: story,
+		slug:     slug,
+		err:      err,
+	})
+}
+
+func IsBuildStoryError(err error) bool {
+	var berr buildSlugElemError
+
+	return errors.As(err, &berr) && berr.elemName == story
+}
+
+func NewBuildScenarioError(err error, slug string) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(buildSlugElemError{
+		elemName: scenario,
+		slug:     slug,
+		err:      err,
+	})
+}
+
+func IsBuildScenarioError(err error) bool {
+	var berr buildSlugElemError
+
+	return errors.As(err, &berr) && berr.elemName == scenario
+}
+
+func NewBuildThesisError(err error, slug string) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(buildSlugElemError{
+		elemName: thesis,
+		slug:     slug,
+		err:      err,
+	})
+}
+
+func IsBuildThesisError(err error) bool {
+	var berr buildSlugElemError
+
+	return errors.As(err, &berr) && berr.elemName == thesis
+}
+
+func (e buildSlugElemError) Cause() error {
+	return e.err
+}
+
+func (e buildSlugElemError) Unwrap() error {
+	return e.err
+}
+
+func (e buildSlugElemError) Error() string {
+	return fmt.Sprintf("%s `%s`: %s", e.elemName, e.slug, e.err)
+}
+
 type noElemWithSlugError struct {
 	elemName string
 	slug     string
@@ -13,7 +174,7 @@ type noElemWithSlugError struct {
 
 func NewNoStoryError(slug string) error {
 	return errors.WithStack(noElemWithSlugError{
-		elemName: "story",
+		elemName: story,
 		slug:     slug,
 	})
 }
@@ -21,12 +182,12 @@ func NewNoStoryError(slug string) error {
 func IsNoStoryError(err error) bool {
 	var nerr noElemWithSlugError
 
-	return errors.As(err, &nerr) && nerr.elemName == "story"
+	return errors.As(err, &nerr) && nerr.elemName == story
 }
 
 func NewNoScenarioError(slug string) error {
 	return errors.WithStack(noElemWithSlugError{
-		elemName: "scenario",
+		elemName: scenario,
 		slug:     slug,
 	})
 }
@@ -34,12 +195,12 @@ func NewNoScenarioError(slug string) error {
 func IsNoScenarioError(err error) bool {
 	var nerr noElemWithSlugError
 
-	return errors.As(err, &nerr) && nerr.elemName == "scenario"
+	return errors.As(err, &nerr) && nerr.elemName == scenario
 }
 
 func NewNoThesisError(slug string) error {
 	return errors.WithStack(noElemWithSlugError{
-		elemName: "thesis",
+		elemName: thesis,
 		slug:     slug,
 	})
 }
@@ -47,7 +208,7 @@ func NewNoThesisError(slug string) error {
 func IsNoThesisError(err error) bool {
 	var nerr noElemWithSlugError
 
-	return errors.As(err, &nerr) && nerr.elemName == "thesis"
+	return errors.As(err, &nerr) && nerr.elemName == thesis
 }
 
 func (e noElemWithSlugError) Error() string {
@@ -61,7 +222,7 @@ type notAllowedElemError struct {
 
 func NewNotAllowedHTTPMethodError(method string) error {
 	return errors.WithStack(notAllowedElemError{
-		elemName: "HTTP method",
+		elemName: httpMethod,
 		unknown:  method,
 	})
 }
@@ -69,38 +230,38 @@ func NewNotAllowedHTTPMethodError(method string) error {
 func IsNotAllowedHTTPMethodError(err error) bool {
 	var uerr notAllowedElemError
 
-	return errors.As(err, &uerr) && uerr.elemName == "HTTP method"
+	return errors.As(err, &uerr) && uerr.elemName == httpMethod
 }
 
-func NewNotAllowedKeywordError(keyword string) error {
+func NewNotAllowedKeywordError(kw string) error {
 	return errors.WithStack(notAllowedElemError{
-		elemName: "keyword",
-		unknown:  keyword,
+		elemName: keyword,
+		unknown:  kw,
 	})
 }
 
 func IsNotAllowedKeywordError(err error) bool {
 	var uerr notAllowedElemError
 
-	return errors.As(err, &uerr) && uerr.elemName == "keyword"
+	return errors.As(err, &uerr) && uerr.elemName == keyword
 }
 
-func NewNotAllowedContentTypeError(contentType string) error {
+func NewNotAllowedContentTypeError(ct string) error {
 	return errors.WithStack(notAllowedElemError{
-		elemName: "content type",
-		unknown:  contentType,
+		elemName: contentType,
+		unknown:  ct,
 	})
 }
 
 func IsNotAllowedContentTypeError(err error) bool {
 	var uerr notAllowedElemError
 
-	return errors.As(err, &uerr) && uerr.elemName == "content type"
+	return errors.As(err, &uerr) && uerr.elemName == contentType
 }
 
 func NewNotAllowedAssertionMethodError(method string) error {
 	return errors.WithStack(notAllowedElemError{
-		elemName: "assertion method",
+		elemName: assertionMethod,
 		unknown:  method,
 	})
 }
@@ -108,7 +269,7 @@ func NewNotAllowedAssertionMethodError(method string) error {
 func IsNotAllowedAssertionMethodError(err error) bool {
 	var uerr notAllowedElemError
 
-	return errors.As(err, &uerr) && uerr.elemName == "assertion method"
+	return errors.As(err, &uerr) && uerr.elemName == assertionMethod
 }
 
 func (e notAllowedElemError) Error() string {

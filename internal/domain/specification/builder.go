@@ -92,7 +92,7 @@ func (b *Builder) Build() (*Specification, error) {
 		spec.stories[slug] = story
 	}
 
-	return spec, b.err
+	return spec, NewBuildSpecificationError(b.err)
 }
 
 func (b *Builder) WithAuthor(author string) *Builder {
@@ -131,6 +131,10 @@ func NewStoryBuilder() *StoryBuilder {
 }
 
 func (b *StoryBuilder) Build(slug string) (Story, error) {
+	if slug == "" {
+		return Story{}, NewStoryEmptySlugError()
+	}
+
 	story := Story{
 		slug:        slug,
 		description: b.description,
@@ -144,7 +148,7 @@ func (b *StoryBuilder) Build(slug string) (Story, error) {
 		story.scenarios[slug] = scenario
 	}
 
-	return story, b.err
+	return story, NewBuildStoryError(b.err, slug)
 }
 
 func (b *StoryBuilder) WithDescription(description string) *StoryBuilder {
@@ -189,6 +193,10 @@ func NewScenarioBuilder() *ScenarioBuilder {
 }
 
 func (b *ScenarioBuilder) Build(slug string) (Scenario, error) {
+	if slug == "" {
+		return Scenario{}, NewScenarioEmptySlugError()
+	}
+
 	scenario := Scenario{
 		slug:        slug,
 		description: b.description,
@@ -199,7 +207,7 @@ func (b *ScenarioBuilder) Build(slug string) (Scenario, error) {
 		scenario.theses[slug] = thesis
 	}
 
-	return scenario, b.err
+	return scenario, NewBuildScenarioError(b.err, slug)
 }
 
 func (b *ScenarioBuilder) WithDescription(description string) *ScenarioBuilder {
@@ -224,12 +232,16 @@ func NewThesisBuilder() *ThesisBuilder {
 }
 
 func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
+	if slug == "" {
+		return Thesis{}, NewThesisEmptySlugError()
+	}
+
 	return Thesis{
 		slug:      slug,
 		statement: b.statement,
 		http:      b.http,
 		assertion: b.assertion,
-	}, b.err
+	}, NewBuildThesisError(b.err, slug)
 }
 
 func (b *ThesisBuilder) WithStatement(keyword string, behavior string) *ThesisBuilder {
