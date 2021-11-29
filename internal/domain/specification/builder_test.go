@@ -9,6 +9,87 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+func TestStoryBuilder_WithDescription(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewStoryBuilder()
+	builder.WithDescription("description")
+
+	story, err := builder.Build("someStory")
+
+	require.NoError(t, err)
+	require.Equal(t, "description", story.Description())
+}
+
+func TestStoryBuilder_WithAsA(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewStoryBuilder()
+	builder.WithAsA("author")
+
+	story, err := builder.Build("someStory")
+
+	require.NoError(t, err)
+	require.Equal(t, "author", story.AsA())
+}
+
+func TestStoryBuilder_WithInOrderTo(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewStoryBuilder()
+	builder.WithInOrderTo("to do something")
+
+	story, err := builder.Build("someStory")
+
+	require.NoError(t, err)
+	require.Equal(t, "to do something", story.InOrderTo())
+}
+
+func TestStoryBuilder_WithWantTo(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewStoryBuilder()
+	builder.WithWantTo("do work")
+
+	story, err := builder.Build("someStory")
+
+	require.NoError(t, err)
+	require.Equal(t, "do work", story.WantTo())
+}
+
+func TestStoryBuilder_WithScenario(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewStoryBuilder()
+	builder.WithScenario("firstScenario", func(b *specification.ScenarioBuilder) {
+		b.WithDescription("this is a first scenario")
+	})
+	builder.WithScenario("secondScenario", func(b *specification.ScenarioBuilder) {
+		b.WithDescription("this is a second scenario")
+	})
+
+	story, err := builder.Build("someStory")
+
+	require.NoError(t, err)
+	expectedFirstScenario, err := specification.NewScenarioBuilder().
+		WithDescription("this is a first scenario").
+		Build("firstScenario")
+	require.NoError(t, err)
+
+	actualFirstScenario, ok := story.Scenario("firstScenario")
+	require.True(t, ok)
+	require.Equal(t, expectedFirstScenario, actualFirstScenario)
+
+	expectedSecondScenario, err := specification.NewScenarioBuilder().
+		WithDescription("this is a second scenario").
+		Build("secondScenario")
+	require.NoError(t, err)
+
+	actualSecondScenario, ok := story.Scenario("secondScenario")
+	require.True(t, ok)
+	require.Equal(t, expectedSecondScenario, actualSecondScenario)
+}
+
 func TestScenarioBuilder_WithDescription(t *testing.T) {
 	t.Parallel()
 
