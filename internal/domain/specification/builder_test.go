@@ -78,6 +78,48 @@ func TestBuilder_WithStory(t *testing.T) {
 	require.Equal(t, expectedSecondStory, actualSecondStory)
 }
 
+func TestStoryBuilder_Build_slug(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name        string
+		Slug        string
+		ShouldBeErr bool
+	}{
+		{
+			Name:        "build_with_slug",
+			Slug:        "story",
+			ShouldBeErr: false,
+		},
+		{
+			Name:        "dont_build_with_empty_slug",
+			Slug:        "",
+			ShouldBeErr: true,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			builder := specification.NewStoryBuilder()
+
+			story, err := builder.Build(c.Slug)
+
+			if c.ShouldBeErr {
+				require.True(t, specification.IsStoryEmptySlugError(err))
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, c.Slug, story.Slug())
+		})
+	}
+}
+
 func TestStoryBuilder_WithDescription(t *testing.T) {
 	t.Parallel()
 
@@ -160,6 +202,48 @@ func TestStoryBuilder_WithScenario(t *testing.T) {
 	require.Equal(t, expectedSecondScenario, actualSecondScenario)
 }
 
+func TestScenarioBuilder_Build_slug(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name        string
+		Slug        string
+		ShouldBeErr bool
+	}{
+		{
+			Name:        "build_with_slug",
+			Slug:        "scenario",
+			ShouldBeErr: false,
+		},
+		{
+			Name:        "dont_build_with_empty_slug",
+			Slug:        "",
+			ShouldBeErr: true,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			builder := specification.NewScenarioBuilder()
+
+			scenario, err := builder.Build(c.Slug)
+
+			if c.ShouldBeErr {
+				require.True(t, specification.IsScenarioEmptySlugError(err))
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, c.Slug, scenario.Slug())
+		})
+	}
+}
+
 func TestScenarioBuilder_WithDescription(t *testing.T) {
 	t.Parallel()
 
@@ -234,6 +318,48 @@ func TestScenarioBuilder_WithThesis(t *testing.T) {
 	require.Equal(t, expectedCheckBeerThesis, actualCheckBeerThesis)
 }
 
+func TestThesisBuilder_Build_slug(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name        string
+		Slug        string
+		ShouldBeErr bool
+	}{
+		{
+			Name:        "build_with_slug",
+			Slug:        "thesis",
+			ShouldBeErr: false,
+		},
+		{
+			Name:        "build_with_empty_slug",
+			Slug:        "",
+			ShouldBeErr: true,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			builder := specification.NewThesisBuilder()
+
+			thesis, err := builder.Build(c.Slug)
+
+			if c.ShouldBeErr {
+				require.True(t, specification.IsThesisEmptySlugError(err))
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, c.Slug, thesis.Slug())
+		})
+	}
+}
+
 func TestThesisBuilder_WithStatement(t *testing.T) {
 	t.Parallel()
 
@@ -242,7 +368,6 @@ func TestThesisBuilder_WithStatement(t *testing.T) {
 		Keyword     string
 		Behavior    string
 		ShouldBeErr bool
-		IsErr       func(err error) bool
 	}{
 		{
 			Name:        "build_with_allowed_given_keyword",
@@ -267,7 +392,6 @@ func TestThesisBuilder_WithStatement(t *testing.T) {
 			Keyword:     "zen",
 			Behavior:    "zen du dust",
 			ShouldBeErr: true,
-			IsErr:       specification.IsNotAllowedKeywordError,
 		},
 	}
 
@@ -283,7 +407,7 @@ func TestThesisBuilder_WithStatement(t *testing.T) {
 			thesis, err := builder.Build("sellHooves")
 
 			if c.ShouldBeErr {
-				require.True(t, c.IsErr(err))
+				require.True(t, specification.IsNotAllowedKeywordError(err))
 
 				return
 			}
@@ -354,7 +478,6 @@ func TestAssertionBuilder_WithMethod(t *testing.T) {
 		Name        string
 		Method      string
 		ShouldBeErr bool
-		IsErr       func(err error) bool
 	}{
 		{
 			Name:        "build_with_allowed_jsonpath_assertion_method",
@@ -365,7 +488,6 @@ func TestAssertionBuilder_WithMethod(t *testing.T) {
 			Name:        "dont_build_with_not_allowed_assertion_method",
 			Method:      "JAYZ",
 			ShouldBeErr: true,
-			IsErr:       specification.IsNotAllowedAssertionMethodError,
 		},
 	}
 
@@ -381,7 +503,7 @@ func TestAssertionBuilder_WithMethod(t *testing.T) {
 			assertion, err := builder.Build()
 
 			if c.ShouldBeErr {
-				require.True(t, c.IsErr(err))
+				require.True(t, specification.IsNotAllowedAssertionMethodError(err))
 
 				return
 			}
@@ -496,7 +618,6 @@ func TestHTTPRequestBuilder_WithMethod(t *testing.T) {
 		Name        string
 		Method      string
 		ShouldBeErr bool
-		IsErr       func(err error) bool
 	}{
 		{
 			Name:        "build_with_allowed_get_method",
@@ -547,7 +668,6 @@ func TestHTTPRequestBuilder_WithMethod(t *testing.T) {
 			Name:        "dont_build_with_not_allowed_past_method",
 			Method:      "PAST",
 			ShouldBeErr: true,
-			IsErr:       specification.IsNotAllowedHTTPMethodError,
 		},
 	}
 
@@ -563,7 +683,7 @@ func TestHTTPRequestBuilder_WithMethod(t *testing.T) {
 			request, err := builder.Build()
 
 			if c.ShouldBeErr {
-				require.True(t, c.IsErr(err))
+				require.True(t, specification.IsNotAllowedHTTPMethodError(err))
 
 				return
 			}
@@ -581,7 +701,6 @@ func TestHTTPRequestBuilder_WithContentType(t *testing.T) {
 		Name        string
 		ContentType string
 		ShouldBeErr bool
-		IsErr       func(err error) bool
 	}{
 		{
 			Name:        "build_with_allowed_content_type_application/json",
@@ -597,7 +716,6 @@ func TestHTTPRequestBuilder_WithContentType(t *testing.T) {
 			Name:        "dont_build_with_not_allowed_content_type",
 			ContentType: "content/type",
 			ShouldBeErr: true,
-			IsErr:       specification.IsNotAllowedContentTypeError,
 		},
 	}
 
@@ -613,7 +731,7 @@ func TestHTTPRequestBuilder_WithContentType(t *testing.T) {
 			request, err := builder.Build()
 
 			if c.ShouldBeErr {
-				require.True(t, c.IsErr(err))
+				require.True(t, specification.IsNotAllowedContentTypeError(err))
 
 				return
 			}
@@ -673,7 +791,6 @@ func TestHTTPResponseBuilder_WithAllowedContentType(t *testing.T) {
 		Name        string
 		ContentType string
 		ShouldBeErr bool
-		IsErr       func(err error) bool
 	}{
 		{
 			Name:        "build_with_allowed_content_type_application/json",
@@ -689,7 +806,6 @@ func TestHTTPResponseBuilder_WithAllowedContentType(t *testing.T) {
 			Name:        "dont_build_with_not_allowed_content_type",
 			ContentType: "some/content",
 			ShouldBeErr: true,
-			IsErr:       specification.IsNotAllowedContentTypeError,
 		},
 	}
 
@@ -705,7 +821,7 @@ func TestHTTPResponseBuilder_WithAllowedContentType(t *testing.T) {
 			request, err := builder.Build()
 
 			if c.ShouldBeErr {
-				require.True(t, c.IsErr(err))
+				require.True(t, specification.IsNotAllowedContentTypeError(err))
 
 				return
 			}
