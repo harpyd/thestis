@@ -35,6 +35,7 @@ type (
 	}
 
 	ThesisBuilder struct {
+		after     []string
 		statement Statement
 		http      HTTP
 		assertion Assertion
@@ -236,12 +237,23 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 		return Thesis{}, NewThesisEmptySlugError()
 	}
 
-	return Thesis{
+	thesis := Thesis{
 		slug:      slug,
+		after:     make([]string, len(b.after)),
 		statement: b.statement,
 		http:      b.http,
 		assertion: b.assertion,
-	}, NewBuildThesisError(b.err, slug)
+	}
+
+	copy(thesis.after, b.after)
+
+	return thesis, NewBuildThesisError(b.err, slug)
+}
+
+func (b *ThesisBuilder) WithAfter(after string) *ThesisBuilder {
+	b.after = append(b.after, after)
+
+	return b
 }
 
 func (b *ThesisBuilder) WithStatement(keyword string, behavior string) *ThesisBuilder {

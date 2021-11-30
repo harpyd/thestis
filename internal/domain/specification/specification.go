@@ -32,6 +32,7 @@ type (
 
 	Thesis struct {
 		slug      string
+		after     []string
 		statement Statement
 		http      HTTP
 		assertion Assertion
@@ -236,6 +237,10 @@ func (s Scenario) Thesis(slug string) (thesis Thesis, ok bool) {
 
 func (t Thesis) Slug() string {
 	return t.slug
+}
+
+func (t Thesis) After() []string {
+	return t.after
 }
 
 func (t Thesis) Statement() Statement {

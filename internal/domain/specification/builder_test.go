@@ -234,6 +234,19 @@ func TestScenarioBuilder_WithThesis(t *testing.T) {
 	require.Equal(t, expectedCheckBeerThesis, actualCheckBeerThesis)
 }
 
+func TestThesisBuilder_WithAfter(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewThesisBuilder()
+	builder.WithAfter("anotherOneThesis")
+	builder.WithAfter("anotherTwoThesis")
+
+	thesis, err := builder.Build("thesis")
+
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"anotherOneThesis", "anotherTwoThesis"}, thesis.After())
+}
+
 func TestThesisBuilder_WithStatement(t *testing.T) {
 	t.Parallel()
 
