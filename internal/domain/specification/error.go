@@ -273,5 +273,9 @@ func IsNotAllowedAssertionMethodError(err error) bool {
 }
 
 func (e notAllowedElemError) Error() string {
+	if e.unknown == "" {
+		return fmt.Sprintf("no %s", e.elemName)
+	}
+
 	return fmt.Sprintf("%s `%s` not allowed", e.elemName, e.unknown)
 }

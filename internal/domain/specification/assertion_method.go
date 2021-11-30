@@ -5,12 +5,16 @@ import "strings"
 type AssertionMethod string
 
 const (
-	UnknownAssertionMethod AssertionMethod = ""
+	UnknownAssertionMethod AssertionMethod = "!"
+	EmptyAssertionMethod   AssertionMethod = ""
 	JSONPath               AssertionMethod = "jsonpath"
 )
 
 func newAssertionMethodFromString(method string) (AssertionMethod, error) {
-	if strings.ToLower(method) == "jsonpath" {
+	switch strings.ToLower(method) {
+	case "":
+		return EmptyAssertionMethod, nil
+	case "jsonpath":
 		return JSONPath, nil
 	}
 

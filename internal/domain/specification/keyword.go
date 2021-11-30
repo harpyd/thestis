@@ -5,7 +5,7 @@ import "strings"
 type Keyword string
 
 const (
-	UnknownKeyword Keyword = ""
+	UnknownKeyword Keyword = "!"
 	Given          Keyword = "given"
 	When           Keyword = "when"
 	Then           Keyword = "then"

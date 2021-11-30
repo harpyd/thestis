@@ -370,6 +370,11 @@ func TestAssertionBuilder_WithMethod(t *testing.T) {
 		IsErr       func(err error) bool
 	}{
 		{
+			Name:        "build_with_allowed_empty_assertion_method",
+			Method:      "",
+			ShouldBeErr: false,
+		},
+		{
 			Name:        "build_with_allowed_jsonpath_assertion_method",
 			Method:      "JSONPATH",
 			ShouldBeErr: false,
@@ -512,6 +517,11 @@ func TestHTTPRequestBuilder_WithMethod(t *testing.T) {
 		IsErr       func(err error) bool
 	}{
 		{
+			Name:        "build_with_allowed_empty_method",
+			Method:      "",
+			ShouldBeErr: false,
+		},
+		{
 			Name:        "build_with_allowed_get_method",
 			Method:      "GET",
 			ShouldBeErr: false,
@@ -596,6 +606,11 @@ func TestHTTPRequestBuilder_WithContentType(t *testing.T) {
 		ShouldBeErr bool
 		IsErr       func(err error) bool
 	}{
+		{
+			Name:        "build_with_allowed_empty_content_type",
+			ContentType: "",
+			ShouldBeErr: false,
+		},
 		{
 			Name:        "build_with_allowed_content_type_application/json",
 			ContentType: "application/json",
@@ -688,6 +703,11 @@ func TestHTTPResponseBuilder_WithAllowedContentType(t *testing.T) {
 		ShouldBeErr bool
 		IsErr       func(err error) bool
 	}{
+		{
+			Name:        "build_with_allowed_empty_content_type",
+			ContentType: "",
+			ShouldBeErr: false,
+		},
 		{
 			Name:        "build_with_allowed_content_type_application/json",
 			ContentType: "application/json",

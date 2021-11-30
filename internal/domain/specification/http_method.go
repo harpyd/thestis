@@ -5,7 +5,8 @@ import "strings"
 type HTTPMethod string
 
 const (
-	UnknownHTTPMethod HTTPMethod = ""
+	UnknownHTTPMethod HTTPMethod = "!"
+	EmptyHTTPMethod   HTTPMethod = ""
 	GET               HTTPMethod = "GET"
 	POST              HTTPMethod = "POST"
 	PUT               HTTPMethod = "PUT"
@@ -18,25 +19,21 @@ const (
 )
 
 func newHTTPMethodFromString(method string) (HTTPMethod, error) {
-	switch strings.ToUpper(method) {
-	case "GET":
-		return GET, nil
-	case "POST":
-		return POST, nil
-	case "PUT":
-		return PUT, nil
-	case "PATCH":
-		return PATCH, nil
-	case "DELETE":
-		return DELETE, nil
-	case "OPTIONS":
-		return OPTIONS, nil
-	case "TRACE":
-		return TRACE, nil
-	case "CONNECT":
-		return CONNECT, nil
-	case "HEAD":
-		return HEAD, nil
+	methods := map[string]HTTPMethod{
+		EmptyHTTPMethod.String(): EmptyHTTPMethod,
+		GET.String():             GET,
+		POST.String():            POST,
+		PUT.String():             PUT,
+		PATCH.String():           PATCH,
+		DELETE.String():          DELETE,
+		OPTIONS.String():         OPTIONS,
+		TRACE.String():           TRACE,
+		CONNECT.String():         CONNECT,
+		HEAD.String():            HEAD,
+	}
+
+	if m, ok := methods[strings.ToUpper(method)]; ok {
+		return m, nil
 	}
 
 	return UnknownHTTPMethod, NewNotAllowedHTTPMethodError(method)
