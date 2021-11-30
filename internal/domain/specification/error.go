@@ -15,8 +15,8 @@ const (
 const (
 	httpMethod      = "HTTP method"
 	keyword         = "keyword"
-	contentType     = "contentType"
-	assertionMethod = "assertionMethod"
+	contentType     = "content type"
+	assertionMethod = "assertion method"
 )
 
 type emptyElemSlugError struct {
