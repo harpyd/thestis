@@ -8,28 +8,28 @@ import (
 
 type (
 	Builder struct {
-		id          string
-		author      string
-		title       string
-		description string
-		stories     []storyFactory
+		id             string
+		author         string
+		title          string
+		description    string
+		storyFactories []storyFactory
 	}
 
 	storyFactory func() (Story, error)
 
 	StoryBuilder struct {
-		description string
-		asA         string
-		inOrderTo   string
-		wantTo      string
-		scenarios   []scenarioFactory
+		description       string
+		asA               string
+		inOrderTo         string
+		wantTo            string
+		scenarioFactories []scenarioFactory
 	}
 
 	scenarioFactory func() (Scenario, error)
 
 	ScenarioBuilder struct {
-		description string
-		theses      []thesisFactory
+		description     string
+		thesisFactories []thesisFactory
 	}
 
 	thesisFactory func() (Thesis, error)
@@ -75,12 +75,12 @@ func (b *Builder) Build() (*Specification, error) {
 		author:      b.author,
 		title:       b.title,
 		description: b.description,
-		stories:     make(map[string]Story, len(b.stories)),
+		stories:     make(map[string]Story, len(b.storyFactories)),
 	}
 
 	var err error
 
-	for _, stryFactory := range b.stories {
+	for _, stryFactory := range b.storyFactories {
 		stry, stryErr := stryFactory()
 		if _, ok := spec.stories[stry.Slug()]; ok {
 			err = multierr.Append(err, NewStorySlugAlreadyExistsError(stry.Slug()))
@@ -94,6 +94,13 @@ func (b *Builder) Build() (*Specification, error) {
 	}
 
 	return spec, NewBuildSpecificationError(err)
+}
+
+func (b *Builder) Reset() {
+	b.author = ""
+	b.title = ""
+	b.description = ""
+	b.storyFactories = nil
 }
 
 func (b *Builder) WithAuthor(author string) *Builder {
@@ -118,7 +125,7 @@ func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder
 	sb := NewStoryBuilder()
 	buildFn(sb)
 
-	b.stories = append(b.stories, func() (Story, error) {
+	b.storyFactories = append(b.storyFactories, func() (Story, error) {
 		return sb.Build(slug)
 	})
 
@@ -145,7 +152,7 @@ func (b *StoryBuilder) Build(slug string) (Story, error) {
 
 	var err error
 
-	for _, scnFactory := range b.scenarios {
+	for _, scnFactory := range b.scenarioFactories {
 		scn, scnErr := scnFactory()
 		if _, ok := stry.scenarios[scn.Slug()]; ok {
 			err = multierr.Append(err, NewScenarioSlugAlreadyExistsError(scn.Slug()))
@@ -159,6 +166,14 @@ func (b *StoryBuilder) Build(slug string) (Story, error) {
 	}
 
 	return stry, NewBuildStoryError(err, slug)
+}
+
+func (b *StoryBuilder) Reset() {
+	b.description = ""
+	b.asA = ""
+	b.inOrderTo = ""
+	b.wantTo = ""
+	b.scenarioFactories = nil
 }
 
 func (b *StoryBuilder) WithDescription(description string) *StoryBuilder {
@@ -189,7 +204,7 @@ func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder
 	sb := NewScenarioBuilder()
 	buildFn(sb)
 
-	b.scenarios = append(b.scenarios, func() (Scenario, error) {
+	b.scenarioFactories = append(b.scenarioFactories, func() (Scenario, error) {
 		return sb.Build(slug)
 	})
 
@@ -213,7 +228,7 @@ func (b *ScenarioBuilder) Build(slug string) (Scenario, error) {
 
 	var err error
 
-	for _, thsisFactory := range b.theses {
+	for _, thsisFactory := range b.thesisFactories {
 		thsis, thsisErr := thsisFactory()
 		if _, ok := scn.theses[thsis.Slug()]; ok {
 			err = multierr.Append(err, NewThesisSlugAlreadyExistsError(thsis.Slug()))
@@ -229,6 +244,11 @@ func (b *ScenarioBuilder) Build(slug string) (Scenario, error) {
 	return scn, NewBuildScenarioError(err, slug)
 }
 
+func (b *ScenarioBuilder) Reset() {
+	b.description = ""
+	b.thesisFactories = nil
+}
+
 func (b *ScenarioBuilder) WithDescription(description string) *ScenarioBuilder {
 	b.description = description
 
@@ -239,7 +259,7 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 	tb := NewThesisBuilder()
 	buildFn(tb)
 
-	b.theses = append(b.theses, func() (Thesis, error) {
+	b.thesisFactories = append(b.thesisFactories, func() (Thesis, error) {
 		return tb.Build(slug)
 	})
 
@@ -280,6 +300,14 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 		httpErr,
 		assertionErr,
 	), slug)
+}
+
+func (b *ThesisBuilder) Reset() {
+	b.after = nil
+	b.keyword = ""
+	b.behavior = ""
+	b.assertionBuilder.Reset()
+	b.httpBuilder.Reset()
 }
 
 func (b *ThesisBuilder) WithAfter(after string) *ThesisBuilder {
