@@ -351,7 +351,7 @@ func (b *AssertionBuilder) Build() (Assertion, error) {
 
 	copy(assertion.asserts, b.asserts)
 
-	return assertion, err
+	return assertion, NewBuildAssertionError(err)
 }
 
 func (b *AssertionBuilder) Reset() {
@@ -388,7 +388,7 @@ func (b *HTTPBuilder) Build() (HTTP, error) {
 	return HTTP{
 		request:  request,
 		response: response,
-	}, multierr.Combine(requestErr, responseErr)
+	}, NewBuildHTTPError(multierr.Combine(requestErr, responseErr))
 }
 
 func (b *HTTPBuilder) Reset() {
@@ -423,7 +423,7 @@ func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
 		url:         b.url,
 		contentType: ctype,
 		body:        deepcopy.StringInterfaceMap(b.body),
-	}, multierr.Combine(methodErr, ctypeErr)
+	}, NewBuildHTTPRequestError(multierr.Combine(methodErr, ctypeErr))
 }
 
 func (b *HTTPRequestBuilder) Reset() {
@@ -467,7 +467,7 @@ func (b *HTTPResponseBuilder) Build() (HTTPResponse, error) {
 	return HTTPResponse{
 		allowedCodes:       deepcopy.IntSlice(b.allowedCodes),
 		allowedContentType: allowedContentType,
-	}, err
+	}, NewBuildHTTPResponseError(err)
 }
 
 func (b *HTTPResponseBuilder) Reset() {

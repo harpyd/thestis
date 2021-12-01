@@ -230,6 +230,134 @@ func (e buildThesisError) Error() string {
 	return fmt.Sprintf("thesis `%s`: %s", e.slug, e.err)
 }
 
+type buildAssertionError struct {
+	err error
+}
+
+func NewBuildAssertionError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(buildAssertionError{
+		err: err,
+	})
+}
+
+func IsBuildAssertionError(err error) bool {
+	var berr buildAssertionError
+
+	return errors.As(err, &berr)
+}
+
+func (e buildAssertionError) Cause() error {
+	return e.err
+}
+
+func (e buildAssertionError) Unwrap() error {
+	return e.err
+}
+
+func (e buildAssertionError) Error() string {
+	return fmt.Sprintf("assertion: %s", e.err)
+}
+
+type buildHTTPError struct {
+	err error
+}
+
+func NewBuildHTTPError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(buildHTTPError{
+		err: err,
+	})
+}
+
+func IsBuildHTTPError(err error) bool {
+	var berr buildHTTPError
+
+	return errors.As(err, &berr)
+}
+
+func (e buildHTTPError) Cause() error {
+	return e.err
+}
+
+func (e buildHTTPError) Unwrap() error {
+	return e.err
+}
+
+func (e buildHTTPError) Error() string {
+	return fmt.Sprintf("HTTP: %s", e.err)
+}
+
+type buildHTTPRequestError struct {
+	err error
+}
+
+func NewBuildHTTPRequestError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(buildHTTPRequestError{
+		err: err,
+	})
+}
+
+func IsBuildHTTPRequestError(err error) bool {
+	var berr buildHTTPRequestError
+
+	return errors.As(err, &berr)
+}
+
+func (e buildHTTPRequestError) Cause() error {
+	return e.err
+}
+
+func (e buildHTTPRequestError) Unwrap() error {
+	return e.err
+}
+
+func (e buildHTTPRequestError) Error() string {
+	return fmt.Sprintf("request: %s", e.err)
+}
+
+type buildHTTPResponseError struct {
+	err error
+}
+
+func NewBuildHTTPResponseError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(buildHTTPResponseError{
+		err: err,
+	})
+}
+
+func IsBuildHTTPResponseError(err error) bool {
+	var berr buildHTTPResponseError
+
+	return errors.As(err, &berr)
+}
+
+func (e buildHTTPResponseError) Cause() error {
+	return e.err
+}
+
+func (e buildHTTPResponseError) Unwrap() error {
+	return e.err
+}
+
+func (e buildHTTPResponseError) Error() string {
+	return fmt.Sprintf("response: %s", e.err)
+}
+
 type noSuchStoryError struct {
 	slug string
 }

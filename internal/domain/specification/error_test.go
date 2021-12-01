@@ -319,6 +319,130 @@ func TestIsBuildThesisError(t *testing.T) {
 	}
 }
 
+func TestIsBuildAssertionError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "build_assertion_error_is_build_assertion_error",
+			Err:       specification.NewBuildAssertionError(errors.New("some")),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error_isnt_build_assertion_error",
+			Err:       errors.New("some"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, specification.IsBuildAssertionError(c.Err))
+		})
+	}
+}
+
+func TestIsBuildHTTPError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "build_http_error_is_build_http_error",
+			Err:       specification.NewBuildHTTPError(errors.New("wrong")),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error_isnt_build_http_error",
+			Err:       errors.New("wrong"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, specification.IsBuildHTTPError(c.Err))
+		})
+	}
+}
+
+func TestIsBuildHTTPRequestError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "build_http_request_error_is_build_http_request_error",
+			Err:       specification.NewBuildHTTPRequestError(errors.New("wrong")),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error_isnt_build_http_request_error",
+			Err:       errors.New("wrong"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, specification.IsBuildHTTPRequestError(c.Err))
+		})
+	}
+}
+
+func TestIsBuildHTTPResponseError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "build_http_response_error_is_build_http_response_error",
+			Err:       specification.NewBuildHTTPResponseError(errors.New("something")),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error_isnt_build_http_response_error",
+			Err:       errors.New("something"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, specification.IsBuildHTTPResponseError(c.Err))
+		})
+	}
+}
+
 func TestIsNoSuchStoryError(t *testing.T) {
 	t.Parallel()
 
