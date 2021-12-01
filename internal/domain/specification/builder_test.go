@@ -354,6 +354,7 @@ func TestThesisBuilder_WithAfter(t *testing.T) {
 	t.Parallel()
 
 	builder := specification.NewThesisBuilder()
+	builder.WithStatement("when", "something")
 	builder.WithAfter("anotherOneThesis")
 	builder.WithAfter("anotherTwoThesis")
 
@@ -402,6 +403,7 @@ func TestThesisBuilder_Build_slug(t *testing.T) {
 			t.Parallel()
 
 			builder := specification.NewThesisBuilder()
+			builder.WithStatement("when", "do something")
 
 			thesis, err := builder.Build(c.Slug)
 
@@ -480,6 +482,7 @@ func TestThesisBuilder_WithAssertion(t *testing.T) {
 	t.Parallel()
 
 	builder := specification.NewThesisBuilder()
+	builder.WithStatement("when", "something wrong")
 	builder.WithAssertion(func(b *specification.AssertionBuilder) {
 		b.WithMethod("JSONPATH")
 		b.WithAssert("getSomeBody.response.body.type", "product")
@@ -500,6 +503,7 @@ func TestThesisBuilder_WithHTTP(t *testing.T) {
 	t.Parallel()
 
 	builder := specification.NewThesisBuilder()
+	builder.WithStatement("given", "some state")
 	builder.WithHTTP(func(b *specification.HTTPBuilder) {
 		b.WithRequest(func(b *specification.HTTPRequestBuilder) {
 			b.WithMethod("GET")

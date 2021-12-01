@@ -12,72 +12,61 @@ type (
 		author      string
 		title       string
 		description string
-		stories     map[string]Story
-
-		err error
+		stories     []storyFactory
 	}
+
+	storyFactory func() (Story, error)
 
 	StoryBuilder struct {
 		description string
 		asA         string
 		inOrderTo   string
 		wantTo      string
-		scenarios   map[string]Scenario
-
-		err error
+		scenarios   []scenarioFactory
 	}
+
+	scenarioFactory func() (Scenario, error)
 
 	ScenarioBuilder struct {
 		description string
-		theses      map[string]Thesis
-
-		err error
+		theses      []thesisFactory
 	}
 
-	ThesisBuilder struct {
-		after     []string
-		statement Statement
-		http      HTTP
-		assertion Assertion
+	thesisFactory func() (Thesis, error)
 
-		err error
+	ThesisBuilder struct {
+		after            []string
+		keyword          string
+		behavior         string
+		httpBuilder      *HTTPBuilder
+		assertionBuilder *AssertionBuilder
 	}
 
 	AssertionBuilder struct {
-		method  AssertionMethod
+		method  string
 		asserts []Assert
-
-		err error
 	}
 
 	HTTPBuilder struct {
-		request  HTTPRequest
-		response HTTPResponse
-
-		err error
+		requestBuilder  *HTTPRequestBuilder
+		responseBuilder *HTTPResponseBuilder
 	}
 
 	HTTPRequestBuilder struct {
-		method      HTTPMethod
+		method      string
 		url         string
-		contentType ContentType
+		contentType string
 		body        map[string]interface{}
-
-		err error
 	}
 
 	HTTPResponseBuilder struct {
 		allowedCodes       []int
-		allowedContentType ContentType
-
-		err error
+		allowedContentType string
 	}
 )
 
 func NewBuilder() *Builder {
-	return &Builder{
-		stories: make(map[string]Story),
-	}
+	return &Builder{}
 }
 
 func (b *Builder) Build() (*Specification, error) {
@@ -89,11 +78,22 @@ func (b *Builder) Build() (*Specification, error) {
 		stories:     make(map[string]Story, len(b.stories)),
 	}
 
-	for slug, story := range b.stories {
-		spec.stories[slug] = story
+	var err error
+
+	for _, stryFactory := range b.stories {
+		stry, stryErr := stryFactory()
+		if _, ok := spec.stories[stry.Slug()]; ok {
+			err = multierr.Append(err, NewStorySlugAlreadyExistsError(stry.Slug()))
+
+			continue
+		}
+
+		err = multierr.Append(err, stryErr)
+
+		spec.stories[stry.Slug()] = stry
 	}
 
-	return spec, NewBuildSpecificationError(b.err)
+	return spec, NewBuildSpecificationError(err)
 }
 
 func (b *Builder) WithAuthor(author string) *Builder {
@@ -118,23 +118,15 @@ func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder
 	sb := NewStoryBuilder()
 	buildFn(sb)
 
-	if _, ok := b.stories[slug]; ok {
-		b.err = multierr.Append(b.err, NewStorySlugAlreadyExistsError(slug))
-
-		return b
-	}
-
-	story, err := sb.Build(slug)
-	b.stories[slug] = story
-	b.err = multierr.Append(b.err, err)
+	b.stories = append(b.stories, func() (Story, error) {
+		return sb.Build(slug)
+	})
 
 	return b
 }
 
 func NewStoryBuilder() *StoryBuilder {
-	return &StoryBuilder{
-		scenarios: make(map[string]Scenario),
-	}
+	return &StoryBuilder{}
 }
 
 func (b *StoryBuilder) Build(slug string) (Story, error) {
@@ -142,7 +134,7 @@ func (b *StoryBuilder) Build(slug string) (Story, error) {
 		return Story{}, NewStoryEmptySlugError()
 	}
 
-	story := Story{
+	stry := Story{
 		slug:        slug,
 		description: b.description,
 		asA:         b.asA,
@@ -151,11 +143,22 @@ func (b *StoryBuilder) Build(slug string) (Story, error) {
 		scenarios:   make(map[string]Scenario),
 	}
 
-	for slug, scenario := range b.scenarios {
-		story.scenarios[slug] = scenario
+	var err error
+
+	for _, scnFactory := range b.scenarios {
+		scn, scnErr := scnFactory()
+		if _, ok := stry.scenarios[scn.Slug()]; ok {
+			err = multierr.Append(err, NewScenarioSlugAlreadyExistsError(scn.Slug()))
+
+			continue
+		}
+
+		err = multierr.Append(err, scnErr)
+
+		stry.scenarios[scn.Slug()] = scn
 	}
 
-	return story, NewBuildStoryError(b.err, slug)
+	return stry, NewBuildStoryError(err, slug)
 }
 
 func (b *StoryBuilder) WithDescription(description string) *StoryBuilder {
@@ -186,23 +189,15 @@ func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder
 	sb := NewScenarioBuilder()
 	buildFn(sb)
 
-	if _, ok := b.scenarios[slug]; ok {
-		b.err = multierr.Append(b.err, NewScenarioSlugAlreadyExistsError(slug))
-
-		return b
-	}
-
-	scenario, err := sb.Build(slug)
-	b.scenarios[slug] = scenario
-	b.err = multierr.Append(b.err, err)
+	b.scenarios = append(b.scenarios, func() (Scenario, error) {
+		return sb.Build(slug)
+	})
 
 	return b
 }
 
 func NewScenarioBuilder() *ScenarioBuilder {
-	return &ScenarioBuilder{
-		theses: make(map[string]Thesis),
-	}
+	return &ScenarioBuilder{}
 }
 
 func (b *ScenarioBuilder) Build(slug string) (Scenario, error) {
@@ -210,17 +205,28 @@ func (b *ScenarioBuilder) Build(slug string) (Scenario, error) {
 		return Scenario{}, NewScenarioEmptySlugError()
 	}
 
-	scenario := Scenario{
+	scn := Scenario{
 		slug:        slug,
 		description: b.description,
 		theses:      make(map[string]Thesis),
 	}
 
-	for slug, thesis := range b.theses {
-		scenario.theses[slug] = thesis
+	var err error
+
+	for _, thsisFactory := range b.theses {
+		thsis, thsisErr := thsisFactory()
+		if _, ok := scn.theses[thsis.Slug()]; ok {
+			err = multierr.Append(err, NewThesisSlugAlreadyExistsError(thsis.Slug()))
+
+			continue
+		}
+
+		err = multierr.Append(err, thsisErr)
+
+		scn.theses[thsis.Slug()] = thsis
 	}
 
-	return scenario, NewBuildScenarioError(b.err, slug)
+	return scn, NewBuildScenarioError(err, slug)
 }
 
 func (b *ScenarioBuilder) WithDescription(description string) *ScenarioBuilder {
@@ -233,21 +239,18 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 	tb := NewThesisBuilder()
 	buildFn(tb)
 
-	if _, ok := b.theses[slug]; ok {
-		b.err = multierr.Append(b.err, NewThesisSlugAlreadyExistsError(slug))
-
-		return b
-	}
-
-	thesis, err := tb.Build(slug)
-	b.theses[slug] = thesis
-	b.err = multierr.Append(b.err, err)
+	b.theses = append(b.theses, func() (Thesis, error) {
+		return tb.Build(slug)
+	})
 
 	return b
 }
 
 func NewThesisBuilder() *ThesisBuilder {
-	return &ThesisBuilder{}
+	return &ThesisBuilder{
+		assertionBuilder: NewAssertionBuilder(),
+		httpBuilder:      NewHTTPBuilder(),
+	}
 }
 
 func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
@@ -255,17 +258,28 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 		return Thesis{}, NewThesisEmptySlugError()
 	}
 
-	thesis := Thesis{
-		slug:      slug,
-		after:     make([]string, len(b.after)),
-		statement: b.statement,
-		http:      b.http,
-		assertion: b.assertion,
+	kw, keywordErr := newKeywordFromString(b.keyword)
+	http, httpErr := b.httpBuilder.Build()
+	assertion, assertionErr := b.assertionBuilder.Build()
+
+	thsis := Thesis{
+		slug:  slug,
+		after: make([]string, len(b.after)),
+		statement: Statement{
+			keyword:  kw,
+			behavior: b.behavior,
+		},
+		http:      http,
+		assertion: assertion,
 	}
 
-	copy(thesis.after, b.after)
+	copy(thsis.after, b.after)
 
-	return thesis, NewBuildThesisError(b.err, slug)
+	return thsis, NewBuildThesisError(multierr.Combine(
+		keywordErr,
+		httpErr,
+		assertionErr,
+	), slug)
 }
 
 func (b *ThesisBuilder) WithAfter(after string) *ThesisBuilder {
@@ -275,34 +289,22 @@ func (b *ThesisBuilder) WithAfter(after string) *ThesisBuilder {
 }
 
 func (b *ThesisBuilder) WithStatement(keyword string, behavior string) *ThesisBuilder {
-	kw, err := newKeywordFromString(keyword)
-	b.statement = Statement{
-		keyword:  kw,
-		behavior: behavior,
-	}
-	b.err = multierr.Append(b.err, err)
+	b.keyword = keyword
+	b.behavior = behavior
 
 	return b
 }
 
 func (b *ThesisBuilder) WithAssertion(buildFn func(b *AssertionBuilder)) *ThesisBuilder {
-	ab := NewAssertionBuilder()
-	buildFn(ab)
-
-	assertion, err := ab.Build()
-	b.assertion = assertion
-	b.err = multierr.Append(b.err, err)
+	b.assertionBuilder.Reset()
+	buildFn(b.assertionBuilder)
 
 	return b
 }
 
 func (b *ThesisBuilder) WithHTTP(buildFn func(b *HTTPBuilder)) *ThesisBuilder {
-	hb := NewHTTPBuilder()
-	buildFn(hb)
-
-	http, err := hb.Build()
-	b.http = http
-	b.err = multierr.Append(b.err, err)
+	b.httpBuilder.Reset()
+	buildFn(b.httpBuilder)
 
 	return b
 }
@@ -312,20 +314,25 @@ func NewAssertionBuilder() *AssertionBuilder {
 }
 
 func (b *AssertionBuilder) Build() (Assertion, error) {
+	method, err := newAssertionMethodFromString(b.method)
+
 	assertion := Assertion{
-		method:  b.method,
+		method:  method,
 		asserts: make([]Assert, len(b.asserts)),
 	}
 
 	copy(assertion.asserts, b.asserts)
 
-	return assertion, b.err
+	return assertion, err
+}
+
+func (b *AssertionBuilder) Reset() {
+	b.method = ""
+	b.asserts = nil
 }
 
 func (b *AssertionBuilder) WithMethod(method string) *AssertionBuilder {
-	m, err := newAssertionMethodFromString(method)
-	b.method = m
-	b.err = multierr.Append(b.err, err)
+	b.method = method
 
 	return b
 }
@@ -340,34 +347,37 @@ func (b *AssertionBuilder) WithAssert(actual string, expected interface{}) *Asse
 }
 
 func NewHTTPBuilder() *HTTPBuilder {
-	return &HTTPBuilder{}
+	return &HTTPBuilder{
+		requestBuilder:  NewHTTPRequestBuilder(),
+		responseBuilder: NewHTTPResponseBuilder(),
+	}
 }
 
 func (b *HTTPBuilder) Build() (HTTP, error) {
+	request, requestErr := b.requestBuilder.Build()
+	response, responseErr := b.responseBuilder.Build()
+
 	return HTTP{
-		request:  b.request,
-		response: b.response,
-	}, b.err
+		request:  request,
+		response: response,
+	}, multierr.Combine(requestErr, responseErr)
+}
+
+func (b *HTTPBuilder) Reset() {
+	b.requestBuilder.Reset()
+	b.responseBuilder.Reset()
 }
 
 func (b *HTTPBuilder) WithRequest(buildFn func(b *HTTPRequestBuilder)) *HTTPBuilder {
-	rb := NewHTTPRequestBuilder()
-	buildFn(rb)
-
-	request, err := rb.Build()
-	b.request = request
-	b.err = multierr.Append(b.err, err)
+	b.requestBuilder.Reset()
+	buildFn(b.requestBuilder)
 
 	return b
 }
 
 func (b *HTTPBuilder) WithResponse(buildFn func(b *HTTPResponseBuilder)) *HTTPBuilder {
-	rb := NewHTTPResponseBuilder()
-	buildFn(rb)
-
-	response, err := rb.Build()
-	b.response = response
-	b.err = multierr.Append(b.err, err)
+	b.responseBuilder.Reset()
+	buildFn(b.responseBuilder)
 
 	return b
 }
@@ -377,18 +387,26 @@ func NewHTTPRequestBuilder() *HTTPRequestBuilder {
 }
 
 func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
+	method, methodErr := newHTTPMethodFromString(b.method)
+	ctype, ctypeErr := newContentTypeFromString(b.contentType)
+
 	return HTTPRequest{
-		method:      b.method,
+		method:      method,
 		url:         b.url,
-		contentType: b.contentType,
+		contentType: ctype,
 		body:        deepcopy.StringInterfaceMap(b.body),
-	}, b.err
+	}, multierr.Combine(methodErr, ctypeErr)
+}
+
+func (b *HTTPRequestBuilder) Reset() {
+	b.method = ""
+	b.url = ""
+	b.contentType = ""
+	b.body = nil
 }
 
 func (b *HTTPRequestBuilder) WithMethod(method string) *HTTPRequestBuilder {
-	m, err := newHTTPMethodFromString(method)
-	b.method = m
-	b.err = multierr.Append(b.err, err)
+	b.method = method
 
 	return b
 }
@@ -400,9 +418,7 @@ func (b *HTTPRequestBuilder) WithURL(url string) *HTTPRequestBuilder {
 }
 
 func (b *HTTPRequestBuilder) WithContentType(contentType string) *HTTPRequestBuilder {
-	ct, err := newContentTypeFromString(contentType)
-	b.contentType = ct
-	b.err = multierr.Append(b.err, err)
+	b.contentType = contentType
 
 	return b
 }
@@ -418,10 +434,17 @@ func NewHTTPResponseBuilder() *HTTPResponseBuilder {
 }
 
 func (b *HTTPResponseBuilder) Build() (HTTPResponse, error) {
+	allowedContentType, err := newContentTypeFromString(b.allowedContentType)
+
 	return HTTPResponse{
 		allowedCodes:       deepcopy.IntSlice(b.allowedCodes),
-		allowedContentType: b.allowedContentType,
-	}, b.err
+		allowedContentType: allowedContentType,
+	}, err
+}
+
+func (b *HTTPResponseBuilder) Reset() {
+	b.allowedCodes = nil
+	b.allowedContentType = ""
 }
 
 func (b *HTTPResponseBuilder) WithAllowedCodes(allowedCodes []int) *HTTPResponseBuilder {
@@ -431,9 +454,7 @@ func (b *HTTPResponseBuilder) WithAllowedCodes(allowedCodes []int) *HTTPResponse
 }
 
 func (b *HTTPResponseBuilder) WithAllowedContentType(allowedContentType string) *HTTPResponseBuilder {
-	act, err := newContentTypeFromString(allowedContentType)
-	b.allowedContentType = act
-	b.err = multierr.Append(b.err, err)
+	b.allowedContentType = allowedContentType
 
 	return b
 }
