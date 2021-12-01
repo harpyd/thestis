@@ -1,9 +1,10 @@
 package specification
 
 import (
-	"go.uber.org/multierr"
+	"fmt"
 
-	"github.com/harpyd/thestis/pkg/deepcopy"
+	"github.com/pkg/errors"
+	"go.uber.org/multierr"
 )
 
 type (
@@ -15,60 +16,15 @@ type (
 		stories     map[string]Story
 	}
 
-	Story struct {
-		slug        string
-		description string
-		asA         string
-		inOrderTo   string
-		wantTo      string
-		scenarios   map[string]Scenario
+	Builder struct {
+		id             string
+		author         string
+		title          string
+		description    string
+		storyFactories []storyFactory
 	}
 
-	Scenario struct {
-		slug        string
-		description string
-		theses      map[string]Thesis
-	}
-
-	Thesis struct {
-		slug      string
-		after     []string
-		statement Statement
-		http      HTTP
-		assertion Assertion
-	}
-
-	Statement struct {
-		keyword  Keyword
-		behavior string
-	}
-
-	HTTP struct {
-		request  HTTPRequest
-		response HTTPResponse
-	}
-
-	HTTPRequest struct {
-		method      HTTPMethod
-		url         string
-		contentType ContentType
-		body        map[string]interface{}
-	}
-
-	HTTPResponse struct {
-		allowedCodes       []int
-		allowedContentType ContentType
-	}
-
-	Assertion struct {
-		method  AssertionMethod
-		asserts []Assert
-	}
-
-	Assert struct {
-		actual   string
-		expected interface{}
-	}
+	storyFactory func() (Story, error)
 )
 
 func (s *Specification) ID() string {
@@ -127,193 +83,105 @@ func (s *Specification) Story(slug string) (story Story, ok bool) {
 	return
 }
 
-func (s Story) Slug() string {
-	return s.slug
-}
-
-func (s Story) Description() string {
-	return s.description
-}
-
-func (s Story) AsA() string {
-	return s.asA
-}
-
-func (s Story) InOrderTo() string {
-	return s.inOrderTo
-}
-
-func (s Story) WantTo() string {
-	return s.wantTo
-}
-
-func (s Story) Scenarios(slugs ...string) ([]Scenario, error) {
-	if shouldGetAll(slugs) {
-		return s.allScenarios(), nil
-	}
-
-	return s.filteredScenarios(slugs)
-}
-
-func (s Story) allScenarios() []Scenario {
-	scenarios := make([]Scenario, 0, len(s.scenarios))
-
-	for _, scenario := range s.scenarios {
-		scenarios = append(scenarios, scenario)
-	}
-
-	return scenarios
-}
-
-func (s Story) filteredScenarios(slugs []string) ([]Scenario, error) {
-	scenarios := make([]Scenario, 0, len(slugs))
-
-	var err error
-
-	for _, slug := range slugs {
-		if scenario, ok := s.Scenario(slug); ok {
-			scenarios = append(scenarios, scenario)
-		} else {
-			err = multierr.Append(err, NewNoSuchScenarioError(slug))
-		}
-	}
-
-	return scenarios, err
-}
-
-func (s Story) Scenario(slug string) (scenario Scenario, ok bool) {
-	scenario, ok = s.scenarios[slug]
-
-	return
-}
-
-func (s Scenario) Slug() string {
-	return s.slug
-}
-
-func (s Scenario) Description() string {
-	return s.description
-}
-
-func (s Scenario) Theses(slugs ...string) ([]Thesis, error) {
-	if shouldGetAll(slugs) {
-		return s.allTheses(), nil
-	}
-
-	return s.filteredTheses(slugs)
-}
-
-func (s Scenario) allTheses() []Thesis {
-	theses := make([]Thesis, 0, len(s.theses))
-
-	for _, thesis := range s.theses {
-		theses = append(theses, thesis)
-	}
-
-	return theses
-}
-
-func (s Scenario) filteredTheses(slugs []string) ([]Thesis, error) {
-	theses := make([]Thesis, 0, len(slugs))
-
-	var err error
-
-	for _, slug := range slugs {
-		if thesis, ok := s.Thesis(slug); ok {
-			theses = append(theses, thesis)
-		} else {
-			err = multierr.Append(err, NewNoSuchThesisError(slug))
-		}
-	}
-
-	return theses, err
-}
-
-func (s Scenario) Thesis(slug string) (thesis Thesis, ok bool) {
-	thesis, ok = s.theses[slug]
-
-	return
-}
-
-func (t Thesis) Slug() string {
-	return t.slug
-}
-
-func (t Thesis) After() []string {
-	return t.after
-}
-
-func (t Thesis) Statement() Statement {
-	return t.statement
-}
-
-func (t Thesis) HTTP() HTTP {
-	return t.http
-}
-
-func (t Thesis) Assertion() Assertion {
-	return t.assertion
-}
-
-func (s Statement) Keyword() Keyword {
-	return s.keyword
-}
-
-func (s Statement) Behavior() string {
-	return s.behavior
-}
-
-func (h HTTP) Request() HTTPRequest {
-	return h.request
-}
-
-func (h HTTP) Response() HTTPResponse {
-	return h.response
-}
-
-func (r HTTPRequest) Method() HTTPMethod {
-	return r.method
-}
-
-func (r HTTPRequest) URL() string {
-	return r.url
-}
-
-func (r HTTPRequest) ContentType() ContentType {
-	return r.contentType
-}
-
-func (r HTTPRequest) Body() map[string]interface{} {
-	return deepcopy.StringInterfaceMap(r.body)
-}
-
-func (r HTTPResponse) AllowedCodes() []int {
-	return deepcopy.IntSlice(r.allowedCodes)
-}
-
-func (r HTTPResponse) AllowedContentType() ContentType {
-	return r.allowedContentType
-}
-
-func (a Assertion) Method() AssertionMethod {
-	return a.method
-}
-
-func (a Assertion) Asserts() []Assert {
-	asserts := make([]Assert, len(a.asserts))
-	copy(asserts, a.asserts)
-
-	return asserts
-}
-
-func (a Assert) Actual() string {
-	return a.actual
-}
-
-func (a Assert) Expected() interface{} {
-	return a.expected
-}
-
 func shouldGetAll(slugs []string) bool {
 	return len(slugs) == 0
+}
+
+func NewBuilder() *Builder {
+	return &Builder{}
+}
+
+func (b *Builder) Build() (*Specification, error) {
+	spec := &Specification{
+		id:          b.id,
+		author:      b.author,
+		title:       b.title,
+		description: b.description,
+		stories:     make(map[string]Story, len(b.storyFactories)),
+	}
+
+	var err error
+
+	for _, stryFactory := range b.storyFactories {
+		stry, stryErr := stryFactory()
+		if _, ok := spec.stories[stry.Slug()]; ok {
+			err = multierr.Append(err, NewStorySlugAlreadyExistsError(stry.Slug()))
+
+			continue
+		}
+
+		err = multierr.Append(err, stryErr)
+
+		spec.stories[stry.Slug()] = stry
+	}
+
+	return spec, NewBuildSpecificationError(err)
+}
+
+func (b *Builder) Reset() {
+	b.author = ""
+	b.title = ""
+	b.description = ""
+	b.storyFactories = nil
+}
+
+func (b *Builder) WithAuthor(author string) *Builder {
+	b.author = author
+
+	return b
+}
+
+func (b *Builder) WithTitle(title string) *Builder {
+	b.title = title
+
+	return b
+}
+
+func (b *Builder) WithDescription(description string) *Builder {
+	b.description = description
+
+	return b
+}
+
+func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder {
+	sb := NewStoryBuilder()
+	buildFn(sb)
+
+	b.storyFactories = append(b.storyFactories, func() (Story, error) {
+		return sb.Build(slug)
+	})
+
+	return b
+}
+
+type buildSpecificationError struct {
+	err error
+}
+
+func NewBuildSpecificationError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(buildSpecificationError{
+		err: err,
+	})
+}
+
+func IsBuildSpecificationError(err error) bool {
+	var berr buildSpecificationError
+
+	return errors.As(err, &berr)
+}
+
+func (e buildSpecificationError) Cause() error {
+	return e.err
+}
+
+func (e buildSpecificationError) Unwrap() error {
+	return e.err
+}
+
+func (e buildSpecificationError) Error() string {
+	return fmt.Sprintf("specification: %s", e.err)
 }
