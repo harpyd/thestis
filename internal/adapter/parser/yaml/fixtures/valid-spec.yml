@@ -1,0 +1,25 @@
+---
+author: Djerys
+title: valid fixture specification
+description: simple valid fixture specification
+
+stories:
+  test:
+    description: test
+    asA: test
+    inOrderTo: test
+    wantTo: test
+    scenarios:
+      test:
+        description: test
+        theses:
+          test:
+            when: test
+            http:
+              request:
+                method: GET
+                url: https://something.net/test
+              response:
+                allowedCodes:
+                  - 201
+                allowedContentType: application/json

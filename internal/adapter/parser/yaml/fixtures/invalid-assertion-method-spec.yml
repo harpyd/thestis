@@ -1,0 +1,34 @@
+---
+author: Djerys
+title: invalid fixture specification
+description: simple invalid assertion method fixture specification
+
+stories:
+  test:
+    description: test
+    asA: test
+    inOrderTo: test
+    wantTo: test
+    scenarios:
+      test:
+        description: test
+        theses:
+          test:
+            when: test
+            http:
+              request:
+                method: GET
+                url: https://something.net/test
+              response:
+                allowedCodes:
+                  - 201
+                allowedContentType: application/json
+
+          assert:
+            then: test
+            after:
+              - test
+            assertion:
+              with: JAY-Z
+              assert:
+                'test.response.body.test': test

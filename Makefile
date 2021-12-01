@@ -11,3 +11,6 @@ test-unit:
 	go test --short -v -race -coverpkg=./... -coverprofile=unit-all.out ./...
 	cat unit-all.out | grep -v .gen.go > unit.out
 	rm unit-all.out
+
+test-integration:
+	go test -v -race -coverprofile=integration.out ./internal/adapter/...
