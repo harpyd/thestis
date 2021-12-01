@@ -6,109 +6,94 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	story    = "story"
-	scenario = "scenario"
-	thesis   = "thesis"
-)
-
-const (
-	httpMethod      = "HTTP method"
-	keyword         = "keyword"
-	contentType     = "content type"
-	assertionMethod = "assertion method"
-)
-
-type elemSlugAlreadyExistsError struct {
-	elemName string
-	slug     string
+type storySlugAlreadyExistsError struct {
+	slug string
 }
 
 func NewStorySlugAlreadyExistsError(slug string) error {
-	return errors.WithStack(elemSlugAlreadyExistsError{
-		elemName: story,
-		slug:     slug,
+	return errors.WithStack(storySlugAlreadyExistsError{
+		slug: slug,
 	})
 }
 
 func IsStorySlugAlreadyExistsError(err error) bool {
-	var aerr elemSlugAlreadyExistsError
+	var aerr storySlugAlreadyExistsError
 
-	return errors.As(err, &aerr) && aerr.elemName == story
+	return errors.As(err, &aerr)
+}
+
+func (e storySlugAlreadyExistsError) Error() string {
+	return fmt.Sprintf("`%s` story already exists", e.slug)
+}
+
+type scenarioSlugAlreadyExistsError struct {
+	slug string
 }
 
 func NewScenarioSlugAlreadyExistsError(slug string) error {
-	return errors.WithStack(elemSlugAlreadyExistsError{
-		elemName: scenario,
-		slug:     slug,
+	return errors.WithStack(scenarioSlugAlreadyExistsError{
+		slug: slug,
 	})
 }
 
 func IsScenarioSlugAlreadyExistsError(err error) bool {
-	var aerr elemSlugAlreadyExistsError
+	var aerr scenarioSlugAlreadyExistsError
 
-	return errors.As(err, &aerr) && aerr.elemName == scenario
+	return errors.As(err, &aerr)
+}
+
+func (e scenarioSlugAlreadyExistsError) Error() string {
+	return fmt.Sprintf("`%s` scenario already exists", e.slug)
+}
+
+type thesisSlugAlreadyExistsError struct {
+	slug string
 }
 
 func NewThesisSlugAlreadyExistsError(slug string) error {
-	return errors.WithStack(elemSlugAlreadyExistsError{
-		elemName: thesis,
-		slug:     slug,
+	return errors.WithStack(thesisSlugAlreadyExistsError{
+		slug: slug,
 	})
 }
 
 func IsThesisSlugAlreadyExistsError(err error) bool {
-	var aerr elemSlugAlreadyExistsError
+	var aerr thesisSlugAlreadyExistsError
 
-	return errors.As(err, &aerr) && aerr.elemName == thesis
+	return errors.As(err, &aerr)
 }
 
-func (e elemSlugAlreadyExistsError) Error() string {
-	return fmt.Sprintf("`%s` %s already exists", e.slug, e.elemName)
+func (e thesisSlugAlreadyExistsError) Error() string {
+	return fmt.Sprintf("`%s` thesis already exists", e.slug)
 }
 
-type emptyElemSlugError struct {
-	elemName string
-}
+var (
+	errStoryEmptySlug    = errors.New("empty story slug")
+	errScenarioEmptySlug = errors.New("empty scenario slug")
+	errThesisEmptySlug   = errors.New("empty thesis slug")
+)
 
 func NewStoryEmptySlugError() error {
-	return errors.WithStack(emptyElemSlugError{
-		elemName: story,
-	})
+	return errors.WithStack(errStoryEmptySlug)
 }
 
 func IsStoryEmptySlugError(err error) bool {
-	var eerr emptyElemSlugError
-
-	return errors.As(err, &eerr) && eerr.elemName == story
+	return errors.Is(err, errStoryEmptySlug)
 }
 
 func NewScenarioEmptySlugError() error {
-	return errors.WithStack(emptyElemSlugError{
-		elemName: "scenario",
-	})
+	return errors.WithStack(errScenarioEmptySlug)
 }
 
 func IsScenarioEmptySlugError(err error) bool {
-	var eerr emptyElemSlugError
-
-	return errors.As(err, &eerr) && eerr.elemName == scenario
+	return errors.Is(err, errScenarioEmptySlug)
 }
 
 func NewThesisEmptySlugError() error {
-	return errors.WithStack(emptyElemSlugError{
-		elemName: "thesis",
-	})
+	return errors.WithStack(errThesisEmptySlug)
 }
 
 func IsThesisEmptySlugError(err error) bool {
-	var eerr emptyElemSlugError
-
-	return errors.As(err, &eerr) && eerr.elemName == thesis
-}
-
-func (e emptyElemSlugError) Error() string {
-	return fmt.Sprintf("empty %s slug", e.elemName)
+	return errors.Is(err, errThesisEmptySlug)
 }
 
 type buildSpecificationError struct {
@@ -143,10 +128,9 @@ func (e buildSpecificationError) Error() string {
 	return fmt.Sprintf("specification: %s", e.err)
 }
 
-type buildSlugElemError struct {
-	elemName string
-	slug     string
-	err      error
+type buildStoryError struct {
+	slug string
+	err  error
 }
 
 func NewBuildStoryError(err error, slug string) error {
@@ -154,17 +138,33 @@ func NewBuildStoryError(err error, slug string) error {
 		return nil
 	}
 
-	return errors.WithStack(buildSlugElemError{
-		elemName: story,
-		slug:     slug,
-		err:      err,
+	return errors.WithStack(buildStoryError{
+		slug: slug,
+		err:  err,
 	})
 }
 
 func IsBuildStoryError(err error) bool {
-	var berr buildSlugElemError
+	var berr buildStoryError
 
-	return errors.As(err, &berr) && berr.elemName == story
+	return errors.As(err, &berr)
+}
+
+func (e buildStoryError) Cause() error {
+	return e.err
+}
+
+func (e buildStoryError) Unwrap() error {
+	return e.err
+}
+
+func (e buildStoryError) Error() string {
+	return fmt.Sprintf("story `%s`: %s", e.slug, e.err)
+}
+
+type buildScenarioError struct {
+	slug string
+	err  error
 }
 
 func NewBuildScenarioError(err error, slug string) error {
@@ -172,17 +172,33 @@ func NewBuildScenarioError(err error, slug string) error {
 		return nil
 	}
 
-	return errors.WithStack(buildSlugElemError{
-		elemName: scenario,
-		slug:     slug,
-		err:      err,
+	return errors.WithStack(buildScenarioError{
+		slug: slug,
+		err:  err,
 	})
 }
 
 func IsBuildScenarioError(err error) bool {
-	var berr buildSlugElemError
+	var berr buildScenarioError
 
-	return errors.As(err, &berr) && berr.elemName == scenario
+	return errors.As(err, &berr)
+}
+
+func (e buildScenarioError) Cause() error {
+	return e.err
+}
+
+func (e buildScenarioError) Unwrap() error {
+	return e.err
+}
+
+func (e buildScenarioError) Error() string {
+	return fmt.Sprintf("scenario `%s`: %s", e.slug, e.err)
+}
+
+type buildThesisError struct {
+	slug string
+	err  error
 }
 
 func NewBuildThesisError(err error, slug string) error {
@@ -190,140 +206,170 @@ func NewBuildThesisError(err error, slug string) error {
 		return nil
 	}
 
-	return errors.WithStack(buildSlugElemError{
-		elemName: thesis,
-		slug:     slug,
-		err:      err,
+	return errors.WithStack(buildThesisError{
+		slug: slug,
+		err:  err,
 	})
 }
 
 func IsBuildThesisError(err error) bool {
-	var berr buildSlugElemError
+	var berr buildThesisError
 
-	return errors.As(err, &berr) && berr.elemName == thesis
+	return errors.As(err, &berr)
 }
 
-func (e buildSlugElemError) Cause() error {
+func (e buildThesisError) Cause() error {
 	return e.err
 }
 
-func (e buildSlugElemError) Unwrap() error {
+func (e buildThesisError) Unwrap() error {
 	return e.err
 }
 
-func (e buildSlugElemError) Error() string {
-	return fmt.Sprintf("%s `%s`: %s", e.elemName, e.slug, e.err)
+func (e buildThesisError) Error() string {
+	return fmt.Sprintf("thesis `%s`: %s", e.slug, e.err)
 }
 
-type noElemWithSlugError struct {
-	elemName string
-	slug     string
+type noSuchStoryError struct {
+	slug string
 }
 
-func NewNoStoryError(slug string) error {
-	return errors.WithStack(noElemWithSlugError{
-		elemName: story,
-		slug:     slug,
+func NewNoSuchStoryError(slug string) error {
+	return errors.WithStack(noSuchStoryError{
+		slug: slug,
 	})
 }
 
-func IsNoStoryError(err error) bool {
-	var nerr noElemWithSlugError
+func IsNoSuchStoryError(err error) bool {
+	var nerr noSuchStoryError
 
-	return errors.As(err, &nerr) && nerr.elemName == story
+	return errors.As(err, &nerr)
 }
 
-func NewNoScenarioError(slug string) error {
-	return errors.WithStack(noElemWithSlugError{
-		elemName: scenario,
-		slug:     slug,
+func (e noSuchStoryError) Error() string {
+	return fmt.Sprintf("no such story `%s`", e.slug)
+}
+
+type noSuchScenarioError struct {
+	slug string
+}
+
+func NewNoSuchScenarioError(slug string) error {
+	return errors.WithStack(noSuchScenarioError{
+		slug: slug,
 	})
 }
 
-func IsNoScenarioError(err error) bool {
-	var nerr noElemWithSlugError
+func IsNoSuchScenarioError(err error) bool {
+	var nerr noSuchScenarioError
 
-	return errors.As(err, &nerr) && nerr.elemName == scenario
+	return errors.As(err, &nerr)
 }
 
-func NewNoThesisError(slug string) error {
-	return errors.WithStack(noElemWithSlugError{
-		elemName: thesis,
-		slug:     slug,
+func (e noSuchScenarioError) Error() string {
+	return fmt.Sprintf("no such scenario `%s`", e.slug)
+}
+
+type noSuchThesisError struct {
+	slug string
+}
+
+func NewNoSuchThesisError(slug string) error {
+	return errors.WithStack(noSuchThesisError{
+		slug: slug,
 	})
 }
 
-func IsNoThesisError(err error) bool {
-	var nerr noElemWithSlugError
+func IsNoSuchThesisError(err error) bool {
+	var nerr noSuchThesisError
 
-	return errors.As(err, &nerr) && nerr.elemName == thesis
+	return errors.As(err, &nerr)
 }
 
-func (e noElemWithSlugError) Error() string {
-	return fmt.Sprintf("no %s `%s`", e.elemName, e.slug)
+func (e noSuchThesisError) Error() string {
+	return fmt.Sprintf("no such thesis `%s`", e.slug)
 }
 
-type notAllowedElemError struct {
-	elemName string
-	unknown  string
+type notAllowedHTTPMethodError struct {
+	method string
 }
 
 func NewNotAllowedHTTPMethodError(method string) error {
-	return errors.WithStack(notAllowedElemError{
-		elemName: httpMethod,
-		unknown:  method,
+	return errors.WithStack(notAllowedHTTPMethodError{
+		method: method,
 	})
 }
 
 func IsNotAllowedHTTPMethodError(err error) bool {
-	var uerr notAllowedElemError
+	var nerr notAllowedHTTPMethodError
 
-	return errors.As(err, &uerr) && uerr.elemName == httpMethod
+	return errors.As(err, &nerr)
 }
 
-func NewNotAllowedKeywordError(kw string) error {
-	return errors.WithStack(notAllowedElemError{
-		elemName: keyword,
-		unknown:  kw,
+func (e notAllowedHTTPMethodError) Error() string {
+	return fmt.Sprintf("HTTP method `%s` not allowed", e.method)
+}
+
+type notAllowedKeywordError struct {
+	keyword string
+}
+
+func NewNotAllowedKeywordError(keyword string) error {
+	return errors.WithStack(notAllowedKeywordError{
+		keyword: keyword,
 	})
 }
 
 func IsNotAllowedKeywordError(err error) bool {
-	var uerr notAllowedElemError
+	var nerr notAllowedKeywordError
 
-	return errors.As(err, &uerr) && uerr.elemName == keyword
+	return errors.As(err, &nerr)
 }
 
-func NewNotAllowedContentTypeError(ct string) error {
-	return errors.WithStack(notAllowedElemError{
-		elemName: contentType,
-		unknown:  ct,
+func (e notAllowedKeywordError) Error() string {
+	if e.keyword == "" {
+		return "no keyword"
+	}
+
+	return fmt.Sprintf("keyword `%s` not allowed", e.keyword)
+}
+
+type notAllowedContentTypeError struct {
+	contentType string
+}
+
+func NewNotAllowedContentTypeError(contentType string) error {
+	return errors.WithStack(notAllowedContentTypeError{
+		contentType: contentType,
 	})
 }
 
 func IsNotAllowedContentTypeError(err error) bool {
-	var uerr notAllowedElemError
+	var nerr notAllowedContentTypeError
 
-	return errors.As(err, &uerr) && uerr.elemName == contentType
+	return errors.As(err, &nerr)
+}
+
+func (e notAllowedContentTypeError) Error() string {
+	return fmt.Sprintf("content type `%s` not allowed", e.contentType)
+}
+
+type notAllowedAssertionMethodError struct {
+	method string
 }
 
 func NewNotAllowedAssertionMethodError(method string) error {
-	return errors.WithStack(notAllowedElemError{
-		elemName: assertionMethod,
-		unknown:  method,
+	return errors.WithStack(notAllowedAssertionMethodError{
+		method: method,
 	})
 }
 
 func IsNotAllowedAssertionMethodError(err error) bool {
-	var uerr notAllowedElemError
+	var nerr notAllowedAssertionMethodError
 
-	return errors.As(err, &uerr) && uerr.elemName == assertionMethod
+	return errors.As(err, &nerr)
 }
 
-func (e notAllowedElemError) Error() string {
-	if e.unknown == "" {
-		return fmt.Sprintf("no %s", e.elemName)
-	}
-
-	return fmt.Sprintf("%s `%s` not allowed", e.elemName, e.unknown)
+func (e notAllowedAssertionMethodError) Error() string {
+	return fmt.Sprintf("assertion method `%s` not allowed", e.method)
 }

@@ -210,7 +210,7 @@ func TestIsBuildSpecificationError(t *testing.T) {
 		},
 		{
 			Name:      "another_error_isnt_specification_error",
-			Err:       specification.NewNoStoryError("slug"),
+			Err:       specification.NewNoSuchStoryError("slug"),
 			IsSameErr: false,
 		},
 	}
@@ -319,7 +319,7 @@ func TestIsBuildThesisError(t *testing.T) {
 	}
 }
 
-func TestIsNoStoryError(t *testing.T) {
+func TestIsNoSuchStoryError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -329,12 +329,12 @@ func TestIsNoStoryError(t *testing.T) {
 	}{
 		{
 			Name:      "no_story_error_is_no_story_error",
-			Err:       specification.NewNoStoryError("someStory"),
+			Err:       specification.NewNoSuchStoryError("someStory"),
 			IsSameErr: true,
 		},
 		{
 			Name:      "another_error_isnt_no_story_error",
-			Err:       specification.NewNoThesisError("someThesis"),
+			Err:       specification.NewNoSuchThesisError("someThesis"),
 			IsSameErr: false,
 		},
 	}
@@ -345,12 +345,12 @@ func TestIsNoStoryError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, specification.IsNoStoryError(c.Err))
+			require.Equal(t, c.IsSameErr, specification.IsNoSuchStoryError(c.Err))
 		})
 	}
 }
 
-func TestIsNoScenarioError(t *testing.T) {
+func TestIsNoSuchScenarioError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -360,12 +360,12 @@ func TestIsNoScenarioError(t *testing.T) {
 	}{
 		{
 			Name:      "no_scenario_error_is_no_scenario_error",
-			Err:       specification.NewNoScenarioError("someScenario"),
+			Err:       specification.NewNoSuchScenarioError("someScenario"),
 			IsSameErr: true,
 		},
 		{
 			Name:      "another_error_isnt_no_scenario_error",
-			Err:       specification.NewNoThesisError("someThesis"),
+			Err:       specification.NewNoSuchThesisError("someThesis"),
 			IsSameErr: false,
 		},
 	}
@@ -376,7 +376,7 @@ func TestIsNoScenarioError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, specification.IsNoScenarioError(c.Err))
+			require.Equal(t, c.IsSameErr, specification.IsNoSuchScenarioError(c.Err))
 		})
 	}
 }
@@ -391,12 +391,12 @@ func TestIsNoThesisError(t *testing.T) {
 	}{
 		{
 			Name:      "no_thesis_error_is_no_thesis_error",
-			Err:       specification.NewNoThesisError("someThesis"),
+			Err:       specification.NewNoSuchThesisError("someThesis"),
 			IsSameErr: true,
 		},
 		{
 			Name:      "another_error_isnt_no_thesis_error",
-			Err:       specification.NewNoStoryError("someStory"),
+			Err:       specification.NewNoSuchStoryError("someStory"),
 			IsSameErr: false,
 		},
 	}
@@ -407,7 +407,7 @@ func TestIsNoThesisError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, specification.IsNoThesisError(c.Err))
+			require.Equal(t, c.IsSameErr, specification.IsNoSuchThesisError(c.Err))
 		})
 	}
 }
@@ -427,7 +427,7 @@ func TestIsNotAllowedHTTPMethodError(t *testing.T) {
 		},
 		{
 			Name:      "another_error_isnt_not_allowed_http_method_error",
-			Err:       specification.NewNoThesisError("POZT"),
+			Err:       specification.NewNoSuchThesisError("POZT"),
 			IsSameErr: false,
 		},
 	}
@@ -489,7 +489,7 @@ func TestIsNotAllowedContentTypeError(t *testing.T) {
 		},
 		{
 			Name:      "another_error_isnt_not_allowed_content_type_error",
-			Err:       specification.NewNoStoryError("some/content"),
+			Err:       specification.NewNoSuchStoryError("some/content"),
 			IsSameErr: false,
 		},
 	}

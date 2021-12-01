@@ -114,7 +114,7 @@ func (s *Specification) filteredStories(slugs []string) ([]Story, error) {
 		if story, ok := s.Story(slug); ok {
 			stories = append(stories, story)
 		} else {
-			err = multierr.Append(err, NewNoStoryError(slug))
+			err = multierr.Append(err, NewNoSuchStoryError(slug))
 		}
 	}
 
@@ -174,7 +174,7 @@ func (s Story) filteredScenarios(slugs []string) ([]Scenario, error) {
 		if scenario, ok := s.Scenario(slug); ok {
 			scenarios = append(scenarios, scenario)
 		} else {
-			err = multierr.Append(err, NewNoScenarioError(slug))
+			err = multierr.Append(err, NewNoSuchScenarioError(slug))
 		}
 	}
 
@@ -222,7 +222,7 @@ func (s Scenario) filteredTheses(slugs []string) ([]Thesis, error) {
 		if thesis, ok := s.Thesis(slug); ok {
 			theses = append(theses, thesis)
 		} else {
-			err = multierr.Append(err, NewNoThesisError(slug))
+			err = multierr.Append(err, NewNoSuchThesisError(slug))
 		}
 	}
 
