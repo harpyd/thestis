@@ -48,7 +48,12 @@ type (
 	}
 
 	assertionSchema struct {
-		Method string                 `yaml:"with"`
-		Assert map[string]interface{} `yaml:"assert"`
+		Method string         `yaml:"with"`
+		Assert []assertSchema `yaml:"assert"`
+	}
+
+	assertSchema struct {
+		Actual   string      `yaml:"actual"`
+		Expected interface{} `yaml:"expected"`
 	}
 )

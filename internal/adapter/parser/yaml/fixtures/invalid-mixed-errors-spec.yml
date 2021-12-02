@@ -30,4 +30,5 @@ stories:
             assertion:
               with: JAY-Z
               assert:
-                'test.response.body.test': test
+                - actual: test.response.body.test
+                  expected: test

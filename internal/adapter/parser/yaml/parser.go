@@ -89,8 +89,8 @@ func buildAssertion(assertion assertionSchema) func(builder *specification.Asser
 	return func(builder *specification.AssertionBuilder) {
 		builder.WithMethod(assertion.Method)
 
-		for actual, expected := range assertion.Assert {
-			builder.WithAssert(actual, expected)
+		for _, assert := range assertion.Assert {
+			builder.WithAssert(assert.Actual, assert.Expected)
 		}
 	}
 }

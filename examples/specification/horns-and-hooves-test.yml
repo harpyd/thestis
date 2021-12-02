@@ -85,4 +85,5 @@ stories:
             assertion:
               with: JSONPATH
               assert:
-                'getSoldProducts.response.body.products..itemsCount': [ 103, 21 ]
+                - actual: getSoldProducts.response.body.products..itemsCount
+                  expected: [ 103, 21 ]

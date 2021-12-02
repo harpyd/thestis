@@ -23,3 +23,13 @@ stories:
                 allowedCodes:
                   - 201
                 allowedContentType: application/json
+
+          assert:
+            then: test
+            after:
+              - test
+            assertion:
+              with: JSONPATH
+              assert:
+                - actual: test.response.body.test
+                  expected: test
