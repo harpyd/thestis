@@ -43,6 +43,10 @@ func (a Assertion) Asserts() []Assert {
 	return asserts
 }
 
+func (a Assertion) IsZero() bool {
+	return a.method == EmptyAssertionMethod && len(a.asserts) == 0
+}
+
 func (a Assert) Actual() string {
 	return a.actual
 }
@@ -81,6 +85,12 @@ func (b *AssertionBuilder) Build() (Assertion, error) {
 	copy(assertion.asserts, b.asserts)
 
 	return assertion, NewBuildAssertionError(err)
+}
+
+func (b *AssertionBuilder) ErrlessBuild() Assertion {
+	a, _ := b.Build()
+
+	return a
 }
 
 func (b *AssertionBuilder) Reset() {

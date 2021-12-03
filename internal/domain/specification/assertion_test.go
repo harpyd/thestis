@@ -112,12 +112,12 @@ func TestIsBuildAssertionError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "build_assertion_error_is_build_assertion_error",
+			Name:      "build_assertion_error",
 			Err:       specification.NewBuildAssertionError(errors.New("some")),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_build_assertion_error",
+			Name:      "another_error",
 			Err:       errors.New("some"),
 			IsSameErr: false,
 		},
@@ -143,12 +143,12 @@ func TestIsNotAllowedAssertionMethodError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "not_allowed_assertion_method_error_is_not_allowed_assertion_method_error",
+			Name:      "not_allowed_assertion_method_error",
 			Err:       specification.NewNotAllowedAssertionMethodError("jzonpad"),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_not_allowed_assertion_method_error",
+			Name:      "another_error",
 			Err:       specification.NewNotAllowedKeywordError("jzonpad"),
 			IsSameErr: false,
 		},

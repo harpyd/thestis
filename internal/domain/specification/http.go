@@ -79,6 +79,10 @@ func (h HTTP) Response() HTTPResponse {
 	return h.response
 }
 
+func (h HTTP) IsZero() bool {
+	return h.Response().IsZero() && h.Request().IsZero()
+}
+
 func (r HTTPRequest) Method() HTTPMethod {
 	return r.method
 }
@@ -95,12 +99,21 @@ func (r HTTPRequest) Body() map[string]interface{} {
 	return deepcopy.StringInterfaceMap(r.body)
 }
 
+func (r HTTPRequest) IsZero() bool {
+	return r.method == EmptyHTTPMethod && r.url == "" &&
+		r.contentType == EmptyContentType && len(r.body) == 0
+}
+
 func (r HTTPResponse) AllowedCodes() []int {
 	return deepcopy.IntSlice(r.allowedCodes)
 }
 
 func (r HTTPResponse) AllowedContentType() ContentType {
 	return r.allowedContentType
+}
+
+func (r HTTPResponse) IsZero() bool {
+	return r.allowedContentType == EmptyContentType && len(r.allowedCodes) == 0
 }
 
 func newContentTypeFromString(contentType string) (ContentType, error) {
@@ -162,6 +175,12 @@ func (b *HTTPBuilder) Build() (HTTP, error) {
 	}, NewBuildHTTPError(multierr.Combine(requestErr, responseErr))
 }
 
+func (b *HTTPBuilder) ErrlessBuild() HTTP {
+	h, _ := b.Build()
+
+	return h
+}
+
 func (b *HTTPBuilder) Reset() {
 	b.requestBuilder.Reset()
 	b.responseBuilder.Reset()
@@ -195,6 +214,12 @@ func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
 		contentType: ctype,
 		body:        deepcopy.StringInterfaceMap(b.body),
 	}, NewBuildHTTPRequestError(multierr.Combine(methodErr, ctypeErr))
+}
+
+func (b *HTTPRequestBuilder) ErrlessBuild() HTTPRequest {
+	r, _ := b.Build()
+
+	return r
 }
 
 func (b *HTTPRequestBuilder) Reset() {
@@ -239,6 +264,12 @@ func (b *HTTPResponseBuilder) Build() (HTTPResponse, error) {
 		allowedCodes:       deepcopy.IntSlice(b.allowedCodes),
 		allowedContentType: allowedContentType,
 	}, NewBuildHTTPResponseError(err)
+}
+
+func (b *HTTPResponseBuilder) ErrlessBuild() HTTPResponse {
+	r, _ := b.Build()
+
+	return r
 }
 
 func (b *HTTPResponseBuilder) Reset() {

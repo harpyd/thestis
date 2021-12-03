@@ -101,6 +101,11 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 	http, httpErr := b.httpBuilder.Build()
 	assertion, assertionErr := b.assertionBuilder.Build()
 
+	err := multierr.Combine(httpErr, assertionErr)
+	if err == nil && http.IsZero() && assertion.IsZero() {
+		err = NewNoThesisHTTPOrAssertionError()
+	}
+
 	thsis := Thesis{
 		slug:  slug,
 		after: make([]string, len(b.after)),
@@ -114,11 +119,13 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 
 	copy(thsis.after, b.after)
 
-	return thsis, NewBuildThesisError(multierr.Combine(
-		keywordErr,
-		httpErr,
-		assertionErr,
-	), slug)
+	return thsis, NewBuildThesisError(multierr.Combine(keywordErr, err), slug)
+}
+
+func (b *ThesisBuilder) ErrlessBuild(slug string) Thesis {
+	t, _ := b.Build(slug)
+
+	return t
 }
 
 func (b *ThesisBuilder) Reset() {
@@ -191,16 +198,6 @@ func (e thesisSlugAlreadyExistsError) Error() string {
 	return fmt.Sprintf("`%s` thesis already exists", e.slug)
 }
 
-var errThesisEmptySlug = errors.New("empty thesis slug")
-
-func NewThesisEmptySlugError() error {
-	return errThesisEmptySlug
-}
-
-func IsThesisEmptySlugError(err error) bool {
-	return errors.Is(err, errThesisEmptySlug)
-}
-
 func NewBuildThesisError(err error, slug string) error {
 	if err == nil {
 		return nil
@@ -264,4 +261,25 @@ func (e notAllowedKeywordError) Error() string {
 	}
 
 	return fmt.Sprintf("keyword `%s` not allowed", e.keyword)
+}
+
+var (
+	errThesisEmptySlug         = errors.New("empty thesis slug")
+	errNoThesisHTTPOrAssertion = errors.New("no HTTP or assertion")
+)
+
+func NewThesisEmptySlugError() error {
+	return errThesisEmptySlug
+}
+
+func IsThesisEmptySlugError(err error) bool {
+	return errors.Is(err, errThesisEmptySlug)
+}
+
+func NewNoThesisHTTPOrAssertionError() error {
+	return errNoThesisHTTPOrAssertion
+}
+
+func IsNoThesisHTTPOrAssertionError(err error) bool {
+	return errors.Is(err, errNoThesisHTTPOrAssertion)
 }

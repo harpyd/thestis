@@ -106,6 +106,10 @@ func (b *StoryBuilder) Build(slug string) (Story, error) {
 		scenarios:   make(map[string]Scenario),
 	}
 
+	if len(b.scenarioFactories) == 0 {
+		return stry, NewBuildStoryError(NewNoStoryScenariosError(), slug)
+	}
+
 	var err error
 
 	for _, scnFactory := range b.scenarioFactories {
@@ -122,6 +126,12 @@ func (b *StoryBuilder) Build(slug string) (Story, error) {
 	}
 
 	return stry, NewBuildStoryError(err, slug)
+}
+
+func (b *StoryBuilder) ErrlessBuild(slug string) Story {
+	s, _ := b.Build(slug)
+
+	return s
 }
 
 func (b *StoryBuilder) Reset() {
@@ -198,16 +208,6 @@ func (e storySlugAlreadyExistsError) Error() string {
 	return fmt.Sprintf("`%s` story already exists", e.slug)
 }
 
-var errStoryEmptySlug = errors.New("empty story slug")
-
-func NewStoryEmptySlugError() error {
-	return errStoryEmptySlug
-}
-
-func IsStoryEmptySlugError(err error) bool {
-	return errors.Is(err, errStoryEmptySlug)
-}
-
 func NewBuildStoryError(err error, slug string) error {
 	if err == nil {
 		return nil
@@ -251,4 +251,25 @@ func IsNoSuchStoryError(err error) bool {
 
 func (e noSuchStoryError) Error() string {
 	return fmt.Sprintf("no such story `%s`", e.slug)
+}
+
+var (
+	errStoryEmptySlug   = errors.New("empty story slug")
+	errNoStoryScenarios = errors.New("no scenarios")
+)
+
+func NewStoryEmptySlugError() error {
+	return errStoryEmptySlug
+}
+
+func IsStoryEmptySlugError(err error) bool {
+	return errors.Is(err, errStoryEmptySlug)
+}
+
+func NewNoStoryScenariosError() error {
+	return errNoStoryScenarios
+}
+
+func IsNoStoryScenariosError(err error) bool {
+	return errors.Is(err, errNoStoryScenarios)
 }

@@ -18,9 +18,8 @@ func TestThesisBuilder_WithAfter(t *testing.T) {
 	builder.WithAfter("anotherOneThesis")
 	builder.WithAfter("anotherTwoThesis")
 
-	thesis, err := builder.Build("thesis")
+	thesis := builder.ErrlessBuild("thesis")
 
-	require.NoError(t, err)
 	require.ElementsMatch(t, []string{"anotherOneThesis", "anotherTwoThesis"}, thesis.After())
 }
 
@@ -53,15 +52,14 @@ func TestThesisBuilder_Build_slug(t *testing.T) {
 			builder := specification.NewThesisBuilder()
 			builder.WithStatement("when", "do something")
 
-			thesis, err := builder.Build(c.Slug)
-
 			if c.ShouldBeErr {
+				_, err := builder.Build(c.Slug)
 				require.True(t, specification.IsThesisEmptySlugError(err))
 
 				return
 			}
 
-			require.NoError(t, err)
+			thesis := builder.ErrlessBuild(c.Slug)
 			require.Equal(t, c.Slug, thesis.Slug())
 		})
 	}
@@ -111,15 +109,14 @@ func TestThesisBuilder_WithStatement(t *testing.T) {
 			builder := specification.NewThesisBuilder()
 			builder.WithStatement(c.Keyword, c.Behavior)
 
-			thesis, err := builder.Build("sellHooves")
-
 			if c.ShouldBeErr {
+				_, err := builder.Build("sellHooves")
 				require.True(t, specification.IsNotAllowedKeywordError(err))
 
 				return
 			}
 
-			require.NoError(t, err)
+			thesis := builder.ErrlessBuild("sellHooves")
 			require.Equal(t, strings.ToLower(c.Keyword), thesis.Statement().Keyword().String())
 			require.Equal(t, c.Behavior, thesis.Statement().Behavior())
 		})
@@ -189,12 +186,12 @@ func TestIsThesisSlugAlreadyExistsError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "thesis_slug_already_exists_error_is_thesis_slug_already_exists_error",
+			Name:      "thesis_slug_already_exists_error",
 			Err:       specification.NewThesisSlugAlreadyExistsError("thesis"),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_thesis_slug_already_exists_error",
+			Name:      "another_error",
 			Err:       errors.New("thesis"),
 			IsSameErr: false,
 		},
@@ -220,12 +217,12 @@ func TestIsThesisEmptySlugError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "thesis_empty_slug_error_is_empty_slug_error",
+			Name:      "thesis_empty_slug_error",
 			Err:       specification.NewThesisEmptySlugError(),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_thesis_empty_slug_error",
+			Name:      "another_error",
 			Err:       errors.New("wrong wrong"),
 			IsSameErr: false,
 		},
@@ -251,12 +248,12 @@ func TestIsBuildThesisError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "build_thesis_error_is_build_thesis_error",
+			Name:      "build_thesis_error",
 			Err:       specification.NewBuildThesisError(errors.New("pew"), "thesis"),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_build_thesis_error",
+			Name:      "another_error",
 			Err:       errors.New("pew"),
 			IsSameErr: false,
 		},
@@ -282,12 +279,12 @@ func TestIsNoSuchThesisError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "no_thesis_error_is_no_thesis_error",
+			Name:      "no_thesis_error",
 			Err:       specification.NewNoSuchThesisError("someThesis"),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_no_thesis_error",
+			Name:      "another_error",
 			Err:       specification.NewNoSuchStoryError("someStory"),
 			IsSameErr: false,
 		},
@@ -313,12 +310,12 @@ func TestIsNotAllowedKeywordError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "not_allowed_keyword_error_is_not_allowed_keyword_error",
+			Name:      "not_allowed_keyword_error",
 			Err:       specification.NewNotAllowedKeywordError("zen"),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_not_allowed_keyword_error",
+			Name:      "another_error",
 			Err:       specification.NewNotAllowedHTTPMethodError("zen"),
 			IsSameErr: false,
 		},
@@ -331,6 +328,37 @@ func TestIsNotAllowedKeywordError(t *testing.T) {
 			t.Parallel()
 
 			require.Equal(t, c.IsSameErr, specification.IsNotAllowedKeywordError(c.Err))
+		})
+	}
+}
+
+func TestIsNoThesisHTTPOrAssertionError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "no_thesis_http_or_assertion_error",
+			Err:       specification.NewNoThesisHTTPOrAssertionError(),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error",
+			Err:       errors.Wrap(specification.NewNoStoryScenariosError(), "wrap"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, specification.IsNoThesisHTTPOrAssertionError(c.Err))
 		})
 	}
 }

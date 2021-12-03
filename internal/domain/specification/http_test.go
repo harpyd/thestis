@@ -307,12 +307,12 @@ func TestIsBuildHTTPError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "build_http_error_is_build_http_error",
+			Name:      "build_http_error",
 			Err:       specification.NewBuildHTTPError(errors.New("wrong")),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_build_http_error",
+			Name:      "another_error",
 			Err:       errors.New("wrong"),
 			IsSameErr: false,
 		},
@@ -338,12 +338,12 @@ func TestIsBuildHTTPRequestError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "build_http_request_error_is_build_http_request_error",
+			Name:      "build_http_request_error",
 			Err:       specification.NewBuildHTTPRequestError(errors.New("wrong")),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_build_http_request_error",
+			Name:      "another_error",
 			Err:       errors.New("wrong"),
 			IsSameErr: false,
 		},
@@ -369,12 +369,12 @@ func TestIsBuildHTTPResponseError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "build_http_response_error_is_build_http_response_error",
+			Name:      "build_http_response_error",
 			Err:       specification.NewBuildHTTPResponseError(errors.New("something")),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_build_http_response_error",
+			Name:      "another_error",
 			Err:       errors.New("something"),
 			IsSameErr: false,
 		},
@@ -400,12 +400,12 @@ func TestIsNotAllowedContentTypeError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "not_allowed_content_type_error_is_not_allowed_content_type_error",
+			Name:      "not_allowed_content_type_error",
 			Err:       specification.NewNotAllowedContentTypeError("some/content"),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_not_allowed_content_type_error",
+			Name:      "another_error",
 			Err:       specification.NewNoSuchStoryError("some/content"),
 			IsSameErr: false,
 		},
@@ -431,12 +431,12 @@ func TestIsNotAllowedHTTPMethodError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "not_allowed_http_method_error_is_not_allowed_http_method_error",
+			Name:      "not_allowed_http_method_error",
 			Err:       specification.NewNotAllowedHTTPMethodError("POZT"),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_not_allowed_http_method_error",
+			Name:      "another_error",
 			Err:       specification.NewNoSuchThesisError("POZT"),
 			IsSameErr: false,
 		},

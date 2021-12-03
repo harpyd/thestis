@@ -85,6 +85,10 @@ func (b *ScenarioBuilder) Build(slug string) (Scenario, error) {
 		theses:      make(map[string]Thesis),
 	}
 
+	if len(b.thesisFactories) == 0 {
+		return scn, NewBuildScenarioError(NewNoScenarioThesesError(), slug)
+	}
+
 	var err error
 
 	for _, thsisFactory := range b.thesisFactories {
@@ -101,6 +105,12 @@ func (b *ScenarioBuilder) Build(slug string) (Scenario, error) {
 	}
 
 	return scn, NewBuildScenarioError(err, slug)
+}
+
+func (b *ScenarioBuilder) ErrlessBuild(slug string) Scenario {
+	s, _ := b.Build(slug)
+
+	return s
 }
 
 func (b *ScenarioBuilder) Reset() {
@@ -156,16 +166,6 @@ func (e scenarioSlugAlreadyExistsError) Error() string {
 	return fmt.Sprintf("`%s` scenario already exists", e.slug)
 }
 
-var errScenarioEmptySlug = errors.New("empty scenario slug")
-
-func NewScenarioEmptySlugError() error {
-	return errScenarioEmptySlug
-}
-
-func IsScenarioEmptySlugError(err error) bool {
-	return errors.Is(err, errScenarioEmptySlug)
-}
-
 func NewBuildScenarioError(err error, slug string) error {
 	if err == nil {
 		return nil
@@ -209,4 +209,25 @@ func IsNoSuchScenarioError(err error) bool {
 
 func (e noSuchScenarioError) Error() string {
 	return fmt.Sprintf("no such scenario `%s`", e.slug)
+}
+
+var (
+	errScenarioEmptySlug = errors.New("empty scenario slug")
+	errNoScenarioTheses  = errors.New("no theses")
+)
+
+func NewScenarioEmptySlugError() error {
+	return errScenarioEmptySlug
+}
+
+func IsScenarioEmptySlugError(err error) bool {
+	return errors.Is(err, errScenarioEmptySlug)
+}
+
+func NewNoScenarioThesesError() error {
+	return errNoScenarioTheses
+}
+
+func IsNoScenarioThesesError(err error) bool {
+	return errors.Is(err, errNoScenarioTheses)
 }

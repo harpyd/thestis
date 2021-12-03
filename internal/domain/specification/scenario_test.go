@@ -37,15 +37,15 @@ func TestScenarioBuilder_Build_slug(t *testing.T) {
 
 			builder := specification.NewScenarioBuilder()
 
-			scenario, err := builder.Build(c.Slug)
-
 			if c.ShouldBeErr {
+				_, err := builder.Build(c.Slug)
 				require.True(t, specification.IsScenarioEmptySlugError(err))
 
 				return
 			}
 
-			require.NoError(t, err)
+			scenario := builder.ErrlessBuild(c.Slug)
+
 			require.Equal(t, c.Slug, scenario.Slug())
 		})
 	}
@@ -57,9 +57,8 @@ func TestScenarioBuilder_WithDescription(t *testing.T) {
 	builder := specification.NewScenarioBuilder()
 	builder.WithDescription("description")
 
-	scenario, err := builder.Build("someScenario")
+	scenario := builder.ErrlessBuild("someScenario")
 
-	require.NoError(t, err)
 	require.Equal(t, "description", scenario.Description())
 }
 
@@ -88,11 +87,9 @@ func TestScenarioBuilder_WithThesis(t *testing.T) {
 		})
 	})
 
-	scenario, err := builder.Build("someScenario")
+	scenario := builder.ErrlessBuild("someScenario")
 
-	require.NoError(t, err)
-
-	expectedGetBeerThesis, err := specification.NewThesisBuilder().
+	expectedGetBeerThesis := specification.NewThesisBuilder().
 		WithStatement("when", "get beer").
 		WithHTTP(func(b *specification.HTTPBuilder) {
 			b.WithRequest(func(b *specification.HTTPRequestBuilder) {
@@ -104,21 +101,19 @@ func TestScenarioBuilder_WithThesis(t *testing.T) {
 				b.WithAllowedContentType("application/json")
 			})
 		}).
-		Build("getBeer")
-	require.NoError(t, err)
+		ErrlessBuild("getBeer")
 
 	actualGetBeerThesis, ok := scenario.Thesis("getBeer")
 	require.True(t, ok)
 	require.Equal(t, expectedGetBeerThesis, actualGetBeerThesis)
 
-	expectedCheckBeerThesis, err := specification.NewThesisBuilder().
+	expectedCheckBeerThesis := specification.NewThesisBuilder().
 		WithStatement("then", "check beer").
 		WithAssertion(func(b *specification.AssertionBuilder) {
 			b.WithMethod("jsonpath")
 			b.WithAssert("getSomeBody.response.body.product", "beer")
 		}).
-		Build("checkBeer")
-	require.NoError(t, err)
+		ErrlessBuild("checkBeer")
 
 	actualCheckBeerThesis, ok := scenario.Thesis("checkBeer")
 	require.True(t, ok)
@@ -146,12 +141,12 @@ func TestIsScenarioSlugAlreadyExistsError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "scenario_slug_already_exists_error_is_scenario_slug_already_exists_error",
+			Name:      "scenario_slug_already_exists_error",
 			Err:       specification.NewScenarioSlugAlreadyExistsError("scenario"),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_scenario_slug_already_exists_error",
+			Name:      "another_error",
 			Err:       specification.NewThesisSlugAlreadyExistsError("thesis"),
 			IsSameErr: false,
 		},
@@ -177,12 +172,12 @@ func TestIsScenarioEmptySlugError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "scenario_empty_slug_error_is_scenario_empty_slug_error",
+			Name:      "scenario_empty_slug_error",
 			Err:       specification.NewScenarioEmptySlugError(),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_scenario_empty_slug_error",
+			Name:      "another_error",
 			Err:       errors.New("error"),
 			IsSameErr: false,
 		},
@@ -208,12 +203,12 @@ func TestIsBuildScenarioError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "build_scenario_error_is_build_scenario_error",
+			Name:      "build_scenario_error",
 			Err:       specification.NewBuildScenarioError(errors.New("wrong"), "scenario"),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_build_scenario_error",
+			Name:      "another_error",
 			Err:       errors.New("wrong"),
 			IsSameErr: false,
 		},
@@ -239,12 +234,12 @@ func TestIsNoSuchScenarioError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "no_scenario_error_is_no_scenario_error",
+			Name:      "no_scenario_error",
 			Err:       specification.NewNoSuchScenarioError("someScenario"),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error_isnt_no_scenario_error",
+			Name:      "another_error",
 			Err:       specification.NewNoSuchThesisError("someThesis"),
 			IsSameErr: false,
 		},
@@ -257,6 +252,37 @@ func TestIsNoSuchScenarioError(t *testing.T) {
 			t.Parallel()
 
 			require.Equal(t, c.IsSameErr, specification.IsNoSuchScenarioError(c.Err))
+		})
+	}
+}
+
+func TestIsNoScenarioThesesError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "no_scenario_theses_error",
+			Err:       specification.NewNoScenarioThesesError(),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_err",
+			Err:       errors.New("another"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, specification.IsNoScenarioThesesError(c.Err))
 		})
 	}
 }

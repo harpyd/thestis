@@ -100,6 +100,10 @@ func (b *Builder) Build() (*Specification, error) {
 		stories:     make(map[string]Story, len(b.storyFactories)),
 	}
 
+	if len(b.storyFactories) == 0 {
+		return spec, NewBuildSpecificationError(NewNoSpecificationStoriesError())
+	}
+
 	var err error
 
 	for _, stryFactory := range b.storyFactories {
@@ -116,6 +120,12 @@ func (b *Builder) Build() (*Specification, error) {
 	}
 
 	return spec, NewBuildSpecificationError(err)
+}
+
+func (b *Builder) ErrlessBuild() *Specification {
+	s, _ := b.Build()
+
+	return s
 }
 
 func (b *Builder) Reset() {
@@ -184,4 +194,14 @@ func (e buildSpecificationError) Unwrap() error {
 
 func (e buildSpecificationError) Error() string {
 	return fmt.Sprintf("specification: %s", e.err)
+}
+
+var errNoSpecificationStories = errors.New("no stories")
+
+func NewNoSpecificationStoriesError() error {
+	return errNoSpecificationStories
+}
+
+func IsNoSpecificationStoriesError(err error) bool {
+	return errors.Is(err, errNoSpecificationStories)
 }
