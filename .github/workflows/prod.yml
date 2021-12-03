@@ -1,0 +1,25 @@
+name: Prod CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tests:
+    name: Test code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Unit tests
+        run: make test-unit
+
+      - name: Integration tests
+        run: make test-integration
