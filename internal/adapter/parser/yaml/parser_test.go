@@ -11,13 +11,15 @@ import (
 )
 
 const (
-	fixturesPath                   = "./fixtures"
-	validSpecPath                  = fixturesPath + "/valid-spec.yml"
-	invalidAssertionMethodSpecPath = fixturesPath + "/invalid-assertion-method-spec.yml"
-	invalidHTTPMethodSpecPath      = fixturesPath + "/invalid-http-method-spec.yml"
-	invalidNoKeywordSpecPath       = fixturesPath + "/invalid-no-keyword-spec.yml"
-	invalidContentTypeSpecPath     = fixturesPath + "/invalid-content-type-spec.yml"
-	invalidMixedErrorsSpecPath     = fixturesPath + "/invalid-mixed-errors-spec.yml"
+	fixturesPath                     = "./fixtures"
+	validSpecPath                    = fixturesPath + "/valid-spec.yml"
+	invalidAssertionMethodSpecPath   = fixturesPath + "/invalid-assertion-method-spec.yml"
+	invalidHTTPMethodSpecPath        = fixturesPath + "/invalid-http-method-spec.yml"
+	invalidNoKeywordSpecPath         = fixturesPath + "/invalid-no-keyword-spec.yml"
+	invalidContentTypeSpecPath       = fixturesPath + "/invalid-content-type-spec.yml"
+	invalidMixedErrorsSpecPath       = fixturesPath + "/invalid-mixed-errors-spec.yml"
+	invalidNoHTTPOrAssertionSpecPath = fixturesPath + "/invalid-no-http-or-assertion-spec.yml"
+	invalidNoStoriesSpecPath         = fixturesPath + "/invalid-no-stories-spec.yml"
 )
 
 func TestSpecificationParserService_ParseSpecification(t *testing.T) {
@@ -72,6 +74,18 @@ func TestSpecificationParserService_ParseSpecification(t *testing.T) {
 					isComplexHTTPRequestMethodError(err) &&
 					isComplexHTTPResponseContentTypeError(err)
 			},
+		},
+		{
+			Name:        "invalid_no_http_or_assertion_specification",
+			SpecPath:    invalidNoHTTPOrAssertionSpecPath,
+			ShouldBeErr: true,
+			IsErr:       isComplexNoThesisHTTPOrAssertionError,
+		},
+		{
+			Name:        "invalid_no_stories_specification",
+			SpecPath:    invalidNoStoriesSpecPath,
+			ShouldBeErr: true,
+			IsErr:       isComplexNoStoriesError,
 		},
 	}
 
@@ -134,4 +148,17 @@ func isComplexHTTPResponseContentTypeError(err error) bool {
 		specification.IsBuildHTTPError(err) &&
 		specification.IsBuildHTTPResponseError(err) &&
 		specification.IsNotAllowedContentTypeError(err)
+}
+
+func isComplexNoThesisHTTPOrAssertionError(err error) bool {
+	return specification.IsBuildSpecificationError(err) &&
+		specification.IsBuildStoryError(err) &&
+		specification.IsBuildScenarioError(err) &&
+		specification.IsBuildThesisError(err) &&
+		specification.IsNoThesisHTTPOrAssertionError(err)
+}
+
+func isComplexNoStoriesError(err error) bool {
+	return specification.IsBuildSpecificationError(err) &&
+		specification.IsNoSpecificationStoriesError(err)
 }
