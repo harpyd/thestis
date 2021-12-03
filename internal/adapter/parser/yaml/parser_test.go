@@ -20,6 +20,8 @@ const (
 	invalidMixedErrorsSpecPath       = fixturesPath + "/invalid-mixed-errors-spec.yml"
 	invalidNoHTTPOrAssertionSpecPath = fixturesPath + "/invalid-no-http-or-assertion-spec.yml"
 	invalidNoStoriesSpecPath         = fixturesPath + "/invalid-no-stories-spec.yml"
+	invalidNoScenariosSpecPath       = fixturesPath + "/invalid-no-scenarios-spec.yml"
+	invalidNoThesesSpecPath          = fixturesPath + "/invalid-no-theses-spec.yml"
 )
 
 func TestSpecificationParserService_ParseSpecification(t *testing.T) {
@@ -86,6 +88,18 @@ func TestSpecificationParserService_ParseSpecification(t *testing.T) {
 			SpecPath:    invalidNoStoriesSpecPath,
 			ShouldBeErr: true,
 			IsErr:       isComplexNoStoriesError,
+		},
+		{
+			Name:        "invalid_no_scenarios_specification",
+			SpecPath:    invalidNoScenariosSpecPath,
+			ShouldBeErr: true,
+			IsErr:       isComplexNoScenariosError,
+		},
+		{
+			Name:        "invalid_no_theses_specification",
+			SpecPath:    invalidNoThesesSpecPath,
+			ShouldBeErr: true,
+			IsErr:       isComplexNoThesesError,
 		},
 	}
 
@@ -161,4 +175,17 @@ func isComplexNoThesisHTTPOrAssertionError(err error) bool {
 func isComplexNoStoriesError(err error) bool {
 	return specification.IsBuildSpecificationError(err) &&
 		specification.IsNoSpecificationStoriesError(err)
+}
+
+func isComplexNoScenariosError(err error) bool {
+	return specification.IsBuildSpecificationError(err) &&
+		specification.IsBuildStoryError(err) &&
+		specification.IsNoStoryScenariosError(err)
+}
+
+func isComplexNoThesesError(err error) bool {
+	return specification.IsBuildSpecificationError(err) &&
+		specification.IsBuildStoryError(err) &&
+		specification.IsBuildScenarioError(err) &&
+		specification.IsNoScenarioThesesError(err)
 }
