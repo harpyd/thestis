@@ -9,6 +9,16 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+func TestScenarioBuilder_Build_no_theses(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewScenarioBuilder()
+
+	_, err := builder.Build("scenario")
+
+	require.True(t, specification.IsNoScenarioThesesError(err))
+}
+
 func TestScenarioBuilder_Build_slug(t *testing.T) {
 	t.Parallel()
 
