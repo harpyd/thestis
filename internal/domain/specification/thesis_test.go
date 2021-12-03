@@ -10,6 +10,16 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+func TestThesisBuilder_Build_no_http_or_assertion(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewThesisBuilder()
+
+	_, err := builder.Build("thesis")
+
+	require.True(t, specification.IsNoThesisHTTPOrAssertionError(err))
+}
+
 func TestThesisBuilder_WithAfter(t *testing.T) {
 	t.Parallel()
 

@@ -9,6 +9,16 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+func TestBuilder_Build_no_stories(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewBuilder()
+
+	_, err := builder.Build()
+
+	require.True(t, specification.IsNoSpecificationStoriesError(err))
+}
+
 func TestBuilder_WithAuthor(t *testing.T) {
 	t.Parallel()
 
