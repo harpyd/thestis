@@ -223,6 +223,14 @@ func (e buildThesisError) Unwrap() error {
 	return e.err
 }
 
+func (e buildThesisError) NestedErrors() []error {
+	return multierr.Errors(e.err)
+}
+
+func (e buildThesisError) CommonError() string {
+	return fmt.Sprintf("thesis `%s`", e.slug)
+}
+
 func (e buildThesisError) Error() string {
 	return fmt.Sprintf("thesis `%s`: %s", e.slug, e.err)
 }

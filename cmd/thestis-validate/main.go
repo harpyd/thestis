@@ -2,30 +2,19 @@ package main
 
 import (
 	"flag"
-	"log"
-	"os"
 
-	"github.com/harpyd/thestis/internal/adapter/parser/yaml"
+	"github.com/harpyd/thestis/internal/validate"
 )
 
-const exampleSpecification = "./examples/specification/horns-and-hooves-test.yml"
+const exampleSpecPath = "./examples/specification/horns-and-hooves-test.yml"
 
 func main() {
 	flag.Parse()
 
-	specFilename := flag.Arg(0)
-	if specFilename == "" {
-		specFilename = exampleSpecification
+	specPath := flag.Arg(0)
+	if specPath == "" {
+		specPath = exampleSpecPath
 	}
 
-	specFile, err := os.Open(specFilename)
-	if err != nil {
-		log.Fatalf("%s: %s", specFilename, err)
-	}
-
-	parser := yaml.NewSpecificationParserService()
-
-	if _, err := parser.ParseSpecification(specFile); err != nil {
-		log.Fatalf("%s: %s", specFile.Name(), err)
-	}
+	validate.Specification(specPath)
 }

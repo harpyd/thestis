@@ -191,6 +191,14 @@ func (e buildScenarioError) Unwrap() error {
 	return e.err
 }
 
+func (e buildScenarioError) NestedErrors() []error {
+	return multierr.Errors(e.err)
+}
+
+func (e buildScenarioError) CommonError() string {
+	return fmt.Sprintf("scenario `%s`", e.slug)
+}
+
 func (e buildScenarioError) Error() string {
 	return fmt.Sprintf("scenario `%s`: %s", e.slug, e.err)
 }

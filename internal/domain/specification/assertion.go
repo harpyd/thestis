@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"go.uber.org/multierr"
 )
 
 type (
@@ -145,6 +146,14 @@ func (e buildAssertionError) Cause() error {
 
 func (e buildAssertionError) Unwrap() error {
 	return e.err
+}
+
+func (e buildAssertionError) NestedErrors() []error {
+	return multierr.Errors(e.err)
+}
+
+func (e buildAssertionError) CommonError() string {
+	return "assertion"
 }
 
 func (e buildAssertionError) Error() string {

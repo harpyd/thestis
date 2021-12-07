@@ -233,6 +233,14 @@ func (e buildStoryError) Unwrap() error {
 	return e.err
 }
 
+func (e buildStoryError) NestedErrors() []error {
+	return multierr.Errors(e.err)
+}
+
+func (e buildStoryError) CommonError() string {
+	return fmt.Sprintf("story `%s`", e.slug)
+}
+
 func (e buildStoryError) Error() string {
 	return fmt.Sprintf("story `%s`: %s", e.slug, e.err)
 }
