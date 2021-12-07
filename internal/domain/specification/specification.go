@@ -192,6 +192,14 @@ func (e buildSpecificationError) Unwrap() error {
 	return e.err
 }
 
+func (e buildSpecificationError) NestedErrors() []error {
+	return multierr.Errors(e.err)
+}
+
+func (e buildSpecificationError) CommonError() string {
+	return "specification"
+}
+
 func (e buildSpecificationError) Error() string {
 	return fmt.Sprintf("specification: %s", e.err)
 }

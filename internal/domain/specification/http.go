@@ -335,6 +335,14 @@ func (e buildHTTPError) Unwrap() error {
 	return e.err
 }
 
+func (e buildHTTPError) NestedErrors() []error {
+	return multierr.Errors(e.err)
+}
+
+func (e buildHTTPError) CommonError() string {
+	return "HTTP"
+}
+
 func (e buildHTTPError) Error() string {
 	return fmt.Sprintf("HTTP: %s", e.err)
 }
@@ -363,6 +371,14 @@ func (e buildHTTPRequestError) Unwrap() error {
 	return e.err
 }
 
+func (e buildHTTPRequestError) NestedErrors() []error {
+	return multierr.Errors(e.err)
+}
+
+func (e buildHTTPRequestError) CommonError() string {
+	return "request"
+}
+
 func (e buildHTTPRequestError) Error() string {
 	return fmt.Sprintf("request: %s", e.err)
 }
@@ -389,6 +405,14 @@ func (e buildHTTPResponseError) Cause() error {
 
 func (e buildHTTPResponseError) Unwrap() error {
 	return e.err
+}
+
+func (e buildHTTPResponseError) NestedErrors() []error {
+	return multierr.Errors(e.err)
+}
+
+func (e buildHTTPResponseError) CommonError() string {
+	return "response"
 }
 
 func (e buildHTTPResponseError) Error() string {
