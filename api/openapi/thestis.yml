@@ -7,26 +7,25 @@ servers:
   - url: 'https://{hostname}/v1'
 
 paths:
-  /specifications:
+  /test-campaigns:
     post:
       tags:
-        - specifications
-        - metadata
-      operationId: loadSpecificationMetadata
-      summary: Creates test specification metadata.
+        - test-campaign
+      operationId: createTestCampaign
+      summary: Creates test campaign for testing services logic using BDD specification style.
       requestBody:
-        description: Specification metadata to create.
+        description: Test campaign data to create.
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoadSpecificationMetadataRequest'
+              $ref: '#/components/schemas/CreateTestCampaignRequest'
       responses:
         201:
-          description: Specification metadata is created.
+          description: Test campaign is created.
           headers:
-            Content-Location:
-              description: Created specification metadata url.
+            Location:
+              description: Created test campaign URI.
               schema:
                 type: string
         400:
@@ -37,77 +36,97 @@ paths:
                 $ref: '#/components/schemas/Error'
     get:
       tags:
-        - specifications
-        - metadata
-      operationId: getSpecificationMetadatas
-      summary: Returns test specification matadatas.
+        - test-campaign
+      operationId: getTestCampaigns
+      summary: Returns test campaigns.
       responses:
         200:
-          description: Found previously created specification metadatas.
+          description: Found previously created test campaigns.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CommonSpecificationMetadataResponse'
+                $ref: '#/components/schemas/TestCampaignResponse'
 
-  /specifications/{specificationID}:
+  /test-campaigns/{testCampaignId}:
     get:
       tags:
-        - specifications
-        - metadata
-      operationId: getSpecificationMetadata
-      summary: Returns test specification metadata.
+        - test-campaign
+      operationId: getTestCampaign
+      summary: Returns test campaign with such ID.
       parameters:
         - in: path
-          name: specificationID
+          name: testCampaignId
           schema:
             type: string
             format: uuid
           required: true
-          description: Specification metadata id.
+          description: Test campaign ID to return.
       responses:
         200:
-          description: Previously created specification metadata.
+          description: Found previously created test campaigns.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SpecificationMetadataResponse'
+                $ref: '#/components/schemas/TestCampaignResponse'
         404:
-          description: Specification metadata not found.
+          description: Test campaign with such ID not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - test-campaign
+      operationId: removeTestCampaign
+      summary: Removes test campaign with such ID.
+      parameters:
+        - in: path
+          name: testCampaignId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: Test campaign ID to remove.
+      responses:
+        204:
+          description: Test campaign successfully removed.
+        404:
+          description: Test campaign with such ID not found.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /specifications/{specificationID}/source:
+  /test-campaigns/{testCampaignId}/specification:
     post:
       tags:
-        - specifications
-        - source
-      operationId: pushSpecificationSource
-      summary: Pushes declarative test specification source.
+        - specification
+      operationId: loadSpecification
+      summary: Loads specification to test campaign.
+      description: >
+        Makes loaded specification as active in test campaign.
+        If there was already a specification in test campaign
+        replace it with a new one.
       parameters:
         - in: path
-          name: specificationID
+          name: testCampaignId
           schema:
             type: string
             format: uuid
           required: true
-          description: Specification metadata id.
+          description: Test campaign ID to load specification as active.
       requestBody:
         description: Declarative specification source.
-        required: true
         content:
           application/x-yaml:
             schema:
-              $ref: '#/components/schemas/SpecificationSource'
+              $ref: '#/components/schemas/CreateSpecificationWithSource'
       responses:
         201:
-          description: Specification source uploaded.
+          description: Specification is loaded.
           headers:
-            Content-Location:
-              description: Uploaded specification source url.
+            Location:
+              description: Created specification URI.
               schema:
                 type: string
         400:
@@ -117,55 +136,76 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         404:
-          description: Specification metadata not found.
+          description: Test campaign with such ID not found.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /specifications/{specificationId}:
     get:
       tags:
-        - specifications
-        - source
-      operationId: getSpecificationSource
-      summary: Returns declarative test specification source.
+        - specification
+      operationId: getSpecification
+      summary: Returns specification with such ID.
       parameters:
         - in: path
-          name: specificationID
+          name: specificationId
           schema:
             type: string
             format: uuid
           required: true
-          description: Specification metadata id.
+          description: Specification ID to return.
       responses:
         200:
-          description: Previously pushed specification source.
+          description: Found previously created specification.
           content:
-            application/x-yaml:
+            application/json:
               schema:
-                $ref: '#/components/schemas/SpecificationSource'
+                $ref: '#/components/schemas/CreateSpecificationWithSource'
         404:
-          description: Specification metadata or source not found.
+          description: Specification with such ID not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - specification
+      operationId: removeSpecification
+      summary: Removes specification with such ID.
+      parameters:
+        - in: path
+          name: specificationId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: Specification ID to remove.
+      responses:
+        204:
+          description: Specification successfully removed.
+        404:
+          description: Specification with such ID not found.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /specifications/{specificationID}/performance:
+  /test-campaigns/{testCampaignId}/performance:
     post:
       tags:
-        - specifications
         - performance
-      operationId: performSpecification
-      summary: Starts test specification performing.
+      operationId: startActivePerformance
+      summary: Starts performance of test campaign active specification.
       parameters:
         - in: path
-          name: specificationID
+          name: testCampaignId
           schema:
             type: string
             format: uuid
           required: true
-          description: Specification metadata id.
+          description: Test campaign ID to start performance.
       requestBody:
         description: >
           Stories and scenarios to perform.
@@ -174,13 +214,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/StartSpecificationPerformanceRequest'
+              $ref: '#/components/schemas/StartPerformanceRequest'
       responses:
         201:
-          description: Specification performance url.
+          description: Performance of active test campaign active specification is created.
           headers:
-            Content-Location:
-              description: Created specification performance url.
+            Location:
+              description: Performance URI.
               schema:
                 type: string
         400:
@@ -190,43 +230,133 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         404:
-          description: Specification metadata not found.
+          description: Test campaign with such ID not found.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /specifications/{specificationID}/performance/{performanceID}:
+  /test-campaigns/{testCampaignId}/performances:
     get:
       tags:
-        - specifications
         - performance
-      operationId: getSpecificationPerformance
-      summary: Returns current state of test specification performance.
+      operationId: getPerformances
+      summary: Returns performances history.
       parameters:
         - in: path
-          name: specificationID
+          name: testCampaignId
           schema:
             type: string
             format: uuid
           required: true
-          description: Specification metadata id.
-        - in: path
-          name: performanceID
-          schema:
-            type: string
-            format: uuid
-          required: true
-          description: Specification performance id.
+          description: Test campaign ID to return performances.
       responses:
         200:
-          description: Current state of specification performance.
+          description: Found previously started performances.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SpecificationPerformanceResponse'
+                items:
+                  $ref: '#/components/schemas/PerformanceResponse'
         404:
-          description: Specification metadata or performance not found.
+          description: Test campaign with such ID not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /performances/{performanceId}:
+    get:
+      tags:
+        - performance
+      operationId: getPerformance
+      summary: Returns peformance with such ID.
+      parameters:
+        - in: path
+          name: performanceId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: Performance ID to return performance.
+      responses:
+        200:
+          description: Found previously started performance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceResponse'
+        404:
+          description: Performance with such ID not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - performance
+      operationId: restartPerformance
+      summary: Restart performance with such ID.
+      parameters:
+        - in: path
+          name: performanceId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: Performance ID to restart.
+      requestBody:
+        description: >
+          Stories and scenarios to perform.
+          If there are no stories, then all stories of specification will be performed.
+          If there are no scenarios in story, then all scenarios of story will be performed.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartPerformanceRequest'
+      responses:
+        204:
+          description: Performance restarted.
+        400:
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Performance with such ID not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        423:
+          description: Performance in progress, cannot restart.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /performances/{performanceId}/cancelled:
+    put:
+      tags:
+        - performance
+      operationId: cancelPerformance
+      summary: Cancels performance with such ID.
+      parameters:
+        - in: path
+          name: performanceId
+          schema:
+            type: string
+            format: uuid
+          required: true
+          description: Performance ID to cancel performance.
+      responses:
+        204:
+          description: >
+            Performance cancelled if it was in process.
+            If it was not executed, nothing happened.
+        404:
+          description: Bad request.
           content:
             application/json:
               schema:
@@ -248,118 +378,12 @@ components:
     ErrorSlug:
       type: string
       enum:
-        - metadata-not-found
-        - source-not-found
+        - test-campaign-not-found
+        - specification-not-found
         - performance-not-found
         - invalid-json
 
-    StartSpecificationPerformanceRequest:
-      type: object
-      properties:
-        stories:
-          type: array
-          items:
-            type: object
-            required:
-              - slug
-            properties:
-              slug:
-                type: string
-              scenarios:
-                type: array
-                items:
-                  type: object
-                  required:
-                    - slug
-                  properties:
-                    slug:
-                      type: string
-
-    SpecificationPerformanceResponse:
-      type: object
-      properties:
-        state:
-          $ref: '#/components/schemas/PerformanceState'
-        storiesPerformance:
-          type: array
-          items:
-            $ref: '#/components/schemas/StoryPerformance'
-      example:
-        state: PERFORMING_FAILED
-        storiesPerformance:
-          - slug: sellHornsAndHooves
-            state: PERFORMING_FAILED
-            scenariosPerformance:
-              - slug: sellExistingHornsAndHooves
-                state: PERFORMING_FAILED
-                thesesPerformance:
-                  - slug: deliverHorns
-                    state: PERFORMING_PASSED
-                  - slug: deliverHooves
-                    state: PERFORMING_PASSED
-                  - slug: sellHornsAndHooves
-                    state: PERFORMING_PASSED
-                  - slug: getSoldProducts
-                    state: PERFORMING_PASSED
-                  - slug: checkSoldProducts
-                    state: PERFORMING_FAILED
-                    failDetails: expected=[103, 21] is not equal to actual=[103, 20]
-
-    StoryPerformance:
-      type: object
-      required:
-        - slug
-        - state
-      properties:
-        slug:
-          type: string
-        state:
-          $ref: '#/components/schemas/PerformanceState'
-        scenariosPerformance:
-          type: array
-          items:
-            $ref: '#/components/schemas/ScenarioPerformance'
-
-    ScenarioPerformance:
-      type: object
-      required:
-        - slug
-        - state
-      properties:
-        slug:
-          type: string
-        state:
-          $ref: '#/components/schemas/PerformanceState'
-        thesesPerformance:
-          type: array
-          items:
-            $ref: '#/components/schemas/ThesisPerformance'
-
-    ThesisPerformance:
-      type: object
-      required:
-        - slug
-        - state
-      properties:
-        slug:
-          type: string
-        state:
-          $ref: '#/components/schemas/PerformanceState'
-        errorDetails:
-          type: string
-        failDetails:
-          type: string
-
-    PerformanceState:
-      type: string
-      enum:
-        - NOT_PERFORMED
-        - PERFORMING
-        - PERFORMING_ERROR
-        - PERFORMING_PASSED
-        - PERFORMING_FAILED
-
-    LoadSpecificationMetadataRequest:
+    CreateTestCampaignRequest:
       type: object
       required:
         - viewName
@@ -369,17 +393,39 @@ components:
         summary:
           type: string
 
-    SpecificationMetadataResponse:
-      allOf:
-        - $ref: '#/components/schemas/CommonSpecificationMetadataResponse'
-        - type: object
-          properties:
-            specification:
-              $ref: '#/components/schemas/Specification'
+    TestCampaignResponse:
+      type: object
+      required:
+        - id
+        - viewName
+      properties:
+        id:
+          type: string
+          format: uuid
+        viewName:
+          type: string
+        summary:
+          type: string
+        activeSpecificationId:
+          type: string
+          format: uuid
+        lastPerformanceId:
+          type: string
+          format: uuid
+
+    CreateSpecificationWithSource:
+      type: string
+      format: binary
+
+    SpecificationResponse:
+      type: object
+      properties:
+        specificationSourceUri:
+          type: string
+        specification:
+          $ref: '#/components/schemas/Specification'
       example:
-        id: 97fa5216-fec5-466a-b86d-32c4228c757f
-        viewName: horns-and-hoovies test No 1
-        summary: selling test
+        specificationSourceUri: https://some-file-hosting/example
         specification:
           author: Djerys
           title: horns-and-hooves API test
@@ -461,19 +507,27 @@ components:
                           - actual: getSoldProducts.response.body.products..itemsCount
                             expected: [ 103, 21 ]
 
-    CommonSpecificationMetadataResponse:
+    StartPerformanceRequest:
       type: object
-      required:
-        - id
-        - viewName
       properties:
-        id:
-          type: string
-          format: uuid
-        viewName:
-          type: string
-        summary:
-          type: string
+        stories:
+          type: array
+          items:
+            type: object
+            required:
+              - slug
+            properties:
+              slug:
+                type: string
+              scenarios:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - slug
+                  properties:
+                    slug:
+                      type: string
 
     Specification:
       type: object
@@ -613,6 +667,86 @@ components:
         expected:
           type: string
 
-    SpecificationSource:
+    PerformanceResponse:
+      type: object
+      properties:
+        state:
+          $ref: '#/components/schemas/PerformanceState'
+        storiesPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoryPerformance'
+      example:
+        state: PERFORMING_FAILED
+        storiesPerformance:
+          - slug: sellHornsAndHooves
+            state: PERFORMING_FAILED
+            scenariosPerformance:
+              - slug: sellExistingHornsAndHooves
+                state: PERFORMING_FAILED
+                thesesPerformance:
+                  - slug: deliverHorns
+                    state: PERFORMING_PASSED
+                  - slug: deliverHooves
+                    state: PERFORMING_PASSED
+                  - slug: sellHornsAndHooves
+                    state: PERFORMING_PASSED
+                  - slug: getSoldProducts
+                    state: PERFORMING_PASSED
+                  - slug: checkSoldProducts
+                    state: PERFORMING_FAILED
+                    failDetails: expected=[103, 21] is not equal to actual=[103, 20]
+
+    StoryPerformance:
+      type: object
+      required:
+        - slug
+        - state
+      properties:
+        slug:
+          type: string
+        state:
+          $ref: '#/components/schemas/PerformanceState'
+        scenariosPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScenarioPerformance'
+
+    ScenarioPerformance:
+      type: object
+      required:
+        - slug
+        - state
+      properties:
+        slug:
+          type: string
+        state:
+          $ref: '#/components/schemas/PerformanceState'
+        thesesPerformance:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThesisPerformance'
+
+    ThesisPerformance:
+      type: object
+      required:
+        - slug
+        - state
+      properties:
+        slug:
+          type: string
+        state:
+          $ref: '#/components/schemas/PerformanceState'
+        errorDetails:
+          type: string
+        failDetails:
+          type: string
+
+    PerformanceState:
       type: string
-      format: binary
+      enum:
+        - NOT_PERFORMED
+        - PERFORMING
+        - PERFORMING_ERROR
+        - PERFORMING_PASSED
+        - PERFORMING_FAILED
