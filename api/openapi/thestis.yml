@@ -120,7 +120,7 @@ paths:
         content:
           application/x-yaml:
             schema:
-              $ref: '#/components/schemas/CreateSpecificationWithSource'
+              $ref: '#/components/schemas/CreateSpecificationWithSourceRequest'
       responses:
         201:
           description: Specification is loaded.
@@ -162,7 +162,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateSpecificationWithSource'
+                $ref: '#/components/schemas/CreateSpecificationWithSourceRequest'
         404:
           description: Specification with such ID not found.
           content:
@@ -413,7 +413,7 @@ components:
           type: string
           format: uuid
 
-    CreateSpecificationWithSource:
+    CreateSpecificationWithSourceRequest:
       type: string
       format: binary
 
