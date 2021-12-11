@@ -1,7 +1,7 @@
 package main
 
-import "log"
+import "github.com/harpyd/thestis/internal/runner"
 
 func main() {
-	log.Println("thestis running...")
+	runner.Start()
 }
