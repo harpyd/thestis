@@ -1,0 +1,16 @@
+version: '3.4'
+
+services:
+  thestis:
+    image: thestis
+    container_name: thestis
+    build:
+      context: .
+      dockerfile: ./build/package/dev/Dockerfile
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./.bin/:/root/
+      - ./configs/:/root/configs/
+    env_file:
+      - .env
