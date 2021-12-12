@@ -1,7 +1,20 @@
 package main
 
-import "log"
+import (
+	"flag"
+
+	"github.com/harpyd/thestis/internal/runner"
+)
+
+const defaultConfigsPath = "configs"
 
 func main() {
-	log.Println("thestis running...")
+	flag.Parse()
+
+	configsPath := flag.Arg(0)
+	if configsPath == "" {
+		configsPath = defaultConfigsPath
+	}
+
+	runner.Start(configsPath)
 }

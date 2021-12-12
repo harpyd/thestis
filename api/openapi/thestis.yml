@@ -196,7 +196,7 @@ paths:
     post:
       tags:
         - performance
-      operationId: startActivePerformance
+      operationId: performActiveSpecification
       summary: Starts performance of test campaign active specification.
       parameters:
         - in: path
@@ -240,7 +240,7 @@ paths:
     get:
       tags:
         - performance
-      operationId: getPerformances
+      operationId: getPerformancesHistory
       summary: Returns performances history.
       parameters:
         - in: path

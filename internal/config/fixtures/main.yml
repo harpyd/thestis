@@ -1,0 +1,4 @@
+http:
+  port: ${HTTP_PORT}
+  readTimeout: 8s
+  writeTimeout: 10s
