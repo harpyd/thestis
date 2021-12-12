@@ -1,0 +1,4 @@
+http:
+  port: ${HTTP_PORT:8080}
+  readTimeout: 4s
+  writeTimeout: 10s

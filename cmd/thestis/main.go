@@ -1,7 +1,20 @@
 package main
 
-import "github.com/harpyd/thestis/internal/runner"
+import (
+	"flag"
+
+	"github.com/harpyd/thestis/internal/runner"
+)
+
+const defaultConfigsDir = "configs"
 
 func main() {
-	runner.Start()
+	flag.Parse()
+
+	configsDir := flag.Arg(0)
+	if configsDir == "" {
+		configsDir = defaultConfigsDir
+	}
+
+	runner.Start(configsDir)
 }
