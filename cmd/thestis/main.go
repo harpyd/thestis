@@ -6,15 +6,15 @@ import (
 	"github.com/harpyd/thestis/internal/runner"
 )
 
-const defaultConfigsDir = "configs"
+const defaultConfigsPath = "configs"
 
 func main() {
 	flag.Parse()
 
-	configsDir := flag.Arg(0)
-	if configsDir == "" {
-		configsDir = defaultConfigsDir
+	configsPath := flag.Arg(0)
+	if configsPath == "" {
+		configsPath = defaultConfigsPath
 	}
 
-	runner.Start(configsDir)
+	runner.Start(configsPath)
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
 )
@@ -30,11 +31,15 @@ type (
 	}
 )
 
-func FromDirectory(configsDir string) (*Config, error) {
+func FromPath(configsPath string) (*Config, error) {
 	setDefaults()
 
 	appEnv := os.Getenv("APP_ENV")
-	if err := parseConfig(configsDir, appEnv); err != nil {
+	if appEnv == "" {
+		appEnv = LocalEnv
+	}
+
+	if err := parseConfig(configsPath, appEnv); err != nil {
 		return nil, err
 	}
 
@@ -43,7 +48,7 @@ func FromDirectory(configsDir string) (*Config, error) {
 		return nil, err
 	}
 
-	setFromEnv(&cfg)
+	cfg.Environment = appEnv
 
 	return &cfg, nil
 }
@@ -54,8 +59,8 @@ func setDefaults() {
 	viper.SetDefault("http.writeTimeout", defaultHTTPRWTimeout)
 }
 
-func parseConfig(configsDir, env string) error {
-	viper.AddConfigPath(configsDir)
+func parseConfig(configsPath, env string) error {
+	viper.AddConfigPath(configsPath)
 	viper.SetConfigName("main")
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -63,7 +68,7 @@ func parseConfig(configsDir, env string) error {
 	}
 
 	if env == LocalEnv {
-		return nil
+		return replaceConfigEnvs()
 	}
 
 	viper.SetConfigName(env)
@@ -84,8 +89,10 @@ func replaceConfigEnvs() error {
 			envVal, err := envValue(strings.TrimSuffix(strings.TrimPrefix(value, "${"), "}"))
 			cmnErr = multierr.Append(cmnErr, err)
 
-			viper.Set(k, envVal)
+			value = envVal
 		}
+
+		viper.Set(k, value)
 	}
 
 	return cmnErr
@@ -95,7 +102,6 @@ func envValue(key string) (string, error) {
 	envKey, defaultVal, hasDef := parseEnv(key)
 
 	value, ok := os.LookupEnv(envKey)
-
 	if !ok {
 		if hasDef {
 			return defaultVal, nil
@@ -123,12 +129,14 @@ func unmarshal(cfg *Config) error {
 	return viper.UnmarshalKey("http", &cfg.HTTP)
 }
 
-func setFromEnv(cfg *Config) {
-	cfg.Environment = os.Getenv("APP_ENV")
-}
-
 type noEnvError struct {
 	envKey string
+}
+
+func IsNoEnvError(err error) bool {
+	var enverr noEnvError
+
+	return errors.As(err, &enverr)
 }
 
 func (e noEnvError) Error() string {

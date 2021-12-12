@@ -10,11 +10,11 @@ import (
 	"github.com/harpyd/thestis/internal/server"
 )
 
-func Start(configsDir string) {
+func Start(configsPath string) {
 	logger, sync := newLogger()
 	defer sync()
 
-	cfg := newConfig(configsDir, logger)
+	cfg := newConfig(configsPath, logger)
 
 	startServer(cfg, logger)
 }
@@ -28,8 +28,8 @@ func newLogger() (*zap.Logger, func()) {
 	return logger, sync
 }
 
-func newConfig(configsDir string, logger *zap.Logger) *config.Config {
-	cfg, err := config.FromDirectory(configsDir)
+func newConfig(configsPath string, logger *zap.Logger) *config.Config {
+	cfg, err := config.FromPath(configsPath)
 	if err != nil {
 		logger.Fatal("Failed to parse config", zap.Error(err))
 	}
