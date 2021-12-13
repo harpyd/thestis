@@ -2,12 +2,12 @@ package mongodb_test
 
 import (
 	"context"
-	"github.com/harpyd/thestis/internal/domain/testcampaign"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/harpyd/thestis/internal/adapter/repository/mongodb"
+	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
 
 type TestCampaignsRepositoryTestSuite struct {
