@@ -46,7 +46,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 		{
 			Name: "test_campaign",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New("some-id", "some campaign")
+				tc, err := testcampaign.New("e75690c2-e659-409d-a528-ffd40d17c4bc", "some campaign")
 				s.Require().NoError(err)
 
 				return tc
@@ -56,7 +56,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 		{
 			Name: "test_campaign_without_view_name",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New("some-id", "")
+				tc, err := testcampaign.New("1153796c-58d4-4b26-8c2f-f32a1a875dac", "")
 				s.Require().NoError(err)
 
 				return tc
