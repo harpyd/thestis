@@ -22,12 +22,20 @@ type (
 	Config struct {
 		Environment string
 		HTTP        HTTP
+		Mongo       Mongo
 	}
 
 	HTTP struct {
 		Port         string
 		ReadTimeout  time.Duration
 		WriteTimeout time.Duration
+	}
+
+	Mongo struct {
+		URI          string
+		DatabaseName string
+		Username     string
+		Password     string
 	}
 )
 
@@ -126,7 +134,11 @@ func parseEnv(key string) (envKey, defaultValue string, hasDef bool) {
 }
 
 func unmarshal(cfg *Config) error {
-	return viper.UnmarshalKey("http", &cfg.HTTP)
+	if err := viper.UnmarshalKey("http", &cfg.HTTP); err != nil {
+		return err
+	}
+
+	return viper.UnmarshalKey("mongo", &cfg.Mongo)
 }
 
 type noEnvError struct {

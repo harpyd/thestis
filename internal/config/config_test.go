@@ -20,11 +20,15 @@ func TestFromPath(t *testing.T) {
 	}
 
 	type env struct {
-		HTTPPort string
+		HTTPPort      string
+		MongoURI      string
+		MongoDatabase string
 	}
 
 	setEnv := func(env env) {
 		_ = os.Setenv("HTTP_PORT", env.HTTPPort)
+		_ = os.Setenv("MONGO_URI", env.MongoURI)
+		_ = os.Setenv("MONGO_DATABASE", env.MongoDatabase)
 	}
 
 	testCases := []struct {
@@ -39,7 +43,9 @@ func TestFromPath(t *testing.T) {
 			Name:        "valid_test_config_with_env",
 			ConfigsPath: fixturesPath,
 			Env: env{
-				HTTPPort: "8080",
+				HTTPPort:      "8080",
+				MongoURI:      "some://uri",
+				MongoDatabase: "someName",
 			},
 			ExpectedConfig: &config.Config{
 				Environment: "local",
@@ -47,6 +53,12 @@ func TestFromPath(t *testing.T) {
 					Port:         "8080",
 					ReadTimeout:  8 * time.Second,
 					WriteTimeout: 10 * time.Second,
+				},
+				Mongo: config.Mongo{
+					URI:          "some://uri",
+					DatabaseName: "someName",
+					Username:     "admin",
+					Password:     "0000",
 				},
 			},
 			ShouldBeErr: false,

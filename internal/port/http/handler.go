@@ -10,16 +10,17 @@ import (
 	"github.com/go-chi/cors"
 	"go.uber.org/zap"
 
+	"github.com/harpyd/thestis/internal/app"
 	v1 "github.com/harpyd/thestis/internal/port/http/v1"
 	"github.com/harpyd/thestis/pkg/logging"
 )
 
-func NewHandler(logger *zap.Logger) http.Handler {
+func NewHandler(application app.Application, logger *zap.Logger) http.Handler {
 	apiRouter := chi.NewRouter()
 	addMiddlewares(apiRouter, logger)
 
 	rootRouter := chi.NewRouter()
-	rootRouter.Mount("/v1", v1.NewHandler(apiRouter))
+	rootRouter.Mount("/v1", v1.NewHandler(application, apiRouter))
 
 	return rootRouter
 }

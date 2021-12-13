@@ -2,3 +2,8 @@ http:
   port: ${HTTP_PORT}
   readTimeout: 8s
   writeTimeout: 10s
+mongo:
+  uri: ${MONGO_URI}
+  databaseName: ${MONGO_DATABASE}
+  username: ${MONGO_USERNAME:admin}
+  password: ${MONGO_PASSWORD:0000}
