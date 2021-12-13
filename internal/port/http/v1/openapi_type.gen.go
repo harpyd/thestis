@@ -5,6 +5,8 @@ package v1
 
 // Defines values for ErrorSlug.
 const (
+	ErrorSlugBadRequest ErrorSlug = "bad-request"
+
 	ErrorSlugInvalidJson ErrorSlug = "invalid-json"
 
 	ErrorSlugPerformanceNotFound ErrorSlug = "performance-not-found"
@@ -12,6 +14,8 @@ const (
 	ErrorSlugSpecificationNotFound ErrorSlug = "specification-not-found"
 
 	ErrorSlugTestCampaignNotFound ErrorSlug = "test-campaign-not-found"
+
+	ErrorSlugUnexpectedError ErrorSlug = "unexpected-error"
 )
 
 // Defines values for PerformanceState.

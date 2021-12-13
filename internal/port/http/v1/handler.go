@@ -9,11 +9,11 @@ import (
 )
 
 type handler struct {
-	application app.Application
+	app app.Application
 }
 
 func NewHandler(application app.Application, r chi.Router) http.Handler {
 	return HandlerFromMux(handler{
-		application: application,
+		app: application,
 	}, r)
 }
