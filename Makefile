@@ -23,4 +23,17 @@ test-unit:
 	rm unit-all.out
 
 test-integration:
-	go test -v -race -coverprofile=integration.out ./internal/adapter/... ./internal/config/...
+	make run-test-db
+	go test -v -race -coverprofile=integration.out ./internal/adapter/... ./internal/config/... || (make stop-test-db && exit 1)
+	make stop-test-db
+
+
+export TEST_DB_URI=mongodb://localhost:27019
+export TEST_DB_NAME=test
+export TEST_CONTAINER_NAME=test-db
+
+run-test-db:
+	docker run --rm -d -p 27019:27017 --name $$TEST_CONTAINER_NAME -e MONGODB_DATABASE=$$TEST_DB_NAME mongo:4.4-bionic
+
+stop-test-db:
+	docker stop $$TEST_CONTAINER_NAME

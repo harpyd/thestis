@@ -26,12 +26,19 @@ func (h CreateTestCampaignHandler) Handle(
 	ctx context.Context,
 	cmd app.CreateTestCampaignCommand,
 ) (testCampaignID string, err error) {
+	defer func() {
+		err = errors.Wrapf(err, "test campaigns with view name = %s", cmd.ViewName)
+	}()
+
 	testCampaignID = uuid.New().String()
 
-	tc := testcampaign.New(testCampaignID, cmd.ViewName)
+	tc, err := testcampaign.New(testCampaignID, cmd.ViewName)
+	if err != nil {
+		return "", err
+	}
 
 	if err = h.testCampaignsRepo.AddTestCampaign(ctx, tc); err != nil {
-		return "", errors.Wrapf(err, "test campaigns with view name = %s", cmd.ViewName)
+		return "", err
 	}
 
 	return

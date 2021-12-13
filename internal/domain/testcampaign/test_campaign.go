@@ -1,16 +1,22 @@
 package testcampaign
 
+import "github.com/pkg/errors"
+
 type TestCampaign struct {
 	id                    string
 	viewName              string
 	activeSpecificationID string
 }
 
-func New(id string, viewName string) *TestCampaign {
+func New(id string, viewName string) (*TestCampaign, error) {
+	if id == "" {
+		return nil, NewEmptyIDError()
+	}
+
 	return &TestCampaign{
 		id:       id,
 		viewName: viewName,
-	}
+	}, nil
 }
 
 func UnmarshalFromDatabase(
@@ -39,4 +45,14 @@ func (tc *TestCampaign) ActiveSpecificationID() string {
 
 func (tc *TestCampaign) SetActiveSpecificationID(specificationID string) {
 	tc.activeSpecificationID = specificationID
+}
+
+var errEmptyID = errors.New("empty test campaign ID")
+
+func NewEmptyIDError() error {
+	return errEmptyID
+}
+
+func IsEmptyIDError(err error) bool {
+	return errors.Is(err, errEmptyID)
 }
