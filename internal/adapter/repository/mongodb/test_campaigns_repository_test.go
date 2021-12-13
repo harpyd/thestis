@@ -44,9 +44,19 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 		IsErr                func(err error) bool
 	}{
 		{
-			Name: "ready_test_campaign",
+			Name: "test_campaign",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
 				tc, err := testcampaign.New("some-id", "some campaign")
+				s.Require().NoError(err)
+
+				return tc
+			},
+			ShouldBeErr: false,
+		},
+		{
+			Name: "test_campaign_without_view_name",
+			TestCampaignsFactory: func() *testcampaign.TestCampaign {
+				tc, err := testcampaign.New("some-id", "")
 				s.Require().NoError(err)
 
 				return tc
