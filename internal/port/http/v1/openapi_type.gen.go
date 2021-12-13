@@ -98,7 +98,7 @@ type ThesisPerformance struct {
 // RestartPerformanceJSONBody defines parameters for RestartPerformance.
 type RestartPerformanceJSONBody StartPerformanceRequest
 
-// CreateTestCampaignJSONBody defines parameters for CreateTestCampaign.
+// CreateTestCampaignJSONBody defines parameters for AddTestCampaign.
 type CreateTestCampaignJSONBody CreateTestCampaignRequest
 
 // PerformActiveSpecificationJSONBody defines parameters for PerformActiveSpecification.
@@ -107,7 +107,7 @@ type PerformActiveSpecificationJSONBody StartPerformanceRequest
 // RestartPerformanceJSONRequestBody defines body for RestartPerformance for application/json ContentType.
 type RestartPerformanceJSONRequestBody RestartPerformanceJSONBody
 
-// CreateTestCampaignJSONRequestBody defines body for CreateTestCampaign for application/json ContentType.
+// CreateTestCampaignJSONRequestBody defines body for AddTestCampaign for application/json ContentType.
 type CreateTestCampaignJSONRequestBody CreateTestCampaignJSONBody
 
 // PerformActiveSpecificationJSONRequestBody defines body for PerformActiveSpecification for application/json ContentType.
