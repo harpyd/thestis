@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"go.uber.org/multierr"
 )
@@ -143,12 +142,6 @@ func unmarshal(cfg *Config) error {
 
 type noEnvError struct {
 	envKey string
-}
-
-func IsNoEnvError(err error) bool {
-	var enverr noEnvError
-
-	return errors.As(err, &enverr)
 }
 
 func (e noEnvError) Error() string {
