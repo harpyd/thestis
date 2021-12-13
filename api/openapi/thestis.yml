@@ -382,6 +382,8 @@ components:
         - specification-not-found
         - performance-not-found
         - invalid-json
+        - bad-request
+        - unexpected-error
 
     CreateTestCampaignRequest:
       type: object

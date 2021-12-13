@@ -32,7 +32,7 @@ func (h CreateTestCampaignHandler) Handle(
 
 	testCampaignID = uuid.New().String()
 
-	tc, err := testcampaign.New(testCampaignID, cmd.ViewName)
+	tc, err := testcampaign.New(testCampaignID, cmd.ViewName, cmd.Summary)
 	if err != nil {
 		return "", err
 	}

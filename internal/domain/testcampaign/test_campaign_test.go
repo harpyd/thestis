@@ -15,6 +15,7 @@ func TestNew(t *testing.T) {
 	type params struct {
 		ID       string
 		ViewName string
+		Summary  string
 	}
 
 	testCases := []struct {
@@ -28,6 +29,7 @@ func TestNew(t *testing.T) {
 			Params: params{
 				ID:       "tc-id",
 				ViewName: "test campaign",
+				Summary:  "summary",
 			},
 			ShouldBeErr: false,
 		},
@@ -36,6 +38,7 @@ func TestNew(t *testing.T) {
 			Params: params{
 				ID:       "",
 				ViewName: "test campaign with empty id",
+				Summary:  "",
 			},
 			ShouldBeErr: true,
 			IsErr:       testcampaign.IsEmptyIDError,
@@ -48,7 +51,7 @@ func TestNew(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			tc, err := testcampaign.New(c.Params.ID, c.Params.ViewName)
+			tc, err := testcampaign.New(c.Params.ID, c.Params.ViewName, c.Params.Summary)
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))
@@ -59,6 +62,7 @@ func TestNew(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, c.Params.ID, tc.ID())
 			require.Equal(t, c.Params.ViewName, tc.ViewName())
+			require.Equal(t, c.Params.Summary, tc.Summary())
 		})
 	}
 }

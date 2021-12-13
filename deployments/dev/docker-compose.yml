@@ -12,5 +12,21 @@ services:
     volumes:
       - ./.bin/:/root/
       - ./configs/:/root/configs/
+    depends_on:
+      - mongodb
     env_file:
       - .env
+
+  mongodb:
+    image: mongo:4.4-bionic
+    container_name: mongodb
+    environment:
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+      - MONGODB_DATABASE=thestis
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=qwerty
+    volumes:
+      - ./.data/db:/data/db
+    ports:
+      - '27018:27017'

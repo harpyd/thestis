@@ -5,10 +5,11 @@ import "github.com/pkg/errors"
 type TestCampaign struct {
 	id                    string
 	viewName              string
+	summary               string
 	activeSpecificationID string
 }
 
-func New(id string, viewName string) (*TestCampaign, error) {
+func New(id string, viewName, summary string) (*TestCampaign, error) {
 	if id == "" {
 		return nil, NewEmptyIDError()
 	}
@@ -16,17 +17,20 @@ func New(id string, viewName string) (*TestCampaign, error) {
 	return &TestCampaign{
 		id:       id,
 		viewName: viewName,
+		summary:  summary,
 	}, nil
 }
 
 func UnmarshalFromDatabase(
 	id string,
 	viewName string,
+	summary string,
 	activeSpecificationID string,
 ) *TestCampaign {
 	return &TestCampaign{
 		id:                    id,
 		viewName:              viewName,
+		summary:               summary,
 		activeSpecificationID: activeSpecificationID,
 	}
 }
@@ -37,6 +41,10 @@ func (tc *TestCampaign) ID() string {
 
 func (tc *TestCampaign) ViewName() string {
 	return tc.viewName
+}
+
+func (tc *TestCampaign) Summary() string {
+	return tc.summary
 }
 
 func (tc *TestCampaign) ActiveSpecificationID() string {

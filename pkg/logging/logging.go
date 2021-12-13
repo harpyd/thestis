@@ -71,3 +71,12 @@ func (e *StructuredLoggerEntry) Panic(v interface{}, stack []byte) {
 		zap.String("panic", fmt.Sprintf("%+v", v)),
 	)
 }
+
+func GetLogger(r *http.Request) *zap.Logger {
+	entry, ok := middleware.GetLogEntry(r).(*StructuredLoggerEntry)
+	if !ok {
+		panic("LogEntry isn't *StructuredLoggerEntry")
+	}
+
+	return entry.Logger
+}

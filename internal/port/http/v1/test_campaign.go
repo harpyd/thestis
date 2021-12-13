@@ -1,9 +1,27 @@
 package v1
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
 
-func (h handler) CreateTestCampaign(w http.ResponseWriter, _ *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
+	"github.com/harpyd/thestis/pkg/httperr"
+)
+
+func (h handler) CreateTestCampaign(w http.ResponseWriter, r *http.Request) {
+	cmd, ok := unmarshalCreateTestCampaignCommand(w, r)
+	if !ok {
+		return
+	}
+
+	createdTestCampaignID, err := h.app.Commands.CreateTestCampaign.Handle(r.Context(), cmd)
+	if err == nil {
+		w.Header().Set("Location", fmt.Sprintf("/test-campaigns/%s", createdTestCampaignID))
+		w.WriteHeader(http.StatusCreated)
+
+		return
+	}
+
+	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
 func (h handler) GetTestCampaigns(w http.ResponseWriter, _ *http.Request) {
