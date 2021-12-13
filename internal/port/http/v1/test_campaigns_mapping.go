@@ -16,7 +16,13 @@ func unmarshalCreateTestCampaignCommand(
 		return
 	}
 
+	var summary string
+	if rb.Summary != nil {
+		summary = *rb.Summary
+	}
+
 	return app.CreateTestCampaignCommand{
 		ViewName: rb.ViewName,
+		Summary:  summary,
 	}, true
 }
