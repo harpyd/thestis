@@ -14,7 +14,7 @@ func NewSpecificationParserService() SpecificationParserService {
 	return SpecificationParserService{}
 }
 
-func (s *SpecificationParserService) ParseSpecification(reader io.Reader) (*specification.Specification, error) {
+func (s SpecificationParserService) ParseSpecification(specID string, reader io.Reader) (*specification.Specification, error) {
 	decoder := yaml.NewDecoder(reader)
 
 	var spec specificationSchema
@@ -22,11 +22,12 @@ func (s *SpecificationParserService) ParseSpecification(reader io.Reader) (*spec
 		return nil, err
 	}
 
-	return build(spec)
+	return build(specID, spec)
 }
 
-func build(spec specificationSchema) (*specification.Specification, error) {
+func build(specID string, spec specificationSchema) (*specification.Specification, error) {
 	builder := specification.NewBuilder().
+		WithID(specID).
 		WithAuthor(spec.Author).
 		WithTitle(spec.Title).
 		WithDescription(spec.Description)

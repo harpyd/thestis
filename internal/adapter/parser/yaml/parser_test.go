@@ -114,7 +114,7 @@ func TestSpecificationParserService_ParseSpecification(t *testing.T) {
 			specFile, err := os.Open(c.SpecPath)
 			require.NoError(t, err)
 
-			_, err = parser.ParseSpecification(specFile)
+			_, err = parser.ParseSpecification("", specFile)
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))

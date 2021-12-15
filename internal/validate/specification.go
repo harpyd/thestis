@@ -20,7 +20,7 @@ func Specification(specPath string) {
 
 	parser := yaml.NewSpecificationParserService()
 
-	if _, err := parser.ParseSpecification(specFile); err != nil {
+	if _, err := parser.ParseSpecification("", specFile); err != nil {
 		fmtErr := format.SpecificationError(err, errorIndent)
 		log.Fatalf("%s:\n%s", specFile.Name(), color.FgRed.Render(fmtErr))
 	}

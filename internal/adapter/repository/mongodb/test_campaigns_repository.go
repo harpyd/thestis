@@ -6,8 +6,10 @@ import (
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/harpyd/thestis/internal/app"
+	"github.com/harpyd/thestis/internal/app/command"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
 
@@ -55,6 +57,48 @@ func (r *TestCampaignsRepository) AddTestCampaign(ctx context.Context, tc *testc
 	_, err := r.testCampaigns.InsertOne(ctx, marshalToTestCampaignDocument(tc))
 
 	return app.NewDatabaseError(err)
+}
+
+func (r *TestCampaignsRepository) UpdateTestCampaign(
+	ctx context.Context,
+	tcID string,
+	updateFn command.TestCampaignUpdater,
+) error {
+	session, err := r.testCampaigns.Database().Client().StartSession()
+	if err != nil {
+		return err
+	}
+
+	defer session.EndSession(ctx)
+
+	_, err = session.WithTransaction(ctx, func(_ mongo.SessionContext) (interface{}, error) {
+		var document testCampaignDocument
+		if err := r.testCampaigns.FindOne(ctx, bson.M{"_id": tcID}).Decode(&document); err != nil {
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				return nil, app.NewTestCampaignNotFoundError(err)
+			}
+
+			return nil, app.NewDatabaseError(err)
+		}
+
+		tc := document.unmarshalToTestCampaign()
+		updatedTestCampaign, err := updateFn(ctx, tc)
+		if err != nil {
+			return nil, err
+		}
+
+		updatedDocument := marshalToTestCampaignDocument(updatedTestCampaign)
+
+		replaceOpt := options.Replace().SetUpsert(true)
+		filter := bson.M{"_id": updatedDocument.ID}
+		if _, err := r.testCampaigns.ReplaceOne(ctx, filter, updatedDocument, replaceOpt); err != nil {
+			return nil, app.NewDatabaseError(err)
+		}
+
+		return nil, nil
+	})
+
+	return err
 }
 
 func (r *TestCampaignsRepository) RemoveAllTestCampaigns(ctx context.Context) error {

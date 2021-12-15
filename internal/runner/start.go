@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 
+	"github.com/harpyd/thestis/internal/adapter/parser/yaml"
 	mongorepo "github.com/harpyd/thestis/internal/adapter/repository/mongodb"
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/command"
@@ -55,10 +56,13 @@ func newMongoDatabase(cfg *config.Config, logger *zap.Logger) *mongo.Database {
 
 func newApplication(db *mongo.Database) app.Application {
 	tcRepo := mongorepo.NewTestCampaignsRepository(db)
+	specRepo := mongorepo.NewSpecificationsRepository(db)
+	parserService := yaml.NewSpecificationParserService()
 
 	return app.Application{
 		Commands: app.Commands{
 			CreateTestCampaign: command.NewCreateTestCampaignHandler(tcRepo),
+			LoadSpecification:  command.NewLoadSpecificationHandler(specRepo, tcRepo, parserService),
 		},
 	}
 }

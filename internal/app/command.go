@@ -5,4 +5,9 @@ type (
 		ViewName string
 		Summary  string
 	}
+
+	LoadSpecificationCommand struct {
+		TestCampaignID string
+		Content        string
+	}
 )

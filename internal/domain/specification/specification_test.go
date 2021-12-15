@@ -19,6 +19,17 @@ func TestBuilder_Build_no_stories(t *testing.T) {
 	require.True(t, specification.IsNoSpecificationStoriesError(err))
 }
 
+func TestBuilder_WithID(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewBuilder()
+	builder.WithID("1972f067-48f1-41b0-87e3-704e60afe371")
+
+	spec := builder.ErrlessBuild()
+
+	require.Equal(t, "1972f067-48f1-41b0-87e3-704e60afe371", spec.ID())
+}
+
 func TestBuilder_WithAuthor(t *testing.T) {
 	t.Parallel()
 
