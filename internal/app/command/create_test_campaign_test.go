@@ -35,8 +35,10 @@ func TestCreateTestCampaignHandler_Handle(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			repo := mock.NewTestCampaignsRepository()
-			handler := command.NewCreateTestCampaignHandler(repo)
+			var (
+				repo    = mock.NewTestCampaignsRepository()
+				handler = command.NewCreateTestCampaignHandler(repo)
+			)
 
 			tcID, err := handler.Handle(context.Background(), c.Command)
 
