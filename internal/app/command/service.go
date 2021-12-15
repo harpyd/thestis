@@ -8,5 +8,5 @@ import (
 
 // nolint
 type specificationParserService interface {
-	ParseSpecification(reader io.Reader) (*specification.Specification, error)
+	ParseSpecification(specID string, reader io.Reader) (*specification.Specification, error)
 }

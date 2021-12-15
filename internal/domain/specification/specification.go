@@ -135,6 +135,12 @@ func (b *Builder) Reset() {
 	b.storyFactories = nil
 }
 
+func (b *Builder) WithID(id string) *Builder {
+	b.id = id
+
+	return b
+}
+
 func (b *Builder) WithAuthor(author string) *Builder {
 	b.author = author
 
