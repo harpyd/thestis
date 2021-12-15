@@ -27,7 +27,7 @@ func (h CreateTestCampaignHandler) Handle(
 	cmd app.CreateTestCampaignCommand,
 ) (testCampaignID string, err error) {
 	defer func() {
-		err = errors.Wrapf(err, "test campaigns with view name = %s", cmd.ViewName)
+		err = errors.Wrap(err, "test campaign creation")
 	}()
 
 	testCampaignID = uuid.New().String()
