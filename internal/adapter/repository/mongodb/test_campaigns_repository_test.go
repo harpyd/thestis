@@ -46,7 +46,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 		IsErr                func(err error) bool
 	}{
 		{
-			Name: "test_campaign",
+			Name: "with_all_fields",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
 				tc, err := testcampaign.New(
 					"e75690c2-e659-409d-a528-ffd40d17c4bc",
@@ -60,7 +60,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 			ShouldBeErr: false,
 		},
 		{
-			Name: "test_campaign_without_view_name",
+			Name: "without_view_name",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
 				tc, err := testcampaign.New(
 					"1153796c-58d4-4b26-8c2f-f32a1a875dac",
@@ -74,7 +74,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 			ShouldBeErr: false,
 		},
 		{
-			Name: "test_campaign_without_summary",
+			Name: "without_summary",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
 				tc, err := testcampaign.New(
 					"290360f8-8d28-437b-9fe6-9bbd23198c76",
