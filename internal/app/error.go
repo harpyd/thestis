@@ -14,6 +14,10 @@ type (
 	testCampaignNotFoundError struct {
 		err error
 	}
+
+	specificationNotFoundError struct {
+		err error
+	}
 )
 
 func NewDatabaseError(err error) error {
@@ -70,4 +74,32 @@ func (e testCampaignNotFoundError) Unwrap() error {
 
 func (e testCampaignNotFoundError) Error() string {
 	return fmt.Sprintf("test campaign not found: %s", e.err)
+}
+
+func NewSpecificationNotFoundError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(specificationNotFoundError{
+		err: err,
+	})
+}
+
+func IsSpecificationNotFoundError(err error) bool {
+	var target specificationNotFoundError
+
+	return errors.As(err, &target)
+}
+
+func (e specificationNotFoundError) Cause() error {
+	return e.err
+}
+
+func (e specificationNotFoundError) Unwrap() error {
+	return e.err
+}
+
+func (e specificationNotFoundError) Error() string {
+	return fmt.Sprintf("specification not found: %s", e.err)
 }
