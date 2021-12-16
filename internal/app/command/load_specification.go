@@ -13,18 +13,18 @@ import (
 )
 
 type LoadSpecificationHandler struct {
-	specRepo          specificationRepository
+	specRepo          specificationsRepository
 	testCampaignsRepo testCampaignsRepository
 	specParserService specificationParserService
 }
 
 func NewLoadSpecificationHandler(
-	specRepo specificationRepository,
+	specsRepo specificationsRepository,
 	testCampaignsRepo testCampaignsRepository,
 	specParserService specificationParserService,
 ) LoadSpecificationHandler {
-	if specRepo == nil {
-		panic("spec repository is nil")
+	if specsRepo == nil {
+		panic("specifications repository is nil")
 	}
 
 	if testCampaignsRepo == nil {
@@ -32,11 +32,11 @@ func NewLoadSpecificationHandler(
 	}
 
 	if specParserService == nil {
-		panic("spec parser service")
+		panic("specification parser service is nil")
 	}
 
 	return LoadSpecificationHandler{
-		specRepo:          specRepo,
+		specRepo:          specsRepo,
 		testCampaignsRepo: testCampaignsRepo,
 		specParserService: specParserService,
 	}

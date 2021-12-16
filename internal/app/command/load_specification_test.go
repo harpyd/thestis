@@ -73,10 +73,10 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 			t.Parallel()
 
 			var (
-				specRepo = mock.NewSpecificationsRepository()
-				tcRepo   = mock.NewTestCampaignsRepository(c.TestCampaignFactory())
-				parser   = mock.NewSpecificationParserService(c.ParseWithErr)
-				handler  = command.NewLoadSpecificationHandler(specRepo, tcRepo, parser)
+				specsRepo = mock.NewSpecificationsRepository()
+				tcsRepo   = mock.NewTestCampaignsRepository(c.TestCampaignFactory())
+				parser    = mock.NewSpecificationParserService(c.ParseWithErr)
+				handler   = command.NewLoadSpecificationHandler(specsRepo, tcsRepo, parser)
 			)
 
 			ctx := context.Background()
@@ -85,16 +85,16 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))
-				require.Equal(t, 0, specRepo.SpecificationsNumber())
+				require.Equal(t, 0, specsRepo.SpecificationsNumber())
 
 				return
 			}
 
 			require.NoError(t, err)
 			require.NotEmpty(t, specID)
-			require.Equal(t, 1, specRepo.SpecificationsNumber())
+			require.Equal(t, 1, specsRepo.SpecificationsNumber())
 
-			tc, err := tcRepo.GetTestCampaign(ctx, c.Command.TestCampaignID)
+			tc, err := tcsRepo.GetTestCampaign(ctx, c.Command.TestCampaignID)
 			require.NoError(t, err)
 			require.Equal(t, specID, tc.ActiveSpecificationID())
 		})
