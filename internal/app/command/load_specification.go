@@ -13,7 +13,7 @@ import (
 )
 
 type LoadSpecificationHandler struct {
-	specRepo          specificationsRepository
+	specsRepo         specificationsRepository
 	testCampaignsRepo testCampaignsRepository
 	specParserService specificationParserService
 }
@@ -36,7 +36,7 @@ func NewLoadSpecificationHandler(
 	}
 
 	return LoadSpecificationHandler{
-		specRepo:          specsRepo,
+		specsRepo:         specsRepo,
 		testCampaignsRepo: testCampaignsRepo,
 		specParserService: specParserService,
 	}
@@ -70,7 +70,7 @@ func (h LoadSpecificationHandler) Handle(
 
 func (h LoadSpecificationHandler) loadSpecification(spec *specification.Specification) TestCampaignUpdater {
 	return func(ctx context.Context, tc *testcampaign.TestCampaign) (*testcampaign.TestCampaign, error) {
-		if err := h.specRepo.AddSpecification(ctx, spec); err != nil {
+		if err := h.specsRepo.AddSpecification(ctx, spec); err != nil {
 			return nil, err
 		}
 
