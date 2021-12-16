@@ -8,6 +8,6 @@ type (
 
 	LoadSpecificationCommand struct {
 		TestCampaignID string
-		Content        string
+		Content        []byte
 	}
 )

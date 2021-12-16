@@ -1,8 +1,8 @@
 package command
 
 import (
+	"bytes"
 	"context"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -13,18 +13,18 @@ import (
 )
 
 type LoadSpecificationHandler struct {
-	specRepo          specificationRepository
+	specsRepo         specificationsRepository
 	testCampaignsRepo testCampaignsRepository
 	specParserService specificationParserService
 }
 
 func NewLoadSpecificationHandler(
-	specRepo specificationRepository,
+	specsRepo specificationsRepository,
 	testCampaignsRepo testCampaignsRepository,
 	specParserService specificationParserService,
 ) LoadSpecificationHandler {
-	if specRepo == nil {
-		panic("spec repository is nil")
+	if specsRepo == nil {
+		panic("specifications repository is nil")
 	}
 
 	if testCampaignsRepo == nil {
@@ -32,11 +32,11 @@ func NewLoadSpecificationHandler(
 	}
 
 	if specParserService == nil {
-		panic("spec parser service")
+		panic("specification parser service is nil")
 	}
 
 	return LoadSpecificationHandler{
-		specRepo:          specRepo,
+		specsRepo:         specsRepo,
 		testCampaignsRepo: testCampaignsRepo,
 		specParserService: specParserService,
 	}
@@ -47,12 +47,12 @@ func (h LoadSpecificationHandler) Handle(
 	cmd app.LoadSpecificationCommand,
 ) (specID string, err error) {
 	defer func() {
-		err = errors.Wrap(err, "spec loading")
+		err = errors.Wrap(err, "specification loading")
 	}()
 
 	specID = uuid.New().String()
 
-	spec, err := h.specParserService.ParseSpecification(specID, strings.NewReader(cmd.Content))
+	spec, err := h.specParserService.ParseSpecification(specID, bytes.NewReader(cmd.Content))
 	if err != nil {
 		return "", err
 	}
@@ -70,7 +70,7 @@ func (h LoadSpecificationHandler) Handle(
 
 func (h LoadSpecificationHandler) loadSpecification(spec *specification.Specification) TestCampaignUpdater {
 	return func(ctx context.Context, tc *testcampaign.TestCampaign) (*testcampaign.TestCampaign, error) {
-		if err := h.specRepo.AddSpecification(ctx, spec); err != nil {
+		if err := h.specsRepo.AddSpecification(ctx, spec); err != nil {
 			return nil, err
 		}
 

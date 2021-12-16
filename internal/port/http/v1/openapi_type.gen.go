@@ -9,6 +9,8 @@ const (
 
 	ErrorSlugInvalidJson ErrorSlug = "invalid-json"
 
+	ErrorSlugInvalidSpecificationSource ErrorSlug = "invalid-specification-source"
+
 	ErrorSlugPerformanceNotFound ErrorSlug = "performance-not-found"
 
 	ErrorSlugSpecificationNotFound ErrorSlug = "specification-not-found"
@@ -30,9 +32,6 @@ const (
 
 	PerformanceStatePERFORMINGPASSED PerformanceState = "PERFORMING_PASSED"
 )
-
-// CreateSpecificationWithSource defines model for CreateSpecificationWithSource.
-type CreateSpecificationWithSource string
 
 // CreateTestCampaignRequest defines model for CreateTestCampaignRequest.
 type CreateTestCampaignRequest struct {
@@ -64,6 +63,9 @@ type ScenarioPerformance struct {
 	State             PerformanceState     `json:"state"`
 	ThesesPerformance *[]ThesisPerformance `json:"thesesPerformance,omitempty"`
 }
+
+// SpecificationSource defines model for SpecificationSource.
+type SpecificationSource string
 
 // StartPerformanceRequest defines model for StartPerformanceRequest.
 type StartPerformanceRequest struct {

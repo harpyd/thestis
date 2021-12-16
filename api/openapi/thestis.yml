@@ -120,7 +120,7 @@ paths:
         content:
           application/x-yaml:
             schema:
-              $ref: '#/components/schemas/CreateSpecificationWithSource'
+              $ref: '#/components/schemas/SpecificationSource'
       responses:
         201:
           description: Specification is loaded.
@@ -137,6 +137,12 @@ paths:
                 $ref: '#/components/schemas/Error'
         404:
           description: Test campaign with such ID not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        422:
+          description: Invalid specification source file.
           content:
             application/json:
               schema:
@@ -162,7 +168,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CreateSpecificationWithSource'
+                $ref: '#/components/schemas/SpecificationSource'
         404:
           description: Specification with such ID not found.
           content:
@@ -381,6 +387,7 @@ components:
         - test-campaign-not-found
         - specification-not-found
         - performance-not-found
+        - invalid-specification-source
         - invalid-json
         - bad-request
         - unexpected-error
@@ -415,7 +422,7 @@ components:
           type: string
           format: uuid
 
-    CreateSpecificationWithSource:
+    SpecificationSource:
       type: string
       format: binary
 
