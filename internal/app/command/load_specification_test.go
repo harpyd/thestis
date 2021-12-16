@@ -37,7 +37,7 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 			Name: "load_valid_specification",
 			Command: app.LoadSpecificationCommand{
 				TestCampaignID: "35474763-28f4-43a6-a184-e8894f50cba8",
-				Content:        spec,
+				Content:        []byte(spec),
 			},
 			TestCampaignFactory: func() *testcampaign.TestCampaign {
 				tc, err := testcampaign.New("35474763-28f4-43a6-a184-e8894f50cba8", "view name", "summary")
@@ -52,7 +52,7 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 			Name: "load_invalid_specification",
 			Command: app.LoadSpecificationCommand{
 				TestCampaignID: "f18fdd19-d69c-4afe-a639-8bcefd6c4af9",
-				Content:        spec,
+				Content:        []byte(spec),
 			},
 			TestCampaignFactory: func() *testcampaign.TestCampaign {
 				tc, err := testcampaign.New("f18fdd19-d69c-4afe-a639-8bcefd6c4af9", "view", "summary")

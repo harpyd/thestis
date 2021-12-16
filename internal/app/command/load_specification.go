@@ -1,8 +1,8 @@
 package command
 
 import (
+	"bytes"
 	"context"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -47,12 +47,12 @@ func (h LoadSpecificationHandler) Handle(
 	cmd app.LoadSpecificationCommand,
 ) (specID string, err error) {
 	defer func() {
-		err = errors.Wrap(err, "spec loading")
+		err = errors.Wrap(err, "specification loading")
 	}()
 
 	specID = uuid.New().String()
 
-	spec, err := h.specParserService.ParseSpecification(specID, strings.NewReader(cmd.Content))
+	spec, err := h.specParserService.ParseSpecification(specID, bytes.NewReader(cmd.Content))
 	if err != nil {
 		return "", err
 	}
