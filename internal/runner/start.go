@@ -2,7 +2,6 @@ package runner
 
 import (
 	"fmt"
-	"github.com/harpyd/thestis/internal/app/query"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
@@ -11,6 +10,7 @@ import (
 	mongorepo "github.com/harpyd/thestis/internal/adapter/repository/mongodb"
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/command"
+	"github.com/harpyd/thestis/internal/app/query"
 	"github.com/harpyd/thestis/internal/config"
 	"github.com/harpyd/thestis/internal/port/http"
 	"github.com/harpyd/thestis/internal/server"
