@@ -8,7 +8,7 @@ import (
 	"github.com/harpyd/thestis/pkg/httperr"
 )
 
-func unmarshalSpecificationSourceCommand(
+func unmarshalToSpecificationSourceCommand(
 	w http.ResponseWriter,
 	r *http.Request,
 	testCampaignID string,
