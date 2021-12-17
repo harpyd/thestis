@@ -2,6 +2,7 @@ package runner
 
 import (
 	"fmt"
+	"github.com/harpyd/thestis/internal/app/query"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
@@ -63,6 +64,9 @@ func newApplication(db *mongo.Database) app.Application {
 		Commands: app.Commands{
 			CreateTestCampaign: command.NewCreateTestCampaignHandler(tcRepo),
 			LoadSpecification:  command.NewLoadSpecificationHandler(specRepo, tcRepo, parserService),
+		},
+		Queries: app.Queries{
+			SpecificTestCampaign: query.NewSpecificTestCampaignHandler(tcRepo),
 		},
 	}
 }
