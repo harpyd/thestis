@@ -37,6 +37,18 @@ func (r *TestCampaignsRepository) GetTestCampaign(
 	return document.unmarshalToTestCampaign(), nil
 }
 
+func (r *TestCampaignsRepository) FindTestCampaign(
+	ctx context.Context,
+	qry app.SpecificTestCampaignQuery,
+) (app.SpecificTestCampaign, error) {
+	document, err := r.getTestCampaignDocument(ctx, qry.TestCampaignID)
+	if err != nil {
+		return app.SpecificTestCampaign{}, err
+	}
+
+	return document.unmarshalToSpecificTestCampaign(), nil
+}
+
 func (r *TestCampaignsRepository) getTestCampaignDocument(
 	ctx context.Context,
 	tcID string,

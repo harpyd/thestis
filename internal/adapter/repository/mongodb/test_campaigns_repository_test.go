@@ -38,6 +38,52 @@ func TestCampaignsRepository(t *testing.T) {
 	})
 }
 
+func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
+	testCampaignToFind, err := testcampaign.New("c0b28d44-d603-4756-bd25-8b3034e1dc77", "some name", "info")
+	s.Require().NoError(err)
+
+	s.addTestCampaigns(testCampaignToFind)
+
+	testCases := []struct {
+		Name        string
+		Query       app.SpecificTestCampaignQuery
+		ShouldBeErr bool
+		IsErr       func(err error) bool
+	}{
+		{
+			Name: "non_existing_test_campaign",
+			Query: app.SpecificTestCampaignQuery{
+				TestCampaignID: "53a7f280-247a-410f-b6ee-c336fe9c643f",
+			},
+			ShouldBeErr: true,
+			IsErr:       app.IsTestCampaignNotFoundError,
+		},
+		{
+			Name: "by_existing_test_campaign_id",
+			Query: app.SpecificTestCampaignQuery{
+				TestCampaignID: "c0b28d44-d603-4756-bd25-8b3034e1dc77",
+			},
+			ShouldBeErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		s.Run(c.Name, func() {
+			tc, err := s.repo.FindTestCampaign(context.Background(), c.Query)
+
+			if c.ShouldBeErr {
+				s.Require().True(c.IsErr(err))
+
+				return
+			}
+
+			s.Require().NoError(err)
+
+			s.Require().Equal(testCampaignToFind.ID(), tc.ID)
+		})
+	}
+}
+
 func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 	testCases := []struct {
 		Name                 string

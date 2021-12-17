@@ -1,6 +1,9 @@
 package mongodb
 
-import "github.com/harpyd/thestis/internal/domain/testcampaign"
+import (
+	"github.com/harpyd/thestis/internal/app"
+	"github.com/harpyd/thestis/internal/domain/testcampaign"
+)
 
 type (
 	testCampaignDocument struct {
@@ -27,4 +30,13 @@ func (d testCampaignDocument) unmarshalToTestCampaign() *testcampaign.TestCampai
 		d.Summary,
 		d.ActiveSpecificationID,
 	)
+}
+
+func (d testCampaignDocument) unmarshalToSpecificTestCampaign() app.SpecificTestCampaign {
+	return app.SpecificTestCampaign{
+		ID:                    d.ID,
+		ViewName:              d.ViewName,
+		Summary:               d.Summary,
+		ActiveSpecificationID: d.ActiveSpecificationID,
+	}
 }
