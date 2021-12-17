@@ -10,7 +10,7 @@ import (
 )
 
 func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testCampaignID string) {
-	cmd, ok := unmarshalSpecificationSourceCommand(w, r, testCampaignID)
+	cmd, ok := unmarshalToSpecificationSourceCommand(w, r, testCampaignID)
 	if !ok {
 		return
 	}
