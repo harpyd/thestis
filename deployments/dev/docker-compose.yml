@@ -12,6 +12,7 @@ services:
     volumes:
       - ./.bin/:/root/
       - ./configs/:/root/configs/
+      - ./swagger/:/root/swagger/
     depends_on:
       - mongodb
     env_file:
