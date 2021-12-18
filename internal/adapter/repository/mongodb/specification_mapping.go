@@ -262,7 +262,7 @@ func (d specificationDocument) unmarshalToSpecificSpecification() app.SpecificSp
 		Author:      d.Author,
 		Title:       d.Title,
 		Description: d.Description,
-		Stories:     make([]app.Story, len(d.Stories)),
+		Stories:     make([]app.Story, 0, len(d.Stories)),
 	}
 
 	for _, s := range d.Stories {
@@ -279,7 +279,7 @@ func (d storyDocument) unmarshalToStory() app.Story {
 		AsA:         d.AsA,
 		InOrderTo:   d.InOrderTo,
 		WantTo:      d.WantTo,
-		Scenarios:   make([]app.Scenario, len(d.Scenarios)),
+		Scenarios:   make([]app.Scenario, 0, len(d.Scenarios)),
 	}
 
 	for _, s := range d.Scenarios {
@@ -293,7 +293,7 @@ func (d scenarioDocument) unmarshalToScenario() app.Scenario {
 	scenario := app.Scenario{
 		Slug:        d.Slug,
 		Description: d.Description,
-		Theses:      make([]app.Thesis, len(d.Theses)),
+		Theses:      make([]app.Thesis, 0, len(d.Theses)),
 	}
 
 	for _, t := range d.Theses {
@@ -346,7 +346,7 @@ func (d httpResponseDocument) unmarshalToHTTPResponse() app.HTTPResponse {
 func (d assertionDocument) unmarshalToAssertion() app.Assertion {
 	assert := app.Assertion{
 		Method:  d.Method,
-		Asserts: make([]app.Assert, len(d.Asserts)),
+		Asserts: make([]app.Assert, 0, len(d.Asserts)),
 	}
 
 	for _, a := range d.Asserts {
