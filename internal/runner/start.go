@@ -66,7 +66,8 @@ func newApplication(db *mongo.Database) app.Application {
 			LoadSpecification:  command.NewLoadSpecificationHandler(specRepo, tcRepo, parserService),
 		},
 		Queries: app.Queries{
-			SpecificTestCampaign: query.NewSpecificTestCampaignHandler(tcRepo),
+			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(tcRepo),
+			SpecificSpecification: query.NewSpecificSpecificationHandler(specRepo),
 		},
 	}
 }

@@ -35,6 +35,18 @@ func (r *SpecificationsRepository) GetSpecification(
 	return document.unmarshalToSpecification(), nil
 }
 
+func (r *SpecificationsRepository) FindSpecification(
+	ctx context.Context,
+	qry app.SpecificSpecificationQuery,
+) (app.SpecificSpecification, error) {
+	document, err := r.getSpecificationDocument(ctx, qry.SpecificationID)
+	if err != nil {
+		return app.SpecificSpecification{}, err
+	}
+
+	return document.unmarshalToSpecificSpecification(), nil
+}
+
 func (r *SpecificationsRepository) getSpecificationDocument(
 	ctx context.Context,
 	specID string,

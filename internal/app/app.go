@@ -24,10 +24,15 @@ type (
 
 type (
 	Queries struct {
-		SpecificTestCampaign specificTestCampaignHandler
+		SpecificTestCampaign  specificTestCampaignHandler
+		SpecificSpecification specificSpecificationHandler
 	}
 
 	specificTestCampaignHandler interface {
 		Handle(ctx context.Context, qry SpecificTestCampaignQuery) (SpecificTestCampaign, error)
+	}
+
+	specificSpecificationHandler interface {
+		Handle(ctx context.Context, qry SpecificSpecificationQuery) (SpecificSpecification, error)
 	}
 )

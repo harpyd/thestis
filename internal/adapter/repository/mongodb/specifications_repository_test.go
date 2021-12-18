@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/harpyd/thestis/internal/adapter/repository/mongodb"
+	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
@@ -34,6 +35,55 @@ func TestSpecificationsRepository(t *testing.T) {
 	suite.Run(t, &SpecificationsRepositoryTestSuite{
 		MongoTestFixtures: MongoTestFixtures{t: t},
 	})
+}
+
+func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
+	specificationToFind := specification.NewBuilder().
+		WithID("64825e35-7fa7-44a4-9ca2-81cfc7b0f0d8").
+		WithAuthor("Djerys").
+		WithTitle("test").
+		ErrlessBuild()
+
+	s.addSpecifications(specificationToFind)
+
+	testCases := []struct {
+		Name        string
+		Query       app.SpecificSpecificationQuery
+		ShouldBeErr bool
+		IsErr       func(err error) bool
+	}{
+		{
+			Name: "non_existing_specification",
+			Query: app.SpecificSpecificationQuery{
+				SpecificationID: "34eff819-c14b-4d89-98a9-8e21d9f3cf21",
+			},
+			ShouldBeErr: true,
+			IsErr:       app.IsSpecificationNotFoundError,
+		},
+		{
+			Name: "by_existing_specification_id",
+			Query: app.SpecificSpecificationQuery{
+				SpecificationID: "64825e35-7fa7-44a4-9ca2-81cfc7b0f0d8",
+			},
+			ShouldBeErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		s.Run(c.Name, func() {
+			spec, err := s.repo.FindSpecification(context.Background(), c.Query)
+
+			if c.ShouldBeErr {
+				s.Require().True(c.IsErr(err))
+
+				return
+			}
+
+			s.Require().NoError(err)
+
+			s.Require().Equal(specificationToFind.ID(), spec.ID)
+		})
+	}
 }
 
 func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
@@ -81,4 +131,13 @@ func (s *SpecificationsRepositoryTestSuite) getSpecification(specID string) *spe
 	s.Require().NoError(err)
 
 	return spec
+}
+
+func (s *SpecificationsRepositoryTestSuite) addSpecifications(specs ...*specification.Specification) {
+	ctx := context.Background()
+
+	for _, spec := range specs {
+		err := s.repo.AddSpecification(ctx, spec)
+		s.Require().NoError(err)
+	}
 }

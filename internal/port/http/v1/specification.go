@@ -38,8 +38,26 @@ func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testC
 	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
-func (h handler) GetSpecification(w http.ResponseWriter, _ *http.Request, _ string) {
-	w.WriteHeader(http.StatusNotImplemented)
+func (h handler) GetSpecification(w http.ResponseWriter, r *http.Request, specificationID string) {
+	qry, ok := unmarshalToSpecificSpecificationQuery(specificationID)
+	if !ok {
+		return
+	}
+
+	spec, err := h.app.Queries.SpecificSpecification.Handle(r.Context(), qry)
+	if err == nil {
+		marshalToSpecificationResponse(w, r, spec)
+
+		return
+	}
+
+	if app.IsSpecificationNotFoundError(err) {
+		httperr.NotFound(string(ErrorSlugSpecificationNotFound), err, w, r)
+
+		return
+	}
+
+	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
 func (h handler) RemoveSpecification(w http.ResponseWriter, _ *http.Request, _ string) {
