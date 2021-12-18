@@ -168,7 +168,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SpecificationSource'
+                $ref: '#/components/schemas/Specification'
         404:
           description: Specification with such ID not found.
           content:
