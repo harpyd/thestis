@@ -11,7 +11,7 @@ type (
 )
 
 type (
-	// SpecificTestCampaign is application layer
+	// SpecificTestCampaign is most detailed application layer
 	// representation of testcampaign.TestCampaign.
 	SpecificTestCampaign struct {
 		ID                    string
@@ -20,7 +20,7 @@ type (
 		ActiveSpecificationID string
 	}
 
-	// SpecificSpecification is application layer
+	// SpecificSpecification is most detailed application layer
 	// representation of specification.Specification.
 	SpecificSpecification struct {
 		ID          string
