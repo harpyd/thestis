@@ -59,16 +59,16 @@ const (
 	PerformanceStatePERFORMINGPASSED PerformanceState = "PERFORMING_PASSED"
 )
 
-// Assertion defines model for Assertion.
-type Assertion struct {
+// Assert defines model for Assert.
+type Assert struct {
 	Actual   string `json:"actual"`
 	Expected string `json:"expected"`
 }
 
-// AssertionAction defines model for AssertionAction.
-type AssertionAction struct {
-	Assert *[]Assertion     `json:"assert,omitempty"`
-	With   *AssertionMethod `json:"with,omitempty"`
+// Assertion defines model for Assertion.
+type Assertion struct {
+	Assert []Assert        `json:"assert"`
+	With   AssertionMethod `json:"with"`
 }
 
 // AssertionMethod defines model for AssertionMethod.
@@ -89,22 +89,28 @@ type Error struct {
 // ErrorSlug defines model for ErrorSlug.
 type ErrorSlug string
 
-// HttpAction defines model for HttpAction.
-type HttpAction struct {
-	Request *struct {
-		Body        *map[string]interface{} `json:"body,omitempty"`
-		ContentType *string                 `json:"contentType,omitempty"`
-		Method      HttpMethod              `json:"method"`
-		Url         string                  `json:"url"`
-	} `json:"request,omitempty"`
-	Response *struct {
-		AllowedCodes       []int   `json:"allowedCodes"`
-		AllowedContentType *string `json:"allowedContentType,omitempty"`
-	} `json:"response,omitempty"`
+// Http defines model for Http.
+type Http struct {
+	Request  *HttpRequest  `json:"request,omitempty"`
+	Response *HttpResponse `json:"response,omitempty"`
 }
 
 // HttpMethod defines model for HttpMethod.
 type HttpMethod string
+
+// HttpRequest defines model for HttpRequest.
+type HttpRequest struct {
+	Body        *map[string]interface{} `json:"body,omitempty"`
+	ContentType *string                 `json:"contentType,omitempty"`
+	Method      HttpMethod              `json:"method"`
+	Url         string                  `json:"url"`
+}
+
+// HttpResponse defines model for HttpResponse.
+type HttpResponse struct {
+	AllowedCodes       []int   `json:"allowedCodes"`
+	AllowedContentType *string `json:"allowedContentType,omitempty"`
+}
 
 // PerformanceResponse defines model for PerformanceResponse.
 type PerformanceResponse struct {
@@ -117,9 +123,9 @@ type PerformanceState string
 
 // Scenario defines model for Scenario.
 type Scenario struct {
-	Description *string   `json:"description,omitempty"`
-	Slug        string    `json:"slug"`
-	Theses      *[]Thesis `json:"theses,omitempty"`
+	Description *string  `json:"description,omitempty"`
+	Slug        string   `json:"slug"`
+	Theses      []Thesis `json:"theses"`
 }
 
 // ScenarioPerformance defines model for ScenarioPerformance.
@@ -131,16 +137,17 @@ type ScenarioPerformance struct {
 
 // Specification defines model for Specification.
 type Specification struct {
-	Author      *string  `json:"author,omitempty"`
-	Description *string  `json:"description,omitempty"`
-	Stories     *[]Story `json:"stories,omitempty"`
-	Title       *string  `json:"title,omitempty"`
+	Author      *string `json:"author,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Id          string  `json:"id"`
+	Stories     []Story `json:"stories"`
+	Title       *string `json:"title,omitempty"`
 }
 
 // SpecificationResponse defines model for SpecificationResponse.
 type SpecificationResponse struct {
-	Specification          *Specification `json:"specification,omitempty"`
-	SpecificationSourceUri *string        `json:"specificationSourceUri,omitempty"`
+	SourceId      string        `json:"sourceId"`
+	Specification Specification `json:"specification"`
 }
 
 // SpecificationSource defines model for SpecificationSource.
@@ -156,14 +163,20 @@ type StartPerformanceRequest struct {
 	} `json:"stories,omitempty"`
 }
 
+// Statement defines model for Statement.
+type Statement struct {
+	Behavior string `json:"behavior"`
+	Keyword  string `json:"keyword"`
+}
+
 // Story defines model for Story.
 type Story struct {
-	AsA         *string     `json:"asA,omitempty"`
-	Description *string     `json:"description,omitempty"`
-	InOrderTo   *string     `json:"inOrderTo,omitempty"`
-	Scenarios   *[]Scenario `json:"scenarios,omitempty"`
-	Slug        string      `json:"slug"`
-	WantTo      *string     `json:"wantTo,omitempty"`
+	AsA         *string    `json:"asA,omitempty"`
+	Description *string    `json:"description,omitempty"`
+	InOrderTo   *string    `json:"inOrderTo,omitempty"`
+	Scenarios   []Scenario `json:"scenarios"`
+	Slug        string     `json:"slug"`
+	WantTo      *string    `json:"wantTo,omitempty"`
 }
 
 // StoryPerformance defines model for StoryPerformance.
@@ -184,13 +197,11 @@ type TestCampaignResponse struct {
 
 // Thesis defines model for Thesis.
 type Thesis struct {
-	After     *[]string        `json:"after,omitempty"`
-	Assertion *AssertionAction `json:"assertion,omitempty"`
-	Given     *string          `json:"given,omitempty"`
-	Http      *HttpAction      `json:"http,omitempty"`
-	Slug      string           `json:"slug"`
-	Then      *string          `json:"then,omitempty"`
-	When      *string          `json:"when,omitempty"`
+	After     []string   `json:"after"`
+	Assertion *Assertion `json:"assertion,omitempty"`
+	Http      *Http      `json:"http,omitempty"`
+	Slug      string     `json:"slug"`
+	Statement Statement  `json:"statement"`
 }
 
 // ThesisPerformance defines model for ThesisPerformance.

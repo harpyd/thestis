@@ -428,8 +428,11 @@ components:
 
     SpecificationResponse:
       type: object
+      required:
+        - specification
+        - sourceId
       properties:
-        specificationSourceUri:
+        sourceId:
           type: string
         specification:
           $ref: '#/components/schemas/Specification'
@@ -540,7 +543,12 @@ components:
 
     Specification:
       type: object
+      required:
+        - id
+        - stories
       properties:
+        id:
+          type: string
         author:
           type: string
         title:
@@ -556,6 +564,7 @@ components:
       type: object
       required:
         - slug
+        - scenarios
       properties:
         slug:
           type: string
@@ -576,6 +585,7 @@ components:
       type: object
       required:
         - slug
+        - theses
       properties:
         slug:
           type: string
@@ -590,52 +600,67 @@ components:
       type: object
       required:
         - slug
+        - after
+        - statement
       properties:
         slug:
           type: string
-        given:
-          type: string
-        when:
-          type: string
-        then:
-          type: string
+        statement:
+          $ref: '#/components/schemas/Statement'
         after:
           type: array
           items:
             type: string
         http:
-          $ref: '#/components/schemas/HttpAction'
+          $ref: '#/components/schemas/Http'
         assertion:
-          $ref: '#/components/schemas/AssertionAction'
+          $ref: '#/components/schemas/Assertion'
 
-    HttpAction:
+    Statement:
+      type: object
+      required:
+        - keyword
+        - behavior
+      properties:
+        keyword:
+          type: string
+        behavior:
+          type: string
+
+    Http:
       type: object
       properties:
         request:
-          type: object
-          required:
-            - method
-            - url
-          properties:
-            method:
-              $ref: '#/components/schemas/HttpMethod'
-            url:
-              type: string
-            contentType:
-              type: string
-            body:
-              type: object
+          $ref: '#/components/schemas/HttpRequest'
         response:
+          $ref: '#/components/schemas/HttpResponse'
+
+    HttpRequest:
+      type: object
+      required:
+        - method
+        - url
+      properties:
+        method:
+          $ref: '#/components/schemas/HttpMethod'
+        url:
+          type: string
+        contentType:
+          type: string
+        body:
           type: object
-          required:
-            - allowedCodes
-          properties:
-            allowedCodes:
-              type: array
-              items:
-                type: integer
-            allowedContentType:
-              type: string
+
+    HttpResponse:
+      type: object
+      required:
+        - allowedCodes
+      properties:
+        allowedCodes:
+          type: array
+          items:
+            type: integer
+        allowedContentType:
+          type: string
 
     HttpMethod:
       type: string
@@ -650,22 +675,25 @@ components:
         - CONNECT
         - HEAD
 
-    AssertionAction:
+    Assertion:
       type: object
+      required:
+        - with
+        - assert
       properties:
         with:
           $ref: '#/components/schemas/AssertionMethod'
         assert:
           type: array
           items:
-            $ref: '#/components/schemas/Assertion'
+            $ref: '#/components/schemas/Assert'
 
     AssertionMethod:
       type: string
       enum:
         - JSONPATH
 
-    Assertion:
+    Assert:
       type: object
       required:
         - actual

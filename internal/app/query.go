@@ -85,3 +85,22 @@ type (
 		Expected interface{}
 	}
 )
+
+func (h HTTP) IsZero() bool {
+	return h.Request.IsZero() && h.Response.IsZero()
+}
+
+func (r HTTPRequest) IsZero() bool {
+	return r.Method == "" &&
+		r.URL == "" &&
+		r.ContentType == "" &&
+		len(r.Body) == 0
+}
+
+func (r HTTPResponse) IsZero() bool {
+	return r.AllowedContentType == "" && len(r.AllowedCodes) == 0
+}
+
+func (a Assertion) IsZero() bool {
+	return a.Method == "" && len(a.Asserts) == 0
+}
