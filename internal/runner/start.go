@@ -2,7 +2,9 @@ package runner
 
 import (
 	"fmt"
+	stdhttp "net/http"
 
+	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/harpyd/thestis/internal/app/query"
 	"github.com/harpyd/thestis/internal/config"
 	"github.com/harpyd/thestis/internal/port/http"
+	v1 "github.com/harpyd/thestis/internal/port/http/v1"
 	"github.com/harpyd/thestis/internal/server"
 	"github.com/harpyd/thestis/pkg/database/mongodb"
 )
@@ -75,7 +78,17 @@ func newApplication(db *mongo.Database) app.Application {
 func startServer(cfg *config.Config, application app.Application, logger *zap.Logger) {
 	logger.Info("HTTP server started", zap.String("port", fmt.Sprintf(":%s", cfg.HTTP.Port)))
 
-	serv := server.New(cfg, http.NewHandler(application, logger))
+	serv := server.New(cfg, http.NewHandler(
+		logger,
+		http.Route{
+			Pattern: "/v1",
+			Handler: v1.NewHandler(application, chi.NewRouter()),
+		},
+		http.Route{
+			Pattern: "/swagger",
+			Handler: stdhttp.StripPrefix("/swagger/", stdhttp.FileServer(stdhttp.Dir("./swagger"))),
+		},
+	))
 	err := serv.Start()
 
 	logger.Fatal("HTTP server stopped", zap.Error(err))
