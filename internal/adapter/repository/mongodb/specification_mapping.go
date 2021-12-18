@@ -1,6 +1,9 @@
 package mongodb
 
-import "github.com/harpyd/thestis/internal/domain/specification"
+import (
+	"github.com/harpyd/thestis/internal/app"
+	"github.com/harpyd/thestis/internal/domain/specification"
+)
 
 type (
 	specificationDocument struct {
@@ -250,5 +253,112 @@ func (d assertionDocument) unmarshalToAssertionBuildFn() func(builder *specifica
 		for _, assert := range d.Asserts {
 			builder.WithAssert(assert.Actual, assert.Expected)
 		}
+	}
+}
+
+func (d specificationDocument) unmarshalToSpecificSpecification() app.SpecificSpecification {
+	spec := app.SpecificSpecification{
+		ID:          d.ID,
+		Author:      d.Author,
+		Title:       d.Title,
+		Description: d.Description,
+		Stories:     make([]app.Story, len(d.Stories)),
+	}
+
+	for _, s := range d.Stories {
+		spec.Stories = append(spec.Stories, s.unmarshalToStory())
+	}
+
+	return spec
+}
+
+func (d storyDocument) unmarshalToStory() app.Story {
+	story := app.Story{
+		Slug:        d.Slug,
+		Description: d.Description,
+		AsA:         d.AsA,
+		InOrderTo:   d.InOrderTo,
+		WantTo:      d.WantTo,
+		Scenarios:   make([]app.Scenario, len(d.Scenarios)),
+	}
+
+	for _, s := range d.Scenarios {
+		story.Scenarios = append(story.Scenarios, s.unmarshalToScenario())
+	}
+
+	return story
+}
+
+func (d scenarioDocument) unmarshalToScenario() app.Scenario {
+	scenario := app.Scenario{
+		Slug:        d.Slug,
+		Description: d.Description,
+		Theses:      make([]app.Thesis, len(d.Theses)),
+	}
+
+	for _, t := range d.Theses {
+		scenario.Theses = append(scenario.Theses, t.unmarshalToThesis())
+	}
+
+	return scenario
+}
+
+func (d thesisDocument) unmarshalToThesis() app.Thesis {
+	return app.Thesis{
+		Slug:      d.Slug,
+		After:     d.After,
+		Statement: d.Statement.unmarshalToStatement(),
+		HTTP:      d.HTTP.unmarshalToHTTP(),
+		Assertion: d.Assertion.unmarshalToAssertion(),
+	}
+}
+
+func (d statementDocument) unmarshalToStatement() app.Statement {
+	return app.Statement{
+		Keyword:  d.Keyword,
+		Behavior: d.Behaviour,
+	}
+}
+
+func (d httpDocument) unmarshalToHTTP() app.HTTP {
+	return app.HTTP{
+		Request:  d.Request.unmarshalToHTTPRequest(),
+		Response: d.Response.unmarshalToHTTPResponse(),
+	}
+}
+
+func (d httpRequestDocument) unmarshalToHTTPRequest() app.HTTPRequest {
+	return app.HTTPRequest{
+		Method:      d.Method,
+		URL:         d.URL,
+		ContentType: d.ContentType,
+		Body:        d.Body,
+	}
+}
+
+func (d httpResponseDocument) unmarshalToHTTPResponse() app.HTTPResponse {
+	return app.HTTPResponse{
+		AllowedCodes:       d.AllowedCodes,
+		AllowedContentType: d.AllowedContentType,
+	}
+}
+
+func (d assertionDocument) unmarshalToAssertion() app.Assertion {
+	assert := app.Assertion{
+		Method:  d.Method,
+		Asserts: make([]app.Assert, len(d.Asserts)),
+	}
+
+	for _, a := range d.Asserts {
+		assert.Asserts = append(assert.Asserts, a.unmarshalToAssert())
+	}
+
+	return assert
+}
+
+func (d assertDocument) unmarshalToAssert() app.Assert {
+	return app.Assert{
+		Actual:   d.Actual,
+		Expected: d.Expected,
 	}
 }
