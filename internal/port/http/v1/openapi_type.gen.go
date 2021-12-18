@@ -137,6 +137,12 @@ type Specification struct {
 	Title       *string  `json:"title,omitempty"`
 }
 
+// SpecificationResponse defines model for SpecificationResponse.
+type SpecificationResponse struct {
+	Specification          *Specification `json:"specification,omitempty"`
+	SpecificationSourceUri *string        `json:"specificationSourceUri,omitempty"`
+}
+
 // SpecificationSource defines model for SpecificationSource.
 type SpecificationSource string
 
