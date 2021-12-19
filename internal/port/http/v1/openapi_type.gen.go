@@ -146,7 +146,7 @@ type Specification struct {
 
 // SpecificationResponse defines model for SpecificationResponse.
 type SpecificationResponse struct {
-	SourceId      string        `json:"sourceId"`
+	SourceUri     string        `json:"sourceUri"`
 	Specification Specification `json:"specification"`
 }
 

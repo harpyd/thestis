@@ -38,7 +38,7 @@ func unmarshalToSpecificSpecificationQuery(specificationID string) (app.Specific
 func marshalToSpecificationResponse(w http.ResponseWriter, r *http.Request, spec app.SpecificSpecification) {
 	response := SpecificationResponse{
 		Specification: marshalToSpecification(spec),
-		SourceId:      "",
+		SourceUri:     "",
 	}
 
 	render.Respond(w, r, response)

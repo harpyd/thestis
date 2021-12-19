@@ -430,14 +430,14 @@ components:
       type: object
       required:
         - specification
-        - sourceId
+        - sourceUri
       properties:
-        sourceId:
+        sourceUri:
           type: string
         specification:
           $ref: '#/components/schemas/Specification'
       example:
-        specificationSourceUri: https://some-file-hosting/example
+        sourceUri: https://some-file-hosting/example
         specification:
           author: Djerys
           title: horns-and-hooves API test
