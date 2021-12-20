@@ -391,6 +391,8 @@ components:
         - invalid-json
         - bad-request
         - unexpected-error
+        - empty-bearer-token
+        - unable-to-verify-jwt
 
     CreateTestCampaignRequest:
       type: object

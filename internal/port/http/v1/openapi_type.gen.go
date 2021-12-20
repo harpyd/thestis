@@ -12,6 +12,8 @@ const (
 const (
 	ErrorSlugBadRequest ErrorSlug = "bad-request"
 
+	ErrorSlugEmptyBearerToken ErrorSlug = "empty-bearer-token"
+
 	ErrorSlugInvalidJson ErrorSlug = "invalid-json"
 
 	ErrorSlugInvalidSpecificationSource ErrorSlug = "invalid-specification-source"
@@ -21,6 +23,8 @@ const (
 	ErrorSlugSpecificationNotFound ErrorSlug = "specification-not-found"
 
 	ErrorSlugTestCampaignNotFound ErrorSlug = "test-campaign-not-found"
+
+	ErrorSlugUnableToVerifyJwt ErrorSlug = "unable-to-verify-jwt"
 
 	ErrorSlugUnexpectedError ErrorSlug = "unexpected-error"
 )
