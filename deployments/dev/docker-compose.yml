@@ -13,6 +13,7 @@ services:
       - ./.bin/:/root/
       - ./configs/:/root/configs/
       - ./swagger/:/root/swagger/
+      - ./.secrets/:/root/.secrets/  # Path to service account file
     depends_on:
       - mongodb
     env_file:
