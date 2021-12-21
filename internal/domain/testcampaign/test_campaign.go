@@ -8,7 +8,7 @@ type TestCampaign struct {
 	summary  string
 
 	activeSpecificationID string
-	userID                string
+	ownerID               string
 }
 
 type Params struct {
@@ -16,7 +16,7 @@ type Params struct {
 	ViewName              string
 	Summary               string
 	ActiveSpecificationID string
-	UserID                string
+	OwnerID               string
 }
 
 func New(params Params) (*TestCampaign, error) {
@@ -24,8 +24,8 @@ func New(params Params) (*TestCampaign, error) {
 		return nil, NewEmptyIDError()
 	}
 
-	if params.UserID == "" {
-		return nil, NewEmptyUserIDError()
+	if params.OwnerID == "" {
+		return nil, NewEmptyOwnerIDError()
 	}
 
 	return &TestCampaign{
@@ -33,7 +33,7 @@ func New(params Params) (*TestCampaign, error) {
 		viewName:              params.ViewName,
 		summary:               params.Summary,
 		activeSpecificationID: params.ActiveSpecificationID,
-		userID:                params.UserID,
+		ownerID:               params.OwnerID,
 	}, nil
 }
 
@@ -53,8 +53,8 @@ func (tc *TestCampaign) ActiveSpecificationID() string {
 	return tc.activeSpecificationID
 }
 
-func (tc *TestCampaign) UserID() string {
-	return tc.userID
+func (tc *TestCampaign) OwnerID() string {
+	return tc.ownerID
 }
 
 func (tc *TestCampaign) SetActiveSpecificationID(specificationID string) {
@@ -62,8 +62,8 @@ func (tc *TestCampaign) SetActiveSpecificationID(specificationID string) {
 }
 
 var (
-	errEmptyID     = errors.New("empty test campaign ID")
-	errEmptyUserID = errors.New("empty user ID")
+	errEmptyID      = errors.New("empty test campaign ID")
+	NewEmptyOwnerID = errors.New("empty owner ID")
 )
 
 func NewEmptyIDError() error {
@@ -74,10 +74,10 @@ func IsEmptyIDError(err error) bool {
 	return errors.Is(err, errEmptyID)
 }
 
-func NewEmptyUserIDError() error {
-	return errEmptyUserID
+func NewEmptyOwnerIDError() error {
+	return NewEmptyOwnerID
 }
 
-func IsEmptyUserIDError(err error) bool {
-	return errors.Is(err, errEmptyUserID)
+func IsEmptyOwnerIDError(err error) bool {
+	return errors.Is(err, NewEmptyOwnerID)
 }

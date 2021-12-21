@@ -409,13 +409,13 @@ components:
       type: object
       required:
         - id
-        - userId
+        - ownerId
         - viewName
       properties:
         id:
           type: string
           format: uuid
-        userId:
+        ownerId:
           type: string
           format: uuid
         viewName:

@@ -34,7 +34,7 @@ func (h CreateTestCampaignHandler) Handle(
 
 	tc, err := testcampaign.New(testcampaign.Params{
 		ID:       testCampaignID,
-		UserID:   cmd.UserID,
+		OwnerID:  cmd.OwnerID,
 		ViewName: cmd.ViewName,
 		Summary:  cmd.Summary,
 	})

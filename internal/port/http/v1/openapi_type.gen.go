@@ -197,8 +197,8 @@ type TestCampaignResponse struct {
 	ActiveSpecificationId *string `json:"activeSpecificationId,omitempty"`
 	Id                    string  `json:"id"`
 	LastPerformanceId     *string `json:"lastPerformanceId,omitempty"`
+	OwnerId               string  `json:"ownerId"`
 	Summary               *string `json:"summary,omitempty"`
-	UserId                string  `json:"userId"`
 	ViewName              string  `json:"viewName"`
 }
 

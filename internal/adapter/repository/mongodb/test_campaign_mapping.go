@@ -11,7 +11,7 @@ type (
 		ViewName              string `bson:"viewName"`
 		Summary               string `bson:"summary"`
 		ActiveSpecificationID string `bson:"activeSpecificationId"`
-		UserID                string `bson:"userId"`
+		OwnerID               string `bson:"ownerId"`
 	}
 )
 
@@ -21,7 +21,7 @@ func marshalToTestCampaignDocument(tc *testcampaign.TestCampaign) testCampaignDo
 		ViewName:              tc.ViewName(),
 		Summary:               tc.Summary(),
 		ActiveSpecificationID: tc.ActiveSpecificationID(),
-		UserID:                tc.UserID(),
+		OwnerID:               tc.OwnerID(),
 	}
 }
 
@@ -31,7 +31,7 @@ func (d testCampaignDocument) unmarshalToTestCampaign() *testcampaign.TestCampai
 		ViewName:              d.ViewName,
 		Summary:               d.Summary,
 		ActiveSpecificationID: d.ActiveSpecificationID,
-		UserID:                d.UserID,
+		OwnerID:               d.OwnerID,
 	})
 
 	return tc
@@ -43,6 +43,6 @@ func (d testCampaignDocument) unmarshalToSpecificTestCampaign() app.SpecificTest
 		ViewName:              d.ViewName,
 		Summary:               d.Summary,
 		ActiveSpecificationID: d.ActiveSpecificationID,
-		UserID:                d.UserID,
+		OwnerID:               d.OwnerID,
 	}
 }

@@ -24,7 +24,7 @@ func TestNew(t *testing.T) {
 				ID:       "tc-id",
 				ViewName: "test campaign",
 				Summary:  "summary",
-				UserID:   "user-id",
+				OwnerID:  "user-id",
 			},
 			ShouldBeErr: false,
 		},
@@ -34,7 +34,7 @@ func TestNew(t *testing.T) {
 				ID:       "",
 				ViewName: "test campaign with empty id",
 				Summary:  "",
-				UserID:   "user-id",
+				OwnerID:  "user-id",
 			},
 			ShouldBeErr: true,
 			IsErr:       testcampaign.IsEmptyIDError,
@@ -47,7 +47,7 @@ func TestNew(t *testing.T) {
 				Summary:  "",
 			},
 			ShouldBeErr: true,
-			IsErr:       testcampaign.IsEmptyUserIDError,
+			IsErr:       testcampaign.IsEmptyOwnerIDError,
 		},
 	}
 
@@ -104,7 +104,7 @@ func TestIsEmptyIDError(t *testing.T) {
 	}
 }
 
-func TestIsEmptyUserIDError(t *testing.T) {
+func TestIsEmptyOwnerIDError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -114,7 +114,7 @@ func TestIsEmptyUserIDError(t *testing.T) {
 	}{
 		{
 			Name:      "empty_user_id_error",
-			Err:       testcampaign.NewEmptyUserIDError(),
+			Err:       testcampaign.NewEmptyOwnerIDError(),
 			IsSameErr: true,
 		},
 		{
@@ -130,7 +130,7 @@ func TestIsEmptyUserIDError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, testcampaign.IsEmptyUserIDError(c.Err))
+			require.Equal(t, c.IsSameErr, testcampaign.IsEmptyOwnerIDError(c.Err))
 		})
 	}
 }

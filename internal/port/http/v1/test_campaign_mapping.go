@@ -31,7 +31,7 @@ func unmarshalToCreateTestCampaignCommand(
 	return app.CreateTestCampaignCommand{
 		ViewName: rb.ViewName,
 		Summary:  summary,
-		UserID:   user.UUID,
+		OwnerID:  user.UUID,
 	}, true
 }
 
@@ -47,7 +47,7 @@ func marshalToTestCampaignResponse(w http.ResponseWriter, r *http.Request, tc ap
 		ViewName:              tc.ViewName,
 		Summary:               &tc.Summary,
 		ActiveSpecificationId: &tc.ActiveSpecificationID,
-		UserId:                tc.UserID,
+		OwnerId:               tc.OwnerID,
 	}
 
 	render.Respond(w, r, response)

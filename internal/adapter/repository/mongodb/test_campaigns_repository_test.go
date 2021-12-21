@@ -43,7 +43,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
 		ID:       "c0b28d44-d603-4756-bd25-8b3034e1dc77",
 		ViewName: "some name",
 		Summary:  "info",
-		UserID:   "54112816-3a55-4a28-82df-3c8e082fa0f8",
+		OwnerID:  "54112816-3a55-4a28-82df-3c8e082fa0f8",
 	})
 	s.Require().NoError(err)
 
@@ -103,7 +103,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 					ID:       "e75690c2-e659-409d-a528-ffd40d17c4bc",
 					ViewName: "some campaign",
 					Summary:  "summary",
-					UserID:   "6c11693f-3376-4873-a8ef-a77a327ccb46",
+					OwnerID:  "6c11693f-3376-4873-a8ef-a77a327ccb46",
 				})
 				s.Require().NoError(err)
 
@@ -118,7 +118,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 					ID:       "1153796c-58d4-4b26-8c2f-f32a1a875dac",
 					ViewName: "",
 					Summary:  "summary",
-					UserID:   "9c845592-5e9e-4160-8e2f-0309a6949f04",
+					OwnerID:  "9c845592-5e9e-4160-8e2f-0309a6949f04",
 				})
 				s.Require().NoError(err)
 
@@ -133,7 +133,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 					ID:       "1153796c-58d4-4b26-8c2f-f32a1a875dac",
 					ViewName: "view name name name",
 					Summary:  "",
-					UserID:   "54112816-3a55-4a28-82df-3c8e082fa0f8",
+					OwnerID:  "54112816-3a55-4a28-82df-3c8e082fa0f8",
 				})
 				s.Require().NoError(err)
 
