@@ -155,7 +155,7 @@ func (c *runnerContext) addAuthMiddleware() {
 		)
 	}
 
-	c.logger.Info("Auth middleware creation completed", zap.String("auth type", authType))
+	c.logger.Info("Auth middleware creation completed", zap.String("authType", authType))
 }
 
 func (c *runnerContext) initServer() {
