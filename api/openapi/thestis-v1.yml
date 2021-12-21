@@ -175,28 +175,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    delete:
-      tags:
-        - specification
-      operationId: removeSpecification
-      summary: Removes specification with such ID.
-      parameters:
-        - in: path
-          name: specificationId
-          schema:
-            type: string
-            format: uuid
-          required: true
-          description: Specification ID to remove.
-      responses:
-        204:
-          description: Specification successfully removed.
-        404:
-          description: Specification with such ID not found.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
 
   /test-campaigns/{testCampaignId}/performance:
     post:

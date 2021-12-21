@@ -59,7 +59,3 @@ func (h handler) GetSpecification(w http.ResponseWriter, r *http.Request, specif
 
 	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
-
-func (h handler) RemoveSpecification(w http.ResponseWriter, _ *http.Request, _ string) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
