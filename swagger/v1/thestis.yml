@@ -393,6 +393,7 @@ components:
         - unexpected-error
         - empty-bearer-token
         - unable-to-verify-jwt
+        - unauthorized-user
 
     CreateTestCampaignRequest:
       type: object
@@ -408,9 +409,13 @@ components:
       type: object
       required:
         - id
+        - userId
         - viewName
       properties:
         id:
+          type: string
+          format: uuid
+        userId:
           type: string
           format: uuid
         viewName:

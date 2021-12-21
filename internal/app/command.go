@@ -2,6 +2,7 @@ package app
 
 type (
 	CreateTestCampaignCommand struct {
+		UserID   string
 		ViewName string
 		Summary  string
 	}

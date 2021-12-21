@@ -3,36 +3,38 @@ package testcampaign
 import "github.com/pkg/errors"
 
 type TestCampaign struct {
-	id                    string
-	viewName              string
-	summary               string
+	id       string
+	viewName string
+	summary  string
+
 	activeSpecificationID string
+	userID                string
 }
 
-func New(id string, viewName, summary string) (*TestCampaign, error) {
-	if id == "" {
+type Params struct {
+	ID                    string
+	ViewName              string
+	Summary               string
+	ActiveSpecificationID string
+	UserID                string
+}
+
+func New(params Params) (*TestCampaign, error) {
+	if params.ID == "" {
 		return nil, NewEmptyIDError()
 	}
 
-	return &TestCampaign{
-		id:       id,
-		viewName: viewName,
-		summary:  summary,
-	}, nil
-}
-
-func UnmarshalFromDatabase(
-	id string,
-	viewName string,
-	summary string,
-	activeSpecificationID string,
-) *TestCampaign {
-	return &TestCampaign{
-		id:                    id,
-		viewName:              viewName,
-		summary:               summary,
-		activeSpecificationID: activeSpecificationID,
+	if params.UserID == "" {
+		return nil, NewEmptyUserIDError()
 	}
+
+	return &TestCampaign{
+		id:                    params.ID,
+		viewName:              params.ViewName,
+		summary:               params.Summary,
+		activeSpecificationID: params.ActiveSpecificationID,
+		userID:                params.UserID,
+	}, nil
 }
 
 func (tc *TestCampaign) ID() string {
@@ -51,11 +53,18 @@ func (tc *TestCampaign) ActiveSpecificationID() string {
 	return tc.activeSpecificationID
 }
 
+func (tc *TestCampaign) UserID() string {
+	return tc.userID
+}
+
 func (tc *TestCampaign) SetActiveSpecificationID(specificationID string) {
 	tc.activeSpecificationID = specificationID
 }
 
-var errEmptyID = errors.New("empty test campaign ID")
+var (
+	errEmptyID     = errors.New("empty test campaign ID")
+	errEmptyUserID = errors.New("empty user ID")
+)
 
 func NewEmptyIDError() error {
 	return errEmptyID
@@ -63,4 +72,12 @@ func NewEmptyIDError() error {
 
 func IsEmptyIDError(err error) bool {
 	return errors.Is(err, errEmptyID)
+}
+
+func NewEmptyUserIDError() error {
+	return errEmptyUserID
+}
+
+func IsEmptyUserIDError(err error) bool {
+	return errors.Is(err, errEmptyUserID)
 }

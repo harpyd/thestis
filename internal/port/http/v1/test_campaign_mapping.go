@@ -12,6 +12,11 @@ func unmarshalToCreateTestCampaignCommand(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (cmd app.CreateTestCampaignCommand, ok bool) {
+	user, ok := unmarshalUser(w, r)
+	if !ok {
+		return
+	}
+
 	var rb CreateTestCampaignRequest
 
 	if ok = decode(w, r, &rb); !ok {
@@ -26,6 +31,7 @@ func unmarshalToCreateTestCampaignCommand(
 	return app.CreateTestCampaignCommand{
 		ViewName: rb.ViewName,
 		Summary:  summary,
+		UserID:   user.UUID,
 	}, true
 }
 
@@ -41,6 +47,7 @@ func marshalToTestCampaignResponse(w http.ResponseWriter, r *http.Request, tc ap
 		ViewName:              tc.ViewName,
 		Summary:               &tc.Summary,
 		ActiveSpecificationId: &tc.ActiveSpecificationID,
+		UserId:                tc.UserID,
 	}
 
 	render.Respond(w, r, response)

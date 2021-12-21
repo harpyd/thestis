@@ -40,7 +40,12 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 				Content:        []byte(spec),
 			},
 			TestCampaignFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New("35474763-28f4-43a6-a184-e8894f50cba8", "view name", "summary")
+				tc, err := testcampaign.New(testcampaign.Params{
+					ID:       "35474763-28f4-43a6-a184-e8894f50cba8",
+					ViewName: "view name",
+					Summary:  "summary",
+					UserID:   "cb39a8e2-8f79-484b-bc48-51f83a8e8c33",
+				})
 				require.NoError(t, err)
 
 				return tc
@@ -55,7 +60,12 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 				Content:        []byte(spec),
 			},
 			TestCampaignFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New("f18fdd19-d69c-4afe-a639-8bcefd6c4af9", "view", "summary")
+				tc, err := testcampaign.New(testcampaign.Params{
+					ID:       "f18fdd19-d69c-4afe-a639-8bcefd6c4af9",
+					ViewName: "view",
+					Summary:  "summary",
+					UserID:   "dc0479de-33ed-4631-b9a4-2834c3efb7b1",
+				})
 				require.NoError(t, err)
 
 				return tc

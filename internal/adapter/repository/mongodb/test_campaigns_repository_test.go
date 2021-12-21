@@ -39,7 +39,12 @@ func TestCampaignsRepository(t *testing.T) {
 }
 
 func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
-	testCampaignToFind, err := testcampaign.New("c0b28d44-d603-4756-bd25-8b3034e1dc77", "some name", "info")
+	testCampaignToFind, err := testcampaign.New(testcampaign.Params{
+		ID:       "c0b28d44-d603-4756-bd25-8b3034e1dc77",
+		ViewName: "some name",
+		Summary:  "info",
+		UserID:   "54112816-3a55-4a28-82df-3c8e082fa0f8",
+	})
 	s.Require().NoError(err)
 
 	s.addTestCampaigns(testCampaignToFind)
@@ -94,11 +99,12 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 		{
 			Name: "with_all_fields",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New(
-					"e75690c2-e659-409d-a528-ffd40d17c4bc",
-					"some campaign",
-					"summary",
-				)
+				tc, err := testcampaign.New(testcampaign.Params{
+					ID:       "e75690c2-e659-409d-a528-ffd40d17c4bc",
+					ViewName: "some campaign",
+					Summary:  "summary",
+					UserID:   "6c11693f-3376-4873-a8ef-a77a327ccb46",
+				})
 				s.Require().NoError(err)
 
 				return tc
@@ -108,11 +114,12 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 		{
 			Name: "without_view_name",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New(
-					"1153796c-58d4-4b26-8c2f-f32a1a875dac",
-					"",
-					"summary",
-				)
+				tc, err := testcampaign.New(testcampaign.Params{
+					ID:       "1153796c-58d4-4b26-8c2f-f32a1a875dac",
+					ViewName: "",
+					Summary:  "summary",
+					UserID:   "9c845592-5e9e-4160-8e2f-0309a6949f04",
+				})
 				s.Require().NoError(err)
 
 				return tc
@@ -122,11 +129,12 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 		{
 			Name: "without_summary",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New(
-					"290360f8-8d28-437b-9fe6-9bbd23198c76",
-					"view",
-					"",
-				)
+				tc, err := testcampaign.New(testcampaign.Params{
+					ID:       "1153796c-58d4-4b26-8c2f-f32a1a875dac",
+					ViewName: "view name name name",
+					Summary:  "",
+					UserID:   "54112816-3a55-4a28-82df-3c8e082fa0f8",
+				})
 				s.Require().NoError(err)
 
 				return tc
@@ -156,7 +164,11 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 }
 
 func (s *TestCampaignsRepositoryTestSuite) TestUpdateTestCampaign() {
-	testCampaignToUpdate, err := testcampaign.New("0b723635-4691-4eae-aca8-79b230989f9d", "some name", "summary")
+	testCampaignToUpdate, err := testcampaign.New(testcampaign.Params{
+		ID:       "0b723635-4691-4eae-aca8-79b230989f9d",
+		ViewName: "some name",
+		Summary:  "summary",
+	})
 	s.Require().NoError(err)
 
 	s.addTestCampaigns(testCampaignToUpdate)

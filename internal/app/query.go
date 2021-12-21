@@ -18,6 +18,7 @@ type (
 		ViewName              string
 		Summary               string
 		ActiveSpecificationID string
+		UserID                string
 	}
 
 	// SpecificSpecification is most detailed application layer

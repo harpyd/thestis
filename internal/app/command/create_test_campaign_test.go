@@ -23,6 +23,7 @@ func TestCreateTestCampaignHandler_Handle(t *testing.T) {
 		{
 			Name: "create_test_campaign",
 			Command: app.CreateTestCampaignCommand{
+				UserID:   "61fcde9c-b729-4ae1-9c86-a80d706eda6c",
 				ViewName: "test campaign",
 			},
 			ShouldBeErr: false,

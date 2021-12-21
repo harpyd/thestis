@@ -26,6 +26,8 @@ const (
 
 	ErrorSlugUnableToVerifyJwt ErrorSlug = "unable-to-verify-jwt"
 
+	ErrorSlugUnauthorizedUser ErrorSlug = "unauthorized-user"
+
 	ErrorSlugUnexpectedError ErrorSlug = "unexpected-error"
 )
 
@@ -196,6 +198,7 @@ type TestCampaignResponse struct {
 	Id                    string  `json:"id"`
 	LastPerformanceId     *string `json:"lastPerformanceId,omitempty"`
 	Summary               *string `json:"summary,omitempty"`
+	UserId                string  `json:"userId"`
 	ViewName              string  `json:"viewName"`
 }
 
