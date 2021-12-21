@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/golang-jwt/jwt/request"
 
-	"github.com/harpyd/thestis/pkg/httperr"
+	"github.com/harpyd/thestis/pkg/http/httperr"
 )
 
 func FakeMiddleware(next http.Handler) http.Handler {

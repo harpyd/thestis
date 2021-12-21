@@ -6,7 +6,7 @@ import (
 
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/specification"
-	"github.com/harpyd/thestis/pkg/httperr"
+	"github.com/harpyd/thestis/pkg/http/httperr"
 )
 
 func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testCampaignID string) {

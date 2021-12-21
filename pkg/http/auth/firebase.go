@@ -7,7 +7,7 @@ import (
 
 	"firebase.google.com/go/auth"
 
-	"github.com/harpyd/thestis/pkg/httperr"
+	"github.com/harpyd/thestis/pkg/http/httperr"
 )
 
 func FirebaseMiddleware(auth *auth.Client) func(next http.Handler) http.Handler {
