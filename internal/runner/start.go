@@ -1,16 +1,14 @@
 package runner
 
 import (
-	"context"
 	"fmt"
 	stdhttp "net/http"
+	"strings"
 
-	firebase "firebase.google.com/go"
 	fireauth "firebase.google.com/go/auth"
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
-	"google.golang.org/api/option"
 
 	"github.com/harpyd/thestis/internal/adapter/parser/yaml"
 	mongorepo "github.com/harpyd/thestis/internal/adapter/repository/mongodb"
@@ -21,6 +19,7 @@ import (
 	"github.com/harpyd/thestis/internal/port/http"
 	v1 "github.com/harpyd/thestis/internal/port/http/v1"
 	"github.com/harpyd/thestis/internal/server"
+	"github.com/harpyd/thestis/pkg/auth/firebase"
 	"github.com/harpyd/thestis/pkg/database/mongodb"
 	"github.com/harpyd/thestis/pkg/http/auth"
 )
@@ -86,19 +85,12 @@ func (c *runnerContext) initMongoDatabase() {
 }
 
 func (c *runnerContext) initFirebaseClient() {
-	opt := option.WithCredentialsFile(c.config.Firebase.ServiceAccountFile)
-
-	firebaseApp, err := firebase.NewApp(context.Background(), nil, opt)
-	if err != nil {
-		c.logger.Fatal("Failed to create Firebase app", zap.Error(err))
-	}
-
-	authClient, err := firebaseApp.Auth(context.Background())
+	firebaseAuth, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
 	if err != nil {
 		c.logger.Fatal("Failed to create Firebase Auth client", zap.Error(err))
 	}
 
-	c.firebaseAuth = authClient
+	c.firebaseAuth = firebaseAuth
 }
 
 func (c *runnerContext) initApplication() {
@@ -130,6 +122,14 @@ func (c *runnerContext) addAuthMiddleware() {
 		c.initFirebaseClient()
 		c.middlewares = append(c.middlewares, auth.FirebaseMiddleware(c.firebaseAuth))
 	default:
+		c.logger.Fatal(
+			"Invalid auth type",
+			zap.String("actual", c.config.Auth.With),
+			zap.String("allowed", strings.Join([]string{
+				config.FakeAuth,
+				config.FirebaseAuth,
+			}, ", ")),
+		)
 	}
 }
 
