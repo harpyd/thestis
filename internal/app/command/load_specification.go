@@ -3,12 +3,12 @@ package command
 import (
 	"bytes"
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
 
@@ -52,15 +52,10 @@ func (h LoadSpecificationHandler) Handle(
 
 	specID = uuid.New().String()
 
-	spec, err := h.specParserService.ParseSpecification(specID, bytes.NewReader(cmd.Content))
-	if err != nil {
-		return "", err
-	}
-
 	if err = h.testCampaignsRepo.UpdateTestCampaign(
 		ctx,
 		cmd.TestCampaignID,
-		h.loadSpecification(spec),
+		h.loadSpecification(specID, cmd),
 	); err != nil {
 		return "", err
 	}
@@ -68,8 +63,18 @@ func (h LoadSpecificationHandler) Handle(
 	return
 }
 
-func (h LoadSpecificationHandler) loadSpecification(spec *specification.Specification) TestCampaignUpdater {
+func (h LoadSpecificationHandler) loadSpecification(specID string, cmd app.LoadSpecificationCommand) TestCampaignUpdater {
 	return func(ctx context.Context, tc *testcampaign.TestCampaign) (*testcampaign.TestCampaign, error) {
+		spec, err := h.specParserService.ParseSpecification(
+			bytes.NewReader(cmd.Content),
+			app.WithSpecificationID(specID),
+			app.WithSpecificationOwnerID(tc.OwnerID()),
+			app.WithSpecificationLoadedAt(time.Now()),
+		)
+		if err != nil {
+			return nil, err
+		}
+
 		if err := h.specsRepo.AddSpecification(ctx, spec); err != nil {
 			return nil, err
 		}

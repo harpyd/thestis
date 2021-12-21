@@ -5,6 +5,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
@@ -14,7 +15,7 @@ func NewSpecificationParserService() SpecificationParserService {
 	return SpecificationParserService{}
 }
 
-func (s SpecificationParserService) ParseSpecification(specID string, reader io.Reader) (*specification.Specification, error) {
+func (s SpecificationParserService) ParseSpecification(reader io.Reader, opts ...app.ParserOption) (*specification.Specification, error) {
 	decoder := yaml.NewDecoder(reader)
 
 	var spec specificationSchema
@@ -22,15 +23,18 @@ func (s SpecificationParserService) ParseSpecification(specID string, reader io.
 		return nil, err
 	}
 
-	return build(specID, spec)
+	return build(spec, opts)
 }
 
-func build(specID string, spec specificationSchema) (*specification.Specification, error) {
+func build(spec specificationSchema, opts []app.ParserOption) (*specification.Specification, error) {
 	builder := specification.NewBuilder().
-		WithID(specID).
 		WithAuthor(spec.Author).
 		WithTitle(spec.Title).
 		WithDescription(spec.Description)
+
+	for _, opt := range opts {
+		opt(builder)
+	}
 
 	for slug, story := range spec.Stories {
 		builder.WithStory(slug, buildStory(story))
