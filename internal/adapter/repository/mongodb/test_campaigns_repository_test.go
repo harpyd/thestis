@@ -166,7 +166,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 func (s *TestCampaignsRepositoryTestSuite) TestUpdateTestCampaign() {
 	testCampaignToUpdate, err := testcampaign.New(testcampaign.Params{
 		ID:       "0b723635-4691-4eae-aca8-79b230989f9d",
-		UserID:   "3dd1ee11-2520-4de1-859a-b8d6fbb003e9",
+		OwnerID:  "3dd1ee11-2520-4de1-859a-b8d6fbb003e9",
 		ViewName: "some name",
 		Summary:  "summary",
 	})

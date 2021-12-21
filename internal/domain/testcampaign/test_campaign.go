@@ -63,7 +63,7 @@ func (tc *TestCampaign) SetActiveSpecificationID(specificationID string) {
 
 var (
 	errEmptyID      = errors.New("empty test campaign ID")
-	NewEmptyOwnerID = errors.New("empty owner ID")
+	errEmptyOwnerID = errors.New("empty owner ID")
 )
 
 func NewEmptyIDError() error {
@@ -75,9 +75,9 @@ func IsEmptyIDError(err error) bool {
 }
 
 func NewEmptyOwnerIDError() error {
-	return NewEmptyOwnerID
+	return errEmptyOwnerID
 }
 
 func IsEmptyOwnerIDError(err error) bool {
-	return errors.Is(err, NewEmptyOwnerID)
+	return errors.Is(err, errEmptyOwnerID)
 }
