@@ -25,7 +25,7 @@ import (
 )
 
 func Start(configsPath string) {
-	newRunner().start(configsPath)
+	newRunner(configsPath).start()
 }
 
 type runnerContext struct {
@@ -36,23 +36,34 @@ type runnerContext struct {
 	app          *app.Application
 	middlewares  []func(stdhttp.Handler) stdhttp.Handler
 	server       *server.Server
+
+	cancel func()
 }
 
-func newRunner() *runnerContext {
-	return &runnerContext{}
-}
+func newRunner(configsPath string) *runnerContext {
+	c := &runnerContext{}
 
-func (c *runnerContext) start(configsPath string) {
-	sync := c.initLogger()
-	defer sync()
-
+	c.cancel = c.initLogger()
 	c.initConfig(configsPath)
 	c.initMongoDatabase()
 	c.initApplication()
 	c.initMiddlewares()
 	c.initServer()
 
-	c.serve()
+	return c
+}
+
+func (c *runnerContext) start() {
+	defer c.cancel()
+
+	c.logger.Info(
+		"HTTP server started",
+		zap.String("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
+	)
+
+	err := c.server.Start()
+
+	c.logger.Fatal("HTTP server stopped", zap.Error(err))
 }
 
 func (c *runnerContext) initLogger() func() {
@@ -73,6 +84,8 @@ func (c *runnerContext) initConfig(configsPath string) {
 	}
 
 	c.config = cfg
+
+	c.logger.Info("Config parsing completed")
 }
 
 func (c *runnerContext) initMongoDatabase() {
@@ -82,6 +95,8 @@ func (c *runnerContext) initMongoDatabase() {
 	}
 
 	c.mongoDB = client.Database(c.config.Mongo.DatabaseName)
+
+	c.logger.Info("MongoDB connection completed")
 }
 
 func (c *runnerContext) initFirebaseClient() {
@@ -91,6 +106,8 @@ func (c *runnerContext) initFirebaseClient() {
 	}
 
 	c.firebaseAuth = firebaseAuth
+
+	c.logger.Info("Firebase Auth client creation completed")
 }
 
 func (c *runnerContext) initApplication() {
@@ -108,14 +125,20 @@ func (c *runnerContext) initApplication() {
 			SpecificSpecification: query.NewSpecificSpecificationHandler(specRepo),
 		},
 	}
+
+	c.logger.Info("Application context creation completed")
 }
 
 func (c *runnerContext) initMiddlewares() {
 	c.addAuthMiddleware()
+
+	c.logger.Info("Middlewares adding completed")
 }
 
 func (c *runnerContext) addAuthMiddleware() {
-	switch c.config.Auth.With {
+	authType := c.config.Auth.With
+
+	switch authType {
 	case config.FakeAuth:
 		c.middlewares = append(c.middlewares, auth.FakeMiddleware)
 	case config.FirebaseAuth:
@@ -124,13 +147,15 @@ func (c *runnerContext) addAuthMiddleware() {
 	default:
 		c.logger.Fatal(
 			"Invalid auth type",
-			zap.String("actual", c.config.Auth.With),
+			zap.String("actual", authType),
 			zap.String("allowed", strings.Join([]string{
 				config.FakeAuth,
 				config.FirebaseAuth,
 			}, ", ")),
 		)
 	}
+
+	c.logger.Info("Auth middleware creation completed", zap.String("auth type", authType))
 }
 
 func (c *runnerContext) initServer() {
@@ -148,15 +173,6 @@ func (c *runnerContext) initServer() {
 			Handler: stdhttp.StripPrefix("/swagger/", stdhttp.FileServer(stdhttp.Dir("./swagger"))),
 		},
 	))
-}
 
-func (c *runnerContext) serve() {
-	c.logger.Info(
-		"HTTP server started",
-		zap.String("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
-	)
-
-	err := c.server.Start()
-
-	c.logger.Fatal("HTTP server stopped", zap.Error(err))
+	c.logger.Info("Server initializing completed")
 }
