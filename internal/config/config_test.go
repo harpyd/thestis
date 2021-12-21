@@ -20,15 +20,17 @@ func TestFromPath(t *testing.T) {
 	}
 
 	type env struct {
-		HTTPPort      string
-		MongoURI      string
-		MongoDatabase string
+		HTTPPort           string
+		MongoURI           string
+		MongoDatabase      string
+		ServiceAccountFile string
 	}
 
 	setEnv := func(env env) {
 		_ = os.Setenv("HTTP_PORT", env.HTTPPort)
 		_ = os.Setenv("MONGO_URI", env.MongoURI)
 		_ = os.Setenv("MONGO_DATABASE", env.MongoDatabase)
+		_ = os.Setenv("SERVICE_ACCOUNT_FILE", env.ServiceAccountFile)
 	}
 
 	testCases := []struct {
@@ -43,9 +45,10 @@ func TestFromPath(t *testing.T) {
 			Name:        "valid_test_config_with_env",
 			ConfigsPath: fixturesPath,
 			Env: env{
-				HTTPPort:      "8080",
-				MongoURI:      "some://uri",
-				MongoDatabase: "someName",
+				HTTPPort:           "8080",
+				MongoURI:           "some://uri",
+				MongoDatabase:      "someName",
+				ServiceAccountFile: "path/to/serviceAccount.json",
 			},
 			ExpectedConfig: &config.Config{
 				Environment: "local",
@@ -59,6 +62,12 @@ func TestFromPath(t *testing.T) {
 					DatabaseName: "someName",
 					Username:     "admin",
 					Password:     "0000",
+				},
+				Firebase: config.Firebase{
+					ServiceAccountFile: "path/to/serviceAccount.json",
+				},
+				Auth: config.Auth{
+					With: "fake",
 				},
 			},
 			ShouldBeErr: false,
