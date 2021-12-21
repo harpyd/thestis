@@ -2,6 +2,7 @@ package specification
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
@@ -10,6 +11,8 @@ import (
 type (
 	Specification struct {
 		id          string
+		ownerID     string
+		loadedAt    time.Time
 		author      string
 		title       string
 		description string
@@ -18,6 +21,8 @@ type (
 
 	Builder struct {
 		id             string
+		ownerID        string
+		loadedAt       time.Time
 		author         string
 		title          string
 		description    string
@@ -29,6 +34,14 @@ type (
 
 func (s *Specification) ID() string {
 	return s.id
+}
+
+func (s *Specification) OwnerID() string {
+	return s.ownerID
+}
+
+func (s *Specification) LoadedAt() time.Time {
+	return s.loadedAt
 }
 
 func (s *Specification) Author() string {
@@ -94,6 +107,8 @@ func NewBuilder() *Builder {
 func (b *Builder) Build() (*Specification, error) {
 	spec := &Specification{
 		id:          b.id,
+		ownerID:     b.ownerID,
+		loadedAt:    b.loadedAt,
 		author:      b.author,
 		title:       b.title,
 		description: b.description,
@@ -137,6 +152,18 @@ func (b *Builder) Reset() {
 
 func (b *Builder) WithID(id string) *Builder {
 	b.id = id
+
+	return b
+}
+
+func (b *Builder) WithOwnerID(ownerID string) *Builder {
+	b.ownerID = ownerID
+
+	return b
+}
+
+func (b *Builder) WithLoadedAt(loadedAt time.Time) *Builder {
+	b.loadedAt = loadedAt
 
 	return b
 }
