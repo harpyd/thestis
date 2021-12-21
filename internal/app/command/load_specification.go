@@ -10,6 +10,7 @@ import (
 
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
+	"github.com/harpyd/thestis/internal/domain/user"
 )
 
 type LoadSpecificationHandler struct {
@@ -72,6 +73,10 @@ func (h LoadSpecificationHandler) loadSpecification(specID string, cmd app.LoadS
 			app.WithSpecificationLoadedAt(time.Now()),
 		)
 		if err != nil {
+			return nil, err
+		}
+
+		if err := user.CanSeeTestCampaign(cmd.LoadedByID, tc); err != nil {
 			return nil, err
 		}
 

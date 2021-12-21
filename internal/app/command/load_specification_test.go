@@ -11,6 +11,7 @@ import (
 	"github.com/harpyd/thestis/internal/app/command/mock"
 	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
+	"github.com/harpyd/thestis/internal/domain/user"
 )
 
 const spec = `
@@ -37,6 +38,7 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 			Name: "load_valid_specification",
 			Command: app.LoadSpecificationCommand{
 				TestCampaignID: "35474763-28f4-43a6-a184-e8894f50cba8",
+				LoadedByID:     "cb39a8e2-8f79-484b-bc48-51f83a8e8c33",
 				Content:        []byte(spec),
 			},
 			TestCampaignFactory: func() *testcampaign.TestCampaign {
@@ -57,6 +59,7 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 			Name: "load_invalid_specification",
 			Command: app.LoadSpecificationCommand{
 				TestCampaignID: "f18fdd19-d69c-4afe-a639-8bcefd6c4af9",
+				LoadedByID:     "dc0479de-33ed-4631-b9a4-2834c3efb7b1",
 				Content:        []byte(spec),
 			},
 			TestCampaignFactory: func() *testcampaign.TestCampaign {
@@ -73,6 +76,26 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 			ParseWithErr: true,
 			ShouldBeErr:  true,
 			IsErr:        specification.IsBuildSpecificationError,
+		},
+		{
+			Name: "user_cant_see_test_campaign",
+			Command: app.LoadSpecificationCommand{
+				TestCampaignID: "e7c57ccf-3bff-402b-ada5-71990e3ab0cd",
+				LoadedByID:     "1dccc358-2f91-427b-b2a8-f46169fc3a04",
+				Content:        []byte(spec),
+			},
+			TestCampaignFactory: func() *testcampaign.TestCampaign {
+				tc, err := testcampaign.New(testcampaign.Params{
+					ID:      "e7c57ccf-3bff-402b-ada5-71990e3ab0cd",
+					OwnerID: "98fd29f8-442b-420c-9cf8-e4d3c1f105e8",
+				})
+				require.NoError(t, err)
+
+				return tc
+			},
+			ParseWithErr: false,
+			ShouldBeErr:  true,
+			IsErr:        user.IsUserCantSeeTestCampaignError,
 		},
 	}
 
