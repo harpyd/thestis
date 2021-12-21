@@ -130,7 +130,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 			Name: "without_summary",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
 				tc, err := testcampaign.New(testcampaign.Params{
-					ID:       "1153796c-58d4-4b26-8c2f-f32a1a875dac",
+					ID:       "9ed07209-7a4f-4dd9-bf0d-6f8b70280f85",
 					ViewName: "view name name name",
 					Summary:  "",
 					OwnerID:  "54112816-3a55-4a28-82df-3c8e082fa0f8",
@@ -166,6 +166,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 func (s *TestCampaignsRepositoryTestSuite) TestUpdateTestCampaign() {
 	testCampaignToUpdate, err := testcampaign.New(testcampaign.Params{
 		ID:       "0b723635-4691-4eae-aca8-79b230989f9d",
+		UserID:   "3dd1ee11-2520-4de1-859a-b8d6fbb003e9",
 		ViewName: "some name",
 		Summary:  "summary",
 	})
