@@ -16,6 +16,11 @@ func unmarshalToSpecificationSourceCommand(
 	r *http.Request,
 	testCampaignID string,
 ) (cmd app.LoadSpecificationCommand, ok bool) {
+	user, ok := unmarshalUser(w, r)
+	if !ok {
+		return
+	}
+
 	content, err := io.ReadAll(r.Body)
 	if err != nil {
 		httperr.BadRequest(string(ErrorSlugBadRequest), err, w, r)
@@ -26,6 +31,7 @@ func unmarshalToSpecificationSourceCommand(
 	return app.LoadSpecificationCommand{
 		Content:        content,
 		TestCampaignID: testCampaignID,
+		LoadedByID:     user.UUID,
 	}, true
 }
 
@@ -47,6 +53,7 @@ func marshalToSpecificationResponse(w http.ResponseWriter, r *http.Request, spec
 func marshalToSpecification(spec app.SpecificSpecification) Specification {
 	res := Specification{
 		Id:          spec.ID,
+		LoadedAt:    spec.LoadedAt,
 		Author:      &spec.Author,
 		Title:       &spec.Title,
 		Description: &spec.Description,

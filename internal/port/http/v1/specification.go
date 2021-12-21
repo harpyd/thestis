@@ -6,6 +6,7 @@ import (
 
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/specification"
+	"github.com/harpyd/thestis/internal/domain/user"
 	"github.com/harpyd/thestis/pkg/http/httperr"
 )
 
@@ -31,6 +32,12 @@ func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testC
 
 	if specification.IsBuildSpecificationError(err) {
 		httperr.UnprocessableEntity(string(ErrorSlugInvalidSpecificationSource), err, w, r)
+
+		return
+	}
+
+	if user.IsUserCantSeeTestCampaignError(err) {
+		httperr.Forbidden(string(ErrorSlugUserCantSeeTestCampaign), err, w, r)
 
 		return
 	}

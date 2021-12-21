@@ -1,5 +1,7 @@
 package app
 
+import "time"
+
 type (
 	SpecificTestCampaignQuery struct {
 		TestCampaignID string
@@ -18,13 +20,13 @@ type (
 		ViewName              string
 		Summary               string
 		ActiveSpecificationID string
-		OwnerID               string
 	}
 
 	// SpecificSpecification is most detailed application layer
 	// representation of specification.Specification.
 	SpecificSpecification struct {
 		ID          string
+		LoadedAt    time.Time
 		Author      string
 		Title       string
 		Description string

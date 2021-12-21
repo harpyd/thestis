@@ -147,6 +147,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        403:
+          description: User cant see test campaign with such ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /specifications/{specificationId}:
     get:
@@ -372,6 +378,7 @@ components:
         - empty-bearer-token
         - unable-to-verify-jwt
         - unauthorized-user
+        - user-cant-see-test-campaign
 
     CreateTestCampaignRequest:
       type: object
@@ -387,13 +394,9 @@ components:
       type: object
       required:
         - id
-        - ownerId
         - viewName
       properties:
         id:
-          type: string
-          format: uuid
-        ownerId:
           type: string
           format: uuid
         viewName:
@@ -424,6 +427,8 @@ components:
       example:
         sourceUri: https://some-file-hosting/example
         specification:
+          id: 6b9e2631-ad0c-4db6-88b1-f23d3cea0743
+          loadedAt: 2020-11-12T00:00:00
           author: Djerys
           title: horns-and-hooves API test
           description: declarative auto tests for horns-and-hooves API
@@ -531,9 +536,14 @@ components:
       required:
         - id
         - stories
+        - loadedAt
       properties:
         id:
           type: string
+          format: uuid
+        loadedAt:
+          type: string
+          format: date-time
         author:
           type: string
         title:

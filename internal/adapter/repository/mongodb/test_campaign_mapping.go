@@ -43,6 +43,5 @@ func (d testCampaignDocument) unmarshalToSpecificTestCampaign() app.SpecificTest
 		ViewName:              d.ViewName,
 		Summary:               d.Summary,
 		ActiveSpecificationID: d.ActiveSpecificationID,
-		OwnerID:               d.OwnerID,
 	}
 }

@@ -1,6 +1,8 @@
 package mongodb
 
 import (
+	"time"
+
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
@@ -8,6 +10,8 @@ import (
 type (
 	specificationDocument struct {
 		ID          string          `bson:"_id,omitempty"`
+		OwnerID     string          `bson:"ownerId"`
+		LoadedAt    time.Time       `bson:"loadedAt"`
 		Author      string          `bson:"author"`
 		Title       string          `bson:"title"`
 		Description string          `bson:"description"`
@@ -75,6 +79,8 @@ func marshalToSpecificationDocument(spec *specification.Specification) specifica
 
 	return specificationDocument{
 		ID:          spec.ID(),
+		OwnerID:     spec.OwnerID(),
+		LoadedAt:    spec.LoadedAt(),
 		Author:      spec.Author(),
 		Title:       spec.Title(),
 		Description: spec.Description(),
@@ -172,6 +178,8 @@ func marshalToAssertDocuments(asserts []specification.Assert) []assertDocument {
 func (d specificationDocument) unmarshalToSpecification() *specification.Specification {
 	builder := specification.NewBuilder().
 		WithID(d.ID).
+		WithOwnerID(d.OwnerID).
+		WithLoadedAt(d.LoadedAt).
 		WithAuthor(d.Author).
 		WithTitle(d.Title).
 		WithDescription(d.Description)
@@ -259,6 +267,7 @@ func (d assertionDocument) unmarshalToAssertionBuildFn() func(builder *specifica
 func (d specificationDocument) unmarshalToSpecificSpecification() app.SpecificSpecification {
 	spec := app.SpecificSpecification{
 		ID:          d.ID,
+		LoadedAt:    d.LoadedAt,
 		Author:      d.Author,
 		Title:       d.Title,
 		Description: d.Description,

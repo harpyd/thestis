@@ -47,7 +47,6 @@ func marshalToTestCampaignResponse(w http.ResponseWriter, r *http.Request, tc ap
 		ViewName:              tc.ViewName,
 		Summary:               &tc.Summary,
 		ActiveSpecificationId: &tc.ActiveSpecificationID,
-		OwnerId:               tc.OwnerID,
 	}
 
 	render.Respond(w, r, response)
