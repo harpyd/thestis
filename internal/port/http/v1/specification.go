@@ -46,7 +46,7 @@ func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testC
 }
 
 func (h handler) GetSpecification(w http.ResponseWriter, r *http.Request, specificationID string) {
-	qry, ok := unmarshalToSpecificSpecificationQuery(specificationID)
+	qry, ok := unmarshalToSpecificSpecificationQuery(w, r, specificationID)
 	if !ok {
 		return
 	}

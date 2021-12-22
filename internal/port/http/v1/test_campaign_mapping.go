@@ -35,9 +35,19 @@ func unmarshalToCreateTestCampaignCommand(
 	}, true
 }
 
-func unmarshalToSpecificTestCampaignQuery(testCampaignID string) (app.SpecificTestCampaignQuery, bool) {
+func unmarshalToSpecificTestCampaignQuery(
+	w http.ResponseWriter,
+	r *http.Request,
+	testCampaignID string,
+) (qry app.SpecificTestCampaignQuery, ok bool) {
+	user, ok := unmarshalUser(w, r)
+	if !ok {
+		return
+	}
+
 	return app.SpecificTestCampaignQuery{
 		TestCampaignID: testCampaignID,
+		UserID:         user.UUID,
 	}, true
 }
 

@@ -27,7 +27,7 @@ func (r *SpecificationsRepository) GetSpecification(
 	ctx context.Context,
 	specID string,
 ) (*specification.Specification, error) {
-	document, err := r.getSpecificationDocument(ctx, specID)
+	document, err := r.getSpecificationDocument(ctx, specID, "")
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (r *SpecificationsRepository) FindSpecification(
 	ctx context.Context,
 	qry app.SpecificSpecificationQuery,
 ) (app.SpecificSpecification, error) {
-	document, err := r.getSpecificationDocument(ctx, qry.SpecificationID)
+	document, err := r.getSpecificationDocument(ctx, qry.SpecificationID, qry.UserID)
 	if err != nil {
 		return app.SpecificSpecification{}, err
 	}
@@ -49,10 +49,12 @@ func (r *SpecificationsRepository) FindSpecification(
 
 func (r *SpecificationsRepository) getSpecificationDocument(
 	ctx context.Context,
-	specID string,
+	specID, userID string,
 ) (specificationDocument, error) {
+	filter := makeSpecificationFilter(specID, userID)
+
 	var document specificationDocument
-	if err := r.specifications.FindOne(ctx, bson.M{"_id": specID}).Decode(&document); err != nil {
+	if err := r.specifications.FindOne(ctx, filter).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return specificationDocument{}, app.NewSpecificationNotFoundError(err)
 		}
@@ -61,6 +63,15 @@ func (r *SpecificationsRepository) getSpecificationDocument(
 	}
 
 	return document, nil
+}
+
+func makeSpecificationFilter(specID, userID string) bson.M {
+	filter := bson.M{"_id": specID}
+	if userID != "" {
+		filter["ownerId"] = userID
+	}
+
+	return filter
 }
 
 func (r *SpecificationsRepository) AddSpecification(ctx context.Context, spec *specification.Specification) error {

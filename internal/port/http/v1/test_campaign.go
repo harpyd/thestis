@@ -30,7 +30,7 @@ func (h handler) GetTestCampaigns(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (h handler) GetTestCampaign(w http.ResponseWriter, r *http.Request, testCampaignID string) {
-	qry, ok := unmarshalToSpecificTestCampaignQuery(testCampaignID)
+	qry, ok := unmarshalToSpecificTestCampaignQuery(w, r, testCampaignID)
 	if !ok {
 		return
 	}

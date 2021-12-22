@@ -29,7 +29,7 @@ func (r *TestCampaignsRepository) GetTestCampaign(
 	ctx context.Context,
 	tcID string,
 ) (*testcampaign.TestCampaign, error) {
-	document, err := r.getTestCampaignDocument(ctx, tcID)
+	document, err := r.getTestCampaignDocument(ctx, tcID, "")
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (r *TestCampaignsRepository) FindTestCampaign(
 	ctx context.Context,
 	qry app.SpecificTestCampaignQuery,
 ) (app.SpecificTestCampaign, error) {
-	document, err := r.getTestCampaignDocument(ctx, qry.TestCampaignID)
+	document, err := r.getTestCampaignDocument(ctx, qry.TestCampaignID, qry.UserID)
 	if err != nil {
 		return app.SpecificTestCampaign{}, err
 	}
@@ -51,10 +51,12 @@ func (r *TestCampaignsRepository) FindTestCampaign(
 
 func (r *TestCampaignsRepository) getTestCampaignDocument(
 	ctx context.Context,
-	tcID string,
+	tcID, userID string,
 ) (testCampaignDocument, error) {
+	filter := makeTestCampaignFilter(tcID, userID)
+
 	var document testCampaignDocument
-	if err := r.testCampaigns.FindOne(ctx, bson.M{"_id": tcID}).Decode(&document); err != nil {
+	if err := r.testCampaigns.FindOne(ctx, filter).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return testCampaignDocument{}, app.NewTestCampaignNotFoundError(err)
 		}
@@ -63,6 +65,15 @@ func (r *TestCampaignsRepository) getTestCampaignDocument(
 	}
 
 	return document, nil
+}
+
+func makeTestCampaignFilter(tcID, userID string) bson.M {
+	filter := bson.M{"_id": tcID}
+	if userID != "" {
+		filter["ownerId"] = userID
+	}
+
+	return filter
 }
 
 func (r *TestCampaignsRepository) AddTestCampaign(ctx context.Context, tc *testcampaign.TestCampaign) error {

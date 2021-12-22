@@ -5,10 +5,12 @@ import "time"
 type (
 	SpecificTestCampaignQuery struct {
 		TestCampaignID string
+		UserID         string
 	}
 
 	SpecificSpecificationQuery struct {
 		SpecificationID string
+		UserID          string
 	}
 )
 

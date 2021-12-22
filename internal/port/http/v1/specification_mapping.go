@@ -35,9 +35,19 @@ func unmarshalToSpecificationSourceCommand(
 	}, true
 }
 
-func unmarshalToSpecificSpecificationQuery(specificationID string) (app.SpecificSpecificationQuery, bool) {
+func unmarshalToSpecificSpecificationQuery(
+	w http.ResponseWriter,
+	r *http.Request,
+	specificationID string,
+) (qry app.SpecificSpecificationQuery, ok bool) {
+	user, ok := unmarshalUser(w, r)
+	if !ok {
+		return
+	}
+
 	return app.SpecificSpecificationQuery{
 		SpecificationID: specificationID,
+		UserID:          user.UUID,
 	}, true
 }
 
