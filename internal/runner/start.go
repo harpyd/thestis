@@ -11,7 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 
-	"github.com/harpyd/thestis/internal/adapter/authprovider"
+	fakeAuth "github.com/harpyd/thestis/internal/adapter/auth/fake"
+	firebaseAuth "github.com/harpyd/thestis/internal/adapter/auth/firebase"
 	"github.com/harpyd/thestis/internal/adapter/parser/yaml"
 	mongorepo "github.com/harpyd/thestis/internal/adapter/repository/mongodb"
 	"github.com/harpyd/thestis/internal/app"
@@ -124,9 +125,9 @@ func (c *runnerContext) initAuthenticationProvider() {
 
 	switch authType {
 	case config.FakeAuth:
-		c.authProvider = authprovider.Fake()
+		c.authProvider = fakeAuth.Provider()
 	case config.FirebaseAuth:
-		c.authProvider = authprovider.Firebase(c.firebaseClient())
+		c.authProvider = firebaseAuth.Provider(c.firebaseClient())
 	default:
 		c.logger.Fatal(
 			"Invalid auth type",

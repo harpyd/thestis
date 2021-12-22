@@ -1,4 +1,4 @@
-package authprovider
+package fake
 
 import (
 	"context"
@@ -11,10 +11,10 @@ import (
 	"github.com/harpyd/thestis/pkg/http/auth"
 )
 
-type FakeProvider struct{}
+type provider struct{}
 
-func Fake() FakeProvider {
-	return FakeProvider{}
+func Provider() auth.Provider {
+	return provider{}
 }
 
 var (
@@ -22,7 +22,7 @@ var (
 	errInvalidJWT     = errors.New("invalid jwt")
 )
 
-func (p FakeProvider) AuthenticatedUser(_ context.Context, r *http.Request) (auth.User, error) {
+func (p provider) AuthenticatedUser(_ context.Context, r *http.Request) (auth.User, error) {
 	var claims jwt.MapClaims
 
 	token, err := request.ParseFromRequest(

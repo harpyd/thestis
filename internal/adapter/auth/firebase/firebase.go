@@ -1,4 +1,4 @@
-package authprovider
+package firebase
 
 import (
 	"context"
@@ -11,12 +11,12 @@ import (
 	"github.com/harpyd/thestis/pkg/http/auth"
 )
 
-type FirebaseProvider struct {
+type provider struct {
 	authClient *fireauth.Client
 }
 
-func Firebase(authClient *fireauth.Client) FirebaseProvider {
-	return FirebaseProvider{
+func Provider(authClient *fireauth.Client) auth.Provider {
+	return provider{
 		authClient: authClient,
 	}
 }
@@ -26,7 +26,7 @@ var (
 	errUnableToVerifyJWT = errors.New("unable to verify jwt")
 )
 
-func (p FirebaseProvider) AuthenticatedUser(ctx context.Context, r *http.Request) (auth.User, error) {
+func (p provider) AuthenticatedUser(ctx context.Context, r *http.Request) (auth.User, error) {
 	bearerToken := tokenFromHeader(r)
 
 	if bearerToken == "" {
