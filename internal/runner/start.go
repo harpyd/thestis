@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 
+	"github.com/harpyd/thestis/internal/adapter/authprovider"
 	"github.com/harpyd/thestis/internal/adapter/parser/yaml"
 	mongorepo "github.com/harpyd/thestis/internal/adapter/repository/mongodb"
 	"github.com/harpyd/thestis/internal/app"
@@ -33,9 +34,8 @@ type runnerContext struct {
 	logger       *zap.Logger
 	config       *config.Config
 	mongoDB      *mongo.Database
-	firebaseAuth *fireauth.Client
 	app          *app.Application
-	middlewares  []func(stdhttp.Handler) stdhttp.Handler
+	authProvider auth.Provider
 	server       *server.Server
 
 	cancel func()
@@ -48,7 +48,7 @@ func newRunner(configsPath string) *runnerContext {
 	c.initConfig(configsPath)
 	c.initMongoDatabase()
 	c.initApplication()
-	c.initMiddlewares()
+	c.initAuthenticationProvider()
 	c.initServer()
 
 	return c
@@ -100,17 +100,6 @@ func (c *runnerContext) initMongoDatabase() {
 	c.logger.Info("MongoDB connection completed")
 }
 
-func (c *runnerContext) initFirebaseClient() {
-	firebaseAuth, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
-	if err != nil {
-		c.logger.Fatal("Failed to create Firebase Auth client", zap.Error(err))
-	}
-
-	c.firebaseAuth = firebaseAuth
-
-	c.logger.Info("Firebase Auth client creation completed")
-}
-
 func (c *runnerContext) initApplication() {
 	tcRepo := mongorepo.NewTestCampaignsRepository(c.mongoDB)
 	specRepo := mongorepo.NewSpecificationsRepository(c.mongoDB)
@@ -127,24 +116,17 @@ func (c *runnerContext) initApplication() {
 		},
 	}
 
-	c.logger.Info("Application context creation completed")
+	c.logger.Info("Application context initialization completed")
 }
 
-func (c *runnerContext) initMiddlewares() {
-	c.addAuthMiddleware()
-
-	c.logger.Info("Middlewares adding completed")
-}
-
-func (c *runnerContext) addAuthMiddleware() {
+func (c *runnerContext) initAuthenticationProvider() {
 	authType := c.config.Auth.With
 
 	switch authType {
 	case config.FakeAuth:
-		c.middlewares = append(c.middlewares, auth.FakeMiddleware)
+		c.authProvider = authprovider.Fake()
 	case config.FirebaseAuth:
-		c.initFirebaseClient()
-		c.middlewares = append(c.middlewares, auth.FirebaseMiddleware(c.firebaseAuth))
+		c.authProvider = authprovider.Firebase(c.firebaseClient())
 	default:
 		c.logger.Fatal(
 			"Invalid auth type",
@@ -156,12 +138,23 @@ func (c *runnerContext) addAuthMiddleware() {
 		)
 	}
 
-	c.logger.Info("Auth middleware creation completed", zap.String("authType", authType))
+	c.logger.Info("Authentication provider initialization completed", zap.String("auth", authType))
+}
+
+func (c *runnerContext) firebaseClient() *fireauth.Client {
+	firebaseAuth, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
+	if err != nil {
+		c.logger.Fatal("Failed to create Firebase Auth client", zap.Error(err))
+	}
+
+	return firebaseAuth
 }
 
 func (c *runnerContext) initServer() {
 	v1Router := chi.NewRouter()
-	v1Router.Use(c.middlewares...)
+	v1Router.Use(
+		auth.Middleware(c.authProvider),
+	)
 
 	c.server = server.New(c.config, http.NewHandler(
 		c.logger,
