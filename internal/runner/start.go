@@ -7,6 +7,7 @@ import (
 
 	fireauth "firebase.google.com/go/auth"
 	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 
@@ -171,6 +172,10 @@ func (c *runnerContext) initServer() {
 		http.Route{
 			Pattern: "/swagger",
 			Handler: stdhttp.StripPrefix("/swagger/", stdhttp.FileServer(stdhttp.Dir("./swagger"))),
+		},
+		http.Route{
+			Pattern: "/metrics",
+			Handler: promhttp.Handler(),
 		},
 	))
 
