@@ -17,11 +17,18 @@ const (
 
 const LocalEnv = "local"
 
+const (
+	FakeAuth     = "fake"
+	FirebaseAuth = "firebase"
+)
+
 type (
 	Config struct {
 		Environment string
 		HTTP        HTTP
 		Mongo       Mongo
+		Auth        Auth
+		Firebase    Firebase
 	}
 
 	HTTP struct {
@@ -35,6 +42,14 @@ type (
 		DatabaseName string
 		Username     string
 		Password     string
+	}
+
+	Auth struct {
+		With string
+	}
+
+	Firebase struct {
+		ServiceAccountFile string
 	}
 )
 
@@ -137,7 +152,15 @@ func unmarshal(cfg *Config) error {
 		return err
 	}
 
-	return viper.UnmarshalKey("mongo", &cfg.Mongo)
+	if err := viper.UnmarshalKey("mongo", &cfg.Mongo); err != nil {
+		return err
+	}
+
+	if err := viper.UnmarshalKey("auth", &cfg.Auth); err != nil {
+		return err
+	}
+
+	return viper.UnmarshalKey("firebase", &cfg.Firebase)
 }
 
 type noEnvError struct {

@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/pkg/httperr"
+	"github.com/harpyd/thestis/pkg/http/httperr"
 )
 
 func unmarshalToSpecificationSourceCommand(
@@ -16,6 +16,11 @@ func unmarshalToSpecificationSourceCommand(
 	r *http.Request,
 	testCampaignID string,
 ) (cmd app.LoadSpecificationCommand, ok bool) {
+	user, ok := unmarshalUser(w, r)
+	if !ok {
+		return
+	}
+
 	content, err := io.ReadAll(r.Body)
 	if err != nil {
 		httperr.BadRequest(string(ErrorSlugBadRequest), err, w, r)
@@ -26,19 +31,30 @@ func unmarshalToSpecificationSourceCommand(
 	return app.LoadSpecificationCommand{
 		Content:        content,
 		TestCampaignID: testCampaignID,
+		LoadedByID:     user.UUID,
 	}, true
 }
 
-func unmarshalToSpecificSpecificationQuery(specificationID string) (app.SpecificSpecificationQuery, bool) {
+func unmarshalToSpecificSpecificationQuery(
+	w http.ResponseWriter,
+	r *http.Request,
+	specificationID string,
+) (qry app.SpecificSpecificationQuery, ok bool) {
+	user, ok := unmarshalUser(w, r)
+	if !ok {
+		return
+	}
+
 	return app.SpecificSpecificationQuery{
 		SpecificationID: specificationID,
+		UserID:          user.UUID,
 	}, true
 }
 
 func marshalToSpecificationResponse(w http.ResponseWriter, r *http.Request, spec app.SpecificSpecification) {
 	response := SpecificationResponse{
 		Specification: marshalToSpecification(spec),
-		SourceId:      "",
+		SourceUri:     "",
 	}
 
 	render.Respond(w, r, response)
@@ -47,6 +63,7 @@ func marshalToSpecificationResponse(w http.ResponseWriter, r *http.Request, spec
 func marshalToSpecification(spec app.SpecificSpecification) Specification {
 	res := Specification{
 		Id:          spec.ID,
+		LoadedAt:    spec.LoadedAt,
 		Author:      &spec.Author,
 		Title:       &spec.Title,
 		Description: &spec.Description,

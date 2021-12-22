@@ -12,12 +12,12 @@ func NestedErrors(err error) []error {
 		return nil
 	}
 
-	var cerr complexError
-	if !errors.As(err, &cerr) {
+	var target complexError
+	if !errors.As(err, &target) {
 		return nil
 	}
 
-	nestedErrors := cerr.NestedErrors()
+	nestedErrors := target.NestedErrors()
 	result := make([]error, len(nestedErrors))
 	copy(result, nestedErrors)
 
@@ -29,10 +29,10 @@ func CommonError(err error) string {
 		return ""
 	}
 
-	var cerr complexError
-	if !errors.As(err, &cerr) {
+	var target complexError
+	if !errors.As(err, &target) {
 		return err.Error()
 	}
 
-	return cerr.CommonError()
+	return target.CommonError()
 }

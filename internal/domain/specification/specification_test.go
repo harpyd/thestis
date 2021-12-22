@@ -2,6 +2,7 @@ package specification_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -28,6 +29,28 @@ func TestBuilder_WithID(t *testing.T) {
 	spec := builder.ErrlessBuild()
 
 	require.Equal(t, "1972f067-48f1-41b0-87e3-704e60afe371", spec.ID())
+}
+
+func TestBuilder_WithOwnerID(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewBuilder()
+	builder.WithOwnerID("134dfe2b-850c-4fc9-8b4a-f76896ff157a")
+
+	spec := builder.ErrlessBuild()
+
+	require.Equal(t, "134dfe2b-850c-4fc9-8b4a-f76896ff157a", spec.OwnerID())
+}
+
+func TestBuilder_WithLoadedAt(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewBuilder()
+	builder.WithLoadedAt(time.Date(2020, time.September, 9, 13, 0, 0, 0, time.UTC))
+
+	spec := builder.ErrlessBuild()
+
+	require.Equal(t, time.Date(2020, time.September, 9, 13, 0, 0, 0, time.UTC), spec.LoadedAt())
 }
 
 func TestBuilder_WithAuthor(t *testing.T) {

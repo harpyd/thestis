@@ -1,12 +1,16 @@
 package app
 
+import "time"
+
 type (
 	SpecificTestCampaignQuery struct {
 		TestCampaignID string
+		UserID         string
 	}
 
 	SpecificSpecificationQuery struct {
 		SpecificationID string
+		UserID          string
 	}
 )
 
@@ -24,6 +28,7 @@ type (
 	// representation of specification.Specification.
 	SpecificSpecification struct {
 		ID          string
+		LoadedAt    time.Time
 		Author      string
 		Title       string
 		Description string

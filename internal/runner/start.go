@@ -3,7 +3,9 @@ package runner
 import (
 	"fmt"
 	stdhttp "net/http"
+	"strings"
 
+	fireauth "firebase.google.com/go/auth"
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
@@ -17,53 +19,103 @@ import (
 	"github.com/harpyd/thestis/internal/port/http"
 	v1 "github.com/harpyd/thestis/internal/port/http/v1"
 	"github.com/harpyd/thestis/internal/server"
+	"github.com/harpyd/thestis/pkg/auth/firebase"
 	"github.com/harpyd/thestis/pkg/database/mongodb"
+	"github.com/harpyd/thestis/pkg/http/auth"
 )
 
 func Start(configsPath string) {
-	logger, sync := newLogger()
-	defer sync()
-
-	cfg := newConfig(configsPath, logger)
-	db := newMongoDatabase(cfg, logger)
-	application := newApplication(db)
-
-	startServer(cfg, application, logger)
+	newRunner(configsPath).start()
 }
 
-func newLogger() (*zap.Logger, func()) {
+type runnerContext struct {
+	logger       *zap.Logger
+	config       *config.Config
+	mongoDB      *mongo.Database
+	firebaseAuth *fireauth.Client
+	app          *app.Application
+	middlewares  []func(stdhttp.Handler) stdhttp.Handler
+	server       *server.Server
+
+	cancel func()
+}
+
+func newRunner(configsPath string) *runnerContext {
+	c := &runnerContext{}
+
+	c.cancel = c.initLogger()
+	c.initConfig(configsPath)
+	c.initMongoDatabase()
+	c.initApplication()
+	c.initMiddlewares()
+	c.initServer()
+
+	return c
+}
+
+func (c *runnerContext) start() {
+	defer c.cancel()
+
+	c.logger.Info(
+		"HTTP server started",
+		zap.String("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
+	)
+
+	err := c.server.Start()
+
+	c.logger.Fatal("HTTP server stopped", zap.Error(err))
+}
+
+func (c *runnerContext) initLogger() func() {
 	logger, _ := zap.NewProduction()
 	sync := func() {
 		_ = logger.Sync()
 	}
 
-	return logger, sync
+	c.logger = logger
+
+	return sync
 }
 
-func newConfig(configsPath string, logger *zap.Logger) *config.Config {
+func (c *runnerContext) initConfig(configsPath string) {
 	cfg, err := config.FromPath(configsPath)
 	if err != nil {
-		logger.Fatal("Failed to parse config", zap.Error(err))
+		c.logger.Fatal("Failed to parse config", zap.Error(err))
 	}
 
-	return cfg
+	c.config = cfg
+
+	c.logger.Info("Config parsing completed")
 }
 
-func newMongoDatabase(cfg *config.Config, logger *zap.Logger) *mongo.Database {
-	client, err := mongodb.NewClient(cfg.Mongo.URI, cfg.Mongo.Username, cfg.Mongo.Password)
+func (c *runnerContext) initMongoDatabase() {
+	client, err := mongodb.NewClient(c.config.Mongo.URI, c.config.Mongo.Username, c.config.Mongo.Password)
 	if err != nil {
-		logger.Fatal("Failed to connect to MongoDB", zap.Error(err))
+		c.logger.Fatal("Failed to connect to MongoDB", zap.Error(err))
 	}
 
-	return client.Database(cfg.Mongo.DatabaseName)
+	c.mongoDB = client.Database(c.config.Mongo.DatabaseName)
+
+	c.logger.Info("MongoDB connection completed")
 }
 
-func newApplication(db *mongo.Database) app.Application {
-	tcRepo := mongorepo.NewTestCampaignsRepository(db)
-	specRepo := mongorepo.NewSpecificationsRepository(db)
+func (c *runnerContext) initFirebaseClient() {
+	firebaseAuth, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
+	if err != nil {
+		c.logger.Fatal("Failed to create Firebase Auth client", zap.Error(err))
+	}
+
+	c.firebaseAuth = firebaseAuth
+
+	c.logger.Info("Firebase Auth client creation completed")
+}
+
+func (c *runnerContext) initApplication() {
+	tcRepo := mongorepo.NewTestCampaignsRepository(c.mongoDB)
+	specRepo := mongorepo.NewSpecificationsRepository(c.mongoDB)
 	parserService := yaml.NewSpecificationParserService()
 
-	return app.Application{
+	c.app = &app.Application{
 		Commands: app.Commands{
 			CreateTestCampaign: command.NewCreateTestCampaignHandler(tcRepo),
 			LoadSpecification:  command.NewLoadSpecificationHandler(specRepo, tcRepo, parserService),
@@ -73,23 +125,54 @@ func newApplication(db *mongo.Database) app.Application {
 			SpecificSpecification: query.NewSpecificSpecificationHandler(specRepo),
 		},
 	}
+
+	c.logger.Info("Application context creation completed")
 }
 
-func startServer(cfg *config.Config, application app.Application, logger *zap.Logger) {
-	logger.Info("HTTP server started", zap.String("port", fmt.Sprintf(":%s", cfg.HTTP.Port)))
+func (c *runnerContext) initMiddlewares() {
+	c.addAuthMiddleware()
 
-	serv := server.New(cfg, http.NewHandler(
-		logger,
+	c.logger.Info("Middlewares adding completed")
+}
+
+func (c *runnerContext) addAuthMiddleware() {
+	authType := c.config.Auth.With
+
+	switch authType {
+	case config.FakeAuth:
+		c.middlewares = append(c.middlewares, auth.FakeMiddleware)
+	case config.FirebaseAuth:
+		c.initFirebaseClient()
+		c.middlewares = append(c.middlewares, auth.FirebaseMiddleware(c.firebaseAuth))
+	default:
+		c.logger.Fatal(
+			"Invalid auth type",
+			zap.String("actual", authType),
+			zap.String("allowed", strings.Join([]string{
+				config.FakeAuth,
+				config.FirebaseAuth,
+			}, ", ")),
+		)
+	}
+
+	c.logger.Info("Auth middleware creation completed", zap.String("authType", authType))
+}
+
+func (c *runnerContext) initServer() {
+	v1Router := chi.NewRouter()
+	v1Router.Use(c.middlewares...)
+
+	c.server = server.New(c.config, http.NewHandler(
+		c.logger,
 		http.Route{
 			Pattern: "/v1",
-			Handler: v1.NewHandler(application, chi.NewRouter()),
+			Handler: v1.NewHandler(c.app, v1Router),
 		},
 		http.Route{
 			Pattern: "/swagger",
 			Handler: stdhttp.StripPrefix("/swagger/", stdhttp.FileServer(stdhttp.Dir("./swagger"))),
 		},
 	))
-	err := serv.Start()
 
-	logger.Fatal("HTTP server stopped", zap.Error(err))
+	c.logger.Info("Server initializing completed")
 }

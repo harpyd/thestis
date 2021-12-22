@@ -6,7 +6,8 @@ import (
 
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/specification"
-	"github.com/harpyd/thestis/pkg/httperr"
+	"github.com/harpyd/thestis/internal/domain/user"
+	"github.com/harpyd/thestis/pkg/http/httperr"
 )
 
 func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testCampaignID string) {
@@ -35,11 +36,17 @@ func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testC
 		return
 	}
 
+	if user.IsUserCantSeeTestCampaignError(err) {
+		httperr.Forbidden(string(ErrorSlugUserCantSeeTestCampaign), err, w, r)
+
+		return
+	}
+
 	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
 func (h handler) GetSpecification(w http.ResponseWriter, r *http.Request, specificationID string) {
-	qry, ok := unmarshalToSpecificSpecificationQuery(specificationID)
+	qry, ok := unmarshalToSpecificSpecificationQuery(w, r, specificationID)
 	if !ok {
 		return
 	}
@@ -58,8 +65,4 @@ func (h handler) GetSpecification(w http.ResponseWriter, r *http.Request, specif
 	}
 
 	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
-}
-
-func (h handler) RemoveSpecification(w http.ResponseWriter, _ *http.Request, _ string) {
-	w.WriteHeader(http.StatusNotImplemented)
 }

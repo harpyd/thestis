@@ -22,9 +22,6 @@ type ServerInterface interface {
 	// Cancels performance with such ID.
 	// (PUT /performances/{performanceId}/cancelled)
 	CancelPerformance(w http.ResponseWriter, r *http.Request, performanceId string)
-	// Removes specification with such ID.
-	// (DELETE /specifications/{specificationId})
-	RemoveSpecification(w http.ResponseWriter, r *http.Request, specificationId string)
 	// Returns specification with such ID.
 	// (GET /specifications/{specificationId})
 	GetSpecification(w http.ResponseWriter, r *http.Request, specificationId string)
@@ -128,32 +125,6 @@ func (siw *ServerInterfaceWrapper) CancelPerformance(w http.ResponseWriter, r *h
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CancelPerformance(w, r, performanceId)
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler(w, r.WithContext(ctx))
-}
-
-// RemoveSpecification operation middleware
-func (siw *ServerInterfaceWrapper) RemoveSpecification(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var err error
-
-	// ------------- Path parameter "specificationId" -------------
-	var specificationId string
-
-	err = runtime.BindStyledParameter("simple", false, "specificationId", chi.URLParam(r, "specificationId"), &specificationId)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter specificationId: %s", err), http.StatusBadRequest)
-		return
-	}
-
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.RemoveSpecification(w, r, specificationId)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -394,9 +365,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/performances/{performanceId}/cancelled", wrapper.CancelPerformance)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/specifications/{specificationId}", wrapper.RemoveSpecification)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/specifications/{specificationId}", wrapper.GetSpecification)
