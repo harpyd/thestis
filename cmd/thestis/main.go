@@ -6,7 +6,7 @@ import (
 	"github.com/harpyd/thestis/internal/runner"
 )
 
-const defaultConfigsPath = "configs"
+const defaultConfigsPath = "configs/thestis"
 
 func main() {
 	flag.Parse()
