@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"go.uber.org/zap"
 
+	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/port/http/logging"
 )
 
@@ -34,7 +34,7 @@ func InternalServerError(slug string, err error, w http.ResponseWriter, r *http.
 }
 
 func httpRespondWithError(err error, slug string, w http.ResponseWriter, r *http.Request, logMSg string, status int) {
-	logging.GetLogger(r).Warn(logMSg, zap.Error(err), zap.String("errorSlug", slug))
+	logging.Logger(r).Warn(logMSg, err, app.LogField{Key: "errorSlug", Value: slug})
 
 	var details string
 	if err != nil {

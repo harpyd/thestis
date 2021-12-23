@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	fireauth "firebase.google.com/go/auth"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
@@ -13,9 +14,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	fakeAuth "github.com/harpyd/thestis/internal/adapter/auth/fake"
 	firebaseAuth "github.com/harpyd/thestis/internal/adapter/auth/firebase"
+	zapadap "github.com/harpyd/thestis/internal/adapter/logger/zap"
 	"github.com/harpyd/thestis/internal/adapter/metrics/prometheus"
 	"github.com/harpyd/thestis/internal/adapter/parser/yaml"
-	mongorepo "github.com/harpyd/thestis/internal/adapter/repository/mongodb"
+	mongoadap "github.com/harpyd/thestis/internal/adapter/repository/mongodb"
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/command"
 	"github.com/harpyd/thestis/internal/app/query"
@@ -36,7 +38,7 @@ func Start(configsPath string) {
 }
 
 type runnerContext struct {
-	logger              *zap.Logger
+	logger              app.LoggingService
 	config              *config.Config
 	persistent          persistentContext
 	specificationParser app.SpecificationParserService
@@ -75,12 +77,12 @@ func (c *runnerContext) start() {
 
 	c.logger.Info(
 		"HTTP server started",
-		zap.String("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
+		app.LogField{Key: "port", Value: fmt.Sprintf(":%s", c.config.HTTP.Port)},
 	)
 
 	err := c.server.Start()
 
-	c.logger.Fatal("HTTP server stopped", zap.Error(err))
+	c.logger.Fatal("HTTP server stopped", err)
 }
 
 func (c *runnerContext) initLogger() func() {
@@ -89,7 +91,7 @@ func (c *runnerContext) initLogger() func() {
 		_ = logger.Sync()
 	}
 
-	c.logger = logger
+	c.logger = zapadap.NewLoggingService(logger)
 
 	return sync
 }
@@ -97,7 +99,7 @@ func (c *runnerContext) initLogger() func() {
 func (c *runnerContext) initConfig(configsPath string) {
 	cfg, err := config.FromPath(configsPath)
 	if err != nil {
-		c.logger.Fatal("Failed to parse config", zap.Error(err))
+		c.logger.Fatal("Failed to parse config", err)
 	}
 
 	c.config = cfg
@@ -107,11 +109,11 @@ func (c *runnerContext) initConfig(configsPath string) {
 
 func (c *runnerContext) initPersistent() {
 	db := c.mongoDatabase()
-	logField := zap.String("db", "mongo")
+	logField := app.LogField{Key: "db", Value: "mongo"}
 
 	var (
-		testCampaignRepo = mongorepo.NewTestCampaignsRepository(db)
-		specRepo         = mongorepo.NewSpecificationsRepository(db)
+		testCampaignRepo = mongoadap.NewTestCampaignsRepository(db)
+		specRepo         = mongoadap.NewSpecificationsRepository(db)
 	)
 
 	c.persistent.testCampaignRepo = testCampaignRepo
@@ -129,13 +131,15 @@ func (c *runnerContext) initPersistent() {
 
 func (c *runnerContext) initSpecificationParser() {
 	c.specificationParser = yaml.NewSpecificationParserService()
-	c.logger.Info("Specification parser service initialization completed", zap.String("type", "yaml"))
+	c.logger.Info("Specification parser service initialization completed", app.LogField{
+		Key: "type", Value: "yaml",
+	})
 }
 
 func (c *runnerContext) mongoDatabase() *mongo.Database {
 	client, err := mongodb.NewClient(c.config.Mongo.URI, c.config.Mongo.Username, c.config.Mongo.Password)
 	if err != nil {
-		c.logger.Fatal("Failed to connect to MongoDB", zap.Error(err))
+		c.logger.Fatal("Failed to connect to MongoDB", err)
 	}
 
 	return client.Database(c.config.Mongo.DatabaseName)
@@ -163,12 +167,12 @@ func (c *runnerContext) initApplication() {
 func (c *runnerContext) initMetrics() {
 	mrs, err := prometheus.NewMetricsService()
 	if err != nil {
-		c.logger.Fatal("Failed to register metrics", zap.Error(err))
+		c.logger.Fatal("Failed to register metrics", err)
 	}
 
 	c.metrics = mrs
 
-	c.logger.Info("Metrics registration completed", zap.String("db", "prometheus"))
+	c.logger.Info("Metrics registration completed", app.LogField{Key: "db", Value: "prometheus"})
 }
 
 func (c *runnerContext) initAuthenticationProvider() {
@@ -182,21 +186,26 @@ func (c *runnerContext) initAuthenticationProvider() {
 	default:
 		c.logger.Fatal(
 			"Invalid auth type",
-			zap.String("actual", authType),
-			zap.String("allowed", strings.Join([]string{
-				config.FakeAuth,
-				config.FirebaseAuth,
-			}, ", ")),
+			errors.Errorf("%s is not valid auth type", authType),
+			app.LogField{
+				Key: "allowed",
+				Value: strings.Join([]string{
+					config.FakeAuth,
+					config.FirebaseAuth,
+				}, ", "),
+			},
 		)
 	}
 
-	c.logger.Info("Authentication provider initialization completed", zap.String("auth", authType))
+	c.logger.Info("Authentication provider initialization completed",
+		app.LogField{Key: "auth", Value: authType},
+	)
 }
 
 func (c *runnerContext) firebaseClient() *fireauth.Client {
 	client, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
 	if err != nil {
-		c.logger.Fatal("Failed to create Firebase Auth client", zap.Error(err))
+		c.logger.Fatal("Failed to create Firebase Auth client", err)
 	}
 
 	return client

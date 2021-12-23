@@ -32,7 +32,3 @@ func WithSpecificationLoadedAt(loadedAt time.Time) ParserOption {
 		b.WithLoadedAt(loadedAt)
 	}
 }
-
-type MetricsService interface {
-	IncRequestsCount(status, method, path string)
-}
