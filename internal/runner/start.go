@@ -37,8 +37,8 @@ type runnerContext struct {
 	config              *config.Config
 	persistent          persistentContext
 	specificationParser app.SpecificationParserService
-	app                 *app.Application
 	metrics             app.MetricsService
+	app                 *app.Application
 	authProvider        auth.Provider
 	server              *server.Server
 
@@ -59,8 +59,8 @@ func newRunner(configsPath string) *runnerContext {
 	c.initConfig(configsPath)
 	c.initPersistent()
 	c.initSpecificationParser()
-	c.initApplication()
 	c.initMetrics()
+	c.initApplication()
 	c.initAuthenticationProvider()
 	c.initServer()
 
