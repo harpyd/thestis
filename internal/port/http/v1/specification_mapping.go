@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/pkg/http/httperr"
+	"github.com/harpyd/thestis/internal/port/http/httperr"
 )
 
 func unmarshalToSpecificationSourceCommand(

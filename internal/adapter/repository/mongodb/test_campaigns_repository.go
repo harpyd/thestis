@@ -9,7 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/app/command"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
 
@@ -85,7 +84,7 @@ func (r *TestCampaignsRepository) AddTestCampaign(ctx context.Context, tc *testc
 func (r *TestCampaignsRepository) UpdateTestCampaign(
 	ctx context.Context,
 	tcID string,
-	updateFn command.TestCampaignUpdater,
+	updateFn app.TestCampaignUpdater,
 ) error {
 	session, err := r.testCampaigns.Database().Client().StartSession()
 	if err != nil {

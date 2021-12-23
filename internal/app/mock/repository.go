@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/app/command"
 	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
@@ -47,7 +46,7 @@ func (m *TestCampaignsRepository) AddTestCampaign(_ context.Context, tc *testcam
 func (m *TestCampaignsRepository) UpdateTestCampaign(
 	ctx context.Context,
 	tcID string,
-	updateFn command.TestCampaignUpdater,
+	updateFn app.TestCampaignUpdater,
 ) error {
 	tc, ok := m.campaigns[tcID]
 	if !ok {

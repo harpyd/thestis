@@ -5,7 +5,8 @@ import (
 	"net/http"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/pkg/http/httperr"
+
+	"github.com/harpyd/thestis/internal/port/http/httperr"
 )
 
 func (h handler) CreateTestCampaign(w http.ResponseWriter, r *http.Request) {

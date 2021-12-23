@@ -4,7 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/harpyd/thestis/pkg/http/httperr"
+
+	"github.com/harpyd/thestis/internal/port/http/httperr"
 )
 
 func decode(w http.ResponseWriter, r *http.Request, v interface{}) bool {

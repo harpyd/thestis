@@ -1,5 +1,9 @@
 version: '3.4'
 
+networks:
+  back-tier:
+  front-tier:
+
 services:
   thestis:
     image: thestis
@@ -7,6 +11,8 @@ services:
     build:
       context: .
       dockerfile: ./build/package/dev/Dockerfile
+    networks:
+      - back-tier
     ports:
       - '8000:8000'
     volumes:
@@ -16,6 +22,8 @@ services:
       - ./.secrets/:/root/.secrets/  # Path to service account file
     depends_on:
       - mongodb
+      - prometheus
+      - grafana
     env_file:
       - .env
 
@@ -30,5 +38,43 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=qwerty
     volumes:
       - ./.data/db:/data/db
+    networks:
+      - back-tier
     ports:
       - '27018:27017'
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./configs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./.data/prometheus:/prometheus
+    ports:
+      - '9090:9090'
+    networks:
+      - back-tier
+    depends_on:
+      - prometheus-node-exporter
+
+  prometheus-node-exporter:
+    image: prom/node-exporter
+    container_name: prometheus-node-exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - back-tier
+    ports:
+      - '9100:9100'
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    volumes:
+      - ./.data/grafana:/var/lib/grafana
+    networks:
+      - back-tier
+      - front-tier
+    ports:
+      - '3000:3000'

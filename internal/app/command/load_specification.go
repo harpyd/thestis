@@ -14,15 +14,15 @@ import (
 )
 
 type LoadSpecificationHandler struct {
-	specsRepo         specificationsRepository
-	testCampaignsRepo testCampaignsRepository
-	specParserService specificationParserService
+	specsRepo         app.SpecificationsRepository
+	testCampaignsRepo app.TestCampaignsRepository
+	specParserService app.SpecificationParserService
 }
 
 func NewLoadSpecificationHandler(
-	specsRepo specificationsRepository,
-	testCampaignsRepo testCampaignsRepository,
-	specParserService specificationParserService,
+	specsRepo app.SpecificationsRepository,
+	testCampaignsRepo app.TestCampaignsRepository,
+	specParserService app.SpecificationParserService,
 ) LoadSpecificationHandler {
 	if specsRepo == nil {
 		panic("specifications repository is nil")
@@ -64,7 +64,10 @@ func (h LoadSpecificationHandler) Handle(
 	return
 }
 
-func (h LoadSpecificationHandler) loadSpecification(specID string, cmd app.LoadSpecificationCommand) TestCampaignUpdater {
+func (h LoadSpecificationHandler) loadSpecification(
+	specID string,
+	cmd app.LoadSpecificationCommand,
+) app.TestCampaignUpdater {
 	return func(ctx context.Context, tc *testcampaign.TestCampaign) (*testcampaign.TestCampaign, error) {
 		spec, err := h.specParserService.ParseSpecification(
 			bytes.NewReader(cmd.Content),

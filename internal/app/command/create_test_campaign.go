@@ -11,10 +11,10 @@ import (
 )
 
 type CreateTestCampaignHandler struct {
-	testCampaignsRepo testCampaignsRepository
+	testCampaignsRepo app.TestCampaignsRepository
 }
 
-func NewCreateTestCampaignHandler(repo testCampaignsRepository) CreateTestCampaignHandler {
+func NewCreateTestCampaignHandler(repo app.TestCampaignsRepository) CreateTestCampaignHandler {
 	if repo == nil {
 		panic("test campaigns repository is nil")
 	}
