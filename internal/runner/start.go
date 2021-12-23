@@ -38,14 +38,14 @@ func Start(configsPath string) {
 }
 
 type runnerContext struct {
-	logger              app.LoggingService
-	config              *config.Config
-	persistent          persistentContext
-	specificationParser app.SpecificationParserService
-	metrics             app.MetricsService
-	app                 *app.Application
-	authProvider        auth.Provider
-	server              *server.Server
+	logger       app.LoggingService
+	config       *config.Config
+	persistent   persistentContext
+	specParser   app.SpecificationParserService
+	metrics      app.MetricsService
+	app          *app.Application
+	authProvider auth.Provider
+	server       *server.Server
 
 	cancel func()
 }
@@ -130,7 +130,7 @@ func (c *runnerContext) initPersistent() {
 }
 
 func (c *runnerContext) initSpecificationParser() {
-	c.specificationParser = yaml.NewSpecificationParserService()
+	c.specParser = yaml.NewSpecificationParserService()
 	c.logger.Info("Specification parser service initialization completed", app.LogField{
 		Key: "type", Value: "yaml",
 	})
@@ -152,7 +152,7 @@ func (c *runnerContext) initApplication() {
 			LoadSpecification: command.NewLoadSpecificationHandler(
 				c.persistent.specRepo,
 				c.persistent.testCampaignRepo,
-				c.specificationParser,
+				c.specParser,
 			),
 		},
 		Queries: app.Queries{
