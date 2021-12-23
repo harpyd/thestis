@@ -15,7 +15,7 @@ type Formatter struct {
 	Logger *zap.Logger
 }
 
-func NewFormatter(logger *zap.Logger) func(next http.Handler) http.Handler {
+func Middleware(logger *zap.Logger) func(next http.Handler) http.Handler {
 	return middleware.RequestLogger(&Formatter{Logger: logger})
 }
 

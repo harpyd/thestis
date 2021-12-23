@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	fireauth "firebase.google.com/go/auth"
-	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 
+	"github.com/go-chi/chi/v5/middleware"
 	fakeAuth "github.com/harpyd/thestis/internal/adapter/auth/fake"
 	firebaseAuth "github.com/harpyd/thestis/internal/adapter/auth/firebase"
 	"github.com/harpyd/thestis/internal/adapter/metrics/prometheus"
@@ -22,10 +22,13 @@ import (
 	"github.com/harpyd/thestis/internal/config"
 	"github.com/harpyd/thestis/internal/port/http"
 	"github.com/harpyd/thestis/internal/port/http/auth"
+	"github.com/harpyd/thestis/internal/port/http/logging"
+	"github.com/harpyd/thestis/internal/port/http/metrics"
 	v1 "github.com/harpyd/thestis/internal/port/http/v1"
 	"github.com/harpyd/thestis/internal/server"
 	"github.com/harpyd/thestis/pkg/auth/firebase"
 	"github.com/harpyd/thestis/pkg/database/mongodb"
+	"github.com/harpyd/thestis/pkg/http/cors"
 )
 
 func Start(configsPath string) {
@@ -200,30 +203,31 @@ func (c *runnerContext) firebaseClient() *fireauth.Client {
 }
 
 func (c *runnerContext) initServer() {
-	c.server = server.New(c.config, http.NewHandler(
-		c.logger,
-		http.Route{
-			Pattern: "/v1",
-			Handler: v1.NewHandler(c.app, c.v1Router()),
+	c.server = server.New(c.config, http.NewHandler(http.Params{
+		Middlewares: []http.Middleware{
+			middleware.RequestID,
+			middleware.RealIP,
+			logging.Middleware(c.logger),
+			middleware.Recoverer,
+			cors.Middleware(c.config.HTTP.AllowedOrigins),
+			middleware.NoCache,
+			metrics.Middleware(c.metrics),
 		},
-		http.Route{
-			Pattern: "/swagger",
-			Handler: stdhttp.StripPrefix("/swagger/", stdhttp.FileServer(stdhttp.Dir("./swagger"))),
+		Routes: []http.Route{
+			{
+				Pattern: "/v1",
+				Handler: v1.NewHandler(c.app, auth.Middleware(c.authProvider)),
+			},
+			{
+				Pattern: "/swagger",
+				Handler: stdhttp.StripPrefix("/swagger/", stdhttp.FileServer(stdhttp.Dir("./swagger"))),
+			},
+			{
+				Pattern: "/metrics",
+				Handler: promhttp.Handler(),
+			},
 		},
-		http.Route{
-			Pattern: "/metrics",
-			Handler: promhttp.Handler(),
-		},
-	))
+	}))
 
 	c.logger.Info("Server initializing completed")
-}
-
-func (c *runnerContext) v1Router() chi.Router {
-	r := chi.NewRouter()
-	r.Use(
-		auth.Middleware(c.authProvider),
-	)
-
-	return r
 }
