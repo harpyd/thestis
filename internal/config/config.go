@@ -32,9 +32,10 @@ type (
 	}
 
 	HTTP struct {
-		Port         string
-		ReadTimeout  time.Duration
-		WriteTimeout time.Duration
+		Port           string
+		ReadTimeout    time.Duration
+		WriteTimeout   time.Duration
+		AllowedOrigins []string
 	}
 
 	Mongo struct {

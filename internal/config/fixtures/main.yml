@@ -2,6 +2,7 @@ http:
   port: ${HTTP_PORT}
   readTimeout: 8s
   writeTimeout: 10s
+  allowedOrigins: https://some-a.com,https://some-b.com
 mongo:
   uri: ${MONGO_URI}
   databaseName: ${MONGO_DATABASE}
