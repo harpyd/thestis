@@ -8,7 +8,7 @@ import (
 
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/command"
-	"github.com/harpyd/thestis/internal/app/command/mock"
+	"github.com/harpyd/thestis/internal/app/mock"
 )
 
 func TestCreateTestCampaignHandler_Handle(t *testing.T) {
