@@ -15,6 +15,8 @@ func Middleware(provider Provider) func(next http.Handler) http.Handler {
 			user, err := provider.AuthenticatedUser(ctx, r)
 			if err != nil {
 				httperr.Unauthorized("unable-to-verify-user", err, w, r)
+
+				return
 			}
 
 			ctx = context.WithValue(ctx, userCtxKey, user)
