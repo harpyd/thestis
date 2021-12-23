@@ -15,6 +15,7 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
+	github.com/urfave/negroni v1.0.0
 	go.mongodb.org/mongo-driver v1.8.1
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.19.1

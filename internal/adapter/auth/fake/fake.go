@@ -11,10 +11,10 @@ import (
 	"github.com/harpyd/thestis/pkg/http/auth"
 )
 
-type provider struct{}
+type Provider struct{}
 
-func Provider() auth.Provider {
-	return provider{}
+func NewProvider() Provider {
+	return Provider{}
 }
 
 var (
@@ -22,7 +22,7 @@ var (
 	errInvalidJWT     = errors.New("invalid jwt")
 )
 
-func (p provider) AuthenticatedUser(_ context.Context, r *http.Request) (auth.User, error) {
+func (p Provider) AuthenticatedUser(_ context.Context, r *http.Request) (auth.User, error) {
 	var claims jwt.MapClaims
 
 	token, err := request.ParseFromRequest(

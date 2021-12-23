@@ -13,6 +13,7 @@ import (
 
 	fakeAuth "github.com/harpyd/thestis/internal/adapter/auth/fake"
 	firebaseAuth "github.com/harpyd/thestis/internal/adapter/auth/firebase"
+	"github.com/harpyd/thestis/internal/adapter/metrics/prometheus"
 	"github.com/harpyd/thestis/internal/adapter/parser/yaml"
 	mongorepo "github.com/harpyd/thestis/internal/adapter/repository/mongodb"
 	"github.com/harpyd/thestis/internal/app"
@@ -32,14 +33,23 @@ func Start(configsPath string) {
 }
 
 type runnerContext struct {
-	logger       *zap.Logger
-	config       *config.Config
-	mongoDB      *mongo.Database
-	app          *app.Application
-	authProvider auth.Provider
-	server       *server.Server
+	logger              *zap.Logger
+	config              *config.Config
+	persistent          persistentContext
+	specificationParser app.SpecificationParserService
+	app                 *app.Application
+	metrics             app.MetricsService
+	authProvider        auth.Provider
+	server              *server.Server
 
 	cancel func()
+}
+
+type persistentContext struct {
+	testCampaignRepo       app.TestCampaignsRepository
+	specRepo               app.SpecificationsRepository
+	specificTestCampaignRM app.SpecificTestCampaignReadModel
+	specificSpecRM         app.SpecificSpecificationReadModel
 }
 
 func newRunner(configsPath string) *runnerContext {
@@ -47,8 +57,10 @@ func newRunner(configsPath string) *runnerContext {
 
 	c.cancel = c.initLogger()
 	c.initConfig(configsPath)
-	c.initMongoDatabase()
+	c.initPersistent()
+	c.initSpecificationParser()
 	c.initApplication()
+	c.initMetrics()
 	c.initAuthenticationProvider()
 	c.initServer()
 
@@ -90,34 +102,70 @@ func (c *runnerContext) initConfig(configsPath string) {
 	c.logger.Info("Config parsing completed")
 }
 
-func (c *runnerContext) initMongoDatabase() {
+func (c *runnerContext) initPersistent() {
+	db := c.mongoDatabase()
+	logField := zap.String("db", "mongo")
+
+	var (
+		testCampaignRepo = mongorepo.NewTestCampaignsRepository(db)
+		specRepo         = mongorepo.NewSpecificationsRepository(db)
+	)
+
+	c.persistent.testCampaignRepo = testCampaignRepo
+	c.logger.Info("Test campaigns repository initialization completed", logField)
+
+	c.persistent.specRepo = specRepo
+	c.logger.Info("Specifications repository initialization completed", logField)
+
+	c.persistent.specificTestCampaignRM = testCampaignRepo
+	c.logger.Info("Specific test campaigns read model initialization completed", logField)
+
+	c.persistent.specificSpecRM = specRepo
+	c.logger.Info("Specific specifications read model initialization completed", logField)
+}
+
+func (c *runnerContext) initSpecificationParser() {
+	c.specificationParser = yaml.NewSpecificationParserService()
+	c.logger.Info("Specification parser service initialization completed", zap.String("type", "yaml"))
+}
+
+func (c *runnerContext) mongoDatabase() *mongo.Database {
 	client, err := mongodb.NewClient(c.config.Mongo.URI, c.config.Mongo.Username, c.config.Mongo.Password)
 	if err != nil {
 		c.logger.Fatal("Failed to connect to MongoDB", zap.Error(err))
 	}
 
-	c.mongoDB = client.Database(c.config.Mongo.DatabaseName)
-
-	c.logger.Info("MongoDB connection completed")
+	return client.Database(c.config.Mongo.DatabaseName)
 }
 
 func (c *runnerContext) initApplication() {
-	tcRepo := mongorepo.NewTestCampaignsRepository(c.mongoDB)
-	specRepo := mongorepo.NewSpecificationsRepository(c.mongoDB)
-	parserService := yaml.NewSpecificationParserService()
-
 	c.app = &app.Application{
 		Commands: app.Commands{
-			CreateTestCampaign: command.NewCreateTestCampaignHandler(tcRepo),
-			LoadSpecification:  command.NewLoadSpecificationHandler(specRepo, tcRepo, parserService),
+			CreateTestCampaign: command.NewCreateTestCampaignHandler(c.persistent.testCampaignRepo),
+			LoadSpecification: command.NewLoadSpecificationHandler(
+				c.persistent.specRepo,
+				c.persistent.testCampaignRepo,
+				c.specificationParser,
+			),
 		},
 		Queries: app.Queries{
-			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(tcRepo),
-			SpecificSpecification: query.NewSpecificSpecificationHandler(specRepo),
+			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(c.persistent.specificTestCampaignRM),
+			SpecificSpecification: query.NewSpecificSpecificationHandler(c.persistent.specificSpecRM),
 		},
 	}
 
 	c.logger.Info("Application context initialization completed")
+}
+
+func (c *runnerContext) initMetrics() {
+	mrs, err := prometheus.NewMetricsService()
+	if err != nil {
+		c.logger.Fatal("Failed to register metrics", zap.Error(err))
+	}
+
+	c.metrics = mrs
+
+	c.logger.Info("Metrics registration completed", zap.String("db", "prometheus"))
 }
 
 func (c *runnerContext) initAuthenticationProvider() {
@@ -125,9 +173,9 @@ func (c *runnerContext) initAuthenticationProvider() {
 
 	switch authType {
 	case config.FakeAuth:
-		c.authProvider = fakeAuth.Provider()
+		c.authProvider = fakeAuth.NewProvider()
 	case config.FirebaseAuth:
-		c.authProvider = firebaseAuth.Provider(c.firebaseClient())
+		c.authProvider = firebaseAuth.NewProvider(c.firebaseClient())
 	default:
 		c.logger.Fatal(
 			"Invalid auth type",
@@ -143,25 +191,20 @@ func (c *runnerContext) initAuthenticationProvider() {
 }
 
 func (c *runnerContext) firebaseClient() *fireauth.Client {
-	firebaseAuth, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
+	client, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
 	if err != nil {
 		c.logger.Fatal("Failed to create Firebase Auth client", zap.Error(err))
 	}
 
-	return firebaseAuth
+	return client
 }
 
 func (c *runnerContext) initServer() {
-	v1Router := chi.NewRouter()
-	v1Router.Use(
-		auth.Middleware(c.authProvider),
-	)
-
 	c.server = server.New(c.config, http.NewHandler(
 		c.logger,
 		http.Route{
 			Pattern: "/v1",
-			Handler: v1.NewHandler(c.app, v1Router),
+			Handler: v1.NewHandler(c.app, c.v1Router()),
 		},
 		http.Route{
 			Pattern: "/swagger",
@@ -174,4 +217,13 @@ func (c *runnerContext) initServer() {
 	))
 
 	c.logger.Info("Server initializing completed")
+}
+
+func (c *runnerContext) v1Router() chi.Router {
+	r := chi.NewRouter()
+	r.Use(
+		auth.Middleware(c.authProvider),
+	)
+
+	return r
 }

@@ -11,12 +11,12 @@ import (
 	"github.com/harpyd/thestis/pkg/http/auth"
 )
 
-type provider struct {
+type Provider struct {
 	authClient *fireauth.Client
 }
 
-func Provider(authClient *fireauth.Client) auth.Provider {
-	return provider{
+func NewProvider(authClient *fireauth.Client) Provider {
+	return Provider{
 		authClient: authClient,
 	}
 }
@@ -26,7 +26,7 @@ var (
 	errUnableToVerifyJWT = errors.New("unable to verify jwt")
 )
 
-func (p provider) AuthenticatedUser(ctx context.Context, r *http.Request) (auth.User, error) {
+func (p Provider) AuthenticatedUser(ctx context.Context, r *http.Request) (auth.User, error) {
 	bearerToken := tokenFromHeader(r)
 
 	if bearerToken == "" {

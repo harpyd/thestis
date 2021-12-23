@@ -8,7 +8,6 @@ import (
 
 	"github.com/harpyd/thestis/internal/adapter/repository/mongodb"
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/app/command"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
 
@@ -177,7 +176,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestUpdateTestCampaign() {
 	testCases := []struct {
 		Name                   string
 		TestCampaignIDToUpdate string
-		Update                 command.TestCampaignUpdater
+		Update                 app.TestCampaignUpdater
 		TestCampaignUpdated    func(tc *testcampaign.TestCampaign) bool
 		ShouldBeErr            bool
 		IsErr                  func(err error) bool
