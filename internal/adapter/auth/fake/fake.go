@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/request"
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/pkg/http/auth"
+	"github.com/harpyd/thestis/internal/port/http/auth"
 )
 
 type Provider struct{}

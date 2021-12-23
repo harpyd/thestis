@@ -11,15 +11,15 @@ import (
 	"go.uber.org/zap"
 )
 
-type StructuredLogger struct {
+type Formatter struct {
 	Logger *zap.Logger
 }
 
-func NewStructuredLogger(logger *zap.Logger) func(next http.Handler) http.Handler {
-	return middleware.RequestLogger(&StructuredLogger{Logger: logger})
+func NewFormatter(logger *zap.Logger) func(next http.Handler) http.Handler {
+	return middleware.RequestLogger(&Formatter{Logger: logger})
 }
 
-func (l *StructuredLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
+func (l *Formatter) NewLogEntry(r *http.Request) middleware.LogEntry {
 	requestID := middleware.GetReqID(r.Context())
 
 	l.Logger.Info(
@@ -31,7 +31,7 @@ func (l *StructuredLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
 		zap.String("requestBody", copyRequestBody(r)),
 	)
 
-	return &StructuredLoggerEntry{
+	return &logEntry{
 		Logger:    l.Logger,
 		uri:       r.RequestURI,
 		requestID: requestID,
@@ -46,7 +46,7 @@ func copyRequestBody(r *http.Request) string {
 	return string(body)
 }
 
-type StructuredLoggerEntry struct {
+type logEntry struct {
 	Logger    *zap.Logger
 	uri       string
 	requestID string
@@ -54,7 +54,7 @@ type StructuredLoggerEntry struct {
 
 const responseRounding = 100
 
-func (e *StructuredLoggerEntry) Write(status, bytes int, _ http.Header, elapsed time.Duration, _ interface{}) {
+func (e *logEntry) Write(status, bytes int, _ http.Header, elapsed time.Duration, _ interface{}) {
 	e.Logger.Info(
 		"Request completed",
 		zap.String("uri", e.uri),
@@ -65,7 +65,7 @@ func (e *StructuredLoggerEntry) Write(status, bytes int, _ http.Header, elapsed 
 	)
 }
 
-func (e *StructuredLoggerEntry) Panic(v interface{}, stack []byte) {
+func (e *logEntry) Panic(v interface{}, stack []byte) {
 	e.Logger = e.Logger.With(
 		zap.String("stack", string(stack)),
 		zap.String("panic", fmt.Sprintf("%+v", v)),
@@ -73,9 +73,9 @@ func (e *StructuredLoggerEntry) Panic(v interface{}, stack []byte) {
 }
 
 func GetLogger(r *http.Request) *zap.Logger {
-	entry, ok := middleware.GetLogEntry(r).(*StructuredLoggerEntry)
+	entry, ok := middleware.GetLogEntry(r).(*logEntry)
 	if !ok {
-		panic("LogEntry isn't *StructuredLoggerEntry")
+		panic("LogEntry isn't *logEntry")
 	}
 
 	return entry.Logger

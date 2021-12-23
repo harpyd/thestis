@@ -21,11 +21,11 @@ import (
 	"github.com/harpyd/thestis/internal/app/query"
 	"github.com/harpyd/thestis/internal/config"
 	"github.com/harpyd/thestis/internal/port/http"
+	"github.com/harpyd/thestis/internal/port/http/auth"
 	v1 "github.com/harpyd/thestis/internal/port/http/v1"
 	"github.com/harpyd/thestis/internal/server"
 	"github.com/harpyd/thestis/pkg/auth/firebase"
 	"github.com/harpyd/thestis/pkg/database/mongodb"
-	"github.com/harpyd/thestis/pkg/http/auth"
 )
 
 func Start(configsPath string) {

@@ -10,7 +10,7 @@ import (
 	"github.com/go-chi/cors"
 	"go.uber.org/zap"
 
-	"github.com/harpyd/thestis/pkg/logging"
+	"github.com/harpyd/thestis/internal/port/http/logging"
 )
 
 type Route struct {
@@ -32,7 +32,7 @@ func NewHandler(logger *zap.Logger, routes ...Route) http.Handler {
 func addMiddlewares(router *chi.Mux, logger *zap.Logger) {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
-	router.Use(logging.NewStructuredLogger(logger))
+	router.Use(logging.NewFormatter(logger))
 	router.Use(middleware.Recoverer)
 	addCORSMiddleware(router)
 	router.Use(middleware.NoCache)

@@ -3,8 +3,8 @@ package v1
 import (
 	"net/http"
 
-	"github.com/harpyd/thestis/pkg/http/auth"
-	"github.com/harpyd/thestis/pkg/http/httperr"
+	"github.com/harpyd/thestis/internal/port/http/auth"
+	"github.com/harpyd/thestis/internal/port/http/httperr"
 )
 
 func unmarshalUser(w http.ResponseWriter, r *http.Request) (auth.User, bool) {

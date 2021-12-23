@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/render"
 	"go.uber.org/zap"
 
-	"github.com/harpyd/thestis/pkg/logging"
+	"github.com/harpyd/thestis/internal/port/http/logging"
 )
 
 func BadRequest(slug string, err error, w http.ResponseWriter, r *http.Request) {

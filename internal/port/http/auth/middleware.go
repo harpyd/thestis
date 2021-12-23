@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/harpyd/thestis/pkg/http/httperr"
+	"github.com/harpyd/thestis/internal/port/http/httperr"
 )
 
 func Middleware(provider Provider) func(next http.Handler) http.Handler {
