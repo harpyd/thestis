@@ -23,3 +23,11 @@ jobs:
 
       - name: Integration tests
         run: make test-integration
+
+      - name: Cover code
+        run: make test-cover
+
+      - name: Upload code coverage
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

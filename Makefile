@@ -33,6 +33,10 @@ test-integration:
 	go test -v -race -coverprofile=integration.out ./internal/adapter/... ./internal/config/... || (make stop-test-db && exit 1)
 	make stop-test-db
 
+test-cover:
+	go install github.com/wadey/gocovmerge@latest
+	gocovmerge unit.out integration.out > cover.out
+	go tool cover -html=cover.out -o cover.html
 
 export TEST_DB_URI=mongodb://localhost:27019
 export TEST_DB_NAME=test
