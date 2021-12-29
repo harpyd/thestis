@@ -10,11 +10,11 @@ import (
 
 type (
 	Thesis struct {
-		slug      string
-		after     []string
-		statement Statement
-		http      HTTP
-		assertion Assertion
+		slug         string
+		dependencies []string
+		statement    Statement
+		http         HTTP
+		assertion    Assertion
 	}
 
 	Statement struct {
@@ -23,7 +23,7 @@ type (
 	}
 
 	ThesisBuilder struct {
-		after            []string
+		dependencies     []string
 		keyword          string
 		behavior         string
 		httpBuilder      *HTTPBuilder
@@ -44,8 +44,8 @@ func (t Thesis) Slug() string {
 	return t.slug
 }
 
-func (t Thesis) After() []string {
-	return t.after
+func (t Thesis) Dependencies() []string {
+	return t.dependencies
 }
 
 func (t Thesis) Statement() Statement {
@@ -107,8 +107,8 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 	}
 
 	thsis := Thesis{
-		slug:  slug,
-		after: make([]string, len(b.after)),
+		slug:         slug,
+		dependencies: make([]string, len(b.dependencies)),
 		statement: Statement{
 			keyword:  kw,
 			behavior: b.behavior,
@@ -117,7 +117,7 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 		assertion: assertion,
 	}
 
-	copy(thsis.after, b.after)
+	copy(thsis.dependencies, b.dependencies)
 
 	return thsis, NewBuildThesisError(multierr.Combine(keywordErr, err), slug)
 }
@@ -129,15 +129,15 @@ func (b *ThesisBuilder) ErrlessBuild(slug string) Thesis {
 }
 
 func (b *ThesisBuilder) Reset() {
-	b.after = nil
+	b.dependencies = nil
 	b.keyword = ""
 	b.behavior = ""
 	b.assertionBuilder.Reset()
 	b.httpBuilder.Reset()
 }
 
-func (b *ThesisBuilder) WithAfter(after string) *ThesisBuilder {
-	b.after = append(b.after, after)
+func (b *ThesisBuilder) WithDependencies(after string) *ThesisBuilder {
+	b.dependencies = append(b.dependencies, after)
 
 	return b
 }

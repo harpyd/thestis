@@ -85,7 +85,7 @@ func buildThesis(thesis thesisSchema) func(builder *specification.ThesisBuilder)
 			WithHTTP(buildHTTP(thesis.HTTP))
 
 		for _, after := range thesis.After {
-			builder.WithAfter(after)
+			builder.WithDependencies(after)
 		}
 	}
 }

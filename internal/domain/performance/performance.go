@@ -123,35 +123,33 @@ func addActions(
 			whens = append(whens, thesis)
 		}
 
-		added := addActionsDependingOnAfter(graph, story, scenario, thesis)
+		added := addDependenciesDependentActions(graph, story, scenario, thesis)
 		if !added {
-			addActionDependingOnBDDStageStart(graph, story, scenario, thesis)
+			addStageDependentAction(graph, story, scenario, thesis)
 		}
 	}
 
-	addActionsDependingOnTheses(graph, story, scenario, givens, specification.When)
-	addActionsDependingOnTheses(graph, story, scenario, whens, specification.Then)
+	addThesesDependentFakeActions(graph, story, scenario, givens, specification.When)
+	addThesesDependentFakeActions(graph, story, scenario, whens, specification.Then)
 }
 
-func addActionsDependingOnAfter(
+func addDependenciesDependentActions(
 	graph actionGraph,
 	story specification.Story,
 	scenario specification.Scenario,
 	thesis specification.Thesis,
 ) bool {
-	if len(thesis.After()) == 0 {
+	if len(thesis.Dependencies()) == 0 {
 		return false
 	}
 
-	for _, after := range thesis.After() {
+	for _, dep := range thesis.Dependencies() {
 		var (
-			from = uniqueThesisName(story.Slug(), scenario.Slug(), after)
+			from = uniqueThesisName(story.Slug(), scenario.Slug(), dep)
 			to   = uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
 		)
 
-		if graph[from] == nil {
-			graph[from] = make(actions, 1)
-		}
+		initializeGraphActionsLazy(graph, from)
 
 		graph[from][to] = newAction(thesis)
 	}
@@ -159,7 +157,7 @@ func addActionsDependingOnAfter(
 	return true
 }
 
-func addActionDependingOnBDDStageStart(
+func addStageDependentAction(
 	graph actionGraph,
 	story specification.Story,
 	scenario specification.Scenario,
@@ -170,14 +168,12 @@ func addActionDependingOnBDDStageStart(
 		to   = uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
 	)
 
-	if graph[from] == nil {
-		graph[from] = make(actions, 1)
-	}
+	initializeGraphActionsLazy(graph, from)
 
 	graph[from][to] = newAction(thesis)
 }
 
-func addActionsDependingOnTheses(
+func addThesesDependentFakeActions(
 	graph actionGraph,
 	story specification.Story,
 	scenario specification.Scenario,
@@ -187,12 +183,41 @@ func addActionsDependingOnTheses(
 	for _, thesis := range theses {
 		from := uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
 		if len(graph[from]) == 0 {
-			if graph[from] == nil {
-				graph[from] = make(actions, 1)
-			}
+			initializeGraphActionsLazy(graph, from)
 
 			graph[from][nextStage.String()] = newFakeAction()
 		}
+	}
+}
+
+func uniqueThesisName(storySlug, scenarioSlug, thesisSlug string) string {
+	return strings.Join([]string{storySlug, scenarioSlug, thesisSlug}, ".")
+}
+
+func thesisPerformerType(thesis specification.Thesis) PerformerType {
+	switch {
+	case !thesis.HTTP().IsZero():
+		return HTTPPerformer
+	case !thesis.Assertion().IsZero():
+		return AssertionPerformer
+	}
+
+	return UnknownPerformer
+}
+
+func buildPerformers(opts []Option) map[PerformerType]Performer {
+	performers := make(map[PerformerType]Performer, len(opts))
+
+	for _, opt := range opts {
+		performers[opt.performerType] = opt.performer
+	}
+
+	return performers
+}
+
+func initializeGraphActionsLazy(graph actionGraph, vertex string) {
+	if graph[vertex] == nil {
+		graph[vertex] = make(actions, 1)
 	}
 }
 
@@ -247,31 +272,6 @@ func checkGraphCyclesDFS(
 	return nil
 }
 
-func uniqueThesisName(storySlug, scenarioSlug, thesisSlug string) string {
-	return strings.Join([]string{storySlug, scenarioSlug, thesisSlug}, ".")
-}
-
-func thesisPerformerType(thesis specification.Thesis) PerformerType {
-	switch {
-	case !thesis.HTTP().IsZero():
-		return HTTPPerformer
-	case !thesis.Assertion().IsZero():
-		return AssertionPerformer
-	}
-
-	return UnknownPerformer
-}
-
-func buildPerformers(opts []Option) map[PerformerType]Performer {
-	performers := make(map[PerformerType]Performer, len(opts))
-
-	for _, opt := range opts {
-		performers[opt.performerType] = opt.performer
-	}
-
-	return performers
-}
-
 func (p *Performance) Start(stream EventStream) {
 	var wg sync.WaitGroup
 
@@ -314,17 +314,17 @@ func (p *Performance) startAction(stream EventStream, from, to string, a action)
 	p.unlockGraph(to)
 }
 
-func (p *Performance) unlockGraph(from string) {
-	for to := range p.graph[from] {
-		p.graph[from][to].unlock <- true
-	}
-}
-
 func (p *Performance) waitGraphLocks(to string) {
 	for from := range p.graph {
 		if dep, ok := p.graph[from][to]; ok {
 			<-dep.unlock
 		}
+	}
+}
+
+func (p *Performance) unlockGraph(from string) {
+	for to := range p.graph[from] {
+		p.graph[from][to].unlock <- true
 	}
 }
 

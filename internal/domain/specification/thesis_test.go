@@ -20,17 +20,17 @@ func TestThesisBuilder_Build_no_http_or_assertion(t *testing.T) {
 	require.True(t, specification.IsNoThesisHTTPOrAssertionError(err))
 }
 
-func TestThesisBuilder_WithAfter(t *testing.T) {
+func TestThesisBuilder_WithDependencies(t *testing.T) {
 	t.Parallel()
 
 	builder := specification.NewThesisBuilder()
 	builder.WithStatement("when", "something")
-	builder.WithAfter("anotherOneThesis")
-	builder.WithAfter("anotherTwoThesis")
+	builder.WithDependencies("anotherOneThesis")
+	builder.WithDependencies("anotherTwoThesis")
 
 	thesis := builder.ErrlessBuild("thesis")
 
-	require.ElementsMatch(t, []string{"anotherOneThesis", "anotherTwoThesis"}, thesis.After())
+	require.ElementsMatch(t, []string{"anotherOneThesis", "anotherTwoThesis"}, thesis.Dependencies())
 }
 
 func TestThesisBuilder_Build_slug(t *testing.T) {
