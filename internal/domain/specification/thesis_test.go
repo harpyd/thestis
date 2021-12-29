@@ -24,7 +24,7 @@ func TestThesisBuilder_WithDependencies(t *testing.T) {
 	t.Parallel()
 
 	builder := specification.NewThesisBuilder()
-	builder.WithStatement("when", "something")
+	builder.WithStage("when", "something")
 	builder.WithDependencies("anotherOneThesis")
 	builder.WithDependencies("anotherTwoThesis")
 
@@ -60,7 +60,7 @@ func TestThesisBuilder_Build_slug(t *testing.T) {
 			t.Parallel()
 
 			builder := specification.NewThesisBuilder()
-			builder.WithStatement("when", "do something")
+			builder.WithStage("when", "do something")
 
 			if c.ShouldBeErr {
 				_, err := builder.Build(c.Slug)
@@ -85,25 +85,25 @@ func TestThesisBuilder_WithStatement(t *testing.T) {
 		ShouldBeErr bool
 	}{
 		{
-			Name:        "build_with_allowed_given_keyword",
+			Name:        "build_with_allowed_given_stage",
 			Keyword:     "given",
 			Behavior:    "hooves delivered to the warehouse",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_when_keyword",
+			Name:        "build_with_allowed_when_stage",
 			Keyword:     "when",
 			Behavior:    "selling hooves",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_then_keyword",
+			Name:        "build_with_allowed_then_stage",
 			Keyword:     "then",
 			Behavior:    "check that hooves are sold",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "dont_build_with_not_allowed_keyword",
+			Name:        "dont_build_with_not_allowed_stage",
 			Keyword:     "zen",
 			Behavior:    "zen du dust",
 			ShouldBeErr: true,
@@ -117,17 +117,17 @@ func TestThesisBuilder_WithStatement(t *testing.T) {
 			t.Parallel()
 
 			builder := specification.NewThesisBuilder()
-			builder.WithStatement(c.Keyword, c.Behavior)
+			builder.WithStage(c.Keyword, c.Behavior)
 
 			if c.ShouldBeErr {
 				_, err := builder.Build("sellHooves")
-				require.True(t, specification.IsNotAllowedKeywordError(err))
+				require.True(t, specification.IsNotAllowedStageError(err))
 
 				return
 			}
 
 			thesis := builder.ErrlessBuild("sellHooves")
-			require.Equal(t, strings.ToLower(c.Keyword), thesis.Statement().Keyword().String())
+			require.Equal(t, strings.ToLower(c.Keyword), thesis.Statement().Stage().String())
 			require.Equal(t, c.Behavior, thesis.Statement().Behavior())
 		})
 	}
@@ -137,7 +137,7 @@ func TestThesisBuilder_WithAssertion(t *testing.T) {
 	t.Parallel()
 
 	builder := specification.NewThesisBuilder()
-	builder.WithStatement("when", "something wrong")
+	builder.WithStage("when", "something wrong")
 	builder.WithAssertion(func(b *specification.AssertionBuilder) {
 		b.WithMethod("JSONPATH")
 		b.WithAssert("getSomeBody.response.body.type", "product")
@@ -158,7 +158,7 @@ func TestThesisBuilder_WithHTTP(t *testing.T) {
 	t.Parallel()
 
 	builder := specification.NewThesisBuilder()
-	builder.WithStatement("given", "some state")
+	builder.WithStage("given", "some state")
 	builder.WithHTTP(func(b *specification.HTTPBuilder) {
 		b.WithRequest(func(b *specification.HTTPRequestBuilder) {
 			b.WithMethod("GET")
@@ -311,7 +311,7 @@ func TestIsNoSuchThesisError(t *testing.T) {
 	}
 }
 
-func TestIsNotAllowedKeywordError(t *testing.T) {
+func TestIsNotAllowedStageError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -320,8 +320,8 @@ func TestIsNotAllowedKeywordError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "not_allowed_keyword_error",
-			Err:       specification.NewNotAllowedKeywordError("zen"),
+			Name:      "not_allowed_stage_error",
+			Err:       specification.NewNotAllowedStageError("zen"),
 			IsSameErr: true,
 		},
 		{
@@ -337,7 +337,7 @@ func TestIsNotAllowedKeywordError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, specification.IsNotAllowedKeywordError(c.Err))
+			require.Equal(t, c.IsSameErr, specification.IsNotAllowedStageError(c.Err))
 		})
 	}
 }

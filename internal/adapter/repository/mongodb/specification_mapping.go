@@ -130,7 +130,7 @@ func marshalToThesisDocuments(theses []specification.Thesis) []thesisDocument {
 			Slug:  thesis.Slug(),
 			After: thesis.Dependencies(),
 			Statement: statementDocument{
-				Keyword:   thesis.Statement().Keyword().String(),
+				Keyword:   thesis.Statement().Stage().String(),
 				Behaviour: thesis.Statement().Behavior(),
 			},
 			HTTP:      marshalToHTTPDocument(thesis.HTTP()),
@@ -218,7 +218,7 @@ func (d scenarioDocument) unmarshalToScenarioBuildFn() func(builder *specificati
 func (d thesisDocument) unmarshalToThesisBuildFn() func(builder *specification.ThesisBuilder) {
 	return func(builder *specification.ThesisBuilder) {
 		builder.
-			WithStatement(d.Statement.Keyword, d.Statement.Behaviour).
+			WithStage(d.Statement.Keyword, d.Statement.Behaviour).
 			WithHTTP(d.HTTP.unmarshalToHTTPBuildFn()).
 			WithAssertion(d.Assertion.unmarshalToAssertionBuildFn())
 

@@ -149,7 +149,7 @@ func TestIsNotAllowedAssertionMethodError(t *testing.T) {
 		},
 		{
 			Name:      "another_error",
-			Err:       specification.NewNotAllowedKeywordError("jzonpad"),
+			Err:       specification.NewNotAllowedStageError("jzonpad"),
 			IsSameErr: false,
 		},
 	}

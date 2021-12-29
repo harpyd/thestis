@@ -117,9 +117,9 @@ func addActions(
 	)
 
 	for _, thesis := range theses {
-		if thesis.Statement().Keyword() == specification.Given {
+		if thesis.Statement().Stage() == specification.Given {
 			givens = append(givens, thesis)
-		} else if thesis.Statement().Keyword() == specification.When {
+		} else if thesis.Statement().Stage() == specification.When {
 			whens = append(whens, thesis)
 		}
 
@@ -164,7 +164,7 @@ func addStageDependentAction(
 	thesis specification.Thesis,
 ) {
 	var (
-		from = thesis.Statement().Keyword().String()
+		from = thesis.Statement().Stage().String()
 		to   = uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
 	)
 
@@ -178,7 +178,7 @@ func addThesesDependentFakeActions(
 	story specification.Story,
 	scenario specification.Scenario,
 	theses []specification.Thesis,
-	nextStage specification.Keyword,
+	nextStage specification.Stage,
 ) {
 	for _, thesis := range theses {
 		from := uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())

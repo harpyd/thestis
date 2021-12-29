@@ -77,7 +77,7 @@ func TestScenarioBuilder_WithThesis(t *testing.T) {
 
 	builder := specification.NewScenarioBuilder()
 	builder.WithThesis("getBeer", func(b *specification.ThesisBuilder) {
-		b.WithStatement("when", "get beer")
+		b.WithStage("when", "get beer")
 		b.WithHTTP(func(b *specification.HTTPBuilder) {
 			b.WithRequest(func(b *specification.HTTPRequestBuilder) {
 				b.WithMethod("GET")
@@ -90,7 +90,7 @@ func TestScenarioBuilder_WithThesis(t *testing.T) {
 		})
 	})
 	builder.WithThesis("checkBeer", func(b *specification.ThesisBuilder) {
-		b.WithStatement("then", "check beer")
+		b.WithStage("then", "check beer")
 		b.WithAssertion(func(b *specification.AssertionBuilder) {
 			b.WithMethod("JSONPATH")
 			b.WithAssert("getSomeBody.response.body.product", "beer")
@@ -100,7 +100,7 @@ func TestScenarioBuilder_WithThesis(t *testing.T) {
 	scenario := builder.ErrlessBuild("someScenario")
 
 	expectedGetBeerThesis := specification.NewThesisBuilder().
-		WithStatement("when", "get beer").
+		WithStage("when", "get beer").
 		WithHTTP(func(b *specification.HTTPBuilder) {
 			b.WithRequest(func(b *specification.HTTPRequestBuilder) {
 				b.WithMethod("GET")
@@ -118,7 +118,7 @@ func TestScenarioBuilder_WithThesis(t *testing.T) {
 	require.Equal(t, expectedGetBeerThesis, actualGetBeerThesis)
 
 	expectedCheckBeerThesis := specification.NewThesisBuilder().
-		WithStatement("then", "check beer").
+		WithStage("then", "check beer").
 		WithAssertion(func(b *specification.AssertionBuilder) {
 			b.WithMethod("jsonpath")
 			b.WithAssert("getSomeBody.response.body.product", "beer")
