@@ -53,7 +53,7 @@ type (
 
 		fake bool
 
-		unlock chan interface{}
+		unlock chan struct{}
 	}
 )
 
@@ -217,14 +217,14 @@ func newAction(thesis specification.Thesis) action {
 	return action{
 		thesis:        thesis,
 		performerType: thesisPerformerType(thesis),
-		unlock:        make(chan interface{}),
+		unlock:        make(chan struct{}),
 	}
 }
 
 func newFakeAction() action {
 	return action{
 		fake:   true,
-		unlock: make(chan interface{}),
+		unlock: make(chan struct{}),
 	}
 }
 
