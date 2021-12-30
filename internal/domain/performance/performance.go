@@ -275,9 +275,17 @@ func (p *Performance) LastAttempt() Attempt {
 	return p.attempts[len(p.attempts)-1]
 }
 
-func (p *Performance) Start(stream EventStream) {
+func (p *Performance) Start() EventStream {
 	p.attempts = append(p.attempts, newAttempt())
 
+	stream := make(EventStream, 1)
+
+	go p.startActions(stream)
+
+	return stream
+}
+
+func (p *Performance) startActions(stream EventStream) {
 	var wg sync.WaitGroup
 
 	for from, as := range p.graph {
