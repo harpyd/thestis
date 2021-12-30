@@ -143,7 +143,7 @@ func addDependenciesDependentActions(
 			to   = uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
 		)
 
-		initializeGraphActionsLazy(graph, from)
+		initGraphActionsLazy(graph, from)
 
 		graph[from][to] = newAction(thesis)
 	}
@@ -160,7 +160,7 @@ func addStageDependentAction(
 		to   = uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
 	)
 
-	initializeGraphActionsLazy(graph, from)
+	initGraphActionsLazy(graph, from)
 
 	graph[from][to] = newAction(thesis)
 }
@@ -175,7 +175,7 @@ func addThesesDependentFakeActions(
 	for _, thesis := range theses {
 		from := uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
 		if len(graph[from]) == 0 {
-			initializeGraphActionsLazy(graph, from)
+			initGraphActionsLazy(graph, from)
 
 			graph[from][nextStage.String()] = newFakeAction()
 		}
@@ -207,7 +207,7 @@ func buildPerformers(opts []Option) map[PerformerType]Performer {
 	return performers
 }
 
-func initializeGraphActionsLazy(graph actionGraph, vertex string) {
+func initGraphActionsLazy(graph actionGraph, vertex string) {
 	if graph[vertex] == nil {
 		graph[vertex] = make(actions, 1)
 	}
