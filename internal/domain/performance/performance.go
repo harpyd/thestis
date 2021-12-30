@@ -21,7 +21,7 @@ const (
 
 type (
 	Performance struct {
-		context    *Context
+		attempts   []Attempt
 		performers map[PerformerType]Performer
 		graph      actionGraph
 	}
@@ -264,7 +264,20 @@ func checkGraphCyclesDFS(
 	return nil
 }
 
+func (p *Performance) Attempts() []Attempt {
+	copied := make([]Attempt, len(p.attempts))
+	copy(copied, p.attempts)
+
+	return copied
+}
+
+func (p *Performance) LastAttempt() Attempt {
+	return p.attempts[len(p.attempts)-1]
+}
+
 func (p *Performance) Start(stream EventStream) {
+	p.attempts = append(p.attempts, newAttempt())
+
 	var wg sync.WaitGroup
 
 	for from, as := range p.graph {
@@ -320,7 +333,7 @@ func (p *Performance) perform(a action) {
 		return
 	}
 
-	performer.Perform(p.context, a.thesis)
+	performer.Perform(p.LastAttempt().Context(), a.thesis)
 }
 
 func (e Event) From() string {
