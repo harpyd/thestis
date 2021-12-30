@@ -8,6 +8,14 @@ type Context struct {
 	store map[string]interface{}
 }
 
+const defaultStoreInitialSize = 10
+
+func newContext() *Context {
+	return &Context{
+		store: make(map[string]interface{}, defaultStoreInitialSize),
+	}
+}
+
 func (c *Context) Store(key string, value interface{}) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -17,7 +25,7 @@ func (c *Context) Store(key string, value interface{}) {
 
 func (c *Context) Load(key string) (interface{}, bool) {
 	c.mu.RLock()
-	defer c.mu.Unlock()
+	defer c.mu.RUnlock()
 
 	value, ok := c.store[key]
 
