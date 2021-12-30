@@ -123,10 +123,8 @@ func addActions(
 			whens = append(whens, thesis)
 		}
 
-		added := addDependenciesDependentActions(graph, story, scenario, thesis)
-		if !added {
-			addStageDependentAction(graph, story, scenario, thesis)
-		}
+		addDependenciesDependentActions(graph, story, scenario, thesis)
+		addStageDependentAction(graph, story, scenario, thesis)
 	}
 
 	addThesesDependentFakeActions(graph, story, scenario, givens, specification.When)
@@ -138,11 +136,7 @@ func addDependenciesDependentActions(
 	story specification.Story,
 	scenario specification.Scenario,
 	thesis specification.Thesis,
-) bool {
-	if len(thesis.Dependencies()) == 0 {
-		return false
-	}
-
+) {
 	for _, dep := range thesis.Dependencies() {
 		var (
 			from = uniqueThesisName(story.Slug(), scenario.Slug(), dep)
@@ -153,8 +147,6 @@ func addDependenciesDependentActions(
 
 		graph[from][to] = newAction(thesis)
 	}
-
-	return true
 }
 
 func addStageDependentAction(
@@ -244,10 +236,10 @@ const (
 	black vertexColor = "black"
 )
 
-func checkGraphCycles(unsortedGraph actionGraph) error {
-	colors := make(map[string]vertexColor, len(unsortedGraph))
+func checkGraphCycles(graph actionGraph) error {
+	colors := make(map[string]vertexColor, len(graph))
 
-	return checkGraphCyclesDFS(unsortedGraph, specification.Given.String(), colors)
+	return checkGraphCyclesDFS(graph, specification.Given.String(), colors)
 }
 
 func checkGraphCyclesDFS(
@@ -275,14 +267,6 @@ func checkGraphCyclesDFS(
 func (p *Performance) Start(stream EventStream) {
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-
-	go func() {
-		defer wg.Done()
-
-		p.unlockGraph(specification.Given.String())
-	}()
-
 	for from, as := range p.graph {
 		for to, a := range as {
 			wg.Add(1)
@@ -301,7 +285,7 @@ func (p *Performance) Start(stream EventStream) {
 }
 
 func (p *Performance) startAction(stream EventStream, from, to string, a action) {
-	p.waitGraphLocks(from)
+	p.waitActionLocks(from)
 
 	p.perform(a)
 
@@ -311,10 +295,10 @@ func (p *Performance) startAction(stream EventStream, from, to string, a action)
 		performerType: a.performerType,
 	}
 
-	p.unlockGraph(to)
+	p.unlockAction(from, to)
 }
 
-func (p *Performance) waitGraphLocks(to string) {
+func (p *Performance) waitActionLocks(to string) {
 	for from := range p.graph {
 		if dep, ok := p.graph[from][to]; ok {
 			<-dep.unlock
@@ -322,10 +306,8 @@ func (p *Performance) waitGraphLocks(to string) {
 	}
 }
 
-func (p *Performance) unlockGraph(from string) {
-	for to := range p.graph[from] {
-		p.graph[from][to].unlock <- true
-	}
+func (p *Performance) unlockAction(from, to string) {
+	close(p.graph[from][to].unlock)
 }
 
 func (p *Performance) perform(a action) {
@@ -380,5 +362,5 @@ func IsCyclicPerformanceGraphError(err error) bool {
 }
 
 func (e cyclicPerformanceGraphError) Error() string {
-	return fmt.Sprintf("cyclic performance graph: (%s, %s)", e.from, e.to)
+	return fmt.Sprintf("cyclic performance graph: %s -> %s", e.from, e.to)
 }
