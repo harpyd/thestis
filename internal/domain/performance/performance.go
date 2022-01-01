@@ -21,6 +21,8 @@ const (
 
 type (
 	Performance struct {
+		once sync.Once
+
 		attempts   []Attempt
 		performers map[PerformerType]Performer
 		graph      actionGraph
@@ -274,13 +276,21 @@ func (p *Performance) LastAttempt() Attempt {
 }
 
 func (p *Performance) Start() <-chan Event {
-	p.attempts = append(p.attempts, newAttempt())
-
 	stream := make(chan Event, 1)
 
-	go p.startActions(stream)
+	go p.start(stream)
 
 	return stream
+}
+
+func (p *Performance) start(stream chan Event) {
+	p.once.Do(func() {
+		p.attempts = append(p.attempts, newAttempt())
+
+		p.startActions(stream)
+	})
+
+	close(stream)
 }
 
 func (p *Performance) startActions(stream chan Event) {
@@ -299,8 +309,6 @@ func (p *Performance) startActions(stream chan Event) {
 	}
 
 	wg.Wait()
-
-	close(stream)
 }
 
 func (p *Performance) startAction(stream chan Event, from, to string, a action) {
