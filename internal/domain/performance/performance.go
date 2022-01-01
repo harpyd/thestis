@@ -34,8 +34,6 @@ type (
 		Perform(c *Context, thesis specification.Thesis)
 	}
 
-	EventStream chan Event
-
 	Event struct {
 		from          string
 		to            string
@@ -275,17 +273,17 @@ func (p *Performance) LastAttempt() Attempt {
 	return p.attempts[len(p.attempts)-1]
 }
 
-func (p *Performance) Start() EventStream {
+func (p *Performance) Start() <-chan Event {
 	p.attempts = append(p.attempts, newAttempt())
 
-	stream := make(EventStream, 1)
+	stream := make(chan Event, 1)
 
 	go p.startActions(stream)
 
 	return stream
 }
 
-func (p *Performance) startActions(stream EventStream) {
+func (p *Performance) startActions(stream chan Event) {
 	var wg sync.WaitGroup
 
 	for from, as := range p.graph {
@@ -305,7 +303,7 @@ func (p *Performance) startActions(stream EventStream) {
 	close(stream)
 }
 
-func (p *Performance) startAction(stream EventStream, from, to string, a action) {
+func (p *Performance) startAction(stream chan Event, from, to string, a action) {
 	p.waitActionLocks(from)
 
 	p.perform(a)

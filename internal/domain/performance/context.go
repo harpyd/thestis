@@ -3,8 +3,7 @@ package performance
 import "sync"
 
 type Context struct {
-	mu sync.RWMutex
-
+	mu    sync.RWMutex
 	store map[string]interface{}
 }
 
