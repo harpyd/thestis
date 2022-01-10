@@ -97,7 +97,7 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 		return Thesis{}, NewThesisEmptySlugError()
 	}
 
-	stage, keywordErr := stageFromString(b.stage)
+	stage, stageErr := stageFromString(b.stage)
 	http, httpErr := b.httpBuilder.Build()
 	assertion, assertionErr := b.assertionBuilder.Build()
 
@@ -119,7 +119,7 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 
 	copy(thsis.dependencies, b.dependencies)
 
-	return thsis, NewBuildThesisError(multierr.Combine(keywordErr, err), slug)
+	return thsis, NewBuildThesisError(multierr.Combine(stageErr, err), slug)
 }
 
 func (b *ThesisBuilder) ErrlessBuild(slug string) Thesis {
@@ -136,13 +136,13 @@ func (b *ThesisBuilder) Reset() {
 	b.httpBuilder.Reset()
 }
 
-func (b *ThesisBuilder) WithDependencies(after string) *ThesisBuilder {
-	b.dependencies = append(b.dependencies, after)
+func (b *ThesisBuilder) WithDependencies(deps string) *ThesisBuilder {
+	b.dependencies = append(b.dependencies, deps)
 
 	return b
 }
 
-func (b *ThesisBuilder) WithStage(stage string, behavior string) *ThesisBuilder {
+func (b *ThesisBuilder) WithStatement(stage string, behavior string) *ThesisBuilder {
 	b.stage = stage
 	b.behavior = behavior
 

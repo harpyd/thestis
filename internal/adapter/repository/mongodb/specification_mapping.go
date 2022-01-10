@@ -218,7 +218,7 @@ func (d scenarioDocument) unmarshalToScenarioBuildFn() func(builder *specificati
 func (d thesisDocument) unmarshalToThesisBuildFn() func(builder *specification.ThesisBuilder) {
 	return func(builder *specification.ThesisBuilder) {
 		builder.
-			WithStage(d.Statement.Keyword, d.Statement.Behaviour).
+			WithStatement(d.Statement.Keyword, d.Statement.Behaviour).
 			WithHTTP(d.HTTP.unmarshalToHTTPBuildFn()).
 			WithAssertion(d.Assertion.unmarshalToAssertionBuildFn())
 

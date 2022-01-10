@@ -24,7 +24,7 @@ func TestThesisBuilder_WithDependencies(t *testing.T) {
 	t.Parallel()
 
 	builder := specification.NewThesisBuilder()
-	builder.WithStage("when", "something")
+	builder.WithStatement("when", "something")
 	builder.WithDependencies("anotherOneThesis")
 	builder.WithDependencies("anotherTwoThesis")
 
@@ -60,7 +60,7 @@ func TestThesisBuilder_Build_slug(t *testing.T) {
 			t.Parallel()
 
 			builder := specification.NewThesisBuilder()
-			builder.WithStage("when", "do something")
+			builder.WithStatement("when", "do something")
 
 			if c.ShouldBeErr {
 				_, err := builder.Build(c.Slug)
@@ -117,7 +117,7 @@ func TestThesisBuilder_WithStatement(t *testing.T) {
 			t.Parallel()
 
 			builder := specification.NewThesisBuilder()
-			builder.WithStage(c.Keyword, c.Behavior)
+			builder.WithStatement(c.Keyword, c.Behavior)
 
 			if c.ShouldBeErr {
 				_, err := builder.Build("sellHooves")
@@ -137,7 +137,7 @@ func TestThesisBuilder_WithAssertion(t *testing.T) {
 	t.Parallel()
 
 	builder := specification.NewThesisBuilder()
-	builder.WithStage("when", "something wrong")
+	builder.WithStatement("when", "something wrong")
 	builder.WithAssertion(func(b *specification.AssertionBuilder) {
 		b.WithMethod("JSONPATH")
 		b.WithAssert("getSomeBody.response.body.type", "product")
@@ -158,7 +158,7 @@ func TestThesisBuilder_WithHTTP(t *testing.T) {
 	t.Parallel()
 
 	builder := specification.NewThesisBuilder()
-	builder.WithStage("given", "some state")
+	builder.WithStatement("given", "some state")
 	builder.WithHTTP(func(b *specification.HTTPBuilder) {
 		b.WithRequest(func(b *specification.HTTPRequestBuilder) {
 			b.WithMethod("GET")
