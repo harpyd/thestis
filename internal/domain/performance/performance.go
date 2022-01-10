@@ -19,6 +19,10 @@ const (
 	AssertionPerformer PerformerType = "assertion"
 )
 
+type Performer interface {
+	Perform(c *Context, thesis specification.Thesis)
+}
+
 type (
 	Performance struct {
 		once sync.Once
@@ -28,46 +32,37 @@ type (
 		graph      actionGraph
 	}
 
+	Option func(p *Performance)
+)
+
+type Event struct {
+	from          string
+	to            string
+	performerType PerformerType
+}
+
+type (
 	actionGraph map[string]actions
 
 	actions map[string]action
 
-	Performer interface {
-		Perform(c *Context, thesis specification.Thesis)
-	}
-
-	Event struct {
-		from          string
-		to            string
-		performerType PerformerType
-	}
-
-	Option struct {
-		performer     Performer
-		performerType PerformerType
-	}
-
 	action struct {
 		thesis        specification.Thesis
 		performerType PerformerType
-
-		fake bool
 
 		unlock chan struct{}
 	}
 )
 
 func WithHTTPPerformer(performer Performer) Option {
-	return Option{
-		performer:     performer,
-		performerType: HTTPPerformer,
+	return func(p *Performance) {
+		p.performers[HTTPPerformer] = performer
 	}
 }
 
 func WithAssertionPerformer(performer Performer) Option {
-	return Option{
-		performer:     performer,
-		performerType: AssertionPerformer,
+	return func(p *Performance) {
+		p.performers[AssertionPerformer] = performer
 	}
 }
 
@@ -77,10 +72,13 @@ func FromSpecification(spec *specification.Specification, opts ...Option) (*Perf
 		return nil, err
 	}
 
-	return &Performance{
-		graph:      graph,
-		performers: buildPerformers(opts),
-	}, nil
+	p := &Performance{graph: graph}
+
+	for _, opt := range opts {
+		opt(p)
+	}
+
+	return p, nil
 }
 
 func buildGraph(spec *specification.Specification) (actionGraph, error) {
@@ -197,16 +195,6 @@ func thesisPerformerType(thesis specification.Thesis) PerformerType {
 	return UnknownPerformer
 }
 
-func buildPerformers(opts []Option) map[PerformerType]Performer {
-	performers := make(map[PerformerType]Performer, len(opts))
-
-	for _, opt := range opts {
-		performers[opt.performerType] = opt.performer
-	}
-
-	return performers
-}
-
 func initGraphActionsLazy(graph actionGraph, vertex string) {
 	if graph[vertex] == nil {
 		graph[vertex] = make(actions, 1)
@@ -223,8 +211,8 @@ func newAction(thesis specification.Thesis) action {
 
 func newFakeAction() action {
 	return action{
-		fake:   true,
-		unlock: make(chan struct{}),
+		performerType: EmptyPerformer,
+		unlock:        make(chan struct{}),
 	}
 }
 
@@ -338,7 +326,7 @@ func (p *Performance) unlockAction(from, to string) {
 }
 
 func (p *Performance) perform(a action) {
-	if a.fake {
+	if a.performerType == EmptyPerformer {
 		return
 	}
 
