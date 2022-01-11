@@ -175,7 +175,7 @@ func addThesesDependentFakeActions(
 		if len(graph[from]) == 0 {
 			initGraphActionsLazy(graph, from)
 
-			graph[from][nextStage.String()] = newFakeAction()
+			graph[from][nextStage.String()] = newEmptyAction()
 		}
 	}
 }
@@ -211,7 +211,7 @@ func newAction(thesis specification.Thesis) action {
 	}
 }
 
-func newFakeAction() action {
+func newEmptyAction() action {
 	return action{
 		performerType: emptyPerformer,
 		unlock:        make(chan struct{}),
