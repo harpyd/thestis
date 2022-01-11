@@ -52,15 +52,15 @@ type (
 	}
 )
 
-// WithHTTPPerformer register given Performer as HTTP performer.
-func WithHTTPPerformer(performer Performer) Option {
+// WithHTTP register given Performer as HTTP performer.
+func WithHTTP(performer Performer) Option {
 	return func(p *Performance) {
 		p.performers[httpPerformer] = performer
 	}
 }
 
-// WithAssertionPerformer register given Performer as assertion performer.
-func WithAssertionPerformer(performer Performer) Option {
+// WithAssertion register given Performer as assertion performer.
+func WithAssertion(performer Performer) Option {
 	return func(p *Performance) {
 		p.performers[assertionPerformer] = performer
 	}
