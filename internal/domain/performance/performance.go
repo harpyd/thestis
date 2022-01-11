@@ -35,12 +35,6 @@ type (
 	Option func(p *Performance)
 )
 
-type Event struct {
-	from          string
-	to            string
-	performerType PerformerType
-}
-
 type (
 	actionGraph map[string]actions
 
@@ -261,6 +255,12 @@ func (p *Performance) Attempts() []Attempt {
 
 func (p *Performance) LastAttempt() Attempt {
 	return p.attempts[len(p.attempts)-1]
+}
+
+type Event struct {
+	from          string
+	to            string
+	performerType PerformerType
 }
 
 func (p *Performance) Start() <-chan Event {
