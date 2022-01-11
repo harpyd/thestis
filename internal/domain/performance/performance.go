@@ -125,8 +125,8 @@ func addActions(
 		addStageDependentAction(graph, story, scenario, thesis)
 	}
 
-	addThesesDependentFakeActions(graph, story, scenario, givens, specification.When)
-	addThesesDependentFakeActions(graph, story, scenario, whens, specification.Then)
+	addThesesDependentEmptyActions(graph, story, scenario, givens, specification.When)
+	addThesesDependentEmptyActions(graph, story, scenario, whens, specification.Then)
 }
 
 func addDependenciesDependentActions(
@@ -163,7 +163,7 @@ func addStageDependentAction(
 	graph[from][to] = newAction(thesis)
 }
 
-func addThesesDependentFakeActions(
+func addThesesDependentEmptyActions(
 	graph actionGraph,
 	story specification.Story,
 	scenario specification.Scenario,
