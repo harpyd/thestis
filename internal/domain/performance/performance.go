@@ -13,7 +13,7 @@ import (
 )
 
 // Performer carries performing of thesis.
-// Performance callers should provide own implementation.
+// Performance creators should provide own implementation.
 type Performer interface {
 	Perform(c *Context, thesis specification.Thesis)
 }
@@ -52,14 +52,14 @@ type (
 	}
 )
 
-// WithHTTP register given Performer as HTTP performer.
+// WithHTTP registers given Performer as HTTP performer.
 func WithHTTP(performer Performer) Option {
 	return func(p *Performance) {
 		p.performers[httpPerformer] = performer
 	}
 }
 
-// WithAssertion register given Performer as assertion performer.
+// WithAssertion registers given Performer as assertion performer.
 func WithAssertion(performer Performer) Option {
 	return func(p *Performance) {
 		p.performers[assertionPerformer] = performer
