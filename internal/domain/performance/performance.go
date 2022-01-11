@@ -12,15 +12,8 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-type performerType string
-
-const (
-	emptyPerformer     performerType = ""
-	unknownPerformer   performerType = "!"
-	httpPerformer      performerType = "HTTP"
-	assertionPerformer performerType = "assertion"
-)
-
+// Performer carries performing of thesis.
+// Performance callers should provide own implementation.
 type Performer interface {
 	Perform(c *Context, thesis specification.Thesis)
 }
@@ -37,6 +30,15 @@ type (
 	Option func(p *Performance)
 )
 
+type performerType string
+
+const (
+	emptyPerformer     performerType = ""
+	unknownPerformer   performerType = "!"
+	httpPerformer      performerType = "HTTP"
+	assertionPerformer performerType = "assertion"
+)
+
 type (
 	actionGraph map[string]actions
 
@@ -50,12 +52,14 @@ type (
 	}
 )
 
+// WithHTTPPerformer register given Performer as HTTP performer.
 func WithHTTPPerformer(performer Performer) Option {
 	return func(p *Performance) {
 		p.performers[httpPerformer] = performer
 	}
 }
 
+// WithAssertionPerformer register given Performer as assertion performer.
 func WithAssertionPerformer(performer Performer) Option {
 	return func(p *Performance) {
 		p.performers[assertionPerformer] = performer
@@ -263,6 +267,11 @@ func (p *Performance) LastAttempt() Attempt {
 
 const defaultStreamSize = 1
 
+// Start asynchronously starts performing of Performance action graph.
+// Start returns chan of Event with default size equals one.
+// Every call of Start creates attempt of performing.
+// Only ONE attempt can be start at a time. If one goroutine has captured
+// performing, then others will wait for it to complete.
 func (p *Performance) Start(ctx context.Context) <-chan Event {
 	stream := make(chan Event, defaultStreamSize)
 
@@ -302,13 +311,23 @@ func (p *Performance) startActions(ctx context.Context, stream chan Event) error
 	return g.Wait()
 }
 
-func (p *Performance) startActionFn(ctx context.Context, stream chan Event, from, to string, a action) func() error {
+func (p *Performance) startActionFn(
+	ctx context.Context,
+	stream chan Event,
+	from, to string,
+	a action,
+) func() error {
 	return func() error {
 		return p.startAction(ctx, stream, from, to, a)
 	}
 }
 
-func (p *Performance) startAction(ctx context.Context, stream chan Event, from, to string, a action) error {
+func (p *Performance) startAction(
+	ctx context.Context,
+	stream chan Event,
+	from, to string,
+	a action,
+) error {
 	if err := p.waitActionLocks(ctx, from); err != nil {
 		return err
 	}
