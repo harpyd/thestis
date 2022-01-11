@@ -87,6 +87,36 @@ func TestIsCyclicPerformanceGraphError(t *testing.T) {
 	}
 }
 
+func TestIsPerformanceCancelledError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "performance_cancelled_error",
+			Err:       performance.NewPerformanceCancelledError(),
+			IsSameErr: true,
+		},
+		{
+			Name: "another_error",
+			Err:  errors.New("performance cancelled"),
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, performance.IsPerformanceCancelledError(c.Err))
+		})
+	}
+}
+
 func invalidCyclicSpecification(t *testing.T) *specification.Specification {
 	t.Helper()
 

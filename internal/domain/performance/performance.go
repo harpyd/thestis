@@ -1,22 +1,24 @@
 package performance
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-type PerformerType string
+type performerType string
 
 const (
-	EmptyPerformer     PerformerType = ""
-	UnknownPerformer   PerformerType = "!"
-	HTTPPerformer      PerformerType = "HTTP"
-	AssertionPerformer PerformerType = "assertion"
+	emptyPerformer     performerType = ""
+	unknownPerformer   performerType = "!"
+	httpPerformer      performerType = "HTTP"
+	assertionPerformer performerType = "assertion"
 )
 
 type Performer interface {
@@ -25,10 +27,10 @@ type Performer interface {
 
 type (
 	Performance struct {
-		once sync.Once
+		started sync.Mutex
 
 		attempts   []Attempt
-		performers map[PerformerType]Performer
+		performers map[performerType]Performer
 		graph      actionGraph
 	}
 
@@ -42,7 +44,7 @@ type (
 
 	action struct {
 		thesis        specification.Thesis
-		performerType PerformerType
+		performerType performerType
 
 		unlock chan struct{}
 	}
@@ -50,13 +52,13 @@ type (
 
 func WithHTTPPerformer(performer Performer) Option {
 	return func(p *Performance) {
-		p.performers[HTTPPerformer] = performer
+		p.performers[httpPerformer] = performer
 	}
 }
 
 func WithAssertionPerformer(performer Performer) Option {
 	return func(p *Performance) {
-		p.performers[AssertionPerformer] = performer
+		p.performers[assertionPerformer] = performer
 	}
 }
 
@@ -178,20 +180,22 @@ func uniqueThesisName(storySlug, scenarioSlug, thesisSlug string) string {
 	return strings.Join([]string{storySlug, scenarioSlug, thesisSlug}, ".")
 }
 
-func thesisPerformerType(thesis specification.Thesis) PerformerType {
+func thesisPerformerType(thesis specification.Thesis) performerType {
 	switch {
 	case !thesis.HTTP().IsZero():
-		return HTTPPerformer
+		return httpPerformer
 	case !thesis.Assertion().IsZero():
-		return AssertionPerformer
+		return assertionPerformer
 	}
 
-	return UnknownPerformer
+	return unknownPerformer
 }
+
+const defaultActionsSize = 1
 
 func initGraphActionsLazy(graph actionGraph, vertex string) {
 	if graph[vertex] == nil {
-		graph[vertex] = make(actions, 1)
+		graph[vertex] = make(actions, defaultActionsSize)
 	}
 }
 
@@ -205,7 +209,7 @@ func newAction(thesis specification.Thesis) action {
 
 func newFakeAction() action {
 	return action{
-		performerType: EmptyPerformer,
+		performerType: emptyPerformer,
 		unlock:        make(chan struct{}),
 	}
 }
@@ -257,68 +261,81 @@ func (p *Performance) LastAttempt() Attempt {
 	return p.attempts[len(p.attempts)-1]
 }
 
-type Event struct {
-	from          string
-	to            string
-	performerType PerformerType
-}
+const defaultStreamSize = 1
 
-func (p *Performance) Start() <-chan Event {
-	stream := make(chan Event, 1)
+func (p *Performance) Start(ctx context.Context) <-chan Event {
+	stream := make(chan Event, defaultStreamSize)
 
-	go p.start(stream)
+	go p.start(ctx, stream)
 
 	return stream
 }
 
-func (p *Performance) start(stream chan Event) {
-	p.once.Do(func() {
-		p.attempts = append(p.attempts, newAttempt())
+func (p *Performance) start(ctx context.Context, stream chan Event) {
+	p.started.Lock()
+	defer p.started.Unlock()
 
-		p.startActions(stream)
-	})
+	p.attempts = append(p.attempts, newAttempt())
+
+	if err := p.startActions(ctx, stream); err != nil {
+		stream <- errEvent{err: err}
+	}
 
 	close(stream)
 }
 
-func (p *Performance) startActions(stream chan Event) {
-	var wg sync.WaitGroup
+func (p *Performance) startActions(ctx context.Context, stream chan Event) error {
+	select {
+	case <-ctx.Done():
+		return NewPerformanceCancelledError()
+	default:
+	}
+
+	g, ctx := errgroup.WithContext(ctx)
 
 	for from, as := range p.graph {
 		for to, a := range as {
-			wg.Add(1)
-
-			go func(from, to string, a action) {
-				defer wg.Done()
-
-				p.startAction(stream, from, to, a)
-			}(from, to, a)
+			g.Go(p.startActionFn(ctx, stream, from, to, a))
 		}
 	}
 
-	wg.Wait()
+	return g.Wait()
 }
 
-func (p *Performance) startAction(stream chan Event, from, to string, a action) {
-	p.waitActionLocks(from)
+func (p *Performance) startActionFn(ctx context.Context, stream chan Event, from, to string, a action) func() error {
+	return func() error {
+		return p.startAction(ctx, stream, from, to, a)
+	}
+}
+
+func (p *Performance) startAction(ctx context.Context, stream chan Event, from, to string, a action) error {
+	if err := p.waitActionLocks(ctx, from); err != nil {
+		return err
+	}
 
 	p.perform(a)
 
-	stream <- Event{
+	stream <- performEvent{
 		from:          from,
 		to:            to,
 		performerType: a.performerType,
 	}
 
 	p.unlockAction(from, to)
+
+	return nil
 }
 
-func (p *Performance) waitActionLocks(to string) {
+func (p *Performance) waitActionLocks(ctx context.Context, to string) error {
 	for from := range p.graph {
-		if dep, ok := p.graph[from][to]; ok {
-			<-dep.unlock
+		select {
+		case <-p.graph[from][to].unlock:
+		case <-ctx.Done():
+			return NewPerformanceCancelledError()
 		}
 	}
+
+	return nil
 }
 
 func (p *Performance) unlockAction(from, to string) {
@@ -326,7 +343,7 @@ func (p *Performance) unlockAction(from, to string) {
 }
 
 func (p *Performance) perform(a action) {
-	if a.performerType == EmptyPerformer {
+	if a.performerType == emptyPerformer {
 		return
 	}
 
@@ -338,23 +355,7 @@ func (p *Performance) perform(a action) {
 	performer.Perform(p.LastAttempt().Context(), a.thesis)
 }
 
-func (e Event) From() string {
-	return e.from
-}
-
-func (e Event) To() string {
-	return e.to
-}
-
-func (e Event) PerformerType() PerformerType {
-	return e.performerType
-}
-
-func (e Event) String() string {
-	return fmt.Sprintf("Performance event `%s -(%s)-> %s`", e.from, e.performerType, e.to)
-}
-
-func (pt PerformerType) String() string {
+func (pt performerType) String() string {
 	return string(pt)
 }
 
@@ -378,4 +379,14 @@ func IsCyclicPerformanceGraphError(err error) bool {
 
 func (e cyclicPerformanceGraphError) Error() string {
 	return fmt.Sprintf("cyclic performance graph: %s -> %s", e.from, e.to)
+}
+
+var errPerformanceCancelled = errors.New("performance cancelled")
+
+func NewPerformanceCancelledError() error {
+	return errPerformanceCancelled
+}
+
+func IsPerformanceCancelledError(err error) bool {
+	return errors.Is(err, errPerformanceCancelled)
 }
