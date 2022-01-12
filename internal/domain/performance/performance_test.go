@@ -123,32 +123,27 @@ func invalidCyclicSpecification(t *testing.T) *specification.Specification {
 	spec, err := specification.NewBuilder().
 		WithStory("story", func(b *specification.StoryBuilder) {
 			b.WithScenario("scenario", func(b *specification.ScenarioBuilder) {
-				b.
-					WithThesis("a", func(b *specification.ThesisBuilder) {
-						b.
-							WithStatement("given", "a").
-							WithDependencies("b").
-							WithHTTP(func(b *specification.HTTPBuilder) {
-								b.
-									WithRequest(func(b *specification.HTTPRequestBuilder) {
-										b.
-											WithMethod("GET").
-											WithURL("https://some-url")
-									}).
-									WithResponse(func(b *specification.HTTPResponseBuilder) {
-										b.WithAllowedCodes([]int{200})
-									})
-							})
-					}).
-					WithThesis("b", func(b *specification.ThesisBuilder) {
-						b.
-							WithAssertion(func(b *specification.AssertionBuilder) {
-								b.WithMethod("jsonpath")
-								b.WithAssert("some", 1)
-							}).
-							WithStatement("given", "b").
-							WithDependencies("a")
+				b.WithThesis("a", func(b *specification.ThesisBuilder) {
+					b.WithStatement("given", "a")
+					b.WithDependencies("b")
+					b.WithHTTP(func(b *specification.HTTPBuilder) {
+						b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+							b.WithMethod("GET")
+							b.WithURL("https://some-url")
+						})
+						b.WithResponse(func(b *specification.HTTPResponseBuilder) {
+							b.WithAllowedCodes([]int{200})
+						})
 					})
+				})
+				b.WithThesis("b", func(b *specification.ThesisBuilder) {
+					b.WithAssertion(func(b *specification.AssertionBuilder) {
+						b.WithMethod("jsonpath")
+						b.WithAssert("some", 1)
+					})
+					b.WithStatement("given", "b")
+					b.WithDependencies("a")
+				})
 			})
 		}).
 		Build()
@@ -164,14 +159,37 @@ func validSpecification(t *testing.T) *specification.Specification {
 	spec, err := specification.NewBuilder().
 		WithStory("story", func(b *specification.StoryBuilder) {
 			b.WithScenario("scenario", func(b *specification.ScenarioBuilder) {
-				b.WithThesis("thesis", func(b *specification.ThesisBuilder) {
-					b.
-						WithStatement("then", "check").
-						WithAssertion(func(b *specification.AssertionBuilder) {
-							b.
-								WithMethod("jsonpath").
-								WithAssert("some", "some")
+				b.WithThesis("a", func(b *specification.ThesisBuilder) {
+					b.WithStatement("given", "state")
+					b.WithHTTP(func(b *specification.HTTPBuilder) {
+						b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+							b.WithMethod("POST")
+							b.WithURL("https://some-api/endpoint")
 						})
+						b.WithResponse(func(b *specification.HTTPResponseBuilder) {
+							b.WithAllowedCodes([]int{201})
+							b.WithAllowedContentType("application/json")
+						})
+					})
+				})
+				b.WithThesis("b", func(b *specification.ThesisBuilder) {
+					b.WithStatement("when", "action")
+					b.WithHTTP(func(b *specification.HTTPBuilder) {
+						b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+							b.WithMethod("GET")
+							b.WithURL("https://some-api/endpoint")
+						})
+						b.WithResponse(func(b *specification.HTTPResponseBuilder) {
+							b.WithAllowedCodes([]int{200})
+						})
+					})
+				})
+				b.WithThesis("c", func(b *specification.ThesisBuilder) {
+					b.WithStatement("then", "check")
+					b.WithAssertion(func(b *specification.AssertionBuilder) {
+						b.WithMethod("jsonpath")
+						b.WithAssert("some", "some")
+					})
 				})
 			})
 		}).
