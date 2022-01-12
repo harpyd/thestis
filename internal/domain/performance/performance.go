@@ -66,13 +66,18 @@ func WithAssertion(performer Performer) Option {
 	}
 }
 
+const defaultPerformersSize = 2
+
 func FromSpecification(spec *specification.Specification, opts ...Option) (*Performance, error) {
 	graph, err := buildGraph(spec)
 	if err != nil {
 		return nil, err
 	}
 
-	p := &Performance{graph: graph}
+	p := &Performance{
+		graph:      graph,
+		performers: make(map[performerType]Performer, defaultPerformersSize),
+	}
 
 	for _, opt := range opts {
 		opt(p)
@@ -347,8 +352,13 @@ func (p *Performance) startAction(
 
 func (p *Performance) waitActionLocks(ctx context.Context, to string) error {
 	for from := range p.graph {
+		a, ok := p.graph[from][to]
+		if !ok {
+			continue
+		}
+
 		select {
-		case <-p.graph[from][to].unlock:
+		case <-a.unlock:
 		case <-ctx.Done():
 			return NewPerformanceCancelledError()
 		}
