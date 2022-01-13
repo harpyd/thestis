@@ -7,15 +7,27 @@ import (
 )
 
 type (
-	actionGraph map[string]actions
+	actionGraph map[string]map[string]Action
 
-	actions map[string]action
-
-	action struct {
+	Action struct {
+		from          string
+		to            string
 		thesis        specification.Thesis
 		performerType performerType
 	}
 )
+
+func (a Action) From() string {
+	return a.from
+}
+
+func (a Action) To() string {
+	return a.to
+}
+
+func (a Action) Thesis() specification.Thesis {
+	return a.thesis
+}
 
 func buildGraph(spec *specification.Specification) (actionGraph, error) {
 	graph := make(actionGraph)
@@ -79,7 +91,7 @@ func addDependenciesDependentActions(
 
 		initGraphActionsLazy(graph, from)
 
-		graph[from][to] = newAction(thesis)
+		graph[from][to] = newAction(from, to, thesis)
 	}
 }
 
@@ -96,7 +108,7 @@ func addStageDependentAction(
 
 	initGraphActionsLazy(graph, from)
 
-	graph[from][to] = newAction(thesis)
+	graph[from][to] = newAction(from, to, thesis)
 }
 
 func addThesesDependentEmptyActions(
@@ -111,7 +123,9 @@ func addThesesDependentEmptyActions(
 		if len(graph[from]) == 0 {
 			initGraphActionsLazy(graph, from)
 
-			graph[from][nextStage.String()] = newEmptyAction()
+			to := nextStage.String()
+
+			graph[from][nextStage.String()] = newEmptyAction(from, to)
 		}
 	}
 }
@@ -135,19 +149,23 @@ const defaultActionsSize = 1
 
 func initGraphActionsLazy(graph actionGraph, vertex string) {
 	if graph[vertex] == nil {
-		graph[vertex] = make(actions, defaultActionsSize)
+		graph[vertex] = make(map[string]Action, defaultActionsSize)
 	}
 }
 
-func newAction(thesis specification.Thesis) action {
-	return action{
+func newAction(from, to string, thesis specification.Thesis) Action {
+	return Action{
+		from:          from,
+		to:            to,
 		thesis:        thesis,
 		performerType: thesisPerformerType(thesis),
 	}
 }
 
-func newEmptyAction() action {
-	return action{
+func newEmptyAction(from, to string) Action {
+	return Action{
+		from:          from,
+		to:            to,
 		performerType: emptyPerformer,
 	}
 }

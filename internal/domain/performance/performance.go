@@ -85,9 +85,22 @@ func (p *Performance) LastAttempt() Attempt {
 	return p.attempts[len(p.attempts)-1]
 }
 
+// Actions returns flat slice representation of action graph.
+func (p *Performance) Actions() []Action {
+	copied := make([]Action, 0, len(p.actionGraph))
+
+	for _, as := range p.actionGraph {
+		for _, a := range as {
+			copied = append(copied, a)
+		}
+	}
+
+	return copied
+}
+
 const defaultStreamSize = 1
 
-// Start asynchronously starts performing of Performance action actionGraph.
+// Start asynchronously starts performing of Performance action graph.
 // Start returns chan of Event with default size equals one.
 // Every call of Start creates attempt of performing.
 // Only ONE attempt can be start at a time. If one goroutine has captured
@@ -148,7 +161,7 @@ func (p *Performance) startActionFn(
 	lockGraph lockGraph,
 	stream chan Event,
 	from, to string,
-	a action,
+	a Action,
 ) func() error {
 	return func() error {
 		return p.startAction(ctx, lockGraph, stream, from, to, a)
@@ -160,18 +173,19 @@ func (p *Performance) startAction(
 	lockGraph lockGraph,
 	stream chan Event,
 	from, to string,
-	a action,
+	a Action,
 ) error {
 	if err := p.waitActionLocks(ctx, lockGraph, from); err != nil {
 		return err
 	}
 
-	p.perform(a)
+	performed := p.perform(a)
 
-	stream <- performEvent{
+	stream <- actionEvent{
 		from:          from,
 		to:            to,
 		performerType: a.performerType,
+		performed:     performed,
 	}
 
 	p.unlockAction(lockGraph, from, to)
@@ -200,17 +214,19 @@ func (p *Performance) unlockAction(lockGraph lockGraph, from, to string) {
 	close(lockGraph[from][to])
 }
 
-func (p *Performance) perform(a action) {
+func (p *Performance) perform(a Action) (performed bool) {
 	if a.performerType == emptyPerformer {
 		return
 	}
 
 	performer, ok := p.performers[a.performerType]
 	if !ok {
-		return
+		return false
 	}
 
 	performer.Perform(p.LastAttempt().Context(), a.thesis)
+
+	return true
 }
 
 func (pt performerType) String() string {
@@ -236,7 +252,7 @@ func IsCyclicPerformanceGraphError(err error) bool {
 }
 
 func (e cyclicPerformanceGraphError) Error() string {
-	return fmt.Sprintf("cyclic performance actionGraph: %s -> %s", e.from, e.to)
+	return fmt.Sprintf("cyclic performance graph: %s -> %s", e.from, e.to)
 }
 
 var (

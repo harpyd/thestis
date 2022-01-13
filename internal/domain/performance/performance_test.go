@@ -18,6 +18,7 @@ func TestFromSpecification(t *testing.T) {
 	testCases := []struct {
 		Name          string
 		Specification *specification.Specification
+		ActionsLen    int
 		ShouldBeErr   bool
 		IsErr         func(err error) bool
 	}{
@@ -30,6 +31,7 @@ func TestFromSpecification(t *testing.T) {
 		{
 			Name:          "valid_performance",
 			Specification: validSpecification(t),
+			ActionsLen:    5,
 			ShouldBeErr:   false,
 		},
 	}
@@ -49,7 +51,9 @@ func TestFromSpecification(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.NotNil(t, perf)
+
+			actions := perf.Actions()
+			require.Len(t, actions, c.ActionsLen)
 		})
 	}
 }
