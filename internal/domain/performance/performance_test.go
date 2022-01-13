@@ -1,7 +1,9 @@
 package performance_test
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -56,6 +58,77 @@ func TestPerformance_Start(t *testing.T) {
 	t.Parallel()
 }
 
+func TestPerformance_Start_one_at_a_time(t *testing.T) {
+	t.Parallel()
+
+	spec := validSpecification(t)
+
+	perf, err := performance.FromSpecification(spec)
+	require.NoError(t, err)
+
+	_, err = perf.Start(context.Background())
+	require.NoError(t, err)
+
+	_, err = perf.Start(context.Background())
+	require.True(t, performance.IsPerformanceAlreadyStartedError(err))
+}
+
+func TestPerformance_Start_with_cancel_context(t *testing.T) {
+	t.Parallel()
+
+	spec := validSpecification(t)
+
+	perf, err := performance.FromSpecification(spec)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	s, err := perf.Start(ctx)
+	require.NoError(t, err)
+
+	cancel()
+
+	requireCancelledEvent(t, s)
+
+	_, err = perf.Start(context.Background())
+	require.NoError(t, err)
+}
+
+func TestPerformance_Start_sync_calls_in_a_row(t *testing.T) {
+	t.Parallel()
+
+	spec := validSpecification(t)
+
+	perf, err := performance.FromSpecification(spec)
+	require.NoError(t, err)
+
+	s1, err := perf.Start(context.Background())
+	require.NoError(t, err)
+
+	finish := make(chan bool)
+
+	go func() {
+		select {
+		case <-finish:
+		case <-time.After(3 * time.Second):
+			require.Fail(t, "Timeout exceeded, test is not finished")
+		}
+	}()
+
+	for range s1 {
+		// read event stream of first call
+	}
+
+	s2, err := perf.Start(context.Background())
+	require.NoError(t, err)
+
+	for range s2 {
+		// read event stream of second call
+	}
+
+	finish <- true
+}
+
 func TestIsCyclicPerformanceGraphError(t *testing.T) {
 	t.Parallel()
 
@@ -101,8 +174,9 @@ func TestIsPerformanceCancelledError(t *testing.T) {
 			IsSameErr: true,
 		},
 		{
-			Name: "another_error",
-			Err:  errors.New("performance cancelled"),
+			Name:      "another_error",
+			Err:       errors.New("performance cancelled"),
+			IsSameErr: false,
 		},
 	}
 
@@ -115,6 +189,49 @@ func TestIsPerformanceCancelledError(t *testing.T) {
 			require.Equal(t, c.IsSameErr, performance.IsPerformanceCancelledError(c.Err))
 		})
 	}
+}
+
+func TestIsPerformanceAlreadyStartedError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "performance_already_started_error",
+			Err:       performance.NewPerformanceAlreadyStartedError(),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error",
+			Err:       errors.New("performance already started"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, performance.IsPerformanceAlreadyStartedError(c.Err))
+		})
+	}
+}
+
+func requireCancelledEvent(t *testing.T, stream <-chan performance.Event) {
+	t.Helper()
+
+	for e := range stream {
+		if performance.IsPerformanceCancelledError(e.Err()) {
+			return
+		}
+	}
+
+	require.Fail(t, "No cancelled event")
 }
 
 func invalidCyclicSpecification(t *testing.T) *specification.Specification {

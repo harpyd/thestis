@@ -3,8 +3,6 @@ package performance
 import (
 	"context"
 	"fmt"
-	"strings"
-	"sync"
 
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -20,11 +18,11 @@ type Performer interface {
 
 type (
 	Performance struct {
-		started sync.Mutex
+		attempts    []Attempt
+		performers  map[performerType]Performer
+		actionGraph actionGraph
 
-		attempts   []Attempt
-		performers map[performerType]Performer
-		graph      actionGraph
+		ready chan bool
 	}
 
 	Option func(p *Performance)
@@ -37,19 +35,6 @@ const (
 	unknownPerformer   performerType = "!"
 	httpPerformer      performerType = "HTTP"
 	assertionPerformer performerType = "assertion"
-)
-
-type (
-	actionGraph map[string]actions
-
-	actions map[string]action
-
-	action struct {
-		thesis        specification.Thesis
-		performerType performerType
-
-		unlock chan struct{}
-	}
 )
 
 // WithHTTP registers given Performer as HTTP performer.
@@ -75,188 +60,18 @@ func FromSpecification(spec *specification.Specification, opts ...Option) (*Perf
 	}
 
 	p := &Performance{
-		graph:      graph,
-		performers: make(map[performerType]Performer, defaultPerformersSize),
+		actionGraph: graph,
+		performers:  make(map[performerType]Performer, defaultPerformersSize),
+		ready:       make(chan bool, 1),
 	}
 
 	for _, opt := range opts {
 		opt(p)
 	}
 
+	p.ready <- true
+
 	return p, nil
-}
-
-func buildGraph(spec *specification.Specification) (actionGraph, error) {
-	graph := make(actionGraph)
-
-	stories, _ := spec.Stories()
-
-	for _, story := range stories {
-		scenarios, _ := story.Scenarios()
-
-		for _, scenario := range scenarios {
-			theses, _ := scenario.Theses()
-
-			addActions(graph, story, scenario, theses)
-		}
-	}
-
-	if err := checkGraphCycles(graph); err != nil {
-		return nil, err
-	}
-
-	return graph, nil
-}
-
-func addActions(
-	graph actionGraph,
-	story specification.Story,
-	scenario specification.Scenario,
-	theses []specification.Thesis,
-) {
-	var (
-		givens = make([]specification.Thesis, 0, len(theses))
-		whens  = make([]specification.Thesis, 0, len(theses))
-	)
-
-	for _, thesis := range theses {
-		if thesis.Statement().Stage() == specification.Given {
-			givens = append(givens, thesis)
-		} else if thesis.Statement().Stage() == specification.When {
-			whens = append(whens, thesis)
-		}
-
-		addDependenciesDependentActions(graph, story, scenario, thesis)
-		addStageDependentAction(graph, story, scenario, thesis)
-	}
-
-	addThesesDependentEmptyActions(graph, story, scenario, givens, specification.When)
-	addThesesDependentEmptyActions(graph, story, scenario, whens, specification.Then)
-}
-
-func addDependenciesDependentActions(
-	graph actionGraph,
-	story specification.Story,
-	scenario specification.Scenario,
-	thesis specification.Thesis,
-) {
-	for _, dep := range thesis.Dependencies() {
-		var (
-			from = uniqueThesisName(story.Slug(), scenario.Slug(), dep)
-			to   = uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
-		)
-
-		initGraphActionsLazy(graph, from)
-
-		graph[from][to] = newAction(thesis)
-	}
-}
-
-func addStageDependentAction(
-	graph actionGraph,
-	story specification.Story,
-	scenario specification.Scenario,
-	thesis specification.Thesis,
-) {
-	var (
-		from = thesis.Statement().Stage().String()
-		to   = uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
-	)
-
-	initGraphActionsLazy(graph, from)
-
-	graph[from][to] = newAction(thesis)
-}
-
-func addThesesDependentEmptyActions(
-	graph actionGraph,
-	story specification.Story,
-	scenario specification.Scenario,
-	theses []specification.Thesis,
-	nextStage specification.Stage,
-) {
-	for _, thesis := range theses {
-		from := uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
-		if len(graph[from]) == 0 {
-			initGraphActionsLazy(graph, from)
-
-			graph[from][nextStage.String()] = newEmptyAction()
-		}
-	}
-}
-
-func uniqueThesisName(storySlug, scenarioSlug, thesisSlug string) string {
-	return strings.Join([]string{storySlug, scenarioSlug, thesisSlug}, ".")
-}
-
-func thesisPerformerType(thesis specification.Thesis) performerType {
-	switch {
-	case !thesis.HTTP().IsZero():
-		return httpPerformer
-	case !thesis.Assertion().IsZero():
-		return assertionPerformer
-	}
-
-	return unknownPerformer
-}
-
-const defaultActionsSize = 1
-
-func initGraphActionsLazy(graph actionGraph, vertex string) {
-	if graph[vertex] == nil {
-		graph[vertex] = make(actions, defaultActionsSize)
-	}
-}
-
-func newAction(thesis specification.Thesis) action {
-	return action{
-		thesis:        thesis,
-		performerType: thesisPerformerType(thesis),
-		unlock:        make(chan struct{}),
-	}
-}
-
-func newEmptyAction() action {
-	return action{
-		performerType: emptyPerformer,
-		unlock:        make(chan struct{}),
-	}
-}
-
-type vertexColor string
-
-const (
-	white vertexColor = ""
-	gray  vertexColor = "gray"
-	black vertexColor = "black"
-)
-
-func checkGraphCycles(graph actionGraph) error {
-	colors := make(map[string]vertexColor, len(graph))
-
-	return checkGraphCyclesDFS(graph, specification.Given.String(), colors)
-}
-
-func checkGraphCyclesDFS(
-	graph actionGraph,
-	from string,
-	colors map[string]vertexColor,
-) error {
-	colors[from] = gray
-
-	for to := range graph[from] {
-		if c := colors[to]; c == white {
-			if err := checkGraphCyclesDFS(graph, to, colors); err != nil {
-				return err
-			}
-		} else if c == gray {
-			return NewCyclicPerformanceGraphError(from, to)
-		}
-	}
-
-	colors[from] = black
-
-	return nil
 }
 
 func (p *Performance) Attempts() []Attempt {
@@ -272,30 +87,40 @@ func (p *Performance) LastAttempt() Attempt {
 
 const defaultStreamSize = 1
 
-// Start asynchronously starts performing of Performance action graph.
+// Start asynchronously starts performing of Performance action actionGraph.
 // Start returns chan of Event with default size equals one.
 // Every call of Start creates attempt of performing.
 // Only ONE attempt can be start at a time. If one goroutine has captured
-// performing, then others will wait for it to complete.
-func (p *Performance) Start(ctx context.Context) <-chan Event {
+// performing, then others calls of Start will be return error that can
+// be detected with method IsPerformanceAlreadyStartedError.
+func (p *Performance) Start(ctx context.Context) (<-chan Event, error) {
+	select {
+	case <-p.ready:
+	default:
+		return nil, NewPerformanceAlreadyStartedError()
+	}
+
+	p.pushNewAttempt()
+
 	stream := make(chan Event, defaultStreamSize)
 
 	go p.start(ctx, stream)
 
-	return stream
+	return stream, nil
+}
+
+func (p *Performance) pushNewAttempt() {
+	p.attempts = append(p.attempts, newAttempt())
 }
 
 func (p *Performance) start(ctx context.Context, stream chan Event) {
-	p.started.Lock()
-	defer p.started.Unlock()
-
-	p.attempts = append(p.attempts, newAttempt())
-
 	if err := p.startActions(ctx, stream); err != nil {
 		stream <- errEvent{err: err}
 	}
 
 	close(stream)
+
+	p.ready <- true
 }
 
 func (p *Performance) startActions(ctx context.Context, stream chan Event) error {
@@ -307,9 +132,11 @@ func (p *Performance) startActions(ctx context.Context, stream chan Event) error
 
 	g, ctx := errgroup.WithContext(ctx)
 
-	for from, as := range p.graph {
+	lg := p.actionGraph.toLockGraph()
+
+	for from, as := range p.actionGraph {
 		for to, a := range as {
-			g.Go(p.startActionFn(ctx, stream, from, to, a))
+			g.Go(p.startActionFn(ctx, lg, stream, from, to, a))
 		}
 	}
 
@@ -318,22 +145,24 @@ func (p *Performance) startActions(ctx context.Context, stream chan Event) error
 
 func (p *Performance) startActionFn(
 	ctx context.Context,
+	lockGraph lockGraph,
 	stream chan Event,
 	from, to string,
 	a action,
 ) func() error {
 	return func() error {
-		return p.startAction(ctx, stream, from, to, a)
+		return p.startAction(ctx, lockGraph, stream, from, to, a)
 	}
 }
 
 func (p *Performance) startAction(
 	ctx context.Context,
+	lockGraph lockGraph,
 	stream chan Event,
 	from, to string,
 	a action,
 ) error {
-	if err := p.waitActionLocks(ctx, from); err != nil {
+	if err := p.waitActionLocks(ctx, lockGraph, from); err != nil {
 		return err
 	}
 
@@ -345,20 +174,20 @@ func (p *Performance) startAction(
 		performerType: a.performerType,
 	}
 
-	p.unlockAction(from, to)
+	p.unlockAction(lockGraph, from, to)
 
 	return nil
 }
 
-func (p *Performance) waitActionLocks(ctx context.Context, to string) error {
-	for from := range p.graph {
-		a, ok := p.graph[from][to]
+func (p *Performance) waitActionLocks(ctx context.Context, lockGraph lockGraph, to string) error {
+	for from := range lockGraph {
+		lock, ok := lockGraph[from][to]
 		if !ok {
 			continue
 		}
 
 		select {
-		case <-a.unlock:
+		case <-lock:
 		case <-ctx.Done():
 			return NewPerformanceCancelledError()
 		}
@@ -367,8 +196,8 @@ func (p *Performance) waitActionLocks(ctx context.Context, to string) error {
 	return nil
 }
 
-func (p *Performance) unlockAction(from, to string) {
-	close(p.graph[from][to].unlock)
+func (p *Performance) unlockAction(lockGraph lockGraph, from, to string) {
+	close(lockGraph[from][to])
 }
 
 func (p *Performance) perform(a action) {
@@ -407,10 +236,13 @@ func IsCyclicPerformanceGraphError(err error) bool {
 }
 
 func (e cyclicPerformanceGraphError) Error() string {
-	return fmt.Sprintf("cyclic performance graph: %s -> %s", e.from, e.to)
+	return fmt.Sprintf("cyclic performance actionGraph: %s -> %s", e.from, e.to)
 }
 
-var errPerformanceCancelled = errors.New("performance cancelled")
+var (
+	errPerformanceCancelled      = errors.New("performance cancelled")
+	errPerformanceAlreadyStarted = errors.New("performance already started")
+)
 
 func NewPerformanceCancelledError() error {
 	return errPerformanceCancelled
@@ -418,4 +250,12 @@ func NewPerformanceCancelledError() error {
 
 func IsPerformanceCancelledError(err error) bool {
 	return errors.Is(err, errPerformanceCancelled)
+}
+
+func NewPerformanceAlreadyStartedError() error {
+	return errPerformanceAlreadyStarted
+}
+
+func IsPerformanceAlreadyStartedError(err error) bool {
+	return errors.Is(err, errPerformanceAlreadyStarted)
 }
