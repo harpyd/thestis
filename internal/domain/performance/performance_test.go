@@ -64,12 +64,16 @@ func TestPerformance_Start(t *testing.T) {
 
 	spec := validSpecification(t)
 
-	http := mock.Performer(func(c *performance.Context, t specification.Thesis) {
+	http := mock.Performer(func(c *performance.Context, t specification.Thesis) (error, error) {
 		c.Store(t.Slug(), "HTTP")
+
+		return nil, nil
 	})
 
-	assertion := mock.Performer(func(c *performance.Context, t specification.Thesis) {
+	assertion := mock.Performer(func(c *performance.Context, t specification.Thesis) (error, error) {
 		c.Store(t.Slug(), "assertion")
+
+		return nil, nil
 	})
 
 	perf, err := performance.FromSpecification(

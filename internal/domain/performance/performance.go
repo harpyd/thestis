@@ -13,7 +13,10 @@ import (
 // Performer carries performing of thesis.
 // Performance creators should provide own implementation.
 type Performer interface {
-	Perform(c *Context, thesis specification.Thesis)
+	// Perform returns two values of error type.
+	// Fail is used as a testing error, like bad assertion in thesis.
+	// Err is used as an infrastructure error, like HTTP connection refused.
+	Perform(c *Context, thesis specification.Thesis) (fail error, err error)
 }
 
 type (
@@ -123,7 +126,7 @@ func (p *Performance) Start(ctx context.Context) (<-chan Event, error) {
 }
 
 func (p *Performance) pushNewAttempt() {
-	p.attempts = append(p.attempts, newAttempt())
+	p.attempts = append(p.attempts, newAttempt(p))
 }
 
 func (p *Performance) start(ctx context.Context, stream chan Event) {
@@ -215,16 +218,26 @@ func (p *Performance) unlockAction(lockGraph lockGraph, from, to string) {
 }
 
 func (p *Performance) perform(a Action) (performed bool) {
-	if a.performerType == emptyPerformer {
-		return
-	}
+	attempt := p.LastAttempt()
+
+	attempt.Flow().goToPerforming(a.from, a.to)
 
 	performer, ok := p.performers[a.performerType]
 	if !ok {
 		return false
 	}
 
-	performer.Perform(p.LastAttempt().Context(), a.thesis)
+	fail, err := performer.Perform(attempt.Context(), a.thesis)
+
+	attempt.Flow().goToPassed(a.from, a.to)
+
+	if fail != nil {
+		attempt.Flow().goToFailed(a.from, a.to, fail)
+	}
+
+	if err != nil {
+		attempt.Flow().goToError(a.from, a.to, err)
+	}
 
 	return true
 }
