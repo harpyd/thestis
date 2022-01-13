@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/performance"
+	"github.com/harpyd/thestis/internal/domain/performance/mock"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
@@ -60,6 +61,46 @@ func TestFromSpecification(t *testing.T) {
 
 func TestPerformance_Start(t *testing.T) {
 	t.Parallel()
+
+	spec := validSpecification(t)
+
+	http := mock.Performer(func(c *performance.Context, t specification.Thesis) {
+		c.Store(t.Slug(), "HTTP")
+	})
+
+	assertion := mock.Performer(func(c *performance.Context, t specification.Thesis) {
+		c.Store(t.Slug(), "assertion")
+	})
+
+	perf, err := performance.FromSpecification(
+		spec,
+		performance.WithHTTP(http),
+		performance.WithAssertion(assertion),
+	)
+	require.NoError(t, err)
+
+	stream, err := perf.Start(context.Background())
+	require.NoError(t, err)
+
+	for e := range stream {
+		if e.Err() != nil {
+			require.Fail(t, "Event with unexpected error", e.Err())
+		}
+	}
+
+	c := perf.LastAttempt().Context()
+
+	v, ok := c.Load("a")
+	require.True(t, ok)
+	require.Equal(t, "HTTP", v)
+
+	v, ok = c.Load("b")
+	require.True(t, ok)
+	require.Equal(t, "HTTP", v)
+
+	v, ok = c.Load("c")
+	require.True(t, ok)
+	require.Equal(t, "assertion", v)
 }
 
 func TestPerformance_Start_one_at_a_time(t *testing.T) {
