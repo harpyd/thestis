@@ -4,7 +4,7 @@ import "fmt"
 
 type Event interface {
 	Err() error
-	Performed() bool
+	ThesesPerformed() bool
 	String() string
 }
 
@@ -19,7 +19,7 @@ func (e actionEvent) Err() error {
 	return nil
 }
 
-func (e actionEvent) Performed() bool {
+func (e actionEvent) ThesesPerformed() bool {
 	return e.performed
 }
 
@@ -41,7 +41,7 @@ func (e errEvent) Err() error {
 	return e.err
 }
 
-func (e errEvent) Performed() bool {
+func (e errEvent) ThesesPerformed() bool {
 	return false
 }
 
