@@ -150,9 +150,9 @@ func (p *Performance) startActions(ctx context.Context, stream chan Event) error
 
 	lg := p.actionGraph.toLockGraph()
 
-	for from, as := range p.actionGraph {
-		for to, a := range as {
-			g.Go(p.startActionFn(ctx, lg, stream, from, to, a))
+	for _, as := range p.actionGraph {
+		for _, a := range as {
+			g.Go(p.startActionFn(ctx, lg, stream, a))
 		}
 	}
 
@@ -163,11 +163,10 @@ func (p *Performance) startActionFn(
 	ctx context.Context,
 	lockGraph lockGraph,
 	stream chan Event,
-	from, to string,
 	a Action,
 ) func() error {
 	return func() error {
-		return p.startAction(ctx, lockGraph, stream, from, to, a)
+		return p.startAction(ctx, lockGraph, stream, a)
 	}
 }
 
@@ -175,23 +174,22 @@ func (p *Performance) startAction(
 	ctx context.Context,
 	lockGraph lockGraph,
 	stream chan Event,
-	from, to string,
 	a Action,
 ) error {
-	if err := p.waitActionLocks(ctx, lockGraph, from); err != nil {
+	if err := p.waitActionLocks(ctx, lockGraph, a.from); err != nil {
 		return err
 	}
 
 	performed := p.perform(a)
 
 	stream <- actionEvent{
-		from:          from,
-		to:            to,
+		from:          a.from,
+		to:            a.to,
 		performerType: a.performerType,
 		performed:     performed,
 	}
 
-	p.unlockAction(lockGraph, from, to)
+	p.unlockAction(lockGraph, a.from, a.to)
 
 	return nil
 }
