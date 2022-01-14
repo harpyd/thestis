@@ -180,13 +180,12 @@ func (p *Performance) startAction(
 		return err
 	}
 
-	performed := p.perform(a)
+	p.perform(a)
 
 	stream <- actionEvent{
 		from:          a.from,
 		to:            a.to,
 		performerType: a.performerType,
-		performed:     performed,
 	}
 
 	p.unlockAction(lockGraph, a.from, a.to)
@@ -215,14 +214,14 @@ func (p *Performance) unlockAction(lockGraph lockGraph, from, to string) {
 	close(lockGraph[from][to])
 }
 
-func (p *Performance) perform(a Action) (performed bool) {
+func (p *Performance) perform(a Action) {
 	attempt := p.LastAttempt()
 
 	attempt.Flow().goToPerforming(a.from, a.to)
 
 	performer, ok := p.performers[a.performerType]
 	if !ok {
-		return false
+		return
 	}
 
 	fail, err := performer.Perform(attempt.Context(), a.thesis)
@@ -236,8 +235,6 @@ func (p *Performance) perform(a Action) (performed bool) {
 	if err != nil {
 		attempt.Flow().goToError(a.from, a.to, err)
 	}
-
-	return true
 }
 
 func (pt performerType) String() string {

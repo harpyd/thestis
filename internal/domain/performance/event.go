@@ -4,7 +4,6 @@ import "fmt"
 
 type Event interface {
 	Err() error
-	ThesesPerformed() bool
 	String() string
 }
 
@@ -12,25 +11,14 @@ type actionEvent struct {
 	from          string
 	to            string
 	performerType performerType
-	performed     bool
 }
 
 func (e actionEvent) Err() error {
 	return nil
 }
 
-func (e actionEvent) ThesesPerformed() bool {
-	return e.performed
-}
-
 func (e actionEvent) String() string {
-	msg := fmt.Sprintf("Performance event: `%s -(%s)-> %s`", e.from, e.performerType, e.to)
-
-	if e.performed {
-		return fmt.Sprintf("%s performed", msg)
-	}
-
-	return fmt.Sprintf("%s not performed", msg)
+	return fmt.Sprintf("Performance event: `%s -(%s)-> %s`", e.from, e.performerType, e.to)
 }
 
 type errEvent struct {
@@ -39,10 +27,6 @@ type errEvent struct {
 
 func (e errEvent) Err() error {
 	return e.err
-}
-
-func (e errEvent) ThesesPerformed() bool {
-	return false
 }
 
 func (e errEvent) String() string {
