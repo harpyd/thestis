@@ -79,7 +79,8 @@ type (
 	}
 
 	// Flow represents current Performance performing.
-	// Flow encapsulate graph and common state of performing.
+	// Flow keeps transitions information
+	// and common state of performing.
 	Flow struct {
 		state State
 		graph map[string]map[string]Transition
@@ -93,8 +94,10 @@ type (
 		fail  error
 	}
 
-	// FlowBuilder builds Flow instance using method WithStep.
-	// FlowBuilder encapsulate Flow common state transition rules
+	// FlowBuilder builds Flow instance using WithStep,
+	// Build and FinallyBuild methods.
+	//
+	// FlowBuilder defines Flow common state transition rules
 	// in WithStep method.
 	FlowBuilder struct {
 		state                State
