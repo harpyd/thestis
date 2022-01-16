@@ -1,6 +1,10 @@
 package performance
 
-import "fmt"
+import (
+	"fmt"
+
+	"go.uber.org/multierr"
+)
 
 type State string
 
@@ -10,8 +14,55 @@ const (
 	Passed       = "passed"
 	Failed       = "failed"
 	Error        = "error"
-	Cancelled    = "cancelled"
+	Canceled     = "canceled"
 )
+
+type stateTransitions map[State]map[State]State
+
+func newStateTransitions() stateTransitions {
+	return stateTransitions{
+		NotPerformed: {
+			NotPerformed: NotPerformed,
+			Performing:   Performing,
+			Passed:       Performing,
+			Failed:       Failed,
+			Error:        Error,
+			Canceled:     Canceled,
+		},
+		Performing: {
+			NotPerformed: Performing,
+			Performing:   Performing,
+			Passed:       Performing,
+			Failed:       Failed,
+			Error:        Error,
+			Canceled:     Canceled,
+		},
+		Failed: {
+			NotPerformed: Failed,
+			Performing:   Failed,
+			Passed:       Failed,
+			Failed:       Failed,
+			Error:        Error,
+			Canceled:     Failed,
+		},
+		Error: {
+			NotPerformed: Error,
+			Performing:   Error,
+			Passed:       Error,
+			Failed:       Error,
+			Error:        Error,
+			Canceled:     Error,
+		},
+		Canceled: {
+			NotPerformed: Canceled,
+			Performing:   Canceled,
+			Passed:       Canceled,
+			Failed:       Canceled,
+			Error:        Canceled,
+			Canceled:     Canceled,
+		},
+	}
+}
 
 type (
 	Step interface {
@@ -36,16 +87,17 @@ type (
 	}
 
 	FlowBuilder struct {
-		state State
-		graph map[string]map[string]*Transition
+		state            State
+		graph            map[string]map[string]*Transition
+		stateTransitions stateTransitions
 	}
 )
 
-func (f Flow) State() State {
+func (f *Flow) State() State {
 	return f.state
 }
 
-func (f Flow) Transitions() []Transition {
+func (f *Flow) Transitions() []Transition {
 	transitions := make([]Transition, 0, len(f.graph))
 
 	for _, ts := range f.graph {
@@ -55,6 +107,26 @@ func (f Flow) Transitions() []Transition {
 	}
 
 	return transitions
+}
+
+func (t Transition) From() string {
+	return t.from
+}
+
+func (t Transition) To() string {
+	return t.to
+}
+
+func (t Transition) State() State {
+	return t.state
+}
+
+func (t Transition) Err() error {
+	return t.err
+}
+
+func (t Transition) Fail() error {
+	return t.fail
 }
 
 func NewFlowBuilder(perf *Performance) *FlowBuilder {
@@ -73,12 +145,35 @@ func NewFlowBuilder(perf *Performance) *FlowBuilder {
 	}
 
 	return &FlowBuilder{
-		state: NotPerformed,
-		graph: graph,
+		state:            NotPerformed,
+		graph:            graph,
+		stateTransitions: newStateTransitions(),
 	}
 }
 
-func (b *FlowBuilder) Build() Flow {
+func (b *FlowBuilder) Build() *Flow {
+	return &Flow{
+		state: b.state,
+		graph: b.copyGraph(),
+	}
+}
+
+func (b *FlowBuilder) FinallyBuild() *Flow {
+	return &Flow{
+		state: b.finalState(),
+		graph: b.copyGraph(),
+	}
+}
+
+func (b *FlowBuilder) finalState() State {
+	if b.state == Performing {
+		return Passed
+	}
+
+	return b.state
+}
+
+func (b *FlowBuilder) copyGraph() map[string]map[string]Transition {
 	graph := make(map[string]map[string]Transition, len(b.graph))
 
 	for from, ts := range b.graph {
@@ -89,42 +184,36 @@ func (b *FlowBuilder) Build() Flow {
 		}
 	}
 
-	return Flow{
-		state: b.state,
-		graph: graph,
-	}
+	return graph
 }
 
 func (b *FlowBuilder) WithStep(step Step) *FlowBuilder {
-	if step.State() == Error {
-		b.state = Error
-	}
-
-	if b.state != Error {
-		if step.State() == Failed {
-			b.state = Failed
-		}
-
-		if step.State() == Cancelled {
-			b.state = Cancelled
-		}
-	}
-
-	from, to, ok := step.FromTo()
+	t, ok := b.transitionFromStep(step)
 	if !ok {
 		return b
+	}
+
+	b.state = b.stateTransitions[b.state][step.State()]
+
+	t.state = step.State()
+	t.err = multierr.Append(t.err, step.Err())
+	t.fail = multierr.Append(t.fail, step.Fail())
+
+	return b
+}
+
+func (b *FlowBuilder) transitionFromStep(step Step) (*Transition, bool) {
+	from, to, ok := step.FromTo()
+	if !ok {
+		return nil, false
 	}
 
 	t, ok := b.graph[from][to]
 	if !ok {
-		return b
+		return nil, false
 	}
 
-	t.state = step.State()
-	t.err = step.Err()
-	t.fail = step.Fail()
-
-	return b
+	return t, true
 }
 
 type performStep struct {
@@ -204,7 +293,7 @@ type cancelStep struct {
 	err error
 }
 
-func newCancelledStep(err error) Step {
+func newCanceledStep(err error) Step {
 	return cancelStep{err: err}
 }
 
@@ -213,7 +302,7 @@ func (c cancelStep) FromTo() (from, to string, ok bool) {
 }
 
 func (c cancelStep) State() State {
-	return Cancelled
+	return Canceled
 }
 
 func (c cancelStep) Err() error {
@@ -225,5 +314,5 @@ func (c cancelStep) Fail() error {
 }
 
 func (c cancelStep) String() string {
-	return fmt.Sprintf("Flow step %s", Cancelled)
+	return fmt.Sprintf("Flow step %s", Canceled)
 }

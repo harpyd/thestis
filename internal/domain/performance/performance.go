@@ -112,7 +112,7 @@ func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 
 func (p *Performance) start(ctx context.Context, steps chan Step) {
 	if err := p.startActions(ctx, steps); err != nil {
-		steps <- newCancelledStep(err)
+		steps <- newCanceledStep(err)
 	}
 
 	close(steps)
@@ -123,7 +123,7 @@ func (p *Performance) start(ctx context.Context, steps chan Step) {
 func (p *Performance) startActions(ctx context.Context, steps chan Step) error {
 	select {
 	case <-ctx.Done():
-		return NewPerformanceCancelledError()
+		return NewPerformanceCanceledError()
 	default:
 	}
 
@@ -186,7 +186,7 @@ func (p *Performance) waitActionLocks(ctx context.Context, lockGraph lockGraph, 
 		select {
 		case <-lock:
 		case <-ctx.Done():
-			return NewPerformanceCancelledError()
+			return NewPerformanceCanceledError()
 		}
 	}
 
@@ -233,16 +233,16 @@ func (e cyclicPerformanceGraphError) Error() string {
 }
 
 var (
-	errPerformanceCancelled      = errors.New("performance cancelled")
+	errPerformanceCanceled       = errors.New("performance canceled")
 	errPerformanceAlreadyStarted = errors.New("performance already started")
 )
 
-func NewPerformanceCancelledError() error {
-	return errPerformanceCancelled
+func NewPerformanceCanceledError() error {
+	return errPerformanceCanceled
 }
 
-func IsPerformanceCancelledError(err error) bool {
-	return errors.Is(err, errPerformanceCancelled)
+func IsPerformanceCanceledError(err error) bool {
+	return errors.Is(err, errPerformanceCanceled)
 }
 
 func NewPerformanceAlreadyStartedError() error {

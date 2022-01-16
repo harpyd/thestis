@@ -20,7 +20,7 @@ type ServerInterface interface {
 	// (PUT /performances/{performanceId})
 	RestartPerformance(w http.ResponseWriter, r *http.Request, performanceId string)
 	// Cancels performance with such ID.
-	// (PUT /performances/{performanceId}/cancelled)
+	// (PUT /performances/{performanceId}/canceled)
 	CancelPerformance(w http.ResponseWriter, r *http.Request, performanceId string)
 	// Returns specification with such ID.
 	// (GET /specifications/{specificationId})
@@ -364,7 +364,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/performances/{performanceId}", wrapper.RestartPerformance)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/performances/{performanceId}/cancelled", wrapper.CancelPerformance)
+		r.Put(options.BaseURL+"/performances/{performanceId}/canceled", wrapper.CancelPerformance)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/specifications/{specificationId}", wrapper.GetSpecification)

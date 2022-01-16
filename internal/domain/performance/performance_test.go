@@ -127,7 +127,7 @@ func TestPerformance_Start_with_cancel_context(t *testing.T) {
 
 	cancel()
 
-	requireCancelledStep(t, steps)
+	requireCanceledStep(t, steps)
 
 	_, err = perf.Start(context.Background())
 	require.NoError(t, err)
@@ -199,7 +199,7 @@ func TestIsCyclicPerformanceGraphError(t *testing.T) {
 	}
 }
 
-func TestIsPerformanceCancelledError(t *testing.T) {
+func TestIsPerformanceCanceledError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -208,13 +208,13 @@ func TestIsPerformanceCancelledError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "performance_cancelled_error",
-			Err:       performance.NewPerformanceCancelledError(),
+			Name:      "performance_canceled_error",
+			Err:       performance.NewPerformanceCanceledError(),
 			IsSameErr: true,
 		},
 		{
 			Name:      "another_error",
-			Err:       errors.New("performance cancelled"),
+			Err:       errors.New("performance canceled"),
 			IsSameErr: false,
 		},
 	}
@@ -225,7 +225,7 @@ func TestIsPerformanceCancelledError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, performance.IsPerformanceCancelledError(c.Err))
+			require.Equal(t, c.IsSameErr, performance.IsPerformanceCanceledError(c.Err))
 		})
 	}
 }
@@ -261,16 +261,16 @@ func TestIsPerformanceAlreadyStartedError(t *testing.T) {
 	}
 }
 
-func requireCancelledStep(t *testing.T, steps <-chan performance.Step) {
+func requireCanceledStep(t *testing.T, steps <-chan performance.Step) {
 	t.Helper()
 
 	for s := range steps {
-		if performance.IsPerformanceCancelledError(s.Err()) {
+		if performance.IsPerformanceCanceledError(s.Err()) {
 			return
 		}
 	}
 
-	require.Fail(t, "No cancelled event")
+	require.Fail(t, "No canceled event")
 }
 
 func invalidCyclicSpecification(t *testing.T) *specification.Specification {

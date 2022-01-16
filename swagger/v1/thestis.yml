@@ -326,7 +326,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /performances/{performanceId}/cancelled:
+  /performances/{performanceId}/canceled:
     put:
       tags:
         - performance
@@ -343,7 +343,7 @@ paths:
       responses:
         204:
           description: >
-            Performance cancelled if it was in process.
+            Performance canceled if it was in process.
             If it was not executed, nothing happened.
         404:
           description: Bad request.
