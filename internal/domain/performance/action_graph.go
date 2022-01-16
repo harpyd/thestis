@@ -102,7 +102,7 @@ func addStageDependentAction(
 	thesis specification.Thesis,
 ) {
 	var (
-		from = thesis.Statement().Stage().String()
+		from = uniqueStageName(story.Slug(), scenario.Slug(), thesis.Statement().Stage())
 		to   = uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
 	)
 
@@ -123,15 +123,19 @@ func addThesesDependentEmptyActions(
 		if len(graph[from]) == 0 {
 			initGraphActionsLazy(graph, from)
 
-			to := nextStage.String()
+			to := uniqueStageName(story.Slug(), scenario.Slug(), nextStage)
 
-			graph[from][nextStage.String()] = newEmptyAction(from, to)
+			graph[from][to] = newEmptyAction(from, to)
 		}
 	}
 }
 
 func uniqueThesisName(storySlug, scenarioSlug, thesisSlug string) string {
 	return strings.Join([]string{storySlug, scenarioSlug, thesisSlug}, ".")
+}
+
+func uniqueStageName(storySlug, scenarioSlug string, stage specification.Stage) string {
+	return strings.Join([]string{storySlug, scenarioSlug, "stage", stage.String()}, ".")
 }
 
 func thesisPerformerType(thesis specification.Thesis) performerType {
