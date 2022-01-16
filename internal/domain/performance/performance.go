@@ -129,9 +129,9 @@ func (p *Performance) startActions(ctx context.Context, steps chan Step) error {
 
 	env := newEnvironment()
 
-	g, ctx := errgroup.WithContext(ctx)
-
 	lg := p.actionGraph.toLockGraph()
+
+	g, ctx := errgroup.WithContext(ctx)
 
 	for _, as := range p.actionGraph {
 		for _, a := range as {
