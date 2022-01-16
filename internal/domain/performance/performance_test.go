@@ -64,14 +64,14 @@ func TestPerformance_Start(t *testing.T) {
 
 	spec := validSpecification(t)
 
-	http := mock.Performer(func(c *performance.Context, t specification.Thesis) (error, error) {
-		c.Store(t.Slug(), "HTTP")
+	http := mock.Performer(func(env *performance.Environment, t specification.Thesis) (error, error) {
+		env.Store(t.Slug(), "HTTP")
 
 		return nil, nil
 	})
 
-	assertion := mock.Performer(func(c *performance.Context, t specification.Thesis) (error, error) {
-		c.Store(t.Slug(), "assertion")
+	assertion := mock.Performer(func(env *performance.Environment, t specification.Thesis) (error, error) {
+		env.Store(t.Slug(), "assertion")
 
 		return nil, nil
 	})
@@ -83,28 +83,18 @@ func TestPerformance_Start(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	stream, err := perf.Start(context.Background())
+	steps, err := perf.Start(context.Background())
 	require.NoError(t, err)
 
-	for e := range stream {
-		if e.Err() != nil {
-			require.Fail(t, "Event with unexpected error", e.Err())
+	for s := range steps {
+		if s.State() == performance.Failed {
+			require.Fail(t, "Step with unexpected fail", s.Fail())
+		}
+
+		if s.State() == performance.Error {
+			require.Fail(t, "Step with unexpected error", s.Err())
 		}
 	}
-
-	c := perf.LastAttempt().Context()
-
-	v, ok := c.Load("a")
-	require.True(t, ok)
-	require.Equal(t, "HTTP", v)
-
-	v, ok = c.Load("b")
-	require.True(t, ok)
-	require.Equal(t, "HTTP", v)
-
-	v, ok = c.Load("c")
-	require.True(t, ok)
-	require.Equal(t, "assertion", v)
 }
 
 func TestPerformance_Start_one_at_a_time(t *testing.T) {
@@ -132,12 +122,12 @@ func TestPerformance_Start_with_cancel_context(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	s, err := perf.Start(ctx)
+	steps, err := perf.Start(ctx)
 	require.NoError(t, err)
 
 	cancel()
 
-	requireCancelledEvent(t, s)
+	requireCancelledStep(t, steps)
 
 	_, err = perf.Start(context.Background())
 	require.NoError(t, err)
@@ -165,14 +155,14 @@ func TestPerformance_Start_sync_calls_in_a_row(t *testing.T) {
 	}()
 
 	for range s1 {
-		// read event stream of first call
+		// read flow steps of first call
 	}
 
 	s2, err := perf.Start(context.Background())
 	require.NoError(t, err)
 
 	for range s2 {
-		// read event stream of second call
+		// read flow steps of second call
 	}
 
 	finish <- true
@@ -271,11 +261,11 @@ func TestIsPerformanceAlreadyStartedError(t *testing.T) {
 	}
 }
 
-func requireCancelledEvent(t *testing.T, stream <-chan performance.Event) {
+func requireCancelledStep(t *testing.T, steps <-chan performance.Step) {
 	t.Helper()
 
-	for e := range stream {
-		if performance.IsPerformanceCancelledError(e.Err()) {
+	for s := range steps {
+		if performance.IsPerformanceCancelledError(s.Err()) {
 			return
 		}
 	}

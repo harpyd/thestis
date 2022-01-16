@@ -16,12 +16,11 @@ type Performer interface {
 	// Perform returns two values of error type.
 	// Fail is used as a testing error, like bad assertion in thesis.
 	// Err is used as an infrastructure error, like HTTP connection refused.
-	Perform(c *Context, thesis specification.Thesis) (fail error, err error)
+	Perform(env *Environment, thesis specification.Thesis) (fail, err error)
 }
 
 type (
 	Performance struct {
-		attempts    []Attempt
 		performers  map[performerType]Performer
 		actionGraph actionGraph
 
@@ -77,74 +76,58 @@ func FromSpecification(spec *specification.Specification, opts ...Option) (*Perf
 	return p, nil
 }
 
-func (p *Performance) Attempts() []Attempt {
-	copied := make([]Attempt, len(p.attempts))
-	copy(copied, p.attempts)
-
-	return copied
-}
-
-func (p *Performance) LastAttempt() Attempt {
-	return p.attempts[len(p.attempts)-1]
-}
-
 // Actions returns flat slice representation of action graph.
 func (p *Performance) Actions() []Action {
-	copied := make([]Action, 0, len(p.actionGraph))
+	actions := make([]Action, 0, len(p.actionGraph))
 
 	for _, as := range p.actionGraph {
 		for _, a := range as {
-			copied = append(copied, a)
+			actions = append(actions, a)
 		}
 	}
 
-	return copied
+	return actions
 }
 
-const defaultStreamSize = 1
-
 // Start asynchronously starts performing of Performance action graph.
-// Start returns chan of Event with default size equals one.
-// Every call of Start creates attempt of performing.
-// Only ONE attempt can be start at a time. If one goroutine has captured
+// Start returns chan of flow Step's. With Step's you can build Flow
+// using FlowBuilder.
+//
+// Only ONE performing can be start at a time. If one goroutine has captured
 // performing, then others calls of Start will be return error that can
 // be detected with method IsPerformanceAlreadyStartedError.
-func (p *Performance) Start(ctx context.Context) (<-chan Event, error) {
+func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 	select {
 	case <-p.ready:
 	default:
 		return nil, NewPerformanceAlreadyStartedError()
 	}
 
-	p.pushNewAttempt()
+	steps := make(chan Step)
 
-	stream := make(chan Event, defaultStreamSize)
+	go p.start(ctx, steps)
 
-	go p.start(ctx, stream)
-
-	return stream, nil
+	return steps, nil
 }
 
-func (p *Performance) pushNewAttempt() {
-	p.attempts = append(p.attempts, newAttempt(p))
-}
-
-func (p *Performance) start(ctx context.Context, stream chan Event) {
-	if err := p.startActions(ctx, stream); err != nil {
-		stream <- errEvent{err: err}
+func (p *Performance) start(ctx context.Context, steps chan Step) {
+	if err := p.startActions(ctx, steps); err != nil {
+		steps <- newCancelledStep(err)
 	}
 
-	close(stream)
+	close(steps)
 
 	p.ready <- true
 }
 
-func (p *Performance) startActions(ctx context.Context, stream chan Event) error {
+func (p *Performance) startActions(ctx context.Context, steps chan Step) error {
 	select {
 	case <-ctx.Done():
 		return NewPerformanceCancelledError()
 	default:
 	}
+
+	env := newEnvironment()
 
 	g, ctx := errgroup.WithContext(ctx)
 
@@ -152,7 +135,7 @@ func (p *Performance) startActions(ctx context.Context, stream chan Event) error
 
 	for _, as := range p.actionGraph {
 		for _, a := range as {
-			g.Go(p.startActionFn(ctx, lg, stream, a))
+			g.Go(p.startActionFn(ctx, env, lg, steps, a))
 		}
 	}
 
@@ -161,32 +144,32 @@ func (p *Performance) startActions(ctx context.Context, stream chan Event) error
 
 func (p *Performance) startActionFn(
 	ctx context.Context,
+	env *Environment,
 	lockGraph lockGraph,
-	stream chan Event,
+	steps chan Step,
 	a Action,
 ) func() error {
 	return func() error {
-		return p.startAction(ctx, lockGraph, stream, a)
+		return p.startAction(ctx, env, lockGraph, steps, a)
 	}
 }
 
 func (p *Performance) startAction(
 	ctx context.Context,
+	env *Environment,
 	lockGraph lockGraph,
-	stream chan Event,
+	steps chan Step,
 	a Action,
 ) error {
 	if err := p.waitActionLocks(ctx, lockGraph, a.from); err != nil {
 		return err
 	}
 
-	p.perform(a)
+	steps <- newPerformingStep(a.from, a.to, a.performerType)
 
-	stream <- actionEvent{
-		from:          a.from,
-		to:            a.to,
-		performerType: a.performerType,
-	}
+	fail, err := p.perform(env, a)
+
+	steps <- newPerformedStep(a.from, a.to, a.performerType, fail, err)
 
 	p.unlockAction(lockGraph, a.from, a.to)
 
@@ -214,27 +197,13 @@ func (p *Performance) unlockAction(lockGraph lockGraph, from, to string) {
 	close(lockGraph[from][to])
 }
 
-func (p *Performance) perform(a Action) {
-	attempt := p.LastAttempt()
-
-	attempt.Flow().goToPerforming(a.from, a.to)
-
+func (p *Performance) perform(env *Environment, a Action) (fail, err error) {
 	performer, ok := p.performers[a.performerType]
 	if !ok {
 		return
 	}
 
-	fail, err := performer.Perform(attempt.Context(), a.thesis)
-
-	attempt.Flow().goToPassed(a.from, a.to)
-
-	if fail != nil {
-		attempt.Flow().goToFailed(a.from, a.to, fail)
-	}
-
-	if err != nil {
-		attempt.Flow().goToError(a.from, a.to, err)
-	}
+	return performer.Perform(env, a.thesis)
 }
 
 func (pt performerType) String() string {
