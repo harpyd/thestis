@@ -135,7 +135,15 @@ func uniqueThesisName(storySlug, scenarioSlug, thesisSlug string) string {
 }
 
 func uniqueStageName(storySlug, scenarioSlug string, stage specification.Stage) string {
-	return strings.Join([]string{storySlug, scenarioSlug, "stage", stage.String()}, ".")
+	if stage == specification.Given {
+		return givenStageName()
+	}
+
+	return strings.Join([]string{"stage", storySlug, scenarioSlug, stage.String()}, ".")
+}
+
+func givenStageName() string {
+	return strings.Join([]string{"stage", specification.Given.String()}, ".")
 }
 
 func thesisPerformerType(thesis specification.Thesis) performerType {
@@ -185,7 +193,7 @@ const (
 func checkGraphCycles(graph actionGraph) error {
 	colors := make(map[string]vertexColor, len(graph))
 
-	return checkGraphCyclesDFS(graph, specification.Given.String(), colors)
+	return checkGraphCyclesDFS(graph, givenStageName(), colors)
 }
 
 func checkGraphCyclesDFS(
