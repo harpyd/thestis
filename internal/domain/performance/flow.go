@@ -17,10 +17,10 @@ const (
 	Canceled     = "canceled"
 )
 
-type stateTransitions map[State]map[State]State
+type stateTransitionRules map[State]map[State]State
 
-func newStateTransitions() stateTransitions {
-	return stateTransitions{
+func newStateTransitionRules() stateTransitionRules {
+	return stateTransitionRules{
 		NotPerformed: {
 			NotPerformed: NotPerformed,
 			Performing:   Performing,
@@ -65,7 +65,12 @@ func newStateTransitions() stateTransitions {
 }
 
 type (
+	// Step is one unit of information
+	// about Performance performing.
 	Step interface {
+		// FromTo returns transition from and to vertexes.
+		// If step has transition, ok == true. Else ok == false.
+		// For example, cancel step has no transition.
 		FromTo() (from, to string, ok bool)
 		State() State
 		Err() error
@@ -73,6 +78,8 @@ type (
 		String() string
 	}
 
+	// Flow represents current Performance performing.
+	// Flow encapsulate graph and common state of performing.
 	Flow struct {
 		state State
 		graph map[string]map[string]Transition
@@ -86,10 +93,13 @@ type (
 		fail  error
 	}
 
+	// FlowBuilder builds Flow instance using method WithStep.
+	// FlowBuilder encapsulate Flow common state transition rules
+	// in WithStep method.
 	FlowBuilder struct {
-		state            State
-		graph            map[string]map[string]*Transition
-		stateTransitions stateTransitions
+		state                State
+		graph                map[string]map[string]*Transition
+		stateTransitionRules stateTransitionRules
 	}
 )
 
@@ -145,9 +155,9 @@ func NewFlowBuilder(perf *Performance) *FlowBuilder {
 	}
 
 	return &FlowBuilder{
-		state:            NotPerformed,
-		graph:            graph,
-		stateTransitions: newStateTransitions(),
+		state:                NotPerformed,
+		graph:                graph,
+		stateTransitionRules: newStateTransitionRules(),
 	}
 }
 
@@ -187,13 +197,51 @@ func (b *FlowBuilder) copyGraph() map[string]map[string]Transition {
 	return graph
 }
 
+// WithStep is method for step by step building of Flow.
+// Also, this method defines Flow common state transition rules.
+//
+// Rules:
+// (NotPerformed -> NotPerformed) => NotPerformed
+// (NotPerformed -> Performing) => Performing
+// (NotPerformed -> Passed) => Performing
+// (NotPerformed -> Failed) => Failed
+// (NotPerformed -> Error) => Error
+// (NotPerformed -> Canceled) => Canceled
+//
+// (Performing -> NotPerformed) => Performing
+// (Performing -> Performing) => Performing
+// (Performing -> Passed) => Performing
+// (Performing -> Failed) => Failed
+// (Performing -> Error) => Error
+// (Performing -> Canceled) => Canceled
+//
+// (Failed -> NotPerformed) => Failed
+// (Failed -> Performing) => Failed
+// (Failed -> Passed) => Failed
+// (Failed -> Failed) => Failed
+// (Failed -> Error) => Error
+// (Failed -> Canceled) => Failed
+//
+// (Error -> NotPerformed) => Error
+// (Error -> Performing) => Error
+// (Error -> Passed) => Error
+// (Error -> Failed) => Error
+// (Error -> Error) => Error
+// (Error -> Canceled) => Canceled
+//
+// (Canceled -> NotPerformed) => Canceled
+// (Canceled -> Performing) => Canceled
+// (Canceled -> Passed) => Canceled
+// (Canceled -> Failed) => Canceled
+// (Canceled -> Error) => Canceled
+// (Canceled -> Canceled) => Canceled.
 func (b *FlowBuilder) WithStep(step Step) *FlowBuilder {
 	t, ok := b.transitionFromStep(step)
 	if !ok {
 		return b
 	}
 
-	b.state = b.stateTransitions[b.state][step.State()]
+	b.state = b.stateTransitionRules[b.state][step.State()]
 
 	t.state = step.State()
 	t.err = multierr.Append(t.err, step.Err())
