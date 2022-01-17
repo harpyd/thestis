@@ -111,8 +111,10 @@ func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 }
 
 func (p *Performance) start(ctx context.Context, steps chan Step) {
-	if err := p.startActions(ctx, steps); err != nil {
+	if err := p.startActions(ctx, steps); IsPerformanceCanceledError(err) {
 		steps <- newCanceledStep(err)
+	} else if err != nil {
+		steps <- newErrorStep(err)
 	}
 
 	close(steps)
