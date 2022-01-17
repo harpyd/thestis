@@ -108,6 +108,12 @@ func NewFlowBuilder(perf *Performance) *FlowBuilder {
 	}
 }
 
+// Build creates intermediate version of Flow from FlowBuilder.
+// Flow created using this method can't have a State equal
+// to Passed.
+//
+// You need to use FinallyBuild method to create
+// final version of Flow.
 func (b *FlowBuilder) Build() Flow {
 	return Flow{
 		state: b.state,
@@ -115,6 +121,11 @@ func (b *FlowBuilder) Build() Flow {
 	}
 }
 
+// FinallyBuild creates final version of Flow from FlowBuilder.
+// Flow created using this method represents final Performance's Flow.
+//
+// If all transitions have Passed states and common State equal
+// to Performing, final version of Flow will have Passed State.
 func (b *FlowBuilder) FinallyBuild() Flow {
 	return Flow{
 		state: b.finalState(),
