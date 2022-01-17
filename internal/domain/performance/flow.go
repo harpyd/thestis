@@ -6,64 +6,6 @@ import (
 	"go.uber.org/multierr"
 )
 
-type State string
-
-const (
-	NotPerformed = ""
-	Performing   = "performing"
-	Passed       = "passed"
-	Failed       = "failed"
-	Error        = "error"
-	Canceled     = "canceled"
-)
-
-type stateTransitionRules map[State]map[State]State
-
-func newStateTransitionRules() stateTransitionRules {
-	return stateTransitionRules{
-		NotPerformed: {
-			NotPerformed: NotPerformed,
-			Performing:   Performing,
-			Passed:       Performing,
-			Failed:       Failed,
-			Error:        Error,
-			Canceled:     Canceled,
-		},
-		Performing: {
-			NotPerformed: Performing,
-			Performing:   Performing,
-			Passed:       Performing,
-			Failed:       Failed,
-			Error:        Error,
-			Canceled:     Canceled,
-		},
-		Failed: {
-			NotPerformed: Failed,
-			Performing:   Failed,
-			Passed:       Failed,
-			Failed:       Failed,
-			Error:        Error,
-			Canceled:     Failed,
-		},
-		Error: {
-			NotPerformed: Error,
-			Performing:   Error,
-			Passed:       Error,
-			Failed:       Error,
-			Error:        Error,
-			Canceled:     Error,
-		},
-		Canceled: {
-			NotPerformed: Canceled,
-			Performing:   Canceled,
-			Passed:       Canceled,
-			Failed:       Canceled,
-			Error:        Canceled,
-			Canceled:     Canceled,
-		},
-	}
-}
-
 type (
 	// Step is one unit of information
 	// about Performance performing.
@@ -100,17 +42,18 @@ type (
 	// FlowBuilder defines Flow common state transition rules
 	// in WithStep method.
 	FlowBuilder struct {
-		state                State
-		graph                map[string]map[string]*Transition
-		stateTransitionRules stateTransitionRules
+		state                        State
+		graph                        map[string]map[string]*Transition
+		commonStateTransitionRules   stateTransitionRules
+		specificStateTransitionRules stateTransitionRules
 	}
 )
 
-func (f *Flow) State() State {
+func (f Flow) State() State {
 	return f.state
 }
 
-func (f *Flow) Transitions() []Transition {
+func (f Flow) Transitions() []Transition {
 	transitions := make([]Transition, 0, len(f.graph))
 
 	for _, ts := range f.graph {
@@ -158,32 +101,45 @@ func NewFlowBuilder(perf *Performance) *FlowBuilder {
 	}
 
 	return &FlowBuilder{
-		state:                NotPerformed,
-		graph:                graph,
-		stateTransitionRules: newStateTransitionRules(),
+		state:                        NotPerformed,
+		graph:                        graph,
+		commonStateTransitionRules:   newCommonStateTransitionRules(),
+		specificStateTransitionRules: newSpecificStateTransitionRules(),
 	}
 }
 
-func (b *FlowBuilder) Build() *Flow {
-	return &Flow{
+func (b *FlowBuilder) Build() Flow {
+	return Flow{
 		state: b.state,
 		graph: b.copyGraph(),
 	}
 }
 
-func (b *FlowBuilder) FinallyBuild() *Flow {
-	return &Flow{
+func (b *FlowBuilder) FinallyBuild() Flow {
+	return Flow{
 		state: b.finalState(),
 		graph: b.copyGraph(),
 	}
 }
 
 func (b *FlowBuilder) finalState() State {
-	if b.state == Performing {
+	if b.state == Performing && b.allPassed() {
 		return Passed
 	}
 
 	return b.state
+}
+
+func (b *FlowBuilder) allPassed() bool {
+	for _, ts := range b.graph {
+		for _, t := range ts {
+			if t.State() != Passed {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 func (b *FlowBuilder) copyGraph() map[string]map[string]Transition {
@@ -244,9 +200,9 @@ func (b *FlowBuilder) WithStep(step Step) *FlowBuilder {
 		return b
 	}
 
-	b.state = b.stateTransitionRules[b.state][step.State()]
+	b.state = b.commonStateTransitionRules.apply(b.state, step.State())
 
-	t.state = step.State()
+	t.state = b.specificStateTransitionRules.apply(t.state, step.State())
 	t.err = multierr.Append(t.err, step.Err())
 	t.fail = multierr.Append(t.fail, step.Fail())
 
