@@ -42,10 +42,10 @@ type (
 	// FlowBuilder defines Flow common state transition rules
 	// in WithStep method.
 	FlowBuilder struct {
-		state                        State
-		graph                        map[string]map[string]*Transition
-		commonStateTransitionRules   stateTransitionRules
-		specificStateTransitionRules stateTransitionRules
+		state         State
+		graph         map[string]map[string]*Transition
+		commonRules   stateTransitionRules
+		specificRules stateTransitionRules
 	}
 )
 
@@ -101,10 +101,10 @@ func NewFlowBuilder(perf *Performance) *FlowBuilder {
 	}
 
 	return &FlowBuilder{
-		state:                        NotPerformed,
-		graph:                        graph,
-		commonStateTransitionRules:   newCommonStateTransitionRules(),
-		specificStateTransitionRules: newSpecificStateTransitionRules(),
+		state:         NotPerformed,
+		graph:         graph,
+		commonRules:   newCommonStateTransitionRules(),
+		specificRules: newSpecificStateTransitionRules(),
 	}
 }
 
@@ -211,9 +211,9 @@ func (b *FlowBuilder) WithStep(step Step) *FlowBuilder {
 		return b
 	}
 
-	b.state = b.commonStateTransitionRules.apply(b.state, step.State())
+	b.state = b.commonRules.apply(b.state, step.State())
 
-	t.state = b.specificStateTransitionRules.apply(t.state, step.State())
+	t.state = b.specificRules.apply(t.state, step.State())
 	t.err = multierr.Append(t.err, step.Err())
 	t.fail = multierr.Append(t.fail, step.Fail())
 
