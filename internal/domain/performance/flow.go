@@ -15,8 +15,8 @@ type (
 		// For example, cancel step has no transition.
 		FromTo() (from, to string, ok bool)
 		State() State
-		Err() error
-		Fail() error
+		CrashErr() error
+		FailErr() error
 		String() string
 	}
 
@@ -175,35 +175,35 @@ func (b *FlowBuilder) copyGraph() map[string]map[string]Transition {
 // (NotPerformed -> Performing) => Performing
 // (NotPerformed -> Passed) => Performing
 // (NotPerformed -> Failed) => Failed
-// (NotPerformed -> Error) => Error
+// (NotPerformed -> Crashed) => Crashed
 // (NotPerformed -> Canceled) => Canceled
 //
 // (Performing -> NotPerformed) => Performing
 // (Performing -> Performing) => Performing
 // (Performing -> Passed) => Performing
 // (Performing -> Failed) => Failed
-// (Performing -> Error) => Error
+// (Performing -> Crashed) => Crashed
 // (Performing -> Canceled) => Canceled
 //
 // (Failed -> NotPerformed) => Failed
 // (Failed -> Performing) => Failed
 // (Failed -> Passed) => Failed
 // (Failed -> Failed) => Failed
-// (Failed -> Error) => Error
+// (Failed -> Crashed) => Crashed
 // (Failed -> Canceled) => Failed
 //
-// (Error -> NotPerformed) => Error
-// (Error -> Performing) => Error
-// (Error -> Passed) => Error
-// (Error -> Failed) => Error
-// (Error -> Error) => Error
-// (Error -> Canceled) => Canceled
+// (Crashed -> NotPerformed) => Crashed
+// (Crashed -> Performing) => Crashed
+// (Crashed -> Passed) => Crashed
+// (Crashed -> Failed) => Crashed
+// (Crashed -> Crashed) => Crashed
+// (Crashed -> Canceled) => Canceled
 //
 // (Canceled -> NotPerformed) => Canceled
 // (Canceled -> Performing) => Canceled
 // (Canceled -> Passed) => Canceled
 // (Canceled -> Failed) => Canceled
-// (Canceled -> Error) => Canceled
+// (Canceled -> Crashed) => Canceled
 // (Canceled -> Canceled) => Canceled.
 func (b *FlowBuilder) WithStep(step Step) *FlowBuilder {
 	t, ok := b.transitionFromStep(step)
@@ -214,8 +214,8 @@ func (b *FlowBuilder) WithStep(step Step) *FlowBuilder {
 	b.state = b.commonRules.apply(b.state, step.State())
 
 	t.state = b.specificRules.apply(t.state, step.State())
-	t.err = multierr.Append(t.err, step.Err())
-	t.fail = multierr.Append(t.fail, step.Fail())
+	t.err = multierr.Append(t.err, step.CrashErr())
+	t.fail = multierr.Append(t.fail, step.FailErr())
 
 	return b
 }
@@ -238,7 +238,7 @@ type performStep struct {
 	from          string
 	to            string
 	state         State
-	err           error
+	crash         error
 	fail          error
 	performerType performerType
 }
@@ -252,18 +252,18 @@ func newPerformingStep(from, to string, performerType performerType) Step {
 	}
 }
 
-func newPerformedStep(from, to string, performerType performerType, fail, err error) Step {
+func newPerformedStep(from, to string, performerType performerType, fail, crash error) Step {
 	var state State
 
 	if fail != nil {
 		state = Failed
 	}
 
-	if err != nil {
-		state = Error
+	if crash != nil {
+		state = Crashed
 	}
 
-	if fail == nil && err == nil {
+	if fail == nil && crash == nil {
 		state = Passed
 	}
 
@@ -273,7 +273,7 @@ func newPerformedStep(from, to string, performerType performerType, fail, err er
 		state:         state,
 		performerType: performerType,
 		fail:          fail,
-		err:           err,
+		crash:         crash,
 	}
 }
 
@@ -285,11 +285,11 @@ func (s performStep) State() State {
 	return s.state
 }
 
-func (s performStep) Err() error {
-	return s.err
+func (s performStep) CrashErr() error {
+	return s.crash
 }
 
-func (s performStep) Fail() error {
+func (s performStep) FailErr() error {
 	return s.fail
 }
 
@@ -300,8 +300,8 @@ func (s performStep) String() string {
 		msg = fmt.Sprintf("%s (with fail: %s)", msg, s.fail)
 	}
 
-	if s.err != nil {
-		msg = fmt.Sprintf("%s (with err: %s)", msg, s.err)
+	if s.crash != nil {
+		msg = fmt.Sprintf("%s (with crash: %s)", msg, s.crash)
 	}
 
 	return msg
@@ -309,39 +309,42 @@ func (s performStep) String() string {
 
 type traceStep struct {
 	state State
-	err   error
+	crash error
 }
 
-func newCanceledStep(err error) Step {
+func newCanceledStep() Step {
+	return traceStep{state: Canceled}
+}
+
+func newCrashedStep(err error) Step {
 	return traceStep{
-		state: Canceled,
-		err:   err,
+		state: Crashed,
+		crash: err,
 	}
 }
 
-func newErrorStep(err error) Step {
-	return traceStep{
-		state: Error,
-		err:   err,
-	}
-}
-
-func (c traceStep) FromTo() (from, to string, ok bool) {
+func (s traceStep) FromTo() (from, to string, ok bool) {
 	return "", "", false
 }
 
-func (c traceStep) State() State {
-	return c.state
+func (s traceStep) State() State {
+	return s.state
 }
 
-func (c traceStep) Err() error {
-	return c.err
+func (s traceStep) CrashErr() error {
+	return s.crash
 }
 
-func (c traceStep) Fail() error {
+func (s traceStep) FailErr() error {
 	return nil
 }
 
-func (c traceStep) String() string {
-	return fmt.Sprintf("Flow step %s (with err: %s)", c.state, c.err)
+func (s traceStep) String() string {
+	msg := fmt.Sprintf("Flow step %s", s.state)
+
+	if s.crash != nil {
+		msg = fmt.Sprintf("%s (with crash: %s)", msg, s.crash)
+	}
+
+	return msg
 }

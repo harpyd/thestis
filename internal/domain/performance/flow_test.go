@@ -54,13 +54,13 @@ func TestFlowBuilder_WithStep_from_valid_performance_start(t *testing.T) {
 func requireStepNotError(t *testing.T, step performance.Step) {
 	t.Helper()
 
-	require.NotEqual(t, performance.Error, step.State())
-	require.NoError(t, step.Err())
+	require.NotEqual(t, performance.Crashed, step.State())
+	require.NoError(t, step.CrashErr())
 }
 
 func requireStepNotFailed(t *testing.T, step performance.Step) {
 	t.Helper()
 
 	require.NotEqual(t, performance.Failed, step.State())
-	require.NoError(t, step.Err())
+	require.NoError(t, step.CrashErr())
 }

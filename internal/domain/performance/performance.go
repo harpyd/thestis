@@ -15,8 +15,8 @@ import (
 type Performer interface {
 	// Perform returns two values of error type.
 	// Fail is used as a testing error, like bad assertion in thesis.
-	// Err is used as an infrastructure error, like HTTP connection refused.
-	Perform(env *Environment, thesis specification.Thesis) (fail, err error)
+	// Crash is used as an infrastructure error, like HTTP connection refused.
+	Perform(env *Environment, thesis specification.Thesis) (fail, crash error)
 }
 
 type (
@@ -113,10 +113,10 @@ func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 func (p *Performance) start(ctx context.Context, steps chan Step) {
 	defer close(steps)
 
-	if err := p.startActions(ctx, steps); IsPerformanceCanceledError(err) {
-		steps <- newCanceledStep(err)
+	if err := p.startActions(ctx, steps); errors.Is(err, errPerformanceCanceled) {
+		steps <- newCanceledStep()
 	} else if err != nil {
-		steps <- newErrorStep(err)
+		steps <- newCrashedStep(err)
 	}
 
 	p.ready <- true
@@ -125,7 +125,7 @@ func (p *Performance) start(ctx context.Context, steps chan Step) {
 func (p *Performance) startActions(ctx context.Context, steps chan Step) error {
 	select {
 	case <-ctx.Done():
-		return NewPerformanceCanceledError()
+		return errPerformanceCanceled
 	default:
 	}
 
@@ -188,7 +188,7 @@ func (p *Performance) waitActionLocks(ctx context.Context, lockGraph lockGraph, 
 		select {
 		case <-lock:
 		case <-ctx.Done():
-			return NewPerformanceCanceledError()
+			return errPerformanceCanceled
 		}
 	}
 
@@ -238,14 +238,6 @@ var (
 	errPerformanceCanceled       = errors.New("performance canceled")
 	errPerformanceAlreadyStarted = errors.New("performance already started")
 )
-
-func NewPerformanceCanceledError() error {
-	return errPerformanceCanceled
-}
-
-func IsPerformanceCanceledError(err error) bool {
-	return errors.Is(err, errPerformanceCanceled)
-}
 
 func NewPerformanceAlreadyStartedError() error {
 	return errPerformanceAlreadyStarted

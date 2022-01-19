@@ -88,11 +88,11 @@ func TestPerformance_Start(t *testing.T) {
 
 	for s := range steps {
 		if s.State() == performance.Failed {
-			require.Fail(t, "Step with unexpected fail", s.Fail())
+			require.Fail(t, "Step with unexpected fail", s.FailErr())
 		}
 
-		if s.State() == performance.Error {
-			require.Fail(t, "Step with unexpected error", s.Err())
+		if s.State() == performance.Crashed {
+			require.Fail(t, "Step with unexpected error", s.CrashErr())
 		}
 	}
 }
@@ -199,37 +199,6 @@ func TestIsCyclicPerformanceGraphError(t *testing.T) {
 	}
 }
 
-func TestIsPerformanceCanceledError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "performance_canceled_error",
-			Err:       performance.NewPerformanceCanceledError(),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       errors.New("performance canceled"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, performance.IsPerformanceCanceledError(c.Err))
-		})
-	}
-}
-
 func TestIsPerformanceAlreadyStartedError(t *testing.T) {
 	t.Parallel()
 
@@ -265,7 +234,7 @@ func requireCanceledStep(t *testing.T, steps <-chan performance.Step) {
 	t.Helper()
 
 	for s := range steps {
-		if performance.IsPerformanceCanceledError(s.Err()) {
+		if s.State() == performance.Canceled {
 			return
 		}
 	}

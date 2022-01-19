@@ -7,9 +7,13 @@ const (
 	Performing   State = "performing"
 	Passed       State = "passed"
 	Failed       State = "failed"
-	Error        State = "error"
+	Crashed      State = "crashed"
 	Canceled     State = "canceled"
 )
+
+func (s State) String() string {
+	return string(s)
+}
 
 type stateTransitionRules map[State]map[State]State
 
@@ -22,7 +26,7 @@ func newCommonStateTransitionRules() stateTransitionRules {
 		NotPerformed: fromNotPerformedTransitionRules(true),
 		Performing:   fromPerformingTransitionRules(true),
 		Failed:       fromFailedTransitionRules(),
-		Error:        fromErrorTransitionRules(),
+		Crashed:      fromErrorTransitionRules(),
 		Canceled:     fromCanceledTransitionRules(),
 	}
 }
@@ -33,7 +37,7 @@ func newSpecificStateTransitionRules() stateTransitionRules {
 		Performing:   fromPerformingTransitionRules(false),
 		Passed:       fromPassedTransitionRules(),
 		Failed:       fromFailedTransitionRules(),
-		Error:        fromErrorTransitionRules(),
+		Crashed:      fromErrorTransitionRules(),
 		Canceled:     fromCanceledTransitionRules(),
 	}
 }
@@ -44,7 +48,7 @@ func fromNotPerformedTransitionRules(commonState bool) map[State]State {
 		Performing:   Performing,
 		Passed:       Passed,
 		Failed:       Failed,
-		Error:        Error,
+		Crashed:      Crashed,
 		Canceled:     Canceled,
 	}
 
@@ -61,7 +65,7 @@ func fromPerformingTransitionRules(commonState bool) map[State]State {
 		Performing:   Performing,
 		Passed:       Passed,
 		Failed:       Failed,
-		Error:        Error,
+		Crashed:      Crashed,
 		Canceled:     Canceled,
 	}
 
@@ -78,7 +82,7 @@ func fromPassedTransitionRules() map[State]State {
 		Performing:   Performing,
 		Passed:       Passed,
 		Failed:       Failed,
-		Error:        Error,
+		Crashed:      Crashed,
 		Canceled:     Canceled,
 	}
 }
@@ -89,19 +93,19 @@ func fromFailedTransitionRules() map[State]State {
 		Performing:   Failed,
 		Passed:       Failed,
 		Failed:       Failed,
-		Error:        Error,
+		Crashed:      Crashed,
 		Canceled:     Failed,
 	}
 }
 
 func fromErrorTransitionRules() map[State]State {
 	return map[State]State{
-		NotPerformed: Error,
-		Performing:   Error,
-		Passed:       Error,
-		Failed:       Error,
-		Error:        Error,
-		Canceled:     Error,
+		NotPerformed: Crashed,
+		Performing:   Crashed,
+		Passed:       Crashed,
+		Failed:       Crashed,
+		Crashed:      Crashed,
+		Canceled:     Crashed,
 	}
 }
 
@@ -111,7 +115,7 @@ func fromCanceledTransitionRules() map[State]State {
 		Performing:   Canceled,
 		Passed:       Canceled,
 		Failed:       Canceled,
-		Error:        Canceled,
+		Crashed:      Canceled,
 		Canceled:     Canceled,
 	}
 }
