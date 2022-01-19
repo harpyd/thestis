@@ -252,28 +252,14 @@ func newPerformingStep(from, to string, performerType performerType) Step {
 	}
 }
 
-func newPerformedStep(from, to string, performerType performerType, fail, crash error) Step {
-	var state State
-
-	if fail != nil {
-		state = Failed
-	}
-
-	if crash != nil {
-		state = Crashed
-	}
-
-	if fail == nil && crash == nil {
-		state = Passed
-	}
-
+func newPerformedStep(from, to string, performerType performerType, result Result) Step {
 	return performStep{
 		from:          from,
 		to:            to,
-		state:         state,
+		state:         result.State(),
 		performerType: performerType,
-		fail:          fail,
-		crash:         crash,
+		fail:          result.FailErr(),
+		crash:         result.CrashErr(),
 	}
 }
 
@@ -314,13 +300,6 @@ type traceStep struct {
 
 func newCanceledStep() Step {
 	return traceStep{state: Canceled}
-}
-
-func newCrashedStep(err error) Step {
-	return traceStep{
-		state: Crashed,
-		crash: err,
-	}
 }
 
 func (s traceStep) FromTo() (from, to string, ok bool) {

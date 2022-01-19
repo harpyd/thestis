@@ -10,15 +10,6 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-// Performer carries performing of thesis.
-// Performance creators should provide own implementation.
-type Performer interface {
-	// Perform returns two values of error type.
-	// Fail is used as a testing error, like bad assertion in thesis.
-	// Crash is used as an infrastructure error, like HTTP connection refused.
-	Perform(env *Environment, thesis specification.Thesis) (fail, crash error)
-}
-
 type (
 	Performance struct {
 		performers  map[performerType]Performer
@@ -115,8 +106,6 @@ func (p *Performance) start(ctx context.Context, steps chan Step) {
 
 	if err := p.startActions(ctx, steps); errors.Is(err, errPerformanceCanceled) {
 		steps <- newCanceledStep()
-	} else if err != nil {
-		steps <- newCrashedStep(err)
 	}
 
 	p.ready <- true
@@ -169,9 +158,9 @@ func (p *Performance) startAction(
 
 	steps <- newPerformingStep(a.from, a.to, a.performerType)
 
-	fail, err := p.perform(env, a)
+	result := p.perform(env, a)
 
-	steps <- newPerformedStep(a.from, a.to, a.performerType, fail, err)
+	steps <- newPerformedStep(a.from, a.to, a.performerType, result)
 
 	p.unlockAction(lockGraph, a.from, a.to)
 
@@ -199,10 +188,14 @@ func (p *Performance) unlockAction(lockGraph lockGraph, from, to string) {
 	close(lockGraph[from][to])
 }
 
-func (p *Performance) perform(env *Environment, a Action) (fail, err error) {
+func (p *Performance) perform(env *Environment, a Action) Result {
+	if a.performerType == emptyPerformer {
+		return Pass()
+	}
+
 	performer, ok := p.performers[a.performerType]
 	if !ok {
-		return
+		return NotPerform()
 	}
 
 	return performer.Perform(env, a.thesis)
