@@ -7,11 +7,9 @@ type Environment struct {
 	store map[string]interface{}
 }
 
-const defaultEnvStoreInitialSize = 10
-
-func newEnvironment() *Environment {
+func NewEnvironment(size int) *Environment {
 	return &Environment{
-		store: make(map[string]interface{}, defaultEnvStoreInitialSize),
+		store: make(map[string]interface{}, size),
 	}
 }
 

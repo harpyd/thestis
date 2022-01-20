@@ -109,6 +109,8 @@ func (p *Performance) start(ctx context.Context, steps chan Step) {
 	p.ready <- true
 }
 
+const defaultEnvStoreInitialSize = 10
+
 func (p *Performance) startActions(ctx context.Context, steps chan Step) {
 	select {
 	case <-ctx.Done():
@@ -118,7 +120,7 @@ func (p *Performance) startActions(ctx context.Context, steps chan Step) {
 	default:
 	}
 
-	env := newEnvironment()
+	env := NewEnvironment(defaultEnvStoreInitialSize)
 
 	lg := p.actionGraph.toLockGraph()
 
