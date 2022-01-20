@@ -209,7 +209,7 @@ func checkGraphCyclesDFS(
 				return err
 			}
 		} else if c == gray {
-			return NewCyclicPerformanceGraphError(from, to)
+			return NewCyclicGraphError(from, to)
 		}
 	}
 

@@ -86,12 +86,12 @@ func (p *Performance) Actions() []Action {
 //
 // Only ONE performing can be start at a time. If one goroutine has captured
 // performing, then others calls of Start will be return error that can
-// be detected with method IsPerformanceAlreadyStartedError.
+// be detected with method IsAlreadyStartedError.
 func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 	select {
 	case <-p.ready:
 	default:
-		return nil, NewPerformanceAlreadyStartedError()
+		return nil, NewAlreadyStartedError()
 	}
 
 	steps := make(chan Step)
@@ -104,7 +104,7 @@ func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 func (p *Performance) start(ctx context.Context, steps chan Step) {
 	defer close(steps)
 
-	if err := p.startActions(ctx, steps); errors.Is(err, errPerformanceCanceled) {
+	if err := p.startActions(ctx, steps); errors.Is(err, errCanceled) {
 		steps <- newCanceledStep()
 	}
 
@@ -114,7 +114,7 @@ func (p *Performance) start(ctx context.Context, steps chan Step) {
 func (p *Performance) startActions(ctx context.Context, steps chan Step) error {
 	select {
 	case <-ctx.Done():
-		return errPerformanceCanceled
+		return errCanceled
 	default:
 	}
 
@@ -177,7 +177,7 @@ func (p *Performance) waitActionLocks(ctx context.Context, lockGraph lockGraph, 
 		select {
 		case <-lock:
 		case <-ctx.Done():
-			return errPerformanceCanceled
+			return errCanceled
 		}
 	}
 
@@ -205,37 +205,37 @@ func (pt performerType) String() string {
 	return string(pt)
 }
 
-type cyclicPerformanceGraphError struct {
+type cyclicGraphError struct {
 	from string
 	to   string
 }
 
-func NewCyclicPerformanceGraphError(from, to string) error {
-	return errors.WithStack(cyclicPerformanceGraphError{
+func NewCyclicGraphError(from, to string) error {
+	return errors.WithStack(cyclicGraphError{
 		from: from,
 		to:   to,
 	})
 }
 
-func IsCyclicPerformanceGraphError(err error) bool {
-	var target cyclicPerformanceGraphError
+func IsCyclicGraphError(err error) bool {
+	var target cyclicGraphError
 
 	return errors.As(err, &target)
 }
 
-func (e cyclicPerformanceGraphError) Error() string {
+func (e cyclicGraphError) Error() string {
 	return fmt.Sprintf("cyclic performance graph: %s -> %s", e.from, e.to)
 }
 
 var (
-	errPerformanceCanceled       = errors.New("performance canceled")
-	errPerformanceAlreadyStarted = errors.New("performance already started")
+	errCanceled       = errors.New("performance canceled")
+	errAlreadyStarted = errors.New("performance already started")
 )
 
-func NewPerformanceAlreadyStartedError() error {
-	return errPerformanceAlreadyStarted
+func NewAlreadyStartedError() error {
+	return errAlreadyStarted
 }
 
-func IsPerformanceAlreadyStartedError(err error) bool {
-	return errors.Is(err, errPerformanceAlreadyStarted)
+func IsAlreadyStartedError(err error) bool {
+	return errors.Is(err, errAlreadyStarted)
 }

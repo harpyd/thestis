@@ -27,7 +27,7 @@ func TestFromSpecification(t *testing.T) {
 			Name:          "cyclic_performance_graph",
 			Specification: invalidCyclicSpecification(t),
 			ShouldBeErr:   true,
-			IsErr:         performance.IsCyclicPerformanceGraphError,
+			IsErr:         performance.IsCyclicGraphError,
 		},
 		{
 			Name:          "valid_performance",
@@ -109,7 +109,7 @@ func TestPerformance_Start_one_at_a_time(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = perf.Start(context.Background())
-	require.True(t, performance.IsPerformanceAlreadyStartedError(err))
+	require.True(t, performance.IsAlreadyStartedError(err))
 }
 
 func TestPerformance_Start_with_cancel_context(t *testing.T) {
@@ -168,7 +168,7 @@ func TestPerformance_Start_sync_calls_in_a_row(t *testing.T) {
 	finish <- true
 }
 
-func TestIsCyclicPerformanceGraphError(t *testing.T) {
+func TestIsCyclicGraphError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -178,7 +178,7 @@ func TestIsCyclicPerformanceGraphError(t *testing.T) {
 	}{
 		{
 			Name:      "cyclic_performance_error",
-			Err:       performance.NewCyclicPerformanceGraphError("from", "to"),
+			Err:       performance.NewCyclicGraphError("from", "to"),
 			IsSameErr: true,
 		},
 		{
@@ -194,12 +194,12 @@ func TestIsCyclicPerformanceGraphError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, performance.IsCyclicPerformanceGraphError(c.Err))
+			require.Equal(t, c.IsSameErr, performance.IsCyclicGraphError(c.Err))
 		})
 	}
 }
 
-func TestIsPerformanceAlreadyStartedError(t *testing.T) {
+func TestIsAlreadyStartedError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -209,7 +209,7 @@ func TestIsPerformanceAlreadyStartedError(t *testing.T) {
 	}{
 		{
 			Name:      "performance_already_started_error",
-			Err:       performance.NewPerformanceAlreadyStartedError(),
+			Err:       performance.NewAlreadyStartedError(),
 			IsSameErr: true,
 		},
 		{
@@ -225,7 +225,7 @@ func TestIsPerformanceAlreadyStartedError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, performance.IsPerformanceAlreadyStartedError(c.Err))
+			require.Equal(t, c.IsSameErr, performance.IsAlreadyStartedError(c.Err))
 		})
 	}
 }
