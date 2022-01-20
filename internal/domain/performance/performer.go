@@ -40,14 +40,14 @@ func Pass() Result {
 func Fail(err error) Result {
 	return Result{
 		state: Failed,
-		err:   failedError{err: err},
+		err:   errors.WithStack(newFailedError(err)),
 	}
 }
 
 func Crash(err error) Result {
 	return Result{
 		state: Crashed,
-		err:   crashedError{err: err},
+		err:   errors.WithStack(newCrashedError(err)),
 	}
 }
 
@@ -69,6 +69,14 @@ type (
 	}
 )
 
+func newFailedError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return failedError{err: err}
+}
+
 func IsFailedError(err error) bool {
 	var target failedError
 
@@ -85,6 +93,14 @@ func (e failedError) Cause() error {
 
 func (e failedError) Unwrap() error {
 	return e.err
+}
+
+func newCrashedError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return crashedError{err: err}
 }
 
 func IsCrashedError(err error) bool {
