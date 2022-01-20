@@ -32,7 +32,7 @@ func TestPass(t *testing.T) {
 func TestFail(t *testing.T) {
 	t.Parallel()
 
-	res := performance.Fail(errors.New("some"))
+	res := performance.Fail(errors.New("fail"))
 
 	require.Equal(t, performance.Failed, res.State())
 	require.Error(t, res.FailErr())
