@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/performance"
-	"github.com/harpyd/thestis/internal/domain/performance/mock"
-	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
 func TestNewFlowBuilder_build_from_new_builder(t *testing.T) {
@@ -31,14 +29,10 @@ func TestFlowBuilder_WithStep_from_valid_performance_start(t *testing.T) {
 
 	spec := validSpecification(t)
 
-	performer := mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		return performance.Pass()
-	})
-
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(performer),
-		performance.WithAssertion(performer),
+		performance.WithHTTP(passingPerformer(t)),
+		performance.WithAssertion(passingPerformer(t)),
 	)
 	require.NoError(t, err)
 
