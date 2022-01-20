@@ -92,7 +92,7 @@ func TestPerformance_Start(t *testing.T) {
 		}
 
 		if s.State() == performance.Crashed {
-			require.Fail(t, "Step with unexpected error", s.Err())
+			require.Fail(t, "Step with unexpected crash", s.Err())
 		}
 	}
 }
