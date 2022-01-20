@@ -207,10 +207,6 @@ func (p *Performance) perform(env *Environment, a Action) Result {
 	return performer.Perform(env, a.thesis)
 }
 
-func (pt performerType) String() string {
-	return string(pt)
-}
-
 type cyclicGraphError struct {
 	from string
 	to   string

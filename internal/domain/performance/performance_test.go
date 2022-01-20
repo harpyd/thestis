@@ -64,22 +64,10 @@ func TestPerformance_Start(t *testing.T) {
 
 	spec := validSpecification(t)
 
-	http := mock.Performer(func(env *performance.Environment, t specification.Thesis) performance.Result {
-		env.Store(t.Slug(), "HTTP")
-
-		return performance.Pass()
-	})
-
-	assertion := mock.Performer(func(env *performance.Environment, t specification.Thesis) performance.Result {
-		env.Store(t.Slug(), "assertion")
-
-		return performance.Pass()
-	})
-
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(http),
-		performance.WithAssertion(assertion),
+		performance.WithHTTP(passingPerformer(t)),
+		performance.WithAssertion(passingPerformer(t)),
 	)
 	require.NoError(t, err)
 
@@ -112,7 +100,7 @@ func TestPerformance_Start_one_at_a_time(t *testing.T) {
 	require.True(t, performance.IsAlreadyStartedError(err))
 }
 
-func TestPerformance_Start_with_cancel_context(t *testing.T) {
+func TestPerformance_Start_with_cancel_context_before_steps_reading(t *testing.T) {
 	t.Parallel()
 
 	spec := validSpecification(t)
@@ -133,23 +121,42 @@ func TestPerformance_Start_with_cancel_context(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestPerformance_Start_with_cancel_context_while_steps_reading(t *testing.T) {
+	t.Parallel()
+
+	spec := validSpecification(t)
+
+	perf, err := performance.FromSpecification(
+		spec,
+		performance.WithHTTP(passingPerformer(t)),
+		performance.WithAssertion(passingPerformer(t)),
+	)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	steps, err := perf.Start(ctx)
+	require.NoError(t, err)
+
+	<-steps
+
+	cancel()
+
+	requireLastCanceledStep(t, steps)
+
+	_, err = perf.Start(context.Background())
+	require.NoError(t, err)
+}
+
 func TestPerformance_Start_with_failed_performer(t *testing.T) {
 	t.Parallel()
 
 	spec := validSpecification(t)
 
-	httpPerformer := mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		return performance.Pass()
-	})
-
-	assertionPerformer := mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		return performance.Fail(errors.New("something wrong"))
-	})
-
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(httpPerformer),
-		performance.WithAssertion(assertionPerformer),
+		performance.WithHTTP(passingPerformer(t)),
+		performance.WithAssertion(failingPerformer(t)),
 	)
 	require.NoError(t, err)
 
@@ -164,18 +171,10 @@ func TestPerformance_Start_with_crashed_performer(t *testing.T) {
 
 	spec := validSpecification(t)
 
-	httpPerformer := mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		return performance.Crash(errors.New("something wrong"))
-	})
-
-	assertionPerformer := mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		return performance.Pass()
-	})
-
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(httpPerformer),
-		performance.WithAssertion(assertionPerformer),
+		performance.WithHTTP(crashingPerformer(t)),
+		performance.WithAssertion(passingPerformer(t)),
 	)
 	require.NoError(t, err)
 
@@ -280,6 +279,30 @@ func TestIsAlreadyStartedError(t *testing.T) {
 			require.Equal(t, c.IsSameErr, performance.IsAlreadyStartedError(c.Err))
 		})
 	}
+}
+
+func passingPerformer(t *testing.T) performance.Performer {
+	t.Helper()
+
+	return mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
+		return performance.Pass()
+	})
+}
+
+func failingPerformer(t *testing.T) performance.Performer {
+	t.Helper()
+
+	return mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
+		return performance.Fail(errors.New("something wrong"))
+	})
+}
+
+func crashingPerformer(t *testing.T) performance.Performer {
+	t.Helper()
+
+	return mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
+		return performance.Crash(errors.New("something wrong"))
+	})
 }
 
 func requireLastCanceledStep(t *testing.T, steps <-chan performance.Step) {
