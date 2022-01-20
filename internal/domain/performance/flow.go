@@ -87,15 +87,34 @@ func NewFlowBuilder(perf *Performance) *FlowBuilder {
 
 		for to := range as {
 			graph[from][to] = &Transition{
+				state: NotPerformed,
 				from:  from,
 				to:    to,
-				state: NotPerformed,
 			}
 		}
 	}
 
 	return &FlowBuilder{
 		state:         NotPerformed,
+		graph:         graph,
+		commonRules:   newCommonStateTransitionRules(),
+		specificRules: newSpecificStateTransitionRules(),
+	}
+}
+
+func NewTunedFlowBuilder(commonState, transitionState State, from, to string) *FlowBuilder {
+	graph := map[string]map[string]*Transition{
+		from: {
+			to: &Transition{
+				state: transitionState,
+				from:  from,
+				to:    to,
+			},
+		},
+	}
+
+	return &FlowBuilder{
+		state:         commonState,
 		graph:         graph,
 		commonRules:   newCommonStateTransitionRules(),
 		specificRules: newSpecificStateTransitionRules(),
@@ -165,40 +184,40 @@ func (b *FlowBuilder) copyGraph() map[string]map[string]Transition {
 // Also, this method defines Flow common state transition rules.
 //
 // Rules:
-// (NotPerformed -> NotPerformed) => NotPerformed
-// (NotPerformed -> Performing) => Performing
-// (NotPerformed -> Passed) => Performing
-// (NotPerformed -> Failed) => Failed
-// (NotPerformed -> Crashed) => Crashed
-// (NotPerformed -> Canceled) => Canceled
+// NotPerformed -> NotPerformed => NotPerformed;
+// NotPerformed -> Performing => Performing;
+// NotPerformed -> Passed => Performing;
+// NotPerformed -> Failed => Failed;
+// NotPerformed -> Crashed => Crashed;
+// NotPerformed -> Canceled => Canceled;
 //
-// (Performing -> NotPerformed) => Performing
-// (Performing -> Performing) => Performing
-// (Performing -> Passed) => Performing
-// (Performing -> Failed) => Failed
-// (Performing -> Crashed) => Crashed
-// (Performing -> Canceled) => Canceled
+// Performing -> NotPerformed => Performing;
+// Performing -> Performing => Performing;
+// Performing -> Passed => Performing;
+// Performing -> Failed => Failed;
+// Performing -> Crashed => Crashed;
+// Performing -> Canceled => Canceled;
 //
-// (Failed -> NotPerformed) => Failed
-// (Failed -> Performing) => Failed
-// (Failed -> Passed) => Failed
-// (Failed -> Failed) => Failed
-// (Failed -> Crashed) => Crashed
-// (Failed -> Canceled) => Failed
+// Failed -> NotPerformed => Failed;
+// Failed -> Performing => Failed;
+// Failed -> Passed => Failed;
+// Failed -> Failed => Failed;
+// Failed -> Crashed => Crashed;
+// Failed -> Canceled => Failed;
 //
-// (Crashed -> NotPerformed) => Crashed
-// (Crashed -> Performing) => Crashed
-// (Crashed -> Passed) => Crashed
-// (Crashed -> Failed) => Crashed
-// (Crashed -> Crashed) => Crashed
-// (Crashed -> Canceled) => Canceled
+// Crashed -> NotPerformed => Crashed;
+// Crashed -> Performing => Crashed;
+// Crashed -> Passed => Crashed;
+// Crashed -> Failed => Crashed;
+// Crashed -> Crashed => Crashed;
+// Crashed -> Canceled => Canceled;
 //
-// (Canceled -> NotPerformed) => Canceled
-// (Canceled -> Performing) => Canceled
-// (Canceled -> Passed) => Canceled
-// (Canceled -> Failed) => Canceled
-// (Canceled -> Crashed) => Canceled
-// (Canceled -> Canceled) => Canceled.
+// Canceled -> NotPerformed => Canceled;
+// Canceled -> Performing => Canceled;
+// Canceled -> Passed => Canceled;
+// Canceled -> Failed => Canceled;
+// Canceled -> Crashed => Canceled;
+// Canceled -> Canceled => Canceled.
 func (b *FlowBuilder) WithStep(step Step) *FlowBuilder {
 	t, ok := b.transitionFromStep(step)
 	if !ok {
