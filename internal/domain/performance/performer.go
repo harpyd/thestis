@@ -1,6 +1,12 @@
 package performance
 
-import "github.com/harpyd/thestis/internal/domain/specification"
+import (
+	"fmt"
+
+	"github.com/pkg/errors"
+
+	"github.com/harpyd/thestis/internal/domain/specification"
+)
 
 type (
 	// Performer carries performing of thesis.
@@ -15,8 +21,7 @@ type (
 	// NotPerformed, Passed, Failed, Crashed.
 	Result struct {
 		state State
-		fail  error
-		crash error
+		err   error
 	}
 )
 
@@ -35,14 +40,14 @@ func Pass() Result {
 func Fail(err error) Result {
 	return Result{
 		state: Failed,
-		fail:  err,
+		err:   failedError{err: err},
 	}
 }
 
 func Crash(err error) Result {
 	return Result{
 		state: Crashed,
-		crash: err,
+		err:   crashedError{err: err},
 	}
 }
 
@@ -50,10 +55,52 @@ func (r Result) State() State {
 	return r.state
 }
 
-func (r Result) FailErr() error {
-	return r.fail
+func (r Result) Err() error {
+	return r.err
 }
 
-func (r Result) CrashErr() error {
-	return r.crash
+type (
+	failedError struct {
+		err error
+	}
+
+	crashedError struct {
+		err error
+	}
+)
+
+func IsFailedError(err error) bool {
+	var target failedError
+
+	return errors.As(err, &target)
+}
+
+func (e failedError) Error() string {
+	return fmt.Sprintf("performance failed: %s", e.err)
+}
+
+func (e failedError) Cause() error {
+	return e.err
+}
+
+func (e failedError) Unwrap() error {
+	return e.err
+}
+
+func IsCrashedError(err error) bool {
+	var target crashedError
+
+	return errors.As(err, &target)
+}
+
+func (e crashedError) Error() string {
+	return fmt.Sprintf("performance crashed: %s", e.err)
+}
+
+func (e crashedError) Cause() error {
+	return e.err
+}
+
+func (e crashedError) Unwrap() error {
+	return e.err
 }

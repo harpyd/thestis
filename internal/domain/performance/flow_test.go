@@ -65,12 +65,12 @@ func requireStepNotError(t *testing.T, step performance.Step) {
 	t.Helper()
 
 	require.NotEqual(t, performance.Crashed, step.State())
-	require.NoError(t, step.CrashErr())
+	require.NoError(t, step.Err())
 }
 
 func requireStepNotFailed(t *testing.T, step performance.Step) {
 	t.Helper()
 
 	require.NotEqual(t, performance.Failed, step.State())
-	require.NoError(t, step.CrashErr())
+	require.NoError(t, step.Err())
 }

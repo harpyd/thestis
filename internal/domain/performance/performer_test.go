@@ -15,8 +15,7 @@ func TestNotPerform(t *testing.T) {
 	res := performance.NotPerform()
 
 	require.Equal(t, performance.NotPerformed, res.State())
-	require.NoError(t, res.FailErr())
-	require.NoError(t, res.CrashErr())
+	require.NoError(t, res.Err())
 }
 
 func TestPass(t *testing.T) {
@@ -25,8 +24,7 @@ func TestPass(t *testing.T) {
 	res := performance.Pass()
 
 	require.Equal(t, performance.Passed, res.State())
-	require.NoError(t, res.FailErr())
-	require.NoError(t, res.CrashErr())
+	require.NoError(t, res.Err())
 }
 
 func TestFail(t *testing.T) {
@@ -35,8 +33,7 @@ func TestFail(t *testing.T) {
 	res := performance.Fail(errors.New("fail"))
 
 	require.Equal(t, performance.Failed, res.State())
-	require.Error(t, res.FailErr())
-	require.NoError(t, res.CrashErr())
+	require.True(t, performance.IsFailedError(res.Err()))
 }
 
 func TestCrash(t *testing.T) {
@@ -45,6 +42,5 @@ func TestCrash(t *testing.T) {
 	res := performance.Crash(errors.New("crash"))
 
 	require.Equal(t, performance.Crashed, res.State())
-	require.NoError(t, res.FailErr())
-	require.Error(t, res.CrashErr())
+	require.True(t, performance.IsCrashedError(res.Err()))
 }

@@ -104,17 +104,17 @@ func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 func (p *Performance) start(ctx context.Context, steps chan Step) {
 	defer close(steps)
 
-	if err := p.startActions(ctx, steps); errors.Is(err, errCanceled) {
-		steps <- newCanceledStep()
-	}
+	p.startActions(ctx, steps)
 
 	p.ready <- true
 }
 
-func (p *Performance) startActions(ctx context.Context, steps chan Step) error {
+func (p *Performance) startActions(ctx context.Context, steps chan Step) {
 	select {
 	case <-ctx.Done():
-		return errCanceled
+		steps <- newCanceledStep()
+
+		return
 	default:
 	}
 
@@ -126,30 +126,32 @@ func (p *Performance) startActions(ctx context.Context, steps chan Step) error {
 
 	for _, as := range p.actionGraph {
 		for _, a := range as {
-			g.Go(p.startActionFn(ctx, env, lg, steps, a))
+			g.Go(p.startActionFn(ctx, steps, env, lg, a))
 		}
 	}
 
-	return g.Wait()
+	if err := g.Wait(); err != nil {
+		steps <- newCanceledStep()
+	}
 }
 
 func (p *Performance) startActionFn(
 	ctx context.Context,
+	steps chan Step,
 	env *Environment,
 	lockGraph lockGraph,
-	steps chan Step,
 	a Action,
 ) func() error {
 	return func() error {
-		return p.startAction(ctx, env, lockGraph, steps, a)
+		return p.startAction(ctx, steps, env, lockGraph, a)
 	}
 }
 
 func (p *Performance) startAction(
 	ctx context.Context,
+	steps chan Step,
 	env *Environment,
 	lockGraph lockGraph,
-	steps chan Step,
 	a Action,
 ) error {
 	if err := p.waitActionLocks(ctx, lockGraph, a.from); err != nil {

@@ -88,11 +88,11 @@ func TestPerformance_Start(t *testing.T) {
 
 	for s := range steps {
 		if s.State() == performance.Failed {
-			require.Fail(t, "Step with unexpected fail", s.FailErr())
+			require.Fail(t, "Step with unexpected fail", s.Err())
 		}
 
 		if s.State() == performance.Crashed {
-			require.Fail(t, "Step with unexpected error", s.CrashErr())
+			require.Fail(t, "Step with unexpected error", s.Err())
 		}
 	}
 }
