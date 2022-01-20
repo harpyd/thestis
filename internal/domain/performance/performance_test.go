@@ -127,10 +127,62 @@ func TestPerformance_Start_with_cancel_context(t *testing.T) {
 
 	cancel()
 
-	requireCanceledStep(t, steps)
+	requireLastCanceledStep(t, steps)
 
 	_, err = perf.Start(context.Background())
 	require.NoError(t, err)
+}
+
+func TestPerformance_Start_with_failed_performer(t *testing.T) {
+	t.Parallel()
+
+	spec := validSpecification(t)
+
+	httpPerformer := mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
+		return performance.Pass()
+	})
+
+	assertionPerformer := mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
+		return performance.Fail(errors.New("something wrong"))
+	})
+
+	perf, err := performance.FromSpecification(
+		spec,
+		performance.WithHTTP(httpPerformer),
+		performance.WithAssertion(assertionPerformer),
+	)
+	require.NoError(t, err)
+
+	steps, err := perf.Start(context.Background())
+	require.NoError(t, err)
+
+	requireStep(t, steps, performance.Failed)
+}
+
+func TestPerformance_Start_with_crashed_performer(t *testing.T) {
+	t.Parallel()
+
+	spec := validSpecification(t)
+
+	httpPerformer := mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
+		return performance.Crash(errors.New("something wrong"))
+	})
+
+	assertionPerformer := mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
+		return performance.Pass()
+	})
+
+	perf, err := performance.FromSpecification(
+		spec,
+		performance.WithHTTP(httpPerformer),
+		performance.WithAssertion(assertionPerformer),
+	)
+	require.NoError(t, err)
+
+	steps, err := perf.Start(context.Background())
+	require.NoError(t, err)
+
+	requireStep(t, steps, performance.Crashed)
 }
 
 func TestPerformance_Start_sync_calls_in_a_row(t *testing.T) {
@@ -230,16 +282,30 @@ func TestIsAlreadyStartedError(t *testing.T) {
 	}
 }
 
-func requireCanceledStep(t *testing.T, steps <-chan performance.Step) {
+func requireLastCanceledStep(t *testing.T, steps <-chan performance.Step) {
+	t.Helper()
+
+	var step performance.Step
+
+	for s := range steps {
+		step = s
+	}
+
+	if step.State() != performance.Canceled {
+		require.Failf(t, "No last %s step", performance.Canceled.String())
+	}
+}
+
+func requireStep(t *testing.T, steps <-chan performance.Step, state performance.State) {
 	t.Helper()
 
 	for s := range steps {
-		if s.State() == performance.Canceled {
+		if s.State() == state {
 			return
 		}
 	}
 
-	require.Fail(t, "No canceled event")
+	require.Failf(t, "No %s step", state.String())
 }
 
 func invalidCyclicSpecification(t *testing.T) *specification.Specification {

@@ -130,7 +130,7 @@ func (p *Performance) startActions(ctx context.Context, steps chan Step) {
 		}
 	}
 
-	if err := g.Wait(); err != nil {
+	if err := g.Wait(); errors.Is(err, errCanceled) {
 		steps <- newCanceledStep()
 	}
 }
@@ -163,6 +163,10 @@ func (p *Performance) startAction(
 	result := p.perform(env, a)
 
 	steps <- newPerformedStep(a.from, a.to, a.performerType, result)
+
+	if result.State() == Failed || result.State() == Crashed {
+		return errTerminated
+	}
 
 	p.unlockAction(lockGraph, a.from, a.to)
 
@@ -231,6 +235,7 @@ func (e cyclicGraphError) Error() string {
 
 var (
 	errCanceled       = errors.New("performance canceled")
+	errTerminated     = errors.New("performance terminated")
 	errAlreadyStarted = errors.New("performance already started")
 )
 
