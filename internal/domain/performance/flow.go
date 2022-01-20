@@ -276,33 +276,24 @@ func (s performStep) String() string {
 	return msg
 }
 
-type traceStep struct {
-	state State
-	err   error
-}
+type cancelStep struct{}
 
 func newCanceledStep() Step {
-	return traceStep{state: Canceled}
+	return cancelStep{}
 }
 
-func (s traceStep) FromTo() (from, to string, ok bool) {
+func (s cancelStep) FromTo() (from, to string, ok bool) {
 	return "", "", false
 }
 
-func (s traceStep) State() State {
-	return s.state
+func (s cancelStep) State() State {
+	return Canceled
 }
 
-func (s traceStep) Err() error {
-	return s.err
+func (s cancelStep) Err() error {
+	return nil
 }
 
-func (s traceStep) String() string {
-	msg := fmt.Sprintf("Flow step %s", s.state)
-
-	if s.err != nil {
-		msg = fmt.Sprintf("%s (with err: %s)", msg, s.err)
-	}
-
-	return msg
+func (s cancelStep) String() string {
+	return fmt.Sprintf("Flow step %s", Canceled)
 }
