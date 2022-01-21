@@ -8,11 +8,17 @@ type Step struct {
 	state performance.State
 }
 
-func NewStep(state performance.State, from, to string) Step {
+func NewTransitionStep(state performance.State, from, to string) Step {
 	return Step{
 		state: state,
 		from:  from,
 		to:    to,
+	}
+}
+
+func NewCanceledStep() Step {
+	return Step{
+		state: performance.Canceled,
 	}
 }
 
