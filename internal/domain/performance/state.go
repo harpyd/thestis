@@ -18,7 +18,17 @@ func (s State) String() string {
 type stateTransitionRules map[State]map[State]State
 
 func (r stateTransitionRules) apply(from, to State) State {
-	return r[from][to]
+	fromStates, ok := r[from]
+	if !ok {
+		return NotPerformed
+	}
+
+	state, ok := fromStates[to]
+	if !ok {
+		return from
+	}
+
+	return state
 }
 
 func newCommonStateTransitionRules() stateTransitionRules {
@@ -123,8 +133,8 @@ func fromCanceledTransitionRules() map[State]State {
 		NotPerformed: Canceled,
 		Performing:   Canceled,
 		Passed:       Canceled,
-		Failed:       Canceled,
-		Crashed:      Canceled,
+		Failed:       Failed,
+		Crashed:      Crashed,
 		Canceled:     Canceled,
 	}
 }
