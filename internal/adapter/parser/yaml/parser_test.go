@@ -151,7 +151,7 @@ func isComplexKeywordError(err error) bool {
 		specification.IsBuildStoryError(err) &&
 		specification.IsBuildScenarioError(err) &&
 		specification.IsBuildThesisError(err) &&
-		specification.IsNotAllowedKeywordError(err)
+		specification.IsNotAllowedStageError(err)
 }
 
 func isComplexHTTPResponseContentTypeError(err error) bool {

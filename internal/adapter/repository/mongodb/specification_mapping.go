@@ -128,9 +128,9 @@ func marshalToThesisDocuments(theses []specification.Thesis) []thesisDocument {
 	for _, thesis := range theses {
 		documents = append(documents, thesisDocument{
 			Slug:  thesis.Slug(),
-			After: thesis.After(),
+			After: thesis.Dependencies(),
 			Statement: statementDocument{
-				Keyword:   thesis.Statement().Keyword().String(),
+				Keyword:   thesis.Statement().Stage().String(),
 				Behaviour: thesis.Statement().Behavior(),
 			},
 			HTTP:      marshalToHTTPDocument(thesis.HTTP()),
@@ -223,7 +223,7 @@ func (d thesisDocument) unmarshalToThesisBuildFn() func(builder *specification.T
 			WithAssertion(d.Assertion.unmarshalToAssertionBuildFn())
 
 		for _, after := range d.After {
-			builder.WithAfter(after)
+			builder.WithDependencies(after)
 		}
 	}
 }

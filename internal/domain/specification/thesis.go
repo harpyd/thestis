@@ -10,42 +10,42 @@ import (
 
 type (
 	Thesis struct {
-		slug      string
-		after     []string
-		statement Statement
-		http      HTTP
-		assertion Assertion
+		slug         string
+		dependencies []string
+		statement    Statement
+		http         HTTP
+		assertion    Assertion
 	}
 
 	Statement struct {
-		keyword  Keyword
+		stage    Stage
 		behavior string
 	}
 
 	ThesisBuilder struct {
-		after            []string
-		keyword          string
+		dependencies     []string
+		stage            string
 		behavior         string
 		httpBuilder      *HTTPBuilder
 		assertionBuilder *AssertionBuilder
 	}
 
-	Keyword string
+	Stage string
 )
 
 const (
-	UnknownKeyword Keyword = "!"
-	Given          Keyword = "given"
-	When           Keyword = "when"
-	Then           Keyword = "then"
+	UnknownStage Stage = "!"
+	Given        Stage = "given"
+	When         Stage = "when"
+	Then         Stage = "then"
 )
 
 func (t Thesis) Slug() string {
 	return t.slug
 }
 
-func (t Thesis) After() []string {
-	return t.after
+func (t Thesis) Dependencies() []string {
+	return t.dependencies
 }
 
 func (t Thesis) Statement() Statement {
@@ -60,15 +60,15 @@ func (t Thesis) Assertion() Assertion {
 	return t.assertion
 }
 
-func (s Statement) Keyword() Keyword {
-	return s.keyword
+func (s Statement) Stage() Stage {
+	return s.stage
 }
 
 func (s Statement) Behavior() string {
 	return s.behavior
 }
 
-func newKeywordFromString(keyword string) (Keyword, error) {
+func stageFromString(keyword string) (Stage, error) {
 	switch strings.ToLower(keyword) {
 	case "given":
 		return Given, nil
@@ -78,10 +78,10 @@ func newKeywordFromString(keyword string) (Keyword, error) {
 		return Then, nil
 	}
 
-	return UnknownKeyword, NewNotAllowedKeywordError(keyword)
+	return UnknownStage, NewNotAllowedStageError(keyword)
 }
 
-func (k Keyword) String() string {
+func (k Stage) String() string {
 	return string(k)
 }
 
@@ -97,7 +97,7 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 		return Thesis{}, NewThesisEmptySlugError()
 	}
 
-	kw, keywordErr := newKeywordFromString(b.keyword)
+	stage, stageErr := stageFromString(b.stage)
 	http, httpErr := b.httpBuilder.Build()
 	assertion, assertionErr := b.assertionBuilder.Build()
 
@@ -107,19 +107,19 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 	}
 
 	thsis := Thesis{
-		slug:  slug,
-		after: make([]string, len(b.after)),
+		slug:         slug,
+		dependencies: make([]string, len(b.dependencies)),
 		statement: Statement{
-			keyword:  kw,
+			stage:    stage,
 			behavior: b.behavior,
 		},
 		http:      http,
 		assertion: assertion,
 	}
 
-	copy(thsis.after, b.after)
+	copy(thsis.dependencies, b.dependencies)
 
-	return thsis, NewBuildThesisError(multierr.Combine(keywordErr, err), slug)
+	return thsis, NewBuildThesisError(multierr.Combine(stageErr, err), slug)
 }
 
 func (b *ThesisBuilder) ErrlessBuild(slug string) Thesis {
@@ -129,21 +129,21 @@ func (b *ThesisBuilder) ErrlessBuild(slug string) Thesis {
 }
 
 func (b *ThesisBuilder) Reset() {
-	b.after = nil
-	b.keyword = ""
+	b.dependencies = nil
+	b.stage = ""
 	b.behavior = ""
 	b.assertionBuilder.Reset()
 	b.httpBuilder.Reset()
 }
 
-func (b *ThesisBuilder) WithAfter(after string) *ThesisBuilder {
-	b.after = append(b.after, after)
+func (b *ThesisBuilder) WithDependencies(deps string) *ThesisBuilder {
+	b.dependencies = append(b.dependencies, deps)
 
 	return b
 }
 
-func (b *ThesisBuilder) WithStatement(keyword string, behavior string) *ThesisBuilder {
-	b.keyword = keyword
+func (b *ThesisBuilder) WithStatement(stage string, behavior string) *ThesisBuilder {
+	b.stage = stage
 	b.behavior = behavior
 
 	return b
@@ -177,7 +177,7 @@ type (
 		slug string
 	}
 
-	notAllowedKeywordError struct {
+	notAllowedStageError struct {
 		keyword string
 	}
 )
@@ -251,24 +251,24 @@ func (e noSuchThesisError) Error() string {
 	return fmt.Sprintf("no such thesis `%s`", e.slug)
 }
 
-func NewNotAllowedKeywordError(keyword string) error {
-	return errors.WithStack(notAllowedKeywordError{
+func NewNotAllowedStageError(keyword string) error {
+	return errors.WithStack(notAllowedStageError{
 		keyword: keyword,
 	})
 }
 
-func IsNotAllowedKeywordError(err error) bool {
-	var nerr notAllowedKeywordError
+func IsNotAllowedStageError(err error) bool {
+	var nerr notAllowedStageError
 
 	return errors.As(err, &nerr)
 }
 
-func (e notAllowedKeywordError) Error() string {
+func (e notAllowedStageError) Error() string {
 	if e.keyword == "" {
-		return "no keyword"
+		return "no stage"
 	}
 
-	return fmt.Sprintf("keyword `%s` not allowed", e.keyword)
+	return fmt.Sprintf("stage `%s` not allowed", e.keyword)
 }
 
 var (
