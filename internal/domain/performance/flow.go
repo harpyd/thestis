@@ -216,8 +216,8 @@ func (b *FlowBuilder) copyGraph() map[string]map[string]Transition {
 // Canceled -> NotPerformed => Canceled;
 // Canceled -> Performing => Canceled;
 // Canceled -> Passed => Canceled;
-// Canceled -> Failed => Canceled;
-// Canceled -> Crashed => Canceled;
+// Canceled -> Failed => Failed;
+// Canceled -> Crashed => Crashed;
 // Canceled -> Canceled => Canceled.
 func (b *FlowBuilder) WithStep(step Step) *FlowBuilder {
 	b.state = b.commonRules.apply(b.state, step.State())
