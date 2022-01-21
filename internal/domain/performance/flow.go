@@ -219,12 +219,12 @@ func (b *FlowBuilder) copyGraph() map[string]map[string]Transition {
 // Canceled -> Crashed => Canceled;
 // Canceled -> Canceled => Canceled.
 func (b *FlowBuilder) WithStep(step Step) *FlowBuilder {
+	b.state = b.commonRules.apply(b.state, step.State())
+
 	t, ok := b.transitionFromStep(step)
 	if !ok {
 		return b
 	}
-
-	b.state = b.commonRules.apply(b.state, step.State())
 
 	t.state = b.specificRules.apply(t.state, step.State())
 	t.err = multierr.Append(t.err, step.Err())
