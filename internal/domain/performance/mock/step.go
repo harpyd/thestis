@@ -30,6 +30,10 @@ func (s Step) FromTo() (from, to string, ok bool) {
 	return s.from, s.to, true
 }
 
+func (s Step) PerformerType() performance.PerformerType {
+	return performance.EmptyPerformer
+}
+
 func (s Step) State() performance.State {
 	return s.state
 }

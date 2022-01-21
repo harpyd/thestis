@@ -12,7 +12,7 @@ import (
 
 type (
 	Performance struct {
-		performers  map[performerType]Performer
+		performers  map[PerformerType]Performer
 		actionGraph actionGraph
 
 		ready chan bool
@@ -21,26 +21,26 @@ type (
 	Option func(p *Performance)
 )
 
-type performerType string
+type PerformerType string
 
 const (
-	emptyPerformer     performerType = ""
-	unknownPerformer   performerType = "!"
-	httpPerformer      performerType = "HTTP"
-	assertionPerformer performerType = "assertion"
+	EmptyPerformer     PerformerType = ""
+	UnknownPerformer   PerformerType = "!"
+	HTTPPerformer      PerformerType = "HTTP"
+	AssertionPerformer PerformerType = "assertion"
 )
 
 // WithHTTP registers given Performer as HTTP performer.
 func WithHTTP(performer Performer) Option {
 	return func(p *Performance) {
-		p.performers[httpPerformer] = performer
+		p.performers[HTTPPerformer] = performer
 	}
 }
 
 // WithAssertion registers given Performer as assertion performer.
 func WithAssertion(performer Performer) Option {
 	return func(p *Performance) {
-		p.performers[assertionPerformer] = performer
+		p.performers[AssertionPerformer] = performer
 	}
 }
 
@@ -54,7 +54,7 @@ func FromSpecification(spec *specification.Specification, opts ...Option) (*Perf
 
 	p := &Performance{
 		actionGraph: graph,
-		performers:  make(map[performerType]Performer, defaultPerformersSize),
+		performers:  make(map[PerformerType]Performer, defaultPerformersSize),
 		ready:       make(chan bool, 1),
 	}
 
@@ -197,7 +197,7 @@ func (p *Performance) unlockAction(lockGraph lockGraph, from, to string) {
 }
 
 func (p *Performance) perform(env *Environment, a Action) Result {
-	if a.performerType == emptyPerformer {
+	if a.performerType == EmptyPerformer {
 		return Pass()
 	}
 

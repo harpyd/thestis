@@ -14,6 +14,7 @@ type (
 		// If step has transition, ok == true. Else ok == false.
 		// For example, cancel step has no transition.
 		FromTo() (from, to string, ok bool)
+		PerformerType() PerformerType
 		State() State
 		Err() error
 		String() string
@@ -251,10 +252,10 @@ type performStep struct {
 	to            string
 	state         State
 	err           error
-	performerType performerType
+	performerType PerformerType
 }
 
-func newPerformingStep(from, to string, performerType performerType) Step {
+func newPerformingStep(from, to string, performerType PerformerType) Step {
 	return performStep{
 		from:          from,
 		to:            to,
@@ -263,7 +264,7 @@ func newPerformingStep(from, to string, performerType performerType) Step {
 	}
 }
 
-func newPerformedStep(from, to string, performerType performerType, result Result) Step {
+func newPerformedStep(from, to string, performerType PerformerType, result Result) Step {
 	return performStep{
 		from:          from,
 		to:            to,
@@ -275,6 +276,10 @@ func newPerformedStep(from, to string, performerType performerType, result Resul
 
 func (s performStep) FromTo() (from, to string, ok bool) {
 	return s.from, s.to, true
+}
+
+func (s performStep) PerformerType() PerformerType {
+	return s.performerType
 }
 
 func (s performStep) State() State {
@@ -303,6 +308,10 @@ func newCanceledStep() Step {
 
 func (s cancelStep) FromTo() (from, to string, ok bool) {
 	return "", "", false
+}
+
+func (s cancelStep) PerformerType() PerformerType {
+	return EmptyPerformer
 }
 
 func (s cancelStep) State() State {

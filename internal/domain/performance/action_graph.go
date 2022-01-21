@@ -13,7 +13,7 @@ type (
 		from          string
 		to            string
 		thesis        specification.Thesis
-		performerType performerType
+		performerType PerformerType
 	}
 )
 
@@ -146,15 +146,15 @@ func givenStageName() string {
 	return strings.Join([]string{"stage", specification.Given.String()}, ".")
 }
 
-func thesisPerformerType(thesis specification.Thesis) performerType {
+func thesisPerformerType(thesis specification.Thesis) PerformerType {
 	switch {
 	case !thesis.HTTP().IsZero():
-		return httpPerformer
+		return HTTPPerformer
 	case !thesis.Assertion().IsZero():
-		return assertionPerformer
+		return AssertionPerformer
 	}
 
-	return unknownPerformer
+	return UnknownPerformer
 }
 
 const defaultActionsSize = 1
@@ -178,7 +178,7 @@ func newEmptyAction(from, to string) Action {
 	return Action{
 		from:          from,
 		to:            to,
-		performerType: emptyPerformer,
+		performerType: EmptyPerformer,
 	}
 }
 
