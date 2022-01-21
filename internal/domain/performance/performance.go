@@ -58,11 +58,13 @@ func FromSpecification(spec *specification.Specification, opts ...Option) (*Perf
 		ready:       make(chan bool, 1),
 	}
 
+	defer func() {
+		p.ready <- true
+	}()
+
 	for _, opt := range opts {
 		opt(p)
 	}
-
-	p.ready <- true
 
 	return p, nil
 }
@@ -102,11 +104,13 @@ func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 }
 
 func (p *Performance) start(ctx context.Context, steps chan Step) {
-	defer close(steps)
+	defer func() {
+		p.ready <- true
+
+		close(steps)
+	}()
 
 	p.startActions(ctx, steps)
-
-	p.ready <- true
 }
 
 const defaultEnvStoreInitialSize = 10
