@@ -55,7 +55,39 @@ func WithAssertion(performer Performer) Option {
 	}
 }
 
+type (
+	Params struct {
+		ID              string
+		OwnerID         string
+		SpecificationID string
+		Actions         []ActionParam
+	}
+
+	ActionParam struct {
+		From   string
+		To     string
+		Thesis specification.Thesis
+	}
+)
+
 const defaultPerformersSize = 2
+
+func UnmarshalFromDatabase(params Params, opts ...Option) *Performance {
+	p := &Performance{
+		id:              params.ID,
+		ownerID:         params.OwnerID,
+		specificationID: params.SpecificationID,
+		actionGraph:     unmarshalGraph(params.Actions),
+		performers:      make(map[PerformerType]Performer, defaultPerformersSize),
+		ready:           make(chan bool, 1),
+	}
+
+	defer p.signalReady()
+
+	p.applyOpts(opts)
+
+	return p
+}
 
 func FromSpecification(spec *specification.Specification, opts ...Option) (*Performance, error) {
 	graph, err := buildGraph(spec)
@@ -71,15 +103,17 @@ func FromSpecification(spec *specification.Specification, opts ...Option) (*Perf
 		ready:           make(chan bool, 1),
 	}
 
-	defer func() {
-		p.ready <- true
-	}()
+	defer p.signalReady()
 
+	p.applyOpts(opts)
+
+	return p, nil
+}
+
+func (p *Performance) applyOpts(opts []Option) {
 	for _, opt := range opts {
 		opt(p)
 	}
-
-	return p, nil
 }
 
 func (p *Performance) ID() string {
@@ -130,12 +164,16 @@ func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 
 func (p *Performance) start(ctx context.Context, steps chan Step) {
 	defer func() {
-		p.ready <- true
+		p.signalReady()
 
 		close(steps)
 	}()
 
 	p.startActions(ctx, steps)
+}
+
+func (p *Performance) signalReady() {
+	p.ready <- true
 }
 
 const defaultEnvStoreInitialSize = 10

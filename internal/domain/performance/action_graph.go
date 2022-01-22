@@ -29,6 +29,18 @@ func (a Action) Thesis() specification.Thesis {
 	return a.thesis
 }
 
+func unmarshalGraph(actions []ActionParam) actionGraph {
+	graph := make(actionGraph, len(actions))
+
+	for _, a := range actions {
+		initGraphActionsLazy(graph, a.From)
+
+		graph[a.From][a.To] = newAction(a.From, a.To, a.Thesis)
+	}
+
+	return graph
+}
+
 func buildGraph(spec *specification.Specification) (actionGraph, error) {
 	graph := make(actionGraph)
 
