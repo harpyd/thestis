@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 
+	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
@@ -33,4 +34,14 @@ type (
 	SpecificSpecificationReadModel interface {
 		FindSpecification(ctx context.Context, qry SpecificSpecificationQuery) (SpecificSpecification, error)
 	}
+)
+
+type (
+	PerformancesRepository interface {
+		GetPerformance(ctx context.Context, perfID string) (*performance.Performance, error)
+		AddPerformance(ctx context.Context, perf *performance.Performance) error
+		DoWithPerformance(ctx context.Context, perfID string, action PerformanceAction) error
+	}
+
+	PerformanceAction func(ctx context.Context, perf *performance.Performance)
 )
