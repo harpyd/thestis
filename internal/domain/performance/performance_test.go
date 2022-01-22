@@ -43,7 +43,7 @@ func TestFromSpecification(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			perf, err := performance.FromSpecification(c.Specification)
+			perf, err := performance.FromSpecification(c.Specification, performance.WithID("perf"))
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))
@@ -55,6 +55,9 @@ func TestFromSpecification(t *testing.T) {
 
 			actions := perf.Actions()
 			require.Len(t, actions, c.ActionsLen)
+			require.Equal(t, "perf", perf.ID())
+			require.Equal(t, c.Specification.ID(), perf.SpecificationID())
+			require.Equal(t, c.Specification.OwnerID(), perf.OwnerID())
 		})
 	}
 }

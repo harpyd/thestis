@@ -12,6 +12,10 @@ import (
 
 type (
 	Performance struct {
+		id              string
+		ownerID         string
+		specificationID string
+
 		performers  map[PerformerType]Performer
 		actionGraph actionGraph
 
@@ -29,6 +33,13 @@ const (
 	HTTPPerformer      PerformerType = "HTTP"
 	AssertionPerformer PerformerType = "assertion"
 )
+
+// WithID fills Performance ID with given value.
+func WithID(id string) Option {
+	return func(p *Performance) {
+		p.id = id
+	}
+}
 
 // WithHTTP registers given Performer as HTTP performer.
 func WithHTTP(performer Performer) Option {
@@ -53,9 +64,11 @@ func FromSpecification(spec *specification.Specification, opts ...Option) (*Perf
 	}
 
 	p := &Performance{
-		actionGraph: graph,
-		performers:  make(map[PerformerType]Performer, defaultPerformersSize),
-		ready:       make(chan bool, 1),
+		ownerID:         spec.OwnerID(),
+		specificationID: spec.ID(),
+		actionGraph:     graph,
+		performers:      make(map[PerformerType]Performer, defaultPerformersSize),
+		ready:           make(chan bool, 1),
 	}
 
 	defer func() {
@@ -67,6 +80,18 @@ func FromSpecification(spec *specification.Specification, opts ...Option) (*Perf
 	}
 
 	return p, nil
+}
+
+func (p *Performance) ID() string {
+	return p.id
+}
+
+func (p *Performance) OwnerID() string {
+	return p.ownerID
+}
+
+func (p *Performance) SpecificationID() string {
+	return p.specificationID
 }
 
 // Actions returns flat slice representation of action graph.
