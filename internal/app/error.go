@@ -18,6 +18,10 @@ type (
 	specificationNotFoundError struct {
 		err error
 	}
+
+	performanceNotFoundError struct {
+		err error
+	}
 )
 
 func NewDatabaseError(err error) error {
@@ -102,4 +106,32 @@ func (e specificationNotFoundError) Unwrap() error {
 
 func (e specificationNotFoundError) Error() string {
 	return fmt.Sprintf("specification not found: %s", e.err)
+}
+
+func NewPerformanceNotFoundError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(performanceNotFoundError{
+		err: err,
+	})
+}
+
+func IsPerformanceNotFoundError(err error) bool {
+	var target performanceNotFoundError
+
+	return errors.As(err, &target)
+}
+
+func (e performanceNotFoundError) Cause() error {
+	return e.err
+}
+
+func (e performanceNotFoundError) Unwrap() error {
+	return e.err
+}
+
+func (e performanceNotFoundError) Error() string {
+	return fmt.Sprintf("performance not found: %s", e.err)
 }
