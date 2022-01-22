@@ -101,3 +101,34 @@ func TestIsSpecificationNotFoundError(t *testing.T) {
 		})
 	}
 }
+
+func TestIsPerformanceNotFoundError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "performance_not_found_error",
+			Err:       app.NewPerformanceNotFoundError(errors.New("no documents")),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error",
+			Err:       errors.New("no documents"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, app.IsPerformanceNotFoundError(c.Err))
+		})
+	}
+}
