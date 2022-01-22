@@ -126,19 +126,23 @@ func marshalToScenarioDocuments(scenarios []specification.Scenario) []scenarioDo
 func marshalToThesisDocuments(theses []specification.Thesis) []thesisDocument {
 	documents := make([]thesisDocument, 0, len(theses))
 	for _, thesis := range theses {
-		documents = append(documents, thesisDocument{
-			Slug:  thesis.Slug(),
-			After: thesis.Dependencies(),
-			Statement: statementDocument{
-				Keyword:   thesis.Statement().Stage().String(),
-				Behaviour: thesis.Statement().Behavior(),
-			},
-			HTTP:      marshalToHTTPDocument(thesis.HTTP()),
-			Assertion: marshalToAssertionDocument(thesis.Assertion()),
-		})
+		documents = append(documents, marshalToThesisDocument(thesis))
 	}
 
 	return documents
+}
+
+func marshalToThesisDocument(thesis specification.Thesis) thesisDocument {
+	return thesisDocument{
+		Slug:  thesis.Slug(),
+		After: thesis.Dependencies(),
+		Statement: statementDocument{
+			Keyword:   thesis.Statement().Stage().String(),
+			Behaviour: thesis.Statement().Behavior(),
+		},
+		HTTP:      marshalToHTTPDocument(thesis.HTTP()),
+		Assertion: marshalToAssertionDocument(thesis.Assertion()),
+	}
 }
 
 func marshalToHTTPDocument(http specification.HTTP) httpDocument {
