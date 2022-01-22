@@ -1,4 +1,4 @@
-name: Prod CI
+name: Main CI
 
 on:
   push:
