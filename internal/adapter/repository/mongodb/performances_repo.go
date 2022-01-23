@@ -8,7 +8,6 @@ import (
 	lock "github.com/square/mongo-lock"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.uber.org/multierr"
 
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/performance"
@@ -78,7 +77,7 @@ func (r *PerformancesRepository) AddPerformance(ctx context.Context, perf *perfo
 	return app.NewDatabaseError(err)
 }
 
-func (r *PerformancesRepository) DoWithPerformance(
+func (r *PerformancesRepository) ExclusivelyDoWithPerformance(
 	ctx context.Context,
 	perfID string,
 	action app.PerformanceAction,
@@ -87,18 +86,18 @@ func (r *PerformancesRepository) DoWithPerformance(
 		return err
 	}
 
-	defer func() {
-		err = multierr.Append(err, r.releaseLock(ctx, perfID))
-	}()
-
 	perf, err := r.GetPerformance(ctx, perfID)
 	if err != nil {
 		return err
 	}
 
-	action(ctx, perf)
+	go func() {
+		defer r.releaseLock(context.Background(), perfID)
 
-	return
+		action(perf)
+	}()
+
+	return nil
 }
 
 func (r *PerformancesRepository) RemoveAllPerformances(ctx context.Context) error {
@@ -118,10 +117,10 @@ func (r *PerformancesRepository) acquireLock(ctx context.Context, perfID string)
 	return app.NewDatabaseError(err)
 }
 
-func (r *PerformancesRepository) releaseLock(ctx context.Context, perfID string) error {
-	_, err := r.locks.Unlock(ctx, performanceLock(perfID))
-
-	return app.NewDatabaseError(err)
+func (r *PerformancesRepository) releaseLock(ctx context.Context, perfID string) {
+	if _, err := r.locks.Unlock(ctx, performanceLock(perfID)); err != nil {
+		panic(app.NewDatabaseError(err))
+	}
 }
 
 func performanceLock(perfID string) string {
