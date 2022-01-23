@@ -79,20 +79,15 @@ func (r *PerformancesRepository) AddPerformance(ctx context.Context, perf *perfo
 
 func (r *PerformancesRepository) ExclusivelyDoWithPerformance(
 	ctx context.Context,
-	perfID string,
+	perf *performance.Performance,
 	action app.PerformanceAction,
 ) error {
-	perf, err := r.GetPerformance(ctx, perfID)
-	if err != nil {
-		return err
-	}
-
-	if err := r.acquireLock(ctx, perfID); err != nil {
+	if err := r.acquireLock(ctx, perf.ID()); err != nil {
 		return err
 	}
 
 	go func() {
-		defer r.releaseLock(context.Background(), perfID)
+		defer r.releaseLock(context.Background(), perf.ID())
 
 		action(perf)
 	}()
