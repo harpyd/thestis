@@ -40,8 +40,8 @@ type (
 	PerformancesRepository interface {
 		GetPerformance(ctx context.Context, perfID string) (*performance.Performance, error)
 		AddPerformance(ctx context.Context, perf *performance.Performance) error
-		DoWithPerformance(ctx context.Context, perfID string, action PerformanceAction) error
+		ExclusivelyDoWithPerformance(ctx context.Context, perfID string, action PerformanceAction) error
 	}
 
-	PerformanceAction func(ctx context.Context, perf *performance.Performance)
+	PerformanceAction func(perf *performance.Performance)
 )
