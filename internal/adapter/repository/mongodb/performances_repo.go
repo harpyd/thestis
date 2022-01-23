@@ -81,13 +81,13 @@ func (r *PerformancesRepository) ExclusivelyDoWithPerformance(
 	ctx context.Context,
 	perfID string,
 	action app.PerformanceAction,
-) (err error) {
-	if err := r.acquireLock(ctx, perfID); err != nil {
+) error {
+	perf, err := r.GetPerformance(ctx, perfID)
+	if err != nil {
 		return err
 	}
 
-	perf, err := r.GetPerformance(ctx, perfID)
-	if err != nil {
+	if err := r.acquireLock(ctx, perfID); err != nil {
 		return err
 	}
 
