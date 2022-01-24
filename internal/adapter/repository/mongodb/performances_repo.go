@@ -62,8 +62,8 @@ func (r *PerformancesRepository) getPerformanceDocument(
 	return document, nil
 }
 
-func makePerformanceFilter(specID, userID string) bson.M {
-	filter := bson.M{"_id": specID}
+func makePerformanceFilter(perfID, userID string) bson.M {
+	filter := bson.M{"_id": perfID}
 	if userID != "" {
 		filter["ownerId"] = userID
 	}
