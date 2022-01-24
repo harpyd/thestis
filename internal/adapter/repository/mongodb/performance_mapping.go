@@ -49,11 +49,10 @@ func (d performanceDocument) unmarshalToPerformance() *performance.Performance {
 	}
 
 	return performance.UnmarshalFromDatabase(performance.Params{
-		ID:              d.ID,
 		OwnerID:         d.OwnerID,
 		SpecificationID: d.SpecificationID,
 		Actions:         actions,
-	})
+	}, performance.WithID(d.ID))
 }
 
 func (d actionDocument) unmarshalToActionParam() performance.ActionParam {

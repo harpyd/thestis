@@ -57,7 +57,6 @@ func WithAssertion(performer Performer) Option {
 
 type (
 	Params struct {
-		ID              string
 		OwnerID         string
 		SpecificationID string
 		Actions         []ActionParam
@@ -74,7 +73,6 @@ const defaultPerformersSize = 2
 
 func UnmarshalFromDatabase(params Params, opts ...Option) *Performance {
 	p := &Performance{
-		id:              params.ID,
 		ownerID:         params.OwnerID,
 		specificationID: params.SpecificationID,
 		actionGraph:     unmarshalGraph(params.Actions),
