@@ -143,10 +143,10 @@ func FlowFromState(commonState, transitionState State, from, to string) *FlowRed
 //
 // You need to use FinallyReduce method to create
 // final version of Flow.
-func (b *FlowReducer) Reduce() Flow {
+func (r *FlowReducer) Reduce() Flow {
 	return Flow{
-		state: b.state,
-		graph: b.copyGraph(),
+		state: r.state,
+		graph: r.copyGraph(),
 	}
 }
 
@@ -155,23 +155,23 @@ func (b *FlowReducer) Reduce() Flow {
 //
 // If all transitions have Passed states and common State equal
 // to Performing, final version of Flow will have Passed State.
-func (b *FlowReducer) FinallyReduce() Flow {
+func (r *FlowReducer) FinallyReduce() Flow {
 	return Flow{
-		state: b.finalState(),
-		graph: b.copyGraph(),
+		state: r.finalState(),
+		graph: r.copyGraph(),
 	}
 }
 
-func (b *FlowReducer) finalState() State {
-	if b.state == Performing && b.allPassed() {
+func (r *FlowReducer) finalState() State {
+	if r.state == Performing && r.allPassed() {
 		return Passed
 	}
 
-	return b.state
+	return r.state
 }
 
-func (b *FlowReducer) allPassed() bool {
-	for _, ts := range b.graph {
+func (r *FlowReducer) allPassed() bool {
+	for _, ts := range r.graph {
 		for _, t := range ts {
 			if t.State() != Passed {
 				return false
@@ -182,10 +182,10 @@ func (b *FlowReducer) allPassed() bool {
 	return true
 }
 
-func (b *FlowReducer) copyGraph() map[string]map[string]Transition {
-	graph := make(map[string]map[string]Transition, len(b.graph))
+func (r *FlowReducer) copyGraph() map[string]map[string]Transition {
+	graph := make(map[string]map[string]Transition, len(r.graph))
 
-	for from, ts := range b.graph {
+	for from, ts := range r.graph {
 		graph[from] = make(map[string]Transition, len(ts))
 
 		for to, t := range ts {
@@ -194,6 +194,12 @@ func (b *FlowReducer) copyGraph() map[string]map[string]Transition {
 	}
 
 	return graph
+}
+
+func (r *FlowReducer) WithID(id string) *FlowReducer {
+	r.id = id
+
+	return r
 }
 
 // WithStep is method for step by step collecting Step's to for their
@@ -234,27 +240,27 @@ func (b *FlowReducer) copyGraph() map[string]map[string]Transition {
 // Canceled -> Failed => Failed;
 // Canceled -> Crashed => Crashed;
 // Canceled -> Canceled => Canceled.
-func (b *FlowReducer) WithStep(step Step) *FlowReducer {
-	b.state = b.commonRules.apply(b.state, step.State())
+func (r *FlowReducer) WithStep(step Step) *FlowReducer {
+	r.state = r.commonRules.apply(r.state, step.State())
 
-	t, ok := b.transitionFromStep(step)
+	t, ok := r.transitionFromStep(step)
 	if !ok {
-		return b
+		return r
 	}
 
-	t.state = b.specificRules.apply(t.state, step.State())
+	t.state = r.specificRules.apply(t.state, step.State())
 	t.err = multierr.Append(t.err, step.Err())
 
-	return b
+	return r
 }
 
-func (b *FlowReducer) transitionFromStep(step Step) (*Transition, bool) {
+func (r *FlowReducer) transitionFromStep(step Step) (*Transition, bool) {
 	from, to, ok := step.FromTo()
 	if !ok {
 		return nil, false
 	}
 
-	t, ok := b.graph[from][to]
+	t, ok := r.graph[from][to]
 	if !ok {
 		return nil, false
 	}
