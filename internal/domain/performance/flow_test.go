@@ -10,6 +10,72 @@ import (
 	"github.com/harpyd/thestis/internal/domain/performance/mock"
 )
 
+const (
+	from = "from"
+	to   = "to"
+)
+
+func TestNewTransition(t *testing.T) {
+	t.Parallel()
+
+	type params struct {
+		State performance.State
+		Error string
+	}
+
+	testCases := []struct {
+		Name    string
+		Params  params
+		WithErr bool
+		IsErr   func(err error) bool
+	}{
+		{
+			Name: "without_error",
+			Params: params{
+				State: performance.Performing,
+			},
+			WithErr: false,
+		},
+		{
+			Name: "with_failed_error",
+			Params: params{
+				State: performance.Failed,
+				Error: "performance failed: something wrong",
+			},
+			WithErr: true,
+			IsErr:   performance.IsFailedError,
+		},
+		{
+			Name: "with_crashed_error",
+			Params: params{
+				State: performance.Crashed,
+				Error: "performance crashed: something wrong",
+			},
+			WithErr: true,
+			IsErr:   performance.IsCrashedError,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			transition := performance.NewTransition(c.Params.State, from, to, c.Params.Error)
+
+			if c.WithErr {
+				require.True(t, c.IsErr(transition.Err()))
+				require.EqualError(t, transition.Err(), c.Params.Error)
+			}
+
+			require.Equal(t, c.Params.State, transition.State())
+			require.Equal(t, from, transition.From())
+			require.Equal(t, to, transition.To())
+		})
+	}
+}
+
 func TestFlowFromPerformance(t *testing.T) {
 	t.Parallel()
 
@@ -55,11 +121,6 @@ func TestFlowReducer_WithStep_from_performance_start(t *testing.T) {
 	flow := b.FinallyReduce()
 	require.Equal(t, performance.Passed, flow.State())
 }
-
-const (
-	from = "from"
-	to   = "to"
-)
 
 func TestFlowReducer_WithStep_flow_common_state(t *testing.T) {
 	t.Parallel()

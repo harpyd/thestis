@@ -78,6 +78,15 @@ func (f Flow) Transitions() []Transition {
 	return transitions
 }
 
+func NewTransition(state State, from, to, errMsg string) Transition {
+	return Transition{
+		from:  from,
+		to:    to,
+		state: state,
+		err:   newTransitionError(state, errMsg),
+	}
+}
+
 func (t Transition) From() string {
 	return t.from
 }
@@ -92,6 +101,42 @@ func (t Transition) State() State {
 
 func (t Transition) Err() error {
 	return t.err
+}
+
+type FlowParams struct {
+	ID            string
+	PerformanceID string
+	State         State
+	Transitions   []Transition
+}
+
+func UnmarshalFlowFromDatabase(params FlowParams) Flow {
+	return Flow{
+		id:            params.ID,
+		performanceID: params.PerformanceID,
+		state:         params.State,
+		graph:         unmarshalFlowGraph(params.Transitions),
+	}
+}
+
+func unmarshalFlowGraph(transitions []Transition) map[string]map[string]Transition {
+	graph := make(map[string]map[string]Transition, len(transitions))
+
+	for _, t := range transitions {
+		initGraphTransitionsLazy(graph, t.From())
+
+		graph[t.From()][t.To()] = t
+	}
+
+	return graph
+}
+
+const defaultTransitionsSize = 1
+
+func initGraphTransitionsLazy(graph map[string]map[string]Transition, vertex string) {
+	if graph[vertex] == nil {
+		graph[vertex] = make(map[string]Transition, defaultTransitionsSize)
+	}
 }
 
 func FlowFromPerformance(perf *Performance) *FlowReducer {
