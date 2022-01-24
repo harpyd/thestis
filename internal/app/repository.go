@@ -49,3 +49,8 @@ type (
 
 	PerformanceAction func(perf *performance.Performance)
 )
+
+type FlowsRepository interface {
+	GetFlow(ctx context.Context, flowID string) (performance.Flow, error)
+	UpsertFlow(ctx context.Context, flow performance.Flow) error
+}
