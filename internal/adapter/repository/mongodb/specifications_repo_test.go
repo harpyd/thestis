@@ -127,6 +127,8 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 }
 
 func (s *SpecificationsRepositoryTestSuite) getSpecification(specID string) *specification.Specification {
+	s.T().Helper()
+
 	spec, err := s.repo.GetSpecification(context.Background(), specID)
 	s.Require().NoError(err)
 
@@ -134,6 +136,8 @@ func (s *SpecificationsRepositoryTestSuite) getSpecification(specID string) *spe
 }
 
 func (s *SpecificationsRepositoryTestSuite) addSpecifications(specs ...*specification.Specification) {
+	s.T().Helper()
+
 	ctx := context.Background()
 
 	for _, spec := range specs {
