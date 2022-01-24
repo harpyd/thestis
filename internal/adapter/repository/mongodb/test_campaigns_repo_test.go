@@ -226,6 +226,8 @@ func (s *TestCampaignsRepositoryTestSuite) TestUpdateTestCampaign() {
 }
 
 func (s *TestCampaignsRepositoryTestSuite) addTestCampaigns(tcs ...*testcampaign.TestCampaign) {
+	s.T().Helper()
+
 	ctx := context.Background()
 
 	for _, tc := range tcs {
@@ -235,6 +237,8 @@ func (s *TestCampaignsRepositoryTestSuite) addTestCampaigns(tcs ...*testcampaign
 }
 
 func (s *TestCampaignsRepositoryTestSuite) getTestCampaign(tcID string) *testcampaign.TestCampaign {
+	s.T().Helper()
+
 	tc, err := s.repo.GetTestCampaign(context.Background(), tcID)
 	s.Require().NoError(err)
 
