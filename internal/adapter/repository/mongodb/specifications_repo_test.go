@@ -94,7 +94,7 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 		IsErr                func(err error) bool
 	}{
 		{
-			Name: "with_id_author_and_title",
+			Name: "successful_adding",
 			SpecificationFactory: func() *specification.Specification {
 				return specification.NewBuilder().
 					WithID("f517f320-7d07-44a5-9fbf-7e1eb6889e87").

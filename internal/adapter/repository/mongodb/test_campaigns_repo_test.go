@@ -96,7 +96,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 		IsErr                func(err error) bool
 	}{
 		{
-			Name: "with_all_fields",
+			Name: "successful_adding_with_all_fields",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
 				tc, err := testcampaign.New(testcampaign.Params{
 					ID:       "e75690c2-e659-409d-a528-ffd40d17c4bc",
@@ -111,7 +111,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 			ShouldBeErr: false,
 		},
 		{
-			Name: "without_view_name",
+			Name: "successful_adding_without_view_name",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
 				tc, err := testcampaign.New(testcampaign.Params{
 					ID:       "1153796c-58d4-4b26-8c2f-f32a1a875dac",
@@ -126,7 +126,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 			ShouldBeErr: false,
 		},
 		{
-			Name: "without_summary",
+			Name: "successful_adding_without_summary",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
 				tc, err := testcampaign.New(testcampaign.Params{
 					ID:       "9ed07209-7a4f-4dd9-bf0d-6f8b70280f85",
