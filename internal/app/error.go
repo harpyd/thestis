@@ -22,6 +22,10 @@ type (
 	performanceNotFoundError struct {
 		err error
 	}
+
+	flowNotFoundError struct {
+		err error
+	}
 )
 
 func NewDatabaseError(err error) error {
@@ -134,4 +138,32 @@ func (e performanceNotFoundError) Unwrap() error {
 
 func (e performanceNotFoundError) Error() string {
 	return fmt.Sprintf("performance not found: %s", e.err)
+}
+
+func NewFlowNotFoundError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(flowNotFoundError{
+		err: err,
+	})
+}
+
+func IsFlowNotFoundError(err error) bool {
+	var target flowNotFoundError
+
+	return errors.As(err, &target)
+}
+
+func (e flowNotFoundError) Cause() error {
+	return e.err
+}
+
+func (e flowNotFoundError) Unwrap() error {
+	return e.err
+}
+
+func (e flowNotFoundError) Error() string {
+	return fmt.Sprintf("flow not found: %s", e.err)
 }
