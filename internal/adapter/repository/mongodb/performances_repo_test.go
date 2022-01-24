@@ -2,6 +2,7 @@ package mongodb_test
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -47,25 +48,10 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 		{
 			Name: "successful_adding",
 			PerformanceFactory: func() *performance.Performance {
-				thesis, err := specification.NewThesisBuilder().
-					WithStatement("given", "test").
-					WithAssertion(func(b *specification.AssertionBuilder) {
-						b.WithMethod("jsonpath")
-						b.WithAssert("some", "value")
-					}).
-					Build("to")
-				s.Require().NoError(err)
-
 				return performance.UnmarshalFromDatabase(performance.Params{
 					OwnerID:         "3614a95c-c278-4687-84e2-97b95b11d399",
 					SpecificationID: "4e4465b0-a312-4f86-9051-a3ae72965215",
-					Actions: []performance.ActionParam{
-						{
-							From:   "stage.given",
-							To:     "story.scenario.to",
-							Thesis: thesis,
-						},
-					},
+					Actions:         []performance.ActionParam{s.actionParam()},
 				}, performance.WithID("3ce098e1-81ae-4610-8372-2f635b1b6a0c"))
 			},
 			ShouldBeErr: false,
@@ -92,6 +78,80 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 	}
 }
 
+func (s *PerformancesRepositoryTestSuite) TestExclusivelyDoWithPerformance_concurrent_actions() {
+	perf := performance.UnmarshalFromDatabase(performance.Params{
+		OwnerID:         "e6cd6e6d-f58f-4a3e-a4d3-6b23dce29750",
+		SpecificationID: "d91da0ce-1caa-43d6-95c0-1a03a9d3cd52",
+		Actions:         []performance.ActionParam{s.actionParam()},
+	}, performance.WithID("9a07bd86-3b6a-4202-88ec-633c1b5a1e91"))
+
+	s.addPerformances(perf)
+
+	const actionsNumber = 100
+
+	var (
+		finish = make(chan bool)
+		errors = make(chan error)
+	)
+
+	go func() {
+		defer close(errors)
+
+		ctx := context.Background()
+
+		var wg sync.WaitGroup
+
+		wg.Add(actionsNumber)
+
+		for i := 1; i <= actionsNumber; i++ {
+			go func() {
+				defer wg.Done()
+
+				perfCopy := s.getPerformance(perf.ID())
+
+				if err := s.repo.ExclusivelyDoWithPerformance(ctx, perfCopy, func(perf *performance.Performance) {
+					finish <- true
+				}); err != nil {
+					errors <- err
+				}
+			}()
+		}
+
+		wg.Wait()
+	}()
+
+	alreadyStartedErrsCount := 0
+
+	for err := range errors {
+		if performance.IsAlreadyStartedError(err) {
+			alreadyStartedErrsCount++
+		}
+	}
+
+	s.Require().Equal(actionsNumber-1, alreadyStartedErrsCount)
+
+	<-finish
+}
+
+func (s *PerformancesRepositoryTestSuite) actionParam() performance.ActionParam {
+	s.T().Helper()
+
+	thesis, err := specification.NewThesisBuilder().
+		WithStatement("given", "test").
+		WithAssertion(func(b *specification.AssertionBuilder) {
+			b.WithMethod("jsonpath")
+			b.WithAssert("some", "value")
+		}).
+		Build("to")
+	s.Require().NoError(err)
+
+	return performance.ActionParam{
+		From:   "stage.given",
+		To:     "story.scenario.to",
+		Thesis: thesis,
+	}
+}
+
 func (s *PerformancesRepositoryTestSuite) getPerformance(perfID string) *performance.Performance {
 	s.T().Helper()
 
@@ -99,6 +159,17 @@ func (s *PerformancesRepositoryTestSuite) getPerformance(perfID string) *perform
 	s.Require().NoError(err)
 
 	return perf
+}
+
+func (s *PerformancesRepositoryTestSuite) addPerformances(perfs ...*performance.Performance) {
+	s.T().Helper()
+
+	ctx := context.Background()
+
+	for _, perf := range perfs {
+		err := s.repo.AddPerformance(ctx, perf)
+		s.Require().NoError(err)
+	}
 }
 
 func (s *PerformancesRepositoryTestSuite) requirePerformancesEqual(expected, actual *performance.Performance) {
