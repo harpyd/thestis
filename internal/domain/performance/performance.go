@@ -141,7 +141,7 @@ func (p *Performance) Actions() []Action {
 
 // Start asynchronously starts performing of Performance action graph.
 // Start returns chan of flow Step's. With Step's you can build Flow
-// using FlowBuilder.
+// using FlowReducer.
 //
 // Only ONE performing can be start at a time. If one goroutine has captured
 // performing, then others calls of Start will be return error that can

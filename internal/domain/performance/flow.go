@@ -24,6 +24,9 @@ type (
 	// Flow keeps transitions information
 	// and common state of performing.
 	Flow struct {
+		id            string
+		performanceID string
+
 		state State
 		graph map[string]map[string]Transition
 	}
@@ -35,18 +38,29 @@ type (
 		err   error
 	}
 
-	// FlowBuilder builds Flow instance using WithStep,
-	// Build and FinallyBuild methods.
+	// FlowReducer builds Flow instance using WithStep,
+	// Reduce and FinallyReduce methods.
 	//
-	// FlowBuilder defines Flow common state transition rules
+	// FlowReducer defines Flow common state transition rules
 	// in WithStep method.
-	FlowBuilder struct {
+	FlowReducer struct {
+		id            string
+		performanceID string
+
 		state         State
 		graph         map[string]map[string]*Transition
 		commonRules   stateTransitionRules
 		specificRules stateTransitionRules
 	}
 )
+
+func (f Flow) ID() string {
+	return f.id
+}
+
+func (f Flow) PerformanceID() string {
+	return f.performanceID
+}
 
 func (f Flow) State() State {
 	return f.state
@@ -80,7 +94,7 @@ func (t Transition) Err() error {
 	return t.err
 }
 
-func NewFlowBuilder(perf *Performance) *FlowBuilder {
+func FlowFromPerformance(perf *Performance) *FlowReducer {
 	graph := make(map[string]map[string]*Transition, len(perf.actionGraph))
 
 	for from, as := range perf.actionGraph {
@@ -95,7 +109,8 @@ func NewFlowBuilder(perf *Performance) *FlowBuilder {
 		}
 	}
 
-	return &FlowBuilder{
+	return &FlowReducer{
+		performanceID: perf.ID(),
 		state:         NotPerformed,
 		graph:         graph,
 		commonRules:   newCommonStateTransitionRules(),
@@ -103,7 +118,7 @@ func NewFlowBuilder(perf *Performance) *FlowBuilder {
 	}
 }
 
-func NewTunedFlowBuilder(commonState, transitionState State, from, to string) *FlowBuilder {
+func FlowFromState(commonState, transitionState State, from, to string) *FlowReducer {
 	graph := map[string]map[string]*Transition{
 		from: {
 			to: &Transition{
@@ -114,7 +129,7 @@ func NewTunedFlowBuilder(commonState, transitionState State, from, to string) *F
 		},
 	}
 
-	return &FlowBuilder{
+	return &FlowReducer{
 		state:         commonState,
 		graph:         graph,
 		commonRules:   newCommonStateTransitionRules(),
@@ -122,32 +137,32 @@ func NewTunedFlowBuilder(commonState, transitionState State, from, to string) *F
 	}
 }
 
-// Build creates intermediate version of Flow from FlowBuilder.
+// Reduce creates intermediate version of Flow from FlowReducer.
 // Flow created using this method can't have a State equal
 // to Passed.
 //
-// You need to use FinallyBuild method to create
+// You need to use FinallyReduce method to create
 // final version of Flow.
-func (b *FlowBuilder) Build() Flow {
+func (b *FlowReducer) Reduce() Flow {
 	return Flow{
 		state: b.state,
 		graph: b.copyGraph(),
 	}
 }
 
-// FinallyBuild creates final version of Flow from FlowBuilder.
+// FinallyReduce creates final version of Flow from FlowReducer.
 // Flow created using this method represents final Performance's Flow.
 //
 // If all transitions have Passed states and common State equal
 // to Performing, final version of Flow will have Passed State.
-func (b *FlowBuilder) FinallyBuild() Flow {
+func (b *FlowReducer) FinallyReduce() Flow {
 	return Flow{
 		state: b.finalState(),
 		graph: b.copyGraph(),
 	}
 }
 
-func (b *FlowBuilder) finalState() State {
+func (b *FlowReducer) finalState() State {
 	if b.state == Performing && b.allPassed() {
 		return Passed
 	}
@@ -155,7 +170,7 @@ func (b *FlowBuilder) finalState() State {
 	return b.state
 }
 
-func (b *FlowBuilder) allPassed() bool {
+func (b *FlowReducer) allPassed() bool {
 	for _, ts := range b.graph {
 		for _, t := range ts {
 			if t.State() != Passed {
@@ -167,7 +182,7 @@ func (b *FlowBuilder) allPassed() bool {
 	return true
 }
 
-func (b *FlowBuilder) copyGraph() map[string]map[string]Transition {
+func (b *FlowReducer) copyGraph() map[string]map[string]Transition {
 	graph := make(map[string]map[string]Transition, len(b.graph))
 
 	for from, ts := range b.graph {
@@ -181,10 +196,10 @@ func (b *FlowBuilder) copyGraph() map[string]map[string]Transition {
 	return graph
 }
 
-// WithStep is method for step by step building of Flow.
-// Also, this method defines Flow common state transition rules.
+// WithStep is method for step by step collecting Step's to for their
+// further reduction with FlowReducer's Reduce or FinallyReduce.
 //
-// Rules:
+// Also, this method defines Flow common state transition rules:
 // NotPerformed -> NotPerformed => NotPerformed;
 // NotPerformed -> Performing => Performing;
 // NotPerformed -> Passed => Performing;
@@ -219,7 +234,7 @@ func (b *FlowBuilder) copyGraph() map[string]map[string]Transition {
 // Canceled -> Failed => Failed;
 // Canceled -> Crashed => Crashed;
 // Canceled -> Canceled => Canceled.
-func (b *FlowBuilder) WithStep(step Step) *FlowBuilder {
+func (b *FlowReducer) WithStep(step Step) *FlowReducer {
 	b.state = b.commonRules.apply(b.state, step.State())
 
 	t, ok := b.transitionFromStep(step)
@@ -233,7 +248,7 @@ func (b *FlowBuilder) WithStep(step Step) *FlowBuilder {
 	return b
 }
 
-func (b *FlowBuilder) transitionFromStep(step Step) (*Transition, bool) {
+func (b *FlowReducer) transitionFromStep(step Step) (*Transition, bool) {
 	from, to, ok := step.FromTo()
 	if !ok {
 		return nil, false

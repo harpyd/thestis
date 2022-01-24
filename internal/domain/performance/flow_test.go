@@ -10,7 +10,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/performance/mock"
 )
 
-func TestNewFlowBuilder_build_from_new_builder(t *testing.T) {
+func TestFlowFromPerformance(t *testing.T) {
 	t.Parallel()
 
 	spec := validSpecification(t)
@@ -18,14 +18,14 @@ func TestNewFlowBuilder_build_from_new_builder(t *testing.T) {
 	perf, err := performance.FromSpecification(spec)
 	require.NoError(t, err)
 
-	b := performance.NewFlowBuilder(perf)
-	flow := b.Build()
+	b := performance.FlowFromPerformance(perf)
+	flow := b.Reduce()
 
 	require.Equal(t, performance.NotPerformed, flow.State())
 	require.Len(t, flow.Transitions(), len(perf.Actions()))
 }
 
-func TestFlowBuilder_WithStep_from_valid_performance_start(t *testing.T) {
+func TestFlowReducer_WithStep_from_performance_start(t *testing.T) {
 	t.Parallel()
 
 	spec := validSpecification(t)
@@ -40,7 +40,7 @@ func TestFlowBuilder_WithStep_from_valid_performance_start(t *testing.T) {
 	steps, err := perf.Start(context.Background())
 	require.NoError(t, err)
 
-	b := performance.NewFlowBuilder(perf)
+	b := performance.FlowFromPerformance(perf)
 
 	for s := range steps {
 		requireStepNotError(t, s)
@@ -48,11 +48,11 @@ func TestFlowBuilder_WithStep_from_valid_performance_start(t *testing.T) {
 
 		b.WithStep(s)
 
-		flow := b.Build()
+		flow := b.Reduce()
 		require.Equal(t, performance.Performing, flow.State())
 	}
 
-	flow := b.FinallyBuild()
+	flow := b.FinallyReduce()
 	require.Equal(t, performance.Passed, flow.State())
 }
 
@@ -61,7 +61,7 @@ const (
 	to   = "to"
 )
 
-func TestFlowBuilder_WithStep_flow_common_state(t *testing.T) {
+func TestFlowReducer_WithStep_flow_common_state(t *testing.T) {
 	t.Parallel()
 
 	type expectedStates struct {
@@ -353,7 +353,7 @@ func TestFlowBuilder_WithStep_flow_common_state(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			b := performance.NewTunedFlowBuilder(
+			b := performance.FlowFromState(
 				c.StartCommonState,
 				performance.NotPerformed,
 				from, to,
@@ -361,8 +361,8 @@ func TestFlowBuilder_WithStep_flow_common_state(t *testing.T) {
 
 			b.WithStep(step(t, c.StepState))
 
-			flow := b.Build()
-			finalFlow := b.FinallyBuild()
+			flow := b.Reduce()
+			finalFlow := b.FinallyReduce()
 
 			require.Equal(t, c.Expected.CommonState, flow.State())
 			require.Equal(t, c.Expected.FinalCommonState, finalFlow.State())
@@ -370,7 +370,7 @@ func TestFlowBuilder_WithStep_flow_common_state(t *testing.T) {
 	}
 }
 
-func TestFlowBuilder_WithStep_transition_state(t *testing.T) {
+func TestFlowReducer_WithStep_transition_state(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -567,7 +567,7 @@ func TestFlowBuilder_WithStep_transition_state(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			b := performance.NewTunedFlowBuilder(
+			b := performance.FlowFromState(
 				performance.NotPerformed,
 				c.StartTransitionState,
 				from, to,
@@ -575,8 +575,8 @@ func TestFlowBuilder_WithStep_transition_state(t *testing.T) {
 
 			b.WithStep(step(t, c.StepState))
 
-			flow := b.Build()
-			finalFlow := b.FinallyBuild()
+			flow := b.Reduce()
+			finalFlow := b.FinallyReduce()
 
 			require.Equal(t, c.ExpectedTransitionState, flow.Transitions()[0].State())
 			require.Equal(t, c.ExpectedTransitionState, finalFlow.Transitions()[0].State())
