@@ -14,9 +14,10 @@ type (
 	}
 
 	actionDocument struct {
-		From   string         `bson:"from"`
-		To     string         `bson:"to"`
-		Thesis thesisDocument `bson:"thesis"`
+		From          string                    `bson:"from"`
+		To            string                    `bson:"to"`
+		Thesis        thesisDocument            `bson:"thesis"`
+		PerformerType performance.PerformerType `bson:"performerType"`
 	}
 )
 
@@ -33,9 +34,10 @@ func marshalToActionDocuments(actions []performance.Action) []actionDocument {
 	documents := make([]actionDocument, 0, len(actions))
 	for _, a := range actions {
 		documents = append(documents, actionDocument{
-			From:   a.From(),
-			To:     a.To(),
-			Thesis: marshalToThesisDocument(a.Thesis()),
+			From:          a.From(),
+			To:            a.To(),
+			Thesis:        marshalToThesisDocument(a.Thesis()),
+			PerformerType: a.PerformerType(),
 		})
 	}
 
@@ -43,9 +45,9 @@ func marshalToActionDocuments(actions []performance.Action) []actionDocument {
 }
 
 func (d performanceDocument) unmarshalToPerformance() *performance.Performance {
-	actions := make([]performance.ActionParam, 0, len(d.Actions))
+	actions := make([]performance.Action, 0, len(d.Actions))
 	for _, a := range d.Actions {
-		actions = append(actions, a.unmarshalToActionParam())
+		actions = append(actions, a.unmarshalToAction())
 	}
 
 	return performance.UnmarshalFromDatabase(performance.Params{
@@ -55,14 +57,10 @@ func (d performanceDocument) unmarshalToPerformance() *performance.Performance {
 	}, performance.WithID(d.ID))
 }
 
-func (d actionDocument) unmarshalToActionParam() performance.ActionParam {
+func (d actionDocument) unmarshalToAction() performance.Action {
 	thesisBuilder := specification.NewThesisBuilder()
 	buildFn := d.Thesis.unmarshalToThesisBuildFn()
 	buildFn(thesisBuilder)
 
-	return performance.ActionParam{
-		From:   d.From,
-		To:     d.To,
-		Thesis: thesisBuilder.ErrlessBuild(d.Thesis.Slug),
-	}
+	return performance.NewAction(d.From, d.To, thesisBuilder.ErrlessBuild(d.Thesis.Slug), d.PerformerType)
 }

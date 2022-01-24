@@ -59,13 +59,7 @@ type (
 	Params struct {
 		OwnerID         string
 		SpecificationID string
-		Actions         []ActionParam
-	}
-
-	ActionParam struct {
-		From   string
-		To     string
-		Thesis specification.Thesis
+		Actions         []Action
 	}
 )
 

@@ -17,6 +17,15 @@ type (
 	}
 )
 
+func NewAction(from, to string, thesis specification.Thesis, performerType PerformerType) Action {
+	return Action{
+		from:          from,
+		to:            to,
+		thesis:        thesis,
+		performerType: performerType,
+	}
+}
+
 func (a Action) From() string {
 	return a.from
 }
@@ -29,13 +38,17 @@ func (a Action) Thesis() specification.Thesis {
 	return a.thesis
 }
 
-func unmarshalGraph(actions []ActionParam) actionGraph {
+func (a Action) PerformerType() PerformerType {
+	return a.performerType
+}
+
+func unmarshalGraph(actions []Action) actionGraph {
 	graph := make(actionGraph, len(actions))
 
 	for _, a := range actions {
-		initGraphActionsLazy(graph, a.From)
+		initGraphActionsLazy(graph, a.From())
 
-		graph[a.From][a.To] = newAction(a.From, a.To, a.Thesis)
+		graph[a.From()][a.To()] = newThesisAction(a.From(), a.To(), a.Thesis())
 	}
 
 	return graph
@@ -103,7 +116,7 @@ func addDependenciesDependentActions(
 
 		initGraphActionsLazy(graph, from)
 
-		graph[from][to] = newAction(from, to, thesis)
+		graph[from][to] = newThesisAction(from, to, thesis)
 	}
 }
 
@@ -120,7 +133,7 @@ func addStageDependentAction(
 
 	initGraphActionsLazy(graph, from)
 
-	graph[from][to] = newAction(from, to, thesis)
+	graph[from][to] = newThesisAction(from, to, thesis)
 }
 
 func addThesesDependentEmptyActions(
@@ -177,7 +190,7 @@ func initGraphActionsLazy(graph actionGraph, vertex string) {
 	}
 }
 
-func newAction(from, to string, thesis specification.Thesis) Action {
+func newThesisAction(from, to string, thesis specification.Thesis) Action {
 	return Action{
 		from:          from,
 		to:            to,
