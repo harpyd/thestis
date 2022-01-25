@@ -28,12 +28,13 @@ type (
 	// SpecificSpecification is most detailed application layer
 	// representation of specification.Specification.
 	SpecificSpecification struct {
-		ID          string
-		LoadedAt    time.Time
-		Author      string
-		Title       string
-		Description string
-		Stories     []Story
+		ID            string
+		PerformanceID string
+		LoadedAt      time.Time
+		Author        string
+		Title         string
+		Description   string
+		Stories       []Story
 	}
 
 	Story struct {
