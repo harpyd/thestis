@@ -22,6 +22,7 @@ type (
 		ViewName              string
 		Summary               string
 		ActiveSpecificationID string
+		CreatedAt             time.Time
 	}
 
 	// SpecificSpecification is most detailed application layer

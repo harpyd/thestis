@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -33,10 +34,11 @@ func (h CreateTestCampaignHandler) Handle(
 	testCampaignID = uuid.New().String()
 
 	tc, err := testcampaign.New(testcampaign.Params{
-		ID:       testCampaignID,
-		OwnerID:  cmd.OwnerID,
-		ViewName: cmd.ViewName,
-		Summary:  cmd.Summary,
+		ID:        testCampaignID,
+		OwnerID:   cmd.OwnerID,
+		ViewName:  cmd.ViewName,
+		Summary:   cmd.Summary,
+		CreatedAt: time.Now().UTC(),
 	})
 	if err != nil {
 		return "", err
