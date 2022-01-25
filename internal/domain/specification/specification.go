@@ -10,9 +10,11 @@ import (
 
 type (
 	Specification struct {
-		id          string
-		ownerID     string
-		loadedAt    time.Time
+		id            string
+		ownerID       string
+		performanceID string
+		loadedAt      time.Time
+
 		author      string
 		title       string
 		description string
@@ -23,6 +25,7 @@ type (
 		id             string
 		ownerID        string
 		loadedAt       time.Time
+		performanceID  string
 		author         string
 		title          string
 		description    string
@@ -38,6 +41,10 @@ func (s *Specification) ID() string {
 
 func (s *Specification) OwnerID() string {
 	return s.ownerID
+}
+
+func (s *Specification) PerformanceID() string {
+	return s.performanceID
 }
 
 func (s *Specification) LoadedAt() time.Time {
@@ -106,13 +113,14 @@ func NewBuilder() *Builder {
 
 func (b *Builder) Build() (*Specification, error) {
 	spec := &Specification{
-		id:          b.id,
-		ownerID:     b.ownerID,
-		loadedAt:    b.loadedAt,
-		author:      b.author,
-		title:       b.title,
-		description: b.description,
-		stories:     make(map[string]Story, len(b.storyFactories)),
+		id:            b.id,
+		ownerID:       b.ownerID,
+		performanceID: b.performanceID,
+		loadedAt:      b.loadedAt,
+		author:        b.author,
+		title:         b.title,
+		description:   b.description,
+		stories:       make(map[string]Story, len(b.storyFactories)),
 	}
 
 	if len(b.storyFactories) == 0 {
@@ -158,6 +166,12 @@ func (b *Builder) WithID(id string) *Builder {
 
 func (b *Builder) WithOwnerID(ownerID string) *Builder {
 	b.ownerID = ownerID
+
+	return b
+}
+
+func (b *Builder) WithPerformanceID(performanceID string) *Builder {
+	b.performanceID = performanceID
 
 	return b
 }
