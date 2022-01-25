@@ -73,7 +73,7 @@ func (h LoadSpecificationHandler) loadSpecification(
 			bytes.NewReader(cmd.Content),
 			app.WithSpecificationID(specID),
 			app.WithSpecificationOwnerID(tc.OwnerID()),
-			app.WithSpecificationLoadedAt(time.Now()),
+			app.WithSpecificationLoadedAt(time.Now().UTC()),
 		)
 		if err != nil {
 			return nil, err
