@@ -62,12 +62,13 @@ func marshalToSpecificationResponse(w http.ResponseWriter, r *http.Request, spec
 
 func marshalToSpecification(spec app.SpecificSpecification) Specification {
 	res := Specification{
-		Id:          spec.ID,
-		LoadedAt:    spec.LoadedAt,
-		Author:      &spec.Author,
-		Title:       &spec.Title,
-		Description: &spec.Description,
-		Stories:     make([]Story, 0, len(spec.Stories)),
+		Id:             spec.ID,
+		TestCampaignId: spec.TestCampaignID,
+		LoadedAt:       spec.LoadedAt,
+		Author:         &spec.Author,
+		Title:          &spec.Title,
+		Description:    &spec.Description,
+		Stories:        make([]Story, 0, len(spec.Stories)),
 	}
 
 	for _, s := range spec.Stories {

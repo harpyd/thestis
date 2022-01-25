@@ -539,10 +539,14 @@ components:
       type: object
       required:
         - id
+        - testCampaignId
         - stories
         - loadedAt
       properties:
         id:
+          type: string
+          format: uuid
+        testCampaignId:
           type: string
           format: uuid
         loadedAt:
