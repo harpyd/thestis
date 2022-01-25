@@ -149,12 +149,13 @@ type ScenarioPerformance struct {
 
 // Specification defines model for Specification.
 type Specification struct {
-	Author      *string   `json:"author,omitempty"`
-	Description *string   `json:"description,omitempty"`
-	Id          string    `json:"id"`
-	LoadedAt    time.Time `json:"loadedAt"`
-	Stories     []Story   `json:"stories"`
-	Title       *string   `json:"title,omitempty"`
+	Author         *string   `json:"author,omitempty"`
+	Description    *string   `json:"description,omitempty"`
+	Id             string    `json:"id"`
+	LoadedAt       time.Time `json:"loadedAt"`
+	Stories        []Story   `json:"stories"`
+	TestCampaignId string    `json:"testCampaignId"`
+	Title          *string   `json:"title,omitempty"`
 }
 
 // SpecificationResponse defines model for SpecificationResponse.
