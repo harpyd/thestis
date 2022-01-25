@@ -42,15 +42,15 @@ func TestBuilder_WithOwnerID(t *testing.T) {
 	require.Equal(t, "134dfe2b-850c-4fc9-8b4a-f76896ff157a", spec.OwnerID())
 }
 
-func TestBuilder_WithPerformanceID(t *testing.T) {
+func TestBuilder_WithTestCampaignID(t *testing.T) {
 	t.Parallel()
 
 	builder := specification.NewBuilder()
-	builder.WithPerformanceID("d8672f47-0a61-4ebc-84d5-2ea197b67d25")
+	builder.WithTestCampaignID("d8672f47-0a61-4ebc-84d5-2ea197b67d25")
 
 	spec := builder.ErrlessBuild()
 
-	require.Equal(t, "d8672f47-0a61-4ebc-84d5-2ea197b67d25", spec.PerformanceID())
+	require.Equal(t, "d8672f47-0a61-4ebc-84d5-2ea197b67d25", spec.TestCampaignID())
 }
 
 func TestBuilder_WithLoadedAt(t *testing.T) {

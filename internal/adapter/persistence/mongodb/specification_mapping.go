@@ -9,14 +9,14 @@ import (
 
 type (
 	specificationDocument struct {
-		ID            string          `bson:"_id,omitempty"`
-		OwnerID       string          `bson:"ownerId"`
-		PerformanceID string          `bson:"performanceId"`
-		LoadedAt      time.Time       `bson:"loadedAt"`
-		Author        string          `bson:"author"`
-		Title         string          `bson:"title"`
-		Description   string          `bson:"description"`
-		Stories       []storyDocument `bson:"stories"`
+		ID             string          `bson:"_id,omitempty"`
+		OwnerID        string          `bson:"ownerId"`
+		TestCampaignID string          `bson:"testCampaignId"`
+		LoadedAt       time.Time       `bson:"loadedAt"`
+		Author         string          `bson:"author"`
+		Title          string          `bson:"title"`
+		Description    string          `bson:"description"`
+		Stories        []storyDocument `bson:"stories"`
 	}
 
 	storyDocument struct {
@@ -79,14 +79,14 @@ func marshalToSpecificationDocument(spec *specification.Specification) specifica
 	stories, _ := spec.Stories()
 
 	return specificationDocument{
-		ID:            spec.ID(),
-		OwnerID:       spec.OwnerID(),
-		PerformanceID: spec.PerformanceID(),
-		LoadedAt:      spec.LoadedAt(),
-		Author:        spec.Author(),
-		Title:         spec.Title(),
-		Description:   spec.Description(),
-		Stories:       marshalToStoryDocuments(stories),
+		ID:             spec.ID(),
+		OwnerID:        spec.OwnerID(),
+		TestCampaignID: spec.TestCampaignID(),
+		LoadedAt:       spec.LoadedAt(),
+		Author:         spec.Author(),
+		Title:          spec.Title(),
+		Description:    spec.Description(),
+		Stories:        marshalToStoryDocuments(stories),
 	}
 }
 
@@ -185,7 +185,7 @@ func (d specificationDocument) unmarshalToSpecification() *specification.Specifi
 	builder := specification.NewBuilder().
 		WithID(d.ID).
 		WithOwnerID(d.OwnerID).
-		WithPerformanceID(d.PerformanceID).
+		WithTestCampaignID(d.TestCampaignID).
 		WithLoadedAt(d.LoadedAt).
 		WithAuthor(d.Author).
 		WithTitle(d.Title).
@@ -273,13 +273,13 @@ func (d assertionDocument) unmarshalToAssertionBuildFn() func(builder *specifica
 
 func (d specificationDocument) unmarshalToSpecificSpecification() app.SpecificSpecification {
 	spec := app.SpecificSpecification{
-		ID:            d.ID,
-		PerformanceID: d.PerformanceID,
-		LoadedAt:      d.LoadedAt,
-		Author:        d.Author,
-		Title:         d.Title,
-		Description:   d.Description,
-		Stories:       make([]app.Story, 0, len(d.Stories)),
+		ID:             d.ID,
+		TestCampaignID: d.TestCampaignID,
+		LoadedAt:       d.LoadedAt,
+		Author:         d.Author,
+		Title:          d.Title,
+		Description:    d.Description,
+		Stories:        make([]app.Story, 0, len(d.Stories)),
 	}
 
 	for _, s := range d.Stories {
