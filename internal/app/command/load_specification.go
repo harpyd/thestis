@@ -69,6 +69,10 @@ func (h LoadSpecificationHandler) loadSpecification(
 	cmd app.LoadSpecificationCommand,
 ) app.TestCampaignUpdater {
 	return func(ctx context.Context, tc *testcampaign.TestCampaign) (*testcampaign.TestCampaign, error) {
+		if err := user.CanSeeTestCampaign(cmd.LoadedByID, tc); err != nil {
+			return nil, err
+		}
+
 		spec, err := h.specParserService.ParseSpecification(
 			bytes.NewReader(cmd.Content),
 			app.WithSpecificationID(specID),
@@ -80,15 +84,11 @@ func (h LoadSpecificationHandler) loadSpecification(
 			return nil, err
 		}
 
-		if err := user.CanSeeTestCampaign(cmd.LoadedByID, tc); err != nil {
-			return nil, err
-		}
-
 		if err := h.specsRepo.AddSpecification(ctx, spec); err != nil {
 			return nil, err
 		}
 
-		tc.SetActiveSpecificationID(spec.ID())
+		tc.BindActiveSpecification(spec.ID())
 
 		return tc, nil
 	}
