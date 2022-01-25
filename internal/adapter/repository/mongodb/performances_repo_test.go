@@ -51,7 +51,7 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 				return performance.UnmarshalFromDatabase(performance.Params{
 					OwnerID:         "3614a95c-c278-4687-84e2-97b95b11d399",
 					SpecificationID: "4e4465b0-a312-4f86-9051-a3ae72965215",
-					Actions:         []performance.Action{s.action()},
+					Actions:         s.actions(),
 				}, performance.WithID("3ce098e1-81ae-4610-8372-2f635b1b6a0c"))
 			},
 			ShouldBeErr: false,
@@ -82,7 +82,7 @@ func (s *PerformancesRepositoryTestSuite) TestExclusivelyDoWithPerformance_concu
 	perf := performance.UnmarshalFromDatabase(performance.Params{
 		OwnerID:         "e6cd6e6d-f58f-4a3e-a4d3-6b23dce29750",
 		SpecificationID: "d91da0ce-1caa-43d6-95c0-1a03a9d3cd52",
-		Actions:         []performance.Action{s.action()},
+		Actions:         s.actions(),
 	}, performance.WithID("9a07bd86-3b6a-4202-88ec-633c1b5a1e91"))
 
 	s.addPerformances(perf)
@@ -133,7 +133,7 @@ func (s *PerformancesRepositoryTestSuite) TestExclusivelyDoWithPerformance_concu
 	<-finish
 }
 
-func (s *PerformancesRepositoryTestSuite) action() performance.Action {
+func (s *PerformancesRepositoryTestSuite) actions() []performance.Action {
 	s.T().Helper()
 
 	thesis, err := specification.NewThesisBuilder().
@@ -145,7 +145,14 @@ func (s *PerformancesRepositoryTestSuite) action() performance.Action {
 		Build("to")
 	s.Require().NoError(err)
 
-	return performance.NewAction("stage.given", "story.scenario.to", thesis, performance.AssertionPerformer)
+	return []performance.Action{
+		performance.NewAction(
+			"stage.given",
+			"story.scenario.to",
+			thesis,
+			performance.AssertionPerformer,
+		),
+	}
 }
 
 func (s *PerformancesRepositoryTestSuite) getPerformance(perfID string) *performance.Performance {
