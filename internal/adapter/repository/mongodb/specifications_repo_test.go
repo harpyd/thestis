@@ -102,7 +102,7 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 					WithTitle("Test title").
 					WithDescription("Test description").
 					WithOwnerID("393a989b-31a2-4c52-a6bd-abd83f5b2392").
-					WithPerformanceID("e0a9361a-3605-4116-bb9b-957d9e0460f8").
+					WithTestCampaignID("e0a9361a-3605-4116-bb9b-957d9e0460f8").
 					ErrlessBuild()
 			},
 			ShouldBeErr: false,

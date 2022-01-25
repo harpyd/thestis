@@ -30,9 +30,9 @@ func WithSpecificationOwnerID(ownerID string) ParserOption {
 	}
 }
 
-func WithSpecificationPerformanceID(performanceID string) ParserOption {
+func WithSpecificationTestCampaignID(performanceID string) ParserOption {
 	return func(b *specification.Builder) {
-		b.WithPerformanceID(performanceID)
+		b.WithTestCampaignID(performanceID)
 	}
 }
 
