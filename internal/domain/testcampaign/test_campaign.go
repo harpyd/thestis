@@ -68,7 +68,7 @@ func (tc *TestCampaign) CreatedAt() time.Time {
 	return tc.createdAt
 }
 
-func (tc *TestCampaign) SetActiveSpecificationID(specificationID string) {
+func (tc *TestCampaign) BindActiveSpecification(specificationID string) {
 	tc.activeSpecificationID = specificationID
 }
 

@@ -203,7 +203,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestUpdateTestCampaign() {
 			Name:                   "update_active_specification_id",
 			TestCampaignIDToUpdate: "0b723635-4691-4eae-aca8-79b230989f9d",
 			Update: func(_ context.Context, tc *testcampaign.TestCampaign) (*testcampaign.TestCampaign, error) {
-				tc.SetActiveSpecificationID("4d5526c4-c588-4b77-8cf8-2a6663be9147")
+				tc.BindActiveSpecification("4d5526c4-c588-4b77-8cf8-2a6663be9147")
 
 				return tc, nil
 			},
