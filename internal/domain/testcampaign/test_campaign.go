@@ -1,6 +1,10 @@
 package testcampaign
 
-import "github.com/pkg/errors"
+import (
+	"time"
+
+	"github.com/pkg/errors"
+)
 
 type TestCampaign struct {
 	id       string
@@ -9,6 +13,7 @@ type TestCampaign struct {
 
 	activeSpecificationID string
 	ownerID               string
+	createdAt             time.Time
 }
 
 type Params struct {
@@ -17,6 +22,7 @@ type Params struct {
 	Summary               string
 	ActiveSpecificationID string
 	OwnerID               string
+	CreatedAt             time.Time
 }
 
 func New(params Params) (*TestCampaign, error) {
@@ -34,6 +40,7 @@ func New(params Params) (*TestCampaign, error) {
 		summary:               params.Summary,
 		activeSpecificationID: params.ActiveSpecificationID,
 		ownerID:               params.OwnerID,
+		createdAt:             params.CreatedAt,
 	}, nil
 }
 
@@ -55,6 +62,10 @@ func (tc *TestCampaign) ActiveSpecificationID() string {
 
 func (tc *TestCampaign) OwnerID() string {
 	return tc.ownerID
+}
+
+func (tc *TestCampaign) CreatedAt() time.Time {
+	return tc.createdAt
 }
 
 func (tc *TestCampaign) SetActiveSpecificationID(specificationID string) {

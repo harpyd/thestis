@@ -2,6 +2,7 @@ package testcampaign_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -21,10 +22,11 @@ func TestNew(t *testing.T) {
 		{
 			Name: "new_without_error",
 			Params: testcampaign.Params{
-				ID:       "tc-id",
-				ViewName: "test campaign",
-				Summary:  "summary",
-				OwnerID:  "user-id",
+				ID:        "tc-id",
+				ViewName:  "test campaign",
+				Summary:   "summary",
+				OwnerID:   "user-id",
+				CreatedAt: time.Now(),
 			},
 			ShouldBeErr: false,
 		},
@@ -69,6 +71,7 @@ func TestNew(t *testing.T) {
 			require.Equal(t, c.Params.ID, tc.ID())
 			require.Equal(t, c.Params.ViewName, tc.ViewName())
 			require.Equal(t, c.Params.Summary, tc.Summary())
+			require.Equal(t, c.Params.CreatedAt, tc.CreatedAt())
 		})
 	}
 }
