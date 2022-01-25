@@ -30,6 +30,12 @@ func WithSpecificationOwnerID(ownerID string) ParserOption {
 	}
 }
 
+func WithSpecificationPerformanceID(performanceID string) ParserOption {
+	return func(b *specification.Builder) {
+		b.WithPerformanceID(performanceID)
+	}
+}
+
 func WithSpecificationLoadedAt(loadedAt time.Time) ParserOption {
 	return func(b *specification.Builder) {
 		b.WithLoadedAt(loadedAt)
