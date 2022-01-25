@@ -37,11 +37,16 @@ func marshalToTransitionDocuments(transitions []performance.Transition) []transi
 }
 
 func marshalToTransitionDocument(transition performance.Transition) transitionDocument {
+	var errMsg string
+	if transition.Err() != nil {
+		errMsg = transition.Err().Error()
+	}
+
 	return transitionDocument{
 		From:  transition.From(),
 		To:    transition.To(),
 		State: transition.State(),
-		Error: transition.Err().Error(),
+		Error: errMsg,
 	}
 }
 
