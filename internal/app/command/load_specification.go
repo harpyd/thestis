@@ -72,6 +72,7 @@ func (h LoadSpecificationHandler) loadSpecification(
 		spec, err := h.specParserService.ParseSpecification(
 			bytes.NewReader(cmd.Content),
 			app.WithSpecificationID(specID),
+			app.WithSpecificationTestCampaignID(tc.ID()),
 			app.WithSpecificationOwnerID(tc.OwnerID()),
 			app.WithSpecificationLoadedAt(time.Now().UTC()),
 		)
