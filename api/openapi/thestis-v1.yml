@@ -395,6 +395,7 @@ components:
       required:
         - id
         - viewName
+        - createdAt
       properties:
         id:
           type: string
@@ -406,6 +407,9 @@ components:
         activeSpecificationId:
           type: string
           format: uuid
+        createdAt:
+          type: string
+          format: date-time
         lastPerformanceId:
           type: string
           format: uuid

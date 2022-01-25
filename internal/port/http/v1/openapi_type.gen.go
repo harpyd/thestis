@@ -201,11 +201,12 @@ type StoryPerformance struct {
 
 // TestCampaignResponse defines model for TestCampaignResponse.
 type TestCampaignResponse struct {
-	ActiveSpecificationId *string `json:"activeSpecificationId,omitempty"`
-	Id                    string  `json:"id"`
-	LastPerformanceId     *string `json:"lastPerformanceId,omitempty"`
-	Summary               *string `json:"summary,omitempty"`
-	ViewName              string  `json:"viewName"`
+	ActiveSpecificationId *string   `json:"activeSpecificationId,omitempty"`
+	CreatedAt             time.Time `json:"createdAt"`
+	Id                    string    `json:"id"`
+	LastPerformanceId     *string   `json:"lastPerformanceId,omitempty"`
+	Summary               *string   `json:"summary,omitempty"`
+	ViewName              string    `json:"viewName"`
 }
 
 // Thesis defines model for Thesis.
