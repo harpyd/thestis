@@ -60,8 +60,14 @@ func makeFlowFilter(flowID string, userID string) bson.M {
 func (r *FlowsRepository) UpsertFlow(ctx context.Context, flow performance.Flow) error {
 	document := marshalToFlowDocument(flow)
 
-	opt := options.Update().SetUpsert(true)
-	_, err := r.flows.UpdateByID(ctx, flow.ID(), document, opt)
+	opt := options.Replace().SetUpsert(true)
+	_, err := r.flows.ReplaceOne(ctx, bson.M{"_id": flow.ID()}, document, opt)
+
+	return app.NewDatabaseError(err)
+}
+
+func (r *FlowsRepository) RemoveAllFlows(ctx context.Context) error {
+	_, err := r.flows.DeleteOne(ctx, bson.D{})
 
 	return app.NewDatabaseError(err)
 }
