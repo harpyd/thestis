@@ -95,12 +95,6 @@ func (r *PerformancesRepository) ExclusivelyDoWithPerformance(
 	return nil
 }
 
-func (r *PerformancesRepository) RemoveAllPerformances(ctx context.Context) error {
-	_, err := r.performances.DeleteMany(ctx, bson.D{})
-
-	return app.NewDatabaseError(err)
-}
-
 func (r *PerformancesRepository) acquireLock(ctx context.Context, perfID string) error {
 	lockName := performanceLock(perfID)
 
@@ -120,4 +114,10 @@ func (r *PerformancesRepository) releaseLock(ctx context.Context, perfID string)
 
 func performanceLock(perfID string) string {
 	return fmt.Sprintf("performance#%s", perfID)
+}
+
+func (r *PerformancesRepository) RemoveAllPerformances(ctx context.Context) error {
+	_, err := r.performances.DeleteMany(ctx, bson.D{})
+
+	return app.NewDatabaseError(err)
 }
