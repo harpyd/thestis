@@ -12,6 +12,7 @@ import (
 )
 
 type SpecificationsRepository struct {
+	testCampaigns  *mongo.Collection
 	specifications *mongo.Collection
 }
 
@@ -19,6 +20,7 @@ const specificationsCollection = "specifications"
 
 func NewSpecificationsRepository(db *mongo.Database) *SpecificationsRepository {
 	return &SpecificationsRepository{
+		testCampaigns:  db.Collection(testCampaignsCollection),
 		specifications: db.Collection(specificationsCollection),
 	}
 }
@@ -33,6 +35,13 @@ func (r *SpecificationsRepository) GetSpecification(
 	}
 
 	return document.unmarshalToSpecification(), nil
+}
+
+func (r *SpecificationsRepository) GetActiveSpecificationByTestCampaignID(
+	_ context.Context,
+	_ string,
+) (*specification.Specification, error) {
+	return nil, nil
 }
 
 func (r *SpecificationsRepository) FindSpecification(

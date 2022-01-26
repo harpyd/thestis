@@ -10,7 +10,10 @@ import (
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
 
-var errNoSuchID = errors.New("no such id in mock map")
+var (
+	errNoSuchID                 = errors.New("no such id in mock map")
+	errNoSpecWithTestCampaignID = errors.New("no specification with test campaign id in mock map")
+)
 
 type TestCampaignsRepository struct {
 	campaigns map[string]testcampaign.TestCampaign
@@ -93,6 +96,19 @@ func (m *SpecificationsRepository) GetSpecification(
 	}
 
 	return &spec, nil
+}
+
+func (m *SpecificationsRepository) GetActiveSpecificationByTestCampaignID(
+	_ context.Context,
+	tcID string,
+) (*specification.Specification, error) {
+	for _, spec := range m.specifications {
+		if spec.TestCampaignID() == tcID {
+			return &spec, nil
+		}
+	}
+
+	return nil, app.NewSpecificationNotFoundError(errNoSpecWithTestCampaignID)
 }
 
 func (m *SpecificationsRepository) AddSpecification(_ context.Context, spec *specification.Specification) error {
