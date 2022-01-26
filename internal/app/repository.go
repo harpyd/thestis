@@ -31,6 +31,10 @@ type (
 type (
 	SpecificationsRepository interface {
 		GetSpecification(ctx context.Context, specID string) (*specification.Specification, error)
+		GetActiveSpecificationByTestCampaignID(
+			ctx context.Context,
+			testCampaignID string,
+		) (*specification.Specification, error)
 		AddSpecification(ctx context.Context, spec *specification.Specification) error
 	}
 
