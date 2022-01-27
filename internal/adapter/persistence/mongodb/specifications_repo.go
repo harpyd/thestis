@@ -6,13 +6,13 @@ import (
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
 type SpecificationsRepository struct {
-	testCampaigns  *mongo.Collection
 	specifications *mongo.Collection
 }
 
@@ -20,7 +20,6 @@ const specificationsCollection = "specifications"
 
 func NewSpecificationsRepository(db *mongo.Database) *SpecificationsRepository {
 	return &SpecificationsRepository{
-		testCampaigns:  db.Collection(testCampaignsCollection),
 		specifications: db.Collection(specificationsCollection),
 	}
 }
@@ -29,7 +28,7 @@ func (r *SpecificationsRepository) GetSpecification(
 	ctx context.Context,
 	specID string,
 ) (*specification.Specification, error) {
-	document, err := r.getSpecificationDocument(ctx, specID, "")
+	document, err := r.getSpecificationDocument(ctx, bson.M{"id": specID}, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -38,17 +37,32 @@ func (r *SpecificationsRepository) GetSpecification(
 }
 
 func (r *SpecificationsRepository) GetActiveSpecificationByTestCampaignID(
-	_ context.Context,
-	_ string,
+	ctx context.Context,
+	testCampaignID string,
 ) (*specification.Specification, error) {
-	return nil, nil
+	var (
+		filter = bson.M{"testCampaignId": testCampaignID}
+		sort   = bson.M{"_id": -1}
+	)
+
+	document, err := r.getSpecificationDocument(ctx, filter, sort)
+	if err != nil {
+		return nil, err
+	}
+
+	return document.unmarshalToSpecification(), nil
 }
 
 func (r *SpecificationsRepository) FindSpecification(
 	ctx context.Context,
 	qry app.SpecificSpecificationQuery,
 ) (app.SpecificSpecification, error) {
-	document, err := r.getSpecificationDocument(ctx, qry.SpecificationID, qry.UserID)
+	filter := bson.M{
+		"id":      qry.SpecificationID,
+		"ownerId": qry.UserID,
+	}
+
+	document, err := r.getSpecificationDocument(ctx, filter, nil)
 	if err != nil {
 		return app.SpecificSpecification{}, err
 	}
@@ -58,12 +72,13 @@ func (r *SpecificationsRepository) FindSpecification(
 
 func (r *SpecificationsRepository) getSpecificationDocument(
 	ctx context.Context,
-	specID, userID string,
+	filter bson.M,
+	sort bson.M,
 ) (specificationDocument, error) {
-	filter := makeSpecificationFilter(specID, userID)
+	opt := options.FindOne().SetSort(sort)
 
 	var document specificationDocument
-	if err := r.specifications.FindOne(ctx, filter).Decode(&document); err != nil {
+	if err := r.specifications.FindOne(ctx, filter, opt).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return specificationDocument{}, app.NewSpecificationNotFoundError(err)
 		}
@@ -72,15 +87,6 @@ func (r *SpecificationsRepository) getSpecificationDocument(
 	}
 
 	return document, nil
-}
-
-func makeSpecificationFilter(specID, userID string) bson.M {
-	filter := bson.M{"_id": specID}
-	if userID != "" {
-		filter["ownerId"] = userID
-	}
-
-	return filter
 }
 
 func (r *SpecificationsRepository) AddSpecification(ctx context.Context, spec *specification.Specification) error {

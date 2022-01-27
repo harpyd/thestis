@@ -86,6 +86,65 @@ func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
 	}
 }
 
+func (s *SpecificationsRepositoryTestSuite) TestGetActiveSpecificationByTestCampaignID() {
+	testCampaignID := "d0832b59-6e8a-46f6-9b57-92e8bf656e93"
+
+	firstSpec := specification.NewBuilder().
+		WithID("358a938f-8191-4264-8070-4ac5914bc130").
+		WithAuthor("Djerys").
+		WithTestCampaignID(testCampaignID).
+		ErrlessBuild()
+
+	secondSpec := specification.NewBuilder().
+		WithID("8c1058aa-295a-47a0-83e9-a128c2bd22af").
+		WithAuthor("John").
+		WithTestCampaignID(testCampaignID).
+		ErrlessBuild()
+
+	lastSpec := specification.NewBuilder().
+		WithID("aa056dc5-b0e7-4695-a209-1d46805373c6").
+		WithAuthor("Leo").
+		WithTestCampaignID(testCampaignID).
+		ErrlessBuild()
+
+	s.addSpecifications(firstSpec, secondSpec, lastSpec)
+
+	testCases := []struct {
+		Name           string
+		TestCampaignID string
+		ShouldBeErr    bool
+		IsErr          func(err error) bool
+	}{
+		{
+			Name:           "non_existing_specification_with_test_campaign_id",
+			TestCampaignID: "1ba42415-588b-4a11-ab06-76b4a298658e",
+			ShouldBeErr:    true,
+			IsErr:          app.IsSpecificationNotFoundError,
+		},
+		{
+			Name:           "last_added_specification",
+			TestCampaignID: testCampaignID,
+			ShouldBeErr:    false,
+		},
+	}
+
+	for _, c := range testCases {
+		s.Run(c.Name, func() {
+			spec, err := s.repo.GetActiveSpecificationByTestCampaignID(context.Background(), c.TestCampaignID)
+
+			if c.ShouldBeErr {
+				s.Require().True(c.IsErr(err))
+
+				return
+			}
+
+			s.Require().NoError(err)
+
+			s.Require().Equal(lastSpec, spec)
+		})
+	}
+}
+
 func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 	testCases := []struct {
 		Name                 string
