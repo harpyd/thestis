@@ -9,7 +9,8 @@ import (
 
 type (
 	specificationDocument struct {
-		ID             string          `bson:"_id,omitempty"`
+		_              string          `bson:"_id,omitempty"`
+		ID             string          `bson:"id,omitempty"`
 		OwnerID        string          `bson:"ownerId"`
 		TestCampaignID string          `bson:"testCampaignId"`
 		LoadedAt       time.Time       `bson:"loadedAt"`
