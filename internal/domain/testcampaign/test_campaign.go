@@ -11,18 +11,16 @@ type TestCampaign struct {
 	viewName string
 	summary  string
 
-	activeSpecificationID string
-	ownerID               string
-	createdAt             time.Time
+	ownerID   string
+	createdAt time.Time
 }
 
 type Params struct {
-	ID                    string
-	ViewName              string
-	Summary               string
-	ActiveSpecificationID string
-	OwnerID               string
-	CreatedAt             time.Time
+	ID        string
+	ViewName  string
+	Summary   string
+	OwnerID   string
+	CreatedAt time.Time
 }
 
 func New(params Params) (*TestCampaign, error) {
@@ -35,12 +33,11 @@ func New(params Params) (*TestCampaign, error) {
 	}
 
 	return &TestCampaign{
-		id:                    params.ID,
-		viewName:              params.ViewName,
-		summary:               params.Summary,
-		activeSpecificationID: params.ActiveSpecificationID,
-		ownerID:               params.OwnerID,
-		createdAt:             params.CreatedAt,
+		id:        params.ID,
+		viewName:  params.ViewName,
+		summary:   params.Summary,
+		ownerID:   params.OwnerID,
+		createdAt: params.CreatedAt,
 	}, nil
 }
 
@@ -52,12 +49,16 @@ func (tc *TestCampaign) ViewName() string {
 	return tc.viewName
 }
 
+func (tc *TestCampaign) SetViewName(viewName string) {
+	tc.viewName = viewName
+}
+
 func (tc *TestCampaign) Summary() string {
 	return tc.summary
 }
 
-func (tc *TestCampaign) ActiveSpecificationID() string {
-	return tc.activeSpecificationID
+func (tc *TestCampaign) SetSummary(summary string) {
+	tc.summary = summary
 }
 
 func (tc *TestCampaign) OwnerID() string {
@@ -66,10 +67,6 @@ func (tc *TestCampaign) OwnerID() string {
 
 func (tc *TestCampaign) CreatedAt() time.Time {
 	return tc.createdAt
-}
-
-func (tc *TestCampaign) BindActiveSpecification(specificationID string) {
-	tc.activeSpecificationID = specificationID
 }
 
 var (

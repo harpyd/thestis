@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/domain/testcampaign"
 	"github.com/harpyd/thestis/internal/domain/user"
 )
 
@@ -51,45 +50,31 @@ func (h LoadSpecificationHandler) Handle(
 		err = errors.Wrap(err, "specification loading")
 	}()
 
-	specID = uuid.New().String()
-
-	if err = h.testCampaignsRepo.UpdateTestCampaign(
-		ctx,
-		cmd.TestCampaignID,
-		h.loadSpecification(specID, cmd),
-	); err != nil {
+	tc, err := h.testCampaignsRepo.GetTestCampaign(ctx, cmd.TestCampaignID)
+	if err != nil {
 		return "", err
 	}
 
-	return
-}
-
-func (h LoadSpecificationHandler) loadSpecification(
-	specID string,
-	cmd app.LoadSpecificationCommand,
-) app.TestCampaignUpdater {
-	return func(ctx context.Context, tc *testcampaign.TestCampaign) (*testcampaign.TestCampaign, error) {
-		if err := user.CanSeeTestCampaign(cmd.LoadedByID, tc); err != nil {
-			return nil, err
-		}
-
-		spec, err := h.specParserService.ParseSpecification(
-			bytes.NewReader(cmd.Content),
-			app.WithSpecificationID(specID),
-			app.WithSpecificationTestCampaignID(tc.ID()),
-			app.WithSpecificationOwnerID(tc.OwnerID()),
-			app.WithSpecificationLoadedAt(time.Now().UTC()),
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := h.specsRepo.AddSpecification(ctx, spec); err != nil {
-			return nil, err
-		}
-
-		tc.BindActiveSpecification(spec.ID())
-
-		return tc, nil
+	if err := user.CanSeeTestCampaign(cmd.LoadedByID, tc); err != nil {
+		return "", err
 	}
+
+	specID = uuid.New().String()
+
+	spec, err := h.specParserService.ParseSpecification(
+		bytes.NewReader(cmd.Content),
+		app.WithSpecificationID(specID),
+		app.WithSpecificationTestCampaignID(tc.ID()),
+		app.WithSpecificationOwnerID(tc.OwnerID()),
+		app.WithSpecificationLoadedAt(time.Now().UTC()),
+	)
+	if err != nil {
+		return "", err
+	}
+
+	if err := h.specsRepo.AddSpecification(ctx, spec); err != nil {
+		return "", err
+	}
+
+	return specID, nil
 }

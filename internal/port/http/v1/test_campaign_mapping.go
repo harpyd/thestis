@@ -53,11 +53,10 @@ func unmarshalToSpecificTestCampaignQuery(
 
 func marshalToTestCampaignResponse(w http.ResponseWriter, r *http.Request, tc app.SpecificTestCampaign) {
 	response := TestCampaignResponse{
-		Id:                    tc.ID,
-		ViewName:              tc.ViewName,
-		Summary:               &tc.Summary,
-		ActiveSpecificationId: &tc.ActiveSpecificationID,
-		CreatedAt:             tc.CreatedAt,
+		Id:        tc.ID,
+		ViewName:  tc.ViewName,
+		Summary:   &tc.Summary,
+		CreatedAt: tc.CreatedAt,
 	}
 
 	render.Respond(w, r, response)

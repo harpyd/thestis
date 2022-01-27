@@ -200,15 +200,28 @@ func (s *TestCampaignsRepositoryTestSuite) TestUpdateTestCampaign() {
 			IsErr:       app.IsTestCampaignNotFoundError,
 		},
 		{
-			Name:                   "update_active_specification_id",
+			Name:                   "update_summary",
 			TestCampaignIDToUpdate: "0b723635-4691-4eae-aca8-79b230989f9d",
 			Update: func(_ context.Context, tc *testcampaign.TestCampaign) (*testcampaign.TestCampaign, error) {
-				tc.BindActiveSpecification("4d5526c4-c588-4b77-8cf8-2a6663be9147")
+				tc.SetSummary("new summary")
 
 				return tc, nil
 			},
 			TestCampaignUpdated: func(tc *testcampaign.TestCampaign) bool {
-				return tc.ActiveSpecificationID() == "4d5526c4-c588-4b77-8cf8-2a6663be9147"
+				return tc.Summary() == "new summary"
+			},
+			ShouldBeErr: false,
+		},
+		{
+			Name:                   "update_view_name",
+			TestCampaignIDToUpdate: "0b723635-4691-4eae-aca8-79b230989f9d",
+			Update: func(_ context.Context, tc *testcampaign.TestCampaign) (*testcampaign.TestCampaign, error) {
+				tc.SetViewName("new view name")
+
+				return tc, nil
+			},
+			TestCampaignUpdated: func(tc *testcampaign.TestCampaign) bool {
+				return tc.ViewName() == "new view name"
 			},
 			ShouldBeErr: false,
 		},
