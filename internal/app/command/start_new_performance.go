@@ -25,7 +25,7 @@ func NewStartPerformanceHandler(
 	flowsRepo app.FlowsRepository,
 ) StartNewPerformanceHandler {
 	if manager == nil {
-		panic("performance manager is nil")
+		panic("flow manager is nil")
 	}
 
 	if specsRepo == nil {
