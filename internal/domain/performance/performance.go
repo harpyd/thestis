@@ -3,6 +3,7 @@ package performance
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
@@ -19,10 +20,17 @@ type (
 		performers  map[PerformerType]Performer
 		actionGraph actionGraph
 
-		ready chan bool
+		lockState lockState
 	}
 
 	Option func(p *Performance)
+)
+
+type lockState = uint32
+
+const (
+	unlocked lockState = iota
+	locked
 )
 
 type PerformerType string
@@ -71,10 +79,8 @@ func UnmarshalFromDatabase(params Params, opts ...Option) *Performance {
 		specificationID: params.SpecificationID,
 		actionGraph:     unmarshalGraph(params.Actions),
 		performers:      make(map[PerformerType]Performer, defaultPerformersSize),
-		ready:           make(chan bool, 1),
+		lockState:       unlocked,
 	}
-
-	defer p.signalReady()
 
 	p.applyOpts(opts)
 
@@ -92,10 +98,8 @@ func FromSpecification(spec *specification.Specification, opts ...Option) (*Perf
 		specificationID: spec.ID(),
 		actionGraph:     graph,
 		performers:      make(map[PerformerType]Performer, defaultPerformersSize),
-		ready:           make(chan bool, 1),
+		lockState:       unlocked,
 	}
-
-	defer p.signalReady()
 
 	p.applyOpts(opts)
 
@@ -141,10 +145,8 @@ func (p *Performance) Actions() []Action {
 // performing, then others calls of Start will be return error that can
 // be detected with method IsAlreadyStartedError.
 func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
-	select {
-	case <-p.ready:
-	default:
-		return nil, NewAlreadyStartedError()
+	if err := p.lock(); err != nil {
+		return nil, err
 	}
 
 	steps := make(chan Step)
@@ -155,17 +157,22 @@ func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 }
 
 func (p *Performance) start(ctx context.Context, steps chan Step) {
-	defer func() {
-		p.signalReady()
-
-		close(steps)
-	}()
+	defer close(steps)
+	defer p.unlock()
 
 	p.startActions(ctx, steps)
 }
 
-func (p *Performance) signalReady() {
-	p.ready <- true
+func (p *Performance) lock() error {
+	if !atomic.CompareAndSwapUint32(&p.lockState, unlocked, locked) {
+		return NewAlreadyStartedError()
+	}
+
+	return nil
+}
+
+func (p *Performance) unlock() {
+	atomic.StoreUint32(&p.lockState, unlocked)
 }
 
 const defaultEnvStoreInitialSize = 10
