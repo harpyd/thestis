@@ -2,10 +2,13 @@ package mock
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
 
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/app"
+	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
@@ -16,6 +19,7 @@ var (
 )
 
 type TestCampaignsRepository struct {
+	mu        sync.RWMutex
 	campaigns map[string]testcampaign.TestCampaign
 }
 
@@ -32,6 +36,9 @@ func NewTestCampaignsRepository(tcs ...*testcampaign.TestCampaign) *TestCampaign
 }
 
 func (m *TestCampaignsRepository) GetTestCampaign(_ context.Context, tcID string) (*testcampaign.TestCampaign, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	tc, ok := m.campaigns[tcID]
 	if !ok {
 		return nil, app.NewTestCampaignNotFoundError(errNoSuchID)
@@ -41,6 +48,9 @@ func (m *TestCampaignsRepository) GetTestCampaign(_ context.Context, tcID string
 }
 
 func (m *TestCampaignsRepository) AddTestCampaign(_ context.Context, tc *testcampaign.TestCampaign) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	m.campaigns[tc.ID()] = *tc
 
 	return nil
@@ -51,6 +61,9 @@ func (m *TestCampaignsRepository) UpdateTestCampaign(
 	tcID string,
 	updateFn app.TestCampaignUpdater,
 ) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	tc, ok := m.campaigns[tcID]
 	if !ok {
 		return app.NewTestCampaignNotFoundError(errNoSuchID)
@@ -67,29 +80,36 @@ func (m *TestCampaignsRepository) UpdateTestCampaign(
 }
 
 func (m *TestCampaignsRepository) TestCampaignsNumber() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	return len(m.campaigns)
 }
 
 type SpecificationsRepository struct {
+	mu             sync.RWMutex
 	specifications map[string]specification.Specification
 }
 
 func NewSpecificationsRepository(specs ...*specification.Specification) *SpecificationsRepository {
-	sm := &SpecificationsRepository{
+	m := &SpecificationsRepository{
 		specifications: make(map[string]specification.Specification, len(specs)),
 	}
 
 	for _, spec := range specs {
-		sm.specifications[spec.ID()] = *spec
+		m.specifications[spec.ID()] = *spec
 	}
 
-	return sm
+	return m
 }
 
 func (m *SpecificationsRepository) GetSpecification(
 	_ context.Context,
 	specID string,
 ) (*specification.Specification, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	spec, ok := m.specifications[specID]
 	if !ok {
 		return nil, app.NewSpecificationNotFoundError(errNoSuchID)
@@ -102,6 +122,9 @@ func (m *SpecificationsRepository) GetActiveSpecificationByTestCampaignID(
 	_ context.Context,
 	tcID string,
 ) (*specification.Specification, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	for _, spec := range m.specifications {
 		if spec.TestCampaignID() == tcID {
 			return &spec, nil
@@ -112,11 +135,90 @@ func (m *SpecificationsRepository) GetActiveSpecificationByTestCampaignID(
 }
 
 func (m *SpecificationsRepository) AddSpecification(_ context.Context, spec *specification.Specification) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	m.specifications[spec.ID()] = *spec
 
 	return nil
 }
 
 func (m *SpecificationsRepository) SpecificationsNumber() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	return len(m.specifications)
+}
+
+type (
+	PerformancesRepository struct {
+		mu           sync.RWMutex
+		performances map[string]lockedPerformance
+	}
+
+	lockedPerformance struct {
+		lock        uint32
+		performance performance.Performance
+	}
+)
+
+func NewPerformancesRepository(perfs ...*performance.Performance) *PerformancesRepository {
+	m := &PerformancesRepository{
+		performances: make(map[string]lockedPerformance, len(perfs)),
+	}
+
+	for _, p := range perfs {
+		m.performances[p.ID()] = lockedPerformance{
+			performance: *p,
+		}
+	}
+
+	return m
+}
+
+func (m *PerformancesRepository) GetPerformance(_ context.Context, perfID string) (*performance.Performance, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	lp, ok := m.performances[perfID]
+	if !ok {
+		return nil, app.NewPerformanceNotFoundError(errNoSuchID)
+	}
+
+	return &lp.performance, nil
+}
+
+func (m *PerformancesRepository) AddPerformance(_ context.Context, perf *performance.Performance) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.performances[perf.ID()] = lockedPerformance{
+		performance: *perf,
+	}
+
+	return nil
+}
+
+func (m *PerformancesRepository) ExclusivelyDoWithPerformance(
+	_ context.Context,
+	perf *performance.Performance,
+	action app.PerformanceAction,
+) error {
+	m.mu.RLock()
+
+	lp, ok := m.performances[perf.ID()]
+	if !ok {
+		return app.NewPerformanceNotFoundError(errNoSuchID)
+	}
+
+	m.mu.RUnlock()
+
+	if !atomic.CompareAndSwapUint32(&lp.lock, 0, 1) {
+		return performance.NewAlreadyStartedError()
+	}
+	defer atomic.StoreUint32(&lp.lock, 0)
+
+	action(perf)
+
+	return nil
 }
