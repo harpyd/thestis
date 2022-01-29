@@ -2,7 +2,7 @@
 
 [![codecov](https://codecov.io/gh/harpyd/thestis/branch/main/graph/badge.svg?token=3JN40B9T6H)](https://codecov.io/gh/harpyd/thestis)
 
-Thestis is a service for auto tests with a declarative description of tests
+Thestis is a service for auto tests with declarative description of tests
 
 ## Project structure
 
@@ -50,6 +50,6 @@ Thestis is a service for auto tests with a declarative description of tests
             * `v1` — implementation of `api/openapi/thestis-v1.yml` _OpenAPI_ specification
     * `runner` — **Thestis** backend application code for running from `cmd/thestis/main.go`
     * `server` — **Thestis** server for running from application config
-    * `validate` — **Thestis** validate
-* `pkg` — public **Thestis** validate util code for running from `cmd/thestis-validate/main.go`
+    * `validate` — **Thestis** validate util code for running from `cmd/thestis-validate/main.go`
+* `pkg` — public **Thestis** library code
 * `swagger` — _Swagger UI_ static source files for UI rendering
