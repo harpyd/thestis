@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/harpyd/thestis/internal/adapter/repository/mongodb"
+	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )

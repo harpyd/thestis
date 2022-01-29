@@ -17,7 +17,7 @@ import (
 	zapadap "github.com/harpyd/thestis/internal/adapter/logger/zap"
 	"github.com/harpyd/thestis/internal/adapter/metrics/prometheus"
 	"github.com/harpyd/thestis/internal/adapter/parser/yaml"
-	mongoadap "github.com/harpyd/thestis/internal/adapter/repository/mongodb"
+	mongoadap "github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/command"
 	"github.com/harpyd/thestis/internal/app/query"
