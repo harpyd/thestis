@@ -12,14 +12,14 @@ import (
 )
 
 type StartNewPerformanceHandler struct {
-	manager   app.PerformanceManager
+	manager   app.FlowManager
 	specsRepo app.SpecificationsRepository
 	perfsRepo app.PerformancesRepository
 	flowsRepo app.FlowsRepository
 }
 
 func NewStartPerformanceHandler(
-	manager app.PerformanceManager,
+	manager app.FlowManager,
 	specsRepo app.SpecificationsRepository,
 	perfsRepo app.PerformancesRepository,
 	flowsRepo app.FlowsRepository,

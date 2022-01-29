@@ -8,7 +8,7 @@ import (
 )
 
 type (
-	PerformanceManager interface {
+	FlowManager interface {
 		ManageFlow(ctx context.Context, perf *performance.Performance) (<-chan Message, error)
 	}
 
@@ -37,7 +37,7 @@ type everyStepSavingFlowManager struct {
 func NewStepByStepSavingFlowManager(
 	perfsRepo PerformancesRepository,
 	flowsRepo FlowsRepository,
-) PerformanceManager {
+) FlowManager {
 	if perfsRepo == nil {
 		panic("performance repository is nil")
 	}
