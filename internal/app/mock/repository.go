@@ -216,9 +216,12 @@ func (m *PerformancesRepository) ExclusivelyDoWithPerformance(
 	if !atomic.CompareAndSwapUint32(&lp.lock, 0, 1) {
 		return performance.NewAlreadyStartedError()
 	}
-	defer atomic.StoreUint32(&lp.lock, 0)
 
-	action(perf)
+	go func() {
+		defer atomic.StoreUint32(&lp.lock, 0)
+
+		action(perf)
+	}()
 
 	return nil
 }
