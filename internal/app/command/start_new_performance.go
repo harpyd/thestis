@@ -12,16 +12,22 @@ import (
 )
 
 type StartNewPerformanceHandler struct {
+	manager   app.PerformanceManager
 	specsRepo app.SpecificationsRepository
 	perfsRepo app.PerformancesRepository
 	flowsRepo app.FlowsRepository
 }
 
 func NewStartPerformanceHandler(
+	manager app.PerformanceManager,
 	specsRepo app.SpecificationsRepository,
 	perfsRepo app.PerformancesRepository,
 	flowsRepo app.FlowsRepository,
 ) StartNewPerformanceHandler {
+	if manager == nil {
+		panic("performance manager is nil")
+	}
+
 	if specsRepo == nil {
 		panic("specification repository is nil")
 	}
@@ -71,47 +77,10 @@ func (h StartNewPerformanceHandler) Handle(
 
 	actionCtx := context.Background()
 
-	steps, err := perf.Start(actionCtx)
+	msg, err := h.manager.ManageFlow(actionCtx, perf)
 	if err != nil {
 		return "", nil, err
 	}
 
-	msg := make(chan app.Message)
-
-	if err = h.perfsRepo.ExclusivelyDoWithPerformance(
-		actionCtx, perf,
-		h.performanceAction(actionCtx, steps, msg),
-	); err != nil {
-		return "", nil, err
-	}
-
 	return perfID, msg, nil
-}
-
-func (h StartNewPerformanceHandler) performanceAction(
-	ctx context.Context,
-	steps <-chan performance.Step,
-	msg chan<- app.Message,
-) func(perf *performance.Performance) {
-	return func(perf *performance.Performance) {
-		defer close(msg)
-
-		fr := performance.FlowFromPerformance(perf)
-
-		for s := range steps {
-			fr.WithStep(s)
-
-			flow := fr.Reduce()
-			if err := h.flowsRepo.UpsertFlow(ctx, flow); err != nil {
-				msg <- app.NewMessageFromError(err)
-			}
-
-			msg <- app.NewMessageFromStringer(s)
-		}
-
-		flow := fr.FinallyReduce()
-		if err := h.flowsRepo.UpsertFlow(ctx, flow); err != nil {
-			msg <- app.NewMessageFromError(err)
-		}
-	}
 }
