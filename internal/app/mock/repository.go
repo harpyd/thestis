@@ -225,3 +225,41 @@ func (m *PerformancesRepository) ExclusivelyDoWithPerformance(
 
 	return nil
 }
+
+type FlowsRepository struct {
+	mu    sync.RWMutex
+	flows map[string]performance.Flow
+}
+
+func NewFlowsRepository(flows ...performance.Flow) *FlowsRepository {
+	m := &FlowsRepository{
+		flows: make(map[string]performance.Flow, len(flows)),
+	}
+
+	for _, f := range flows {
+		m.flows[f.ID()] = f
+	}
+
+	return m
+}
+
+func (m *FlowsRepository) GetFlow(_ context.Context, flowID string) (performance.Flow, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	flow, ok := m.flows[flowID]
+	if !ok {
+		return performance.Flow{}, app.NewFlowNotFoundError(errNoSuchID)
+	}
+
+	return flow, nil
+}
+
+func (m *FlowsRepository) UpsertFlow(_ context.Context, flow performance.Flow) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.flows[flow.ID()] = flow
+
+	return nil
+}
