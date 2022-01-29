@@ -51,8 +51,8 @@ type runnerContext struct {
 }
 
 type persistentContext struct {
-	testCampaignRepo       app.TestCampaignsRepository
-	specRepo               app.SpecificationsRepository
+	testCampaignsRepo      app.TestCampaignsRepository
+	specsRepo              app.SpecificationsRepository
 	specificTestCampaignRM app.SpecificTestCampaignReadModel
 	specificSpecRM         app.SpecificSpecificationReadModel
 }
@@ -116,10 +116,10 @@ func (c *runnerContext) initPersistent() {
 		specRepo         = mongoadap.NewSpecificationsRepository(db)
 	)
 
-	c.persistent.testCampaignRepo = testCampaignRepo
+	c.persistent.testCampaignsRepo = testCampaignRepo
 	c.logger.Info("Test campaigns repository initialization completed", logField)
 
-	c.persistent.specRepo = specRepo
+	c.persistent.specsRepo = specRepo
 	c.logger.Info("Specifications repository initialization completed", logField)
 
 	c.persistent.specificTestCampaignRM = testCampaignRepo
@@ -148,10 +148,10 @@ func (c *runnerContext) mongoDatabase() *mongo.Database {
 func (c *runnerContext) initApplication() {
 	c.app = &app.Application{
 		Commands: app.Commands{
-			CreateTestCampaign: command.NewCreateTestCampaignHandler(c.persistent.testCampaignRepo),
+			CreateTestCampaign: command.NewCreateTestCampaignHandler(c.persistent.testCampaignsRepo),
 			LoadSpecification: command.NewLoadSpecificationHandler(
-				c.persistent.specRepo,
-				c.persistent.testCampaignRepo,
+				c.persistent.specsRepo,
+				c.persistent.testCampaignsRepo,
 				c.specParser,
 			),
 		},
