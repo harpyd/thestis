@@ -52,7 +52,7 @@ func (h StartNewPerformanceHandler) Handle(
 	cmd app.StartNewPerformanceCommand,
 ) (perfID string, messages <-chan app.Message, err error) {
 	defer func() {
-		err = errors.New("new performance starting")
+		err = errors.Wrap(err, "new performance starting")
 	}()
 
 	spec, err := h.specsRepo.GetActiveSpecificationByTestCampaignID(ctx, cmd.TestCampaignID)
