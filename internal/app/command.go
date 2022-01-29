@@ -12,4 +12,9 @@ type (
 		LoadedByID     string
 		Content        []byte
 	}
+
+	StartNewPerformanceCommand struct {
+		TestCampaignID string
+		StartedByID    string
+	}
 )
