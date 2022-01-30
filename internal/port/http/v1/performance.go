@@ -1,9 +1,55 @@
 package v1
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/harpyd/thestis/internal/app"
+	"github.com/harpyd/thestis/internal/domain/performance"
+	"github.com/harpyd/thestis/internal/domain/user"
+	"github.com/harpyd/thestis/internal/port/http/httperr"
+)
 
 func (h handler) StartNewPerformance(w http.ResponseWriter, r *http.Request, testCampaignID string) {
-	w.WriteHeader(http.StatusNotImplemented)
+	cmd, ok := unmarshalStartNewPerformanceCommand(w, r, testCampaignID)
+	if !ok {
+		return
+	}
+
+	perfID, msg, err := h.app.Commands.StartNewPerformance.Handle(r.Context(), cmd)
+	if err == nil {
+		w.WriteHeader(http.StatusAccepted)
+		w.Header().Set("Location", fmt.Sprintf("/performances/%s", perfID))
+
+		go func(reqID string) {
+			for m := range msg {
+				h.logger.Info(m.String(), app.LogField{Key: "requestId", Value: reqID})
+			}
+		}(middleware.GetReqID(r.Context()))
+
+		return
+	}
+
+	if user.IsUserCantSeeTestCampaignError(err) {
+		httperr.Forbidden(string(ErrorSlugUserCantSeeTestCampaign), err, w, r)
+
+		return
+	}
+
+	if app.IsSpecificationNotFoundError(err) {
+		httperr.NotFound(string(ErrorSlugSpecificationNotFound), err, w, r)
+
+		return
+	}
+
+	if performance.IsAlreadyStartedError(err) {
+		httperr.Conflict(string(ErrorSlugPerformanceAlreadyStarted), err, w, r)
+
+		return
+	}
+
+	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
 func (h handler) GetPerformancesHistory(w http.ResponseWriter, _ *http.Request, _ string) {
