@@ -34,7 +34,7 @@ type everyStepSavingFlowManager struct {
 	flowsRepo FlowsRepository
 }
 
-func NewStepByStepSavingFlowManager(
+func NewEveryStepSavingFlowManager(
 	perfsRepo PerformancesRepository,
 	flowsRepo FlowsRepository,
 ) FlowManager {
