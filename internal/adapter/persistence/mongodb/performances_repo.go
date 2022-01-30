@@ -36,7 +36,7 @@ func NewPerformancesRepository(db *mongo.Database) *PerformancesRepository {
 }
 
 func (r *PerformancesRepository) GetPerformance(ctx context.Context, perfID string) (*performance.Performance, error) {
-	document, err := r.getPerformanceDocument(ctx, perfID, "")
+	document, err := r.getPerformanceDocument(ctx, bson.M{"_id": perfID})
 	if err != nil {
 		return nil, err
 	}
@@ -46,10 +46,8 @@ func (r *PerformancesRepository) GetPerformance(ctx context.Context, perfID stri
 
 func (r *PerformancesRepository) getPerformanceDocument(
 	ctx context.Context,
-	perfID, userID string,
+	filter bson.M,
 ) (performanceDocument, error) {
-	filter := makePerformanceFilter(perfID, userID)
-
 	var document performanceDocument
 	if err := r.performances.FindOne(ctx, filter).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -60,15 +58,6 @@ func (r *PerformancesRepository) getPerformanceDocument(
 	}
 
 	return document, nil
-}
-
-func makePerformanceFilter(perfID, userID string) bson.M {
-	filter := bson.M{"_id": perfID}
-	if userID != "" {
-		filter["ownerId"] = userID
-	}
-
-	return filter
 }
 
 func (r *PerformancesRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
