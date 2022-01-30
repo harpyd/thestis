@@ -15,6 +15,7 @@ import (
 
 var (
 	errNoSuchID                 = errors.New("no such id in mock map")
+	errDuplicateID              = errors.New("duplicate id in mock map")
 	errNoSpecWithTestCampaignID = errors.New("no specification with test campaign id in mock map")
 )
 
@@ -50,6 +51,10 @@ func (m *TestCampaignsRepository) GetTestCampaign(_ context.Context, tcID string
 func (m *TestCampaignsRepository) AddTestCampaign(_ context.Context, tc *testcampaign.TestCampaign) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	if _, ok := m.campaigns[tc.ID()]; ok {
+		return app.NewAlreadyExistsError(errDuplicateID)
+	}
 
 	m.campaigns[tc.ID()] = *tc
 
