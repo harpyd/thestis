@@ -6,8 +6,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
+	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
@@ -41,10 +43,32 @@ func TestPerformancesRepository(t *testing.T) {
 func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 	testCases := []struct {
 		Name               string
+		Before             func()
 		PerformanceFactory func() *performance.Performance
 		ShouldBeErr        bool
 		IsErr              func(err error) bool
 	}{
+		{
+			Name: "failed_adding_one_performance_twice",
+			Before: func() {
+				perf := performance.UnmarshalFromDatabase(performance.Params{
+					SpecificationID: "1a63b6ea-df5f-4a68-bf04-c2e30044f2ef",
+				}, performance.WithID("a4a2906d-4df5-42f1-8832-77a33cba4d7f"))
+
+				s.addPerformances(perf)
+			},
+			PerformanceFactory: func() *performance.Performance {
+				return performance.UnmarshalFromDatabase(performance.Params{
+					OwnerID:         "05bf69e9-d7b5-4e7a-8fab-24227dca033a",
+					SpecificationID: "1a63b6ea-df5f-4a68-bf04-c2e30044f2ef",
+					Actions:         s.actions(),
+				}, performance.WithID("a4a2906d-4df5-42f1-8832-77a33cba4d7f"))
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				return app.IsAlreadyExistsError(err) && mongo.IsDuplicateKeyError(err)
+			},
+		},
 		{
 			Name: "successful_adding",
 			PerformanceFactory: func() *performance.Performance {
@@ -60,6 +84,10 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 
 	for _, c := range testCases {
 		s.Run(c.Name, func() {
+			if c.Before != nil {
+				c.Before()
+			}
+
 			perf := c.PerformanceFactory()
 
 			err := s.repo.AddPerformance(context.Background(), perf)
