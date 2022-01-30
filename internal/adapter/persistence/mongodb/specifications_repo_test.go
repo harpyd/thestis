@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/app"
