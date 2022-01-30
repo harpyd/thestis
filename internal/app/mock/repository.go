@@ -143,6 +143,10 @@ func (m *SpecificationsRepository) AddSpecification(_ context.Context, spec *spe
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	if _, ok := m.specifications[spec.ID()]; ok {
+		return app.NewAlreadyExistsError(errDuplicateID)
+	}
+
 	m.specifications[spec.ID()] = *spec
 
 	return nil
