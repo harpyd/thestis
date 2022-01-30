@@ -43,6 +43,7 @@ type runnerContext struct {
 	persistent   persistentContext
 	specParser   app.SpecificationParserService
 	metrics      app.MetricsService
+	flowManager  app.FlowManager
 	app          *app.Application
 	authProvider auth.Provider
 	server       *server.Server
@@ -53,6 +54,8 @@ type runnerContext struct {
 type persistentContext struct {
 	testCampaignsRepo      app.TestCampaignsRepository
 	specsRepo              app.SpecificationsRepository
+	perfsRepo              app.PerformancesRepository
+	flowsRepo              app.FlowsRepository
 	specificTestCampaignRM app.SpecificTestCampaignReadModel
 	specificSpecRM         app.SpecificSpecificationReadModel
 }
@@ -65,6 +68,7 @@ func newRunner(configsPath string) *runnerContext {
 	c.initPersistent()
 	c.initSpecificationParser()
 	c.initMetrics()
+	c.initFlowManager()
 	c.initApplication()
 	c.initAuthenticationProvider()
 	c.initServer()
@@ -112,20 +116,28 @@ func (c *runnerContext) initPersistent() {
 	logField := app.LogField{Key: "db", Value: "mongo"}
 
 	var (
-		testCampaignRepo = mongoadap.NewTestCampaignsRepository(db)
-		specRepo         = mongoadap.NewSpecificationsRepository(db)
+		testCampaignsRepo = mongoadap.NewTestCampaignsRepository(db)
+		specsRepo         = mongoadap.NewSpecificationsRepository(db)
+		perfsRepo         = mongoadap.NewPerformancesRepository(db)
+		flowsRepo         = mongoadap.NewFlowsRepository(db)
 	)
 
-	c.persistent.testCampaignsRepo = testCampaignRepo
+	c.persistent.testCampaignsRepo = testCampaignsRepo
 	c.logger.Info("Test campaigns repository initialization completed", logField)
 
-	c.persistent.specsRepo = specRepo
+	c.persistent.specsRepo = specsRepo
 	c.logger.Info("Specifications repository initialization completed", logField)
 
-	c.persistent.specificTestCampaignRM = testCampaignRepo
+	c.persistent.perfsRepo = perfsRepo
+	c.logger.Info("Performances repository initialization completed", logField)
+
+	c.persistent.flowsRepo = flowsRepo
+	c.logger.Info("Flows repository initialization completed", logField)
+
+	c.persistent.specificTestCampaignRM = testCampaignsRepo
 	c.logger.Info("Specific test campaigns read model initialization completed", logField)
 
-	c.persistent.specificSpecRM = specRepo
+	c.persistent.specificSpecRM = specsRepo
 	c.logger.Info("Specific specifications read model initialization completed", logField)
 }
 
@@ -154,6 +166,11 @@ func (c *runnerContext) initApplication() {
 				c.persistent.testCampaignsRepo,
 				c.specParser,
 			),
+			StartNewPerformance: command.NewStartPerformanceHandler(
+				c.flowManager,
+				c.persistent.specsRepo,
+				c.persistent.perfsRepo,
+			),
 		},
 		Queries: app.Queries{
 			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(c.persistent.specificTestCampaignRM),
@@ -173,6 +190,10 @@ func (c *runnerContext) initMetrics() {
 	c.metrics = mrs
 
 	c.logger.Info("Metrics registration completed", app.LogField{Key: "db", Value: "prometheus"})
+}
+
+func (c *runnerContext) initFlowManager() {
+	c.flowManager = app.NewEveryStepSavingFlowManager(c.persistent.perfsRepo, c.persistent.flowsRepo)
 }
 
 func (c *runnerContext) initAuthenticationProvider() {
@@ -225,7 +246,7 @@ func (c *runnerContext) initServer() {
 		Routes: []http.Route{
 			{
 				Pattern: "/v1",
-				Handler: v1.NewHandler(c.app, auth.Middleware(c.authProvider)),
+				Handler: v1.NewHandler(c.app, c.logger, auth.Middleware(c.authProvider)),
 			},
 			{
 				Pattern: "/swagger",
