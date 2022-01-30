@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/app"
@@ -57,17 +58,37 @@ func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
 		IsErr       func(err error) bool
 	}{
 		{
-			Name: "non_existing_test_campaign",
+			Name: "by_non_existing_test_campaign_id_and_non_existing_owner_id",
 			Query: app.SpecificTestCampaignQuery{
-				TestCampaignID: "53a7f280-247a-410f-b6ee-c336fe9c643f",
+				TestCampaignID: "145337c9-ef1b-4dfd-a227-24805d25b52e",
+				UserID:         "52d308aa-5a8a-4931-b558-73962e55d443",
 			},
 			ShouldBeErr: true,
 			IsErr:       app.IsTestCampaignNotFoundError,
 		},
 		{
-			Name: "by_existing_test_campaign_id",
+			Name: "by_non_existing_test_campaign_id_and_existing_owner_id",
+			Query: app.SpecificTestCampaignQuery{
+				TestCampaignID: "53a7f280-247a-410f-b6ee-c336fe9c643f",
+				UserID:         "54112816-3a55-4a28-82df-3c8e082fa0f8",
+			},
+			ShouldBeErr: true,
+			IsErr:       app.IsTestCampaignNotFoundError,
+		},
+		{
+			Name: "by_existing_test_campaign_id_and_non_existing_owner_id",
 			Query: app.SpecificTestCampaignQuery{
 				TestCampaignID: "c0b28d44-d603-4756-bd25-8b3034e1dc77",
+				UserID:         "0c972872-b033-4fb1-a29b-2e14a8eb56f4",
+			},
+			ShouldBeErr: true,
+			IsErr:       app.IsTestCampaignNotFoundError,
+		},
+		{
+			Name: "by_existing_test_campaign_id_and_existing_owner_id",
+			Query: app.SpecificTestCampaignQuery{
+				TestCampaignID: "c0b28d44-d603-4756-bd25-8b3034e1dc77",
+				UserID:         "54112816-3a55-4a28-82df-3c8e082fa0f8",
 			},
 			ShouldBeErr: false,
 		},
@@ -96,10 +117,39 @@ func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
 func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 	testCases := []struct {
 		Name                 string
+		Before               func()
 		TestCampaignsFactory func() *testcampaign.TestCampaign
 		ShouldBeErr          bool
 		IsErr                func(err error) bool
 	}{
+		{
+			Name: "failed_adding_one_test_campaign_twice",
+			Before: func() {
+				tc, err := testcampaign.New(testcampaign.Params{
+					ID:      "d7822ba3-7bec-48c8-8b32-491108a75390",
+					OwnerID: "a40b27f2-1206-4309-be31-4100a9d7c0c8",
+				})
+				s.Require().NoError(err)
+
+				s.addTestCampaigns(tc)
+			},
+			TestCampaignsFactory: func() *testcampaign.TestCampaign {
+				tc, err := testcampaign.New(testcampaign.Params{
+					ID:        "d7822ba3-7bec-48c8-8b32-491108a75390",
+					OwnerID:   "42154bef-3d63-4341-a989-71932ecb4220",
+					ViewName:  "bbbbbo",
+					Summary:   "ssssso",
+					CreatedAt: time.Now().UTC(),
+				})
+				s.Require().NoError(err)
+
+				return tc
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				return app.IsDatabaseError(err) && mongo.IsDuplicateKeyError(err)
+			},
+		},
 		{
 			Name: "successful_adding_with_all_fields",
 			TestCampaignsFactory: func() *testcampaign.TestCampaign {
@@ -152,6 +202,10 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 
 	for _, c := range testCases {
 		s.Run(c.Name, func() {
+			if c.Before != nil {
+				c.Before()
+			}
+
 			testCampaign := c.TestCampaignsFactory()
 
 			err := s.repo.AddTestCampaign(context.Background(), testCampaign)
@@ -269,6 +323,7 @@ func (s *TestCampaignsRepositoryTestSuite) getTestCampaign(tcID string) *testcam
 
 func (s *TestCampaignsRepositoryTestSuite) requireTestCampaignsEqual(expected, actual *testcampaign.TestCampaign) {
 	s.Require().Equal(expected.ID(), actual.ID())
+	s.Require().Equal(expected.OwnerID(), actual.OwnerID())
 	s.Require().Equal(expected.Summary(), actual.Summary())
 	s.Require().Equal(expected.ViewName(), actual.ViewName())
 	s.requireTimesEqualWithRounding(expected.CreatedAt(), actual.CreatedAt())
