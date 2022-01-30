@@ -15,14 +15,12 @@ type StartNewPerformanceHandler struct {
 	manager   app.FlowManager
 	specsRepo app.SpecificationsRepository
 	perfsRepo app.PerformancesRepository
-	flowsRepo app.FlowsRepository
 }
 
 func NewStartPerformanceHandler(
 	manager app.FlowManager,
 	specsRepo app.SpecificationsRepository,
 	perfsRepo app.PerformancesRepository,
-	flowsRepo app.FlowsRepository,
 ) StartNewPerformanceHandler {
 	if manager == nil {
 		panic("flow manager is nil")
@@ -36,14 +34,10 @@ func NewStartPerformanceHandler(
 		panic("performances repository is nil")
 	}
 
-	if flowsRepo == nil {
-		panic("flows repository is nil")
-	}
-
 	return StartNewPerformanceHandler{
+		manager:   manager,
 		specsRepo: specsRepo,
 		perfsRepo: perfsRepo,
-		flowsRepo: flowsRepo,
 	}
 }
 
