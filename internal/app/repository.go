@@ -82,6 +82,10 @@ type (
 	flowNotFoundError struct {
 		err error
 	}
+
+	alreadyExistsError struct {
+		err error
+	}
 )
 
 func NewDatabaseError(err error) error {
@@ -222,4 +226,32 @@ func (e flowNotFoundError) Unwrap() error {
 
 func (e flowNotFoundError) Error() string {
 	return fmt.Sprintf("flow not found: %s", e.err)
+}
+
+func NewAlreadyExistsError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(alreadyExistsError{
+		err: err,
+	})
+}
+
+func IsAlreadyExistsError(err error) bool {
+	var target alreadyExistsError
+
+	return errors.As(err, &target)
+}
+
+func (e alreadyExistsError) Cause() error {
+	return e.err
+}
+
+func (e alreadyExistsError) Unwrap() error {
+	return e.err
+}
+
+func (e alreadyExistsError) Error() string {
+	return fmt.Sprintf("already exists: %s", e.err)
 }

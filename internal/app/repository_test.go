@@ -163,3 +163,34 @@ func TestIsFlowNotFoundError(t *testing.T) {
 		})
 	}
 }
+
+func TestIsAlreadyExistsError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "already_exists_error",
+			Err:       app.NewAlreadyExistsError(errors.New("duplicate key")),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error",
+			Err:       errors.New("duplicate key"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, app.IsAlreadyExistsError(c.Err))
+		})
+	}
+}
