@@ -186,8 +186,8 @@ paths:
     post:
       tags:
         - performance
-      operationId: performActiveSpecification
-      summary: Starts performance of test campaign active specification.
+      operationId: startNewPerformance
+      summary: Asynchronously starts performing of test campaign active specification performance.
       parameters:
         - in: path
           name: testCampaignId
@@ -196,17 +196,8 @@ paths:
             format: uuid
           required: true
           description: Test campaign ID to start performance.
-      requestBody:
-        description: >
-          Stories and scenarios to perform.
-          If there are no stories, then all stories of specification will be performed.
-          If there are no scenarios in story, then all scenarios of story will be performed.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StartPerformanceRequest'
       responses:
-        201:
+        202:
           description: Performance of active test campaign active specification is created.
           headers:
             Location:
@@ -219,8 +210,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        403:
+          description: User cannot see test campaign and start performance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         404:
           description: Test campaign with such ID not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        409:
+          description: Performance already started. Only one performing can be start at a time.
           content:
             application/json:
               schema:
@@ -295,15 +298,6 @@ paths:
             format: uuid
           required: true
           description: Performance ID to restart.
-      requestBody:
-        description: >
-          Stories and scenarios to perform.
-          If there are no stories, then all stories of specification will be performed.
-          If there are no scenarios in story, then all scenarios of story will be performed.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StartPerformanceRequest'
       responses:
         204:
           description: Performance restarted.
@@ -379,6 +373,7 @@ components:
         - unable-to-verify-jwt
         - unauthorized-user
         - user-cant-see-test-campaign
+        - performance-already-started
 
     CreateTestCampaignRequest:
       type: object

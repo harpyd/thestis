@@ -22,6 +22,8 @@ const (
 
 	ErrorSlugInvalidSpecificationSource ErrorSlug = "invalid-specification-source"
 
+	ErrorSlugPerformanceAlreadyStarted ErrorSlug = "performance-already-started"
+
 	ErrorSlugPerformanceNotFound ErrorSlug = "performance-not-found"
 
 	ErrorSlugSpecificationNotFound ErrorSlug = "specification-not-found"
@@ -167,16 +169,6 @@ type SpecificationResponse struct {
 // SpecificationSource defines model for SpecificationSource.
 type SpecificationSource string
 
-// StartPerformanceRequest defines model for StartPerformanceRequest.
-type StartPerformanceRequest struct {
-	Stories *[]struct {
-		Scenarios *[]struct {
-			Slug string `json:"slug"`
-		} `json:"scenarios,omitempty"`
-		Slug string `json:"slug"`
-	} `json:"stories,omitempty"`
-}
-
 // Statement defines model for Statement.
 type Statement struct {
 	Behavior string `json:"behavior"`
@@ -226,20 +218,8 @@ type ThesisPerformance struct {
 	State        PerformanceState `json:"state"`
 }
 
-// RestartPerformanceJSONBody defines parameters for RestartPerformance.
-type RestartPerformanceJSONBody StartPerformanceRequest
-
 // CreateTestCampaignJSONBody defines parameters for CreateTestCampaign.
 type CreateTestCampaignJSONBody CreateTestCampaignRequest
 
-// PerformActiveSpecificationJSONBody defines parameters for PerformActiveSpecification.
-type PerformActiveSpecificationJSONBody StartPerformanceRequest
-
-// RestartPerformanceJSONRequestBody defines body for RestartPerformance for application/json ContentType.
-type RestartPerformanceJSONRequestBody RestartPerformanceJSONBody
-
 // CreateTestCampaignJSONRequestBody defines body for CreateTestCampaign for application/json ContentType.
 type CreateTestCampaignJSONRequestBody CreateTestCampaignJSONBody
-
-// PerformActiveSpecificationJSONRequestBody defines body for PerformActiveSpecification for application/json ContentType.
-type PerformActiveSpecificationJSONRequestBody PerformActiveSpecificationJSONBody

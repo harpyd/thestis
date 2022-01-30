@@ -37,9 +37,9 @@ type ServerInterface interface {
 	// Returns test campaign with such ID.
 	// (GET /test-campaigns/{testCampaignId})
 	GetTestCampaign(w http.ResponseWriter, r *http.Request, testCampaignId string)
-	// Starts performance of test campaign active specification.
+	// Asynchronously starts performing of test campaign active specification performance.
 	// (POST /test-campaigns/{testCampaignId}/performance)
-	PerformActiveSpecification(w http.ResponseWriter, r *http.Request, testCampaignId string)
+	StartNewPerformance(w http.ResponseWriter, r *http.Request, testCampaignId string)
 	// Returns performances history.
 	// (GET /test-campaigns/{testCampaignId}/performances)
 	GetPerformancesHistory(w http.ResponseWriter, r *http.Request, testCampaignId string)
@@ -242,8 +242,8 @@ func (siw *ServerInterfaceWrapper) GetTestCampaign(w http.ResponseWriter, r *htt
 	handler(w, r.WithContext(ctx))
 }
 
-// PerformActiveSpecification operation middleware
-func (siw *ServerInterfaceWrapper) PerformActiveSpecification(w http.ResponseWriter, r *http.Request) {
+// StartNewPerformance operation middleware
+func (siw *ServerInterfaceWrapper) StartNewPerformance(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
@@ -258,7 +258,7 @@ func (siw *ServerInterfaceWrapper) PerformActiveSpecification(w http.ResponseWri
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PerformActiveSpecification(w, r, testCampaignId)
+		siw.Handler.StartNewPerformance(w, r, testCampaignId)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -382,7 +382,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/test-campaigns/{testCampaignId}", wrapper.GetTestCampaign)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/test-campaigns/{testCampaignId}/performance", wrapper.PerformActiveSpecification)
+		r.Post(options.BaseURL+"/test-campaigns/{testCampaignId}/performance", wrapper.StartNewPerformance)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-campaigns/{testCampaignId}/performances", wrapper.GetPerformancesHistory)
