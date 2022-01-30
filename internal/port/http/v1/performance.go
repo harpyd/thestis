@@ -2,7 +2,7 @@ package v1
 
 import "net/http"
 
-func (h handler) PerformActiveSpecification(w http.ResponseWriter, _ *http.Request, _ string) {
+func (h handler) StartNewPerformance(w http.ResponseWriter, r *http.Request, testCampaignID string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
