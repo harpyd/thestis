@@ -25,7 +25,7 @@ func NewFlowsRepository(db *mongo.Database) *FlowsRepository {
 }
 
 func (r *FlowsRepository) GetFlow(ctx context.Context, flowID string) (performance.Flow, error) {
-	document, err := r.getFlowDocument(ctx, flowID, "")
+	document, err := r.getFlowDocument(ctx, bson.M{"_id": flowID})
 	if err != nil {
 		return performance.Flow{}, err
 	}
@@ -33,9 +33,7 @@ func (r *FlowsRepository) GetFlow(ctx context.Context, flowID string) (performan
 	return document.unmarshalToFlow(), err
 }
 
-func (r *FlowsRepository) getFlowDocument(ctx context.Context, flowID, userID string) (flowDocument, error) {
-	filter := makeFlowFilter(flowID, userID)
-
+func (r *FlowsRepository) getFlowDocument(ctx context.Context, filter bson.M) (flowDocument, error) {
 	var document flowDocument
 	if err := r.flows.FindOne(ctx, filter).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments); err != nil {
@@ -46,15 +44,6 @@ func (r *FlowsRepository) getFlowDocument(ctx context.Context, flowID, userID st
 	}
 
 	return document, nil
-}
-
-func makeFlowFilter(flowID string, userID string) bson.M {
-	filter := bson.M{"_id": flowID}
-	if userID != "" {
-		filter["ownerId"] = userID
-	}
-
-	return filter
 }
 
 func (r *FlowsRepository) UpsertFlow(ctx context.Context, flow performance.Flow) error {
