@@ -2,7 +2,6 @@ package mongodb_test
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/mongo"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
