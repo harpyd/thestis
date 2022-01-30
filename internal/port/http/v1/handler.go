@@ -10,16 +10,22 @@ import (
 )
 
 type handler struct {
-	app *app.Application
+	app    *app.Application
+	logger app.LoggingService
 }
 
-func NewHandler(application *app.Application, middlewares ...http.Middleware) stdhttp.Handler {
+func NewHandler(
+	application *app.Application,
+	logger app.LoggingService,
+	middlewares ...http.Middleware,
+) stdhttp.Handler {
 	r := chi.NewRouter()
 	for _, m := range middlewares {
 		r.Use(m)
 	}
 
 	return HandlerFromMux(handler{
-		app: application,
+		app:    application,
+		logger: logger,
 	}, r)
 }
