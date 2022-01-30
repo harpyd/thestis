@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/harpyd/thestis/internal/domain/performance"
 )
 
@@ -78,7 +80,7 @@ func (m *everyStepSavingFlowManager) action(
 	return func(perf *performance.Performance) {
 		defer close(msg)
 
-		fr := performance.FlowFromPerformance(perf)
+		fr := performance.FlowFromPerformance(uuid.New().String(), perf)
 
 		for s := range steps {
 			fr.WithStep(s)

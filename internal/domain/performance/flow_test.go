@@ -84,7 +84,7 @@ func TestFlowFromPerformance(t *testing.T) {
 	perf, err := performance.FromSpecification(spec)
 	require.NoError(t, err)
 
-	b := performance.FlowFromPerformance(perf)
+	b := performance.FlowFromPerformance("flow", perf)
 	flow := b.Reduce()
 
 	require.Equal(t, performance.NotPerformed, flow.State())
@@ -106,7 +106,7 @@ func TestFlowReducer_WithStep_from_performance_start(t *testing.T) {
 	steps, err := perf.Start(context.Background())
 	require.NoError(t, err)
 
-	b := performance.FlowFromPerformance(perf)
+	b := performance.FlowFromPerformance("flow", perf)
 
 	for s := range steps {
 		requireStepNotError(t, s)
