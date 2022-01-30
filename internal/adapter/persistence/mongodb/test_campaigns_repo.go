@@ -69,6 +69,9 @@ func (r *TestCampaignsRepository) getTestCampaignDocument(
 
 func (r *TestCampaignsRepository) AddTestCampaign(ctx context.Context, tc *testcampaign.TestCampaign) error {
 	_, err := r.testCampaigns.InsertOne(ctx, marshalToTestCampaignDocument(tc))
+	if mongo.IsDuplicateKeyError(err) {
+		return app.NewAlreadyExistsError(err)
+	}
 
 	return app.NewDatabaseError(err)
 }

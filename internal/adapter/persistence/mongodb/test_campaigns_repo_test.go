@@ -147,7 +147,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 			},
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return app.IsDatabaseError(err) && mongo.IsDuplicateKeyError(err)
+				return app.IsAlreadyExistsError(err) && mongo.IsDuplicateKeyError(err)
 			},
 		},
 		{
