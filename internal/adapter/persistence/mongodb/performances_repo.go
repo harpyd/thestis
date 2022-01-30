@@ -62,6 +62,9 @@ func (r *PerformancesRepository) getPerformanceDocument(
 
 func (r *PerformancesRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
 	_, err := r.performances.InsertOne(ctx, marshalToPerformanceDocument(perf))
+	if mongo.IsDuplicateKeyError(err) {
+		return app.NewAlreadyExistsError(err)
+	}
 
 	return app.NewDatabaseError(err)
 }
