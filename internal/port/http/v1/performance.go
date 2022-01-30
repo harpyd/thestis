@@ -24,7 +24,7 @@ func (h handler) StartNewPerformance(w http.ResponseWriter, r *http.Request, tes
 
 		go func(reqID string) {
 			for m := range msg {
-				h.logger.Info(m.String(), app.LogField{Key: "requestId", Value: reqID})
+				h.logger.Info(m.String(), app.StringLogField("requestId", reqID))
 			}
 		}(middleware.GetReqID(r.Context()))
 

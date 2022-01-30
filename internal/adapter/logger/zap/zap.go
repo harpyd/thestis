@@ -45,7 +45,7 @@ func (l LoggingService) Fatal(msg string, err error, fields ...app.LogField) {
 func mapToZapFields(fields []app.LogField) []zap.Field {
 	zapFields := make([]zap.Field, 0, len(fields))
 	for _, f := range fields {
-		zapFields = append(zapFields, zap.String(f.Key, f.Value))
+		zapFields = append(zapFields, zap.String(f.Key(), f.Value()))
 	}
 
 	return zapFields
@@ -56,7 +56,7 @@ func mapToZapFieldsWithErr(err error, fields []app.LogField) []zap.Field {
 	zapFields = append(zapFields, zap.Error(err))
 
 	for _, f := range fields {
-		zapFields = append(zapFields, zap.String(f.Key, f.Value))
+		zapFields = append(zapFields, zap.String(f.Key(), f.Value()))
 	}
 
 	return zapFields
