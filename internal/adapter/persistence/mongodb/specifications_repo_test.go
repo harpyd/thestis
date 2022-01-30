@@ -2,6 +2,7 @@ package mongodb_test
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/mongo"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -170,10 +171,32 @@ func (s *SpecificationsRepositoryTestSuite) TestGetActiveSpecificationByTestCamp
 func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 	testCases := []struct {
 		Name                 string
+		Before               func()
 		SpecificationFactory func() *specification.Specification
 		ShouldBeErr          bool
 		IsErr                func(err error) bool
 	}{
+		{
+			Name: "failed_adding_one_specification_twice",
+			Before: func() {
+				spec := specification.NewBuilder().
+					WithID("62a4e06b-c00f-49a5-a1c1-5906e5e2e1d5").
+					ErrlessBuild()
+
+				s.addSpecifications(spec)
+			},
+			SpecificationFactory: func() *specification.Specification {
+				return specification.NewBuilder().
+					WithID("62a4e06b-c00f-49a5-a1c1-5906e5e2e1d5").
+					WithAuthor("Djerys").
+					WithOwnerID("6c204a55-023f-49bf-8c3d-1e7915b64f3a").
+					ErrlessBuild()
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				return app.IsAlreadyExistsError(err) && mongo.IsDuplicateKeyError(err)
+			},
+		},
 		{
 			Name: "successful_adding",
 			SpecificationFactory: func() *specification.Specification {
@@ -192,6 +215,10 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 
 	for _, c := range testCases {
 		s.Run(c.Name, func() {
+			if c.Before != nil {
+				c.Before()
+			}
+
 			spec := c.SpecificationFactory()
 
 			err := s.repo.AddSpecification(context.Background(), spec)
