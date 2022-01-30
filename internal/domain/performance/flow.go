@@ -139,7 +139,7 @@ func initGraphTransitionsLazy(graph map[string]map[string]Transition, vertex str
 	}
 }
 
-func FlowFromPerformance(perf *Performance) *FlowReducer {
+func FlowFromPerformance(id string, perf *Performance) *FlowReducer {
 	graph := make(map[string]map[string]*Transition, len(perf.actionGraph))
 
 	for from, as := range perf.actionGraph {
@@ -155,6 +155,7 @@ func FlowFromPerformance(perf *Performance) *FlowReducer {
 	}
 
 	return &FlowReducer{
+		id:            id,
 		performanceID: perf.ID(),
 		state:         NotPerformed,
 		graph:         graph,
@@ -190,8 +191,10 @@ func FlowFromState(commonState, transitionState State, from, to string) *FlowRed
 // final version of Flow.
 func (r *FlowReducer) Reduce() Flow {
 	return Flow{
-		state: r.state,
-		graph: r.copyGraph(),
+		id:            r.id,
+		performanceID: r.performanceID,
+		state:         r.state,
+		graph:         r.copyGraph(),
 	}
 }
 
@@ -202,8 +205,10 @@ func (r *FlowReducer) Reduce() Flow {
 // to Performing, final version of Flow will have Passed State.
 func (r *FlowReducer) FinallyReduce() Flow {
 	return Flow{
-		state: r.finalState(),
-		graph: r.copyGraph(),
+		id:            r.id,
+		performanceID: r.performanceID,
+		state:         r.finalState(),
+		graph:         r.copyGraph(),
 	}
 }
 
@@ -239,12 +244,6 @@ func (r *FlowReducer) copyGraph() map[string]map[string]Transition {
 	}
 
 	return graph
-}
-
-func (r *FlowReducer) WithID(id string) *FlowReducer {
-	r.id = id
-
-	return r
 }
 
 // WithStep is method for step by step collecting Step's to for their
