@@ -19,8 +19,18 @@ type SpecificationsRepository struct {
 const specificationsCollection = "specifications"
 
 func NewSpecificationsRepository(db *mongo.Database) *SpecificationsRepository {
+	col := db.Collection(specificationsCollection)
+
+	_, err := col.Indexes().CreateOne(context.Background(), mongo.IndexModel{
+		Keys:    bson.M{"id": 1},
+		Options: options.Index().SetUnique(true),
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	return &SpecificationsRepository{
-		specifications: db.Collection(specificationsCollection),
+		specifications: col,
 	}
 }
 
@@ -91,6 +101,9 @@ func (r *SpecificationsRepository) getSpecificationDocument(
 
 func (r *SpecificationsRepository) AddSpecification(ctx context.Context, spec *specification.Specification) error {
 	_, err := r.specifications.InsertOne(ctx, marshalToSpecificationDocument(spec))
+	if mongo.IsDuplicateKeyError(err) {
+		return app.NewAlreadyExistsError(err)
+	}
 
 	return app.NewDatabaseError(err)
 }
