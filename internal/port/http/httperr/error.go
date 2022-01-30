@@ -25,6 +25,10 @@ func NotFound(slug string, err error, w http.ResponseWriter, r *http.Request) {
 	httpRespondWithError(err, slug, w, r, "Not Found", http.StatusNotFound)
 }
 
+func Conflict(slug string, err error, w http.ResponseWriter, r *http.Request) {
+	httpRespondWithError(err, slug, w, r, "Conflict", http.StatusConflict)
+}
+
 func UnprocessableEntity(slug string, err error, w http.ResponseWriter, r *http.Request) {
 	httpRespondWithError(err, slug, w, r, "Unprocessable Entity", http.StatusUnprocessableEntity)
 }
