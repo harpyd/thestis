@@ -81,7 +81,7 @@ func (c *runnerContext) start() {
 
 	c.logger.Info(
 		"HTTP server started",
-		app.LogField{Key: "port", Value: fmt.Sprintf(":%s", c.config.HTTP.Port)},
+		app.StringLogField("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
 	)
 
 	err := c.server.Start()
@@ -113,7 +113,7 @@ func (c *runnerContext) initConfig(configsPath string) {
 
 func (c *runnerContext) initPersistent() {
 	db := c.mongoDatabase()
-	logField := app.LogField{Key: "db", Value: "mongo"}
+	logField := app.StringLogField("db", "mongo")
 
 	var (
 		testCampaignsRepo = mongoadap.NewTestCampaignsRepository(db)
@@ -143,9 +143,7 @@ func (c *runnerContext) initPersistent() {
 
 func (c *runnerContext) initSpecificationParser() {
 	c.specParser = yaml.NewSpecificationParserService()
-	c.logger.Info("Specification parser service initialization completed", app.LogField{
-		Key: "type", Value: "yaml",
-	})
+	c.logger.Info("Specification parser service initialization completed", app.StringLogField("type", "yaml"))
 }
 
 func (c *runnerContext) mongoDatabase() *mongo.Database {
@@ -189,7 +187,7 @@ func (c *runnerContext) initMetrics() {
 
 	c.metrics = mrs
 
-	c.logger.Info("Metrics registration completed", app.LogField{Key: "db", Value: "prometheus"})
+	c.logger.Info("Metrics registration completed", app.StringLogField("db", "prometheus"))
 }
 
 func (c *runnerContext) initFlowManager() {
@@ -208,19 +206,11 @@ func (c *runnerContext) initAuthenticationProvider() {
 		c.logger.Fatal(
 			"Invalid auth type",
 			errors.Errorf("%s is not valid auth type", authType),
-			app.LogField{
-				Key: "allowed",
-				Value: strings.Join([]string{
-					config.FakeAuth,
-					config.FirebaseAuth,
-				}, ", "),
-			},
+			app.StringLogField("allowed", strings.Join([]string{config.FakeAuth, config.FirebaseAuth}, ", ")),
 		)
 	}
 
-	c.logger.Info("Authentication provider initialization completed",
-		app.LogField{Key: "auth", Value: authType},
-	)
+	c.logger.Info("Authentication provider initialization completed", app.StringLogField("auth", authType))
 }
 
 func (c *runnerContext) firebaseClient() *fireauth.Client {

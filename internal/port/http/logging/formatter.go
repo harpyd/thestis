@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -22,11 +21,11 @@ func (l *Formatter) NewLogEntry(r *http.Request) middleware.LogEntry {
 
 	l.logging.Info(
 		"Request started",
-		app.LogField{Key: "requestId", Value: requestID},
-		app.LogField{Key: "httpMethod", Value: r.Method},
-		app.LogField{Key: "remoteAddress", Value: r.RemoteAddr},
-		app.LogField{Key: "uri", Value: r.RequestURI},
-		app.LogField{Key: "requestBody", Value: copyRequestBody(r)},
+		app.StringLogField("requestId", requestID),
+		app.StringLogField("httpMethod", r.Method),
+		app.StringLogField("removeAddress", r.RemoteAddr),
+		app.StringLogField("uri", r.RequestURI),
+		app.StringLogField("requestBody", copyRequestBody(r)),
 	)
 
 	return &logEntry{
@@ -55,18 +54,19 @@ const responseRounding = 100
 func (e *logEntry) Write(status, bytes int, _ http.Header, elapsed time.Duration, _ interface{}) {
 	e.logging.Info(
 		"Request completed",
-		app.LogField{Key: "uri", Value: e.uri},
-		app.LogField{Key: "requestId", Value: e.requestID},
-		app.LogField{Key: "responseStatus", Value: strconv.Itoa(status)},
-		app.LogField{Key: "responseBytesLength", Value: strconv.Itoa(bytes)},
-		app.LogField{Key: "responseElapsed", Value: elapsed.Round(time.Millisecond / responseRounding).String()},
+		app.StringLogField("uri", e.uri),
+		app.StringLogField("requestId", e.requestID),
+		app.IntLogField("responseStatus", status),
+		app.IntLogField("responseBytesLength", bytes),
+		app.DurationLogField("responseElapsed", elapsed.Round(time.Millisecond/responseRounding)),
+		app.DurationLogField("responseElapsed", elapsed.Round(time.Millisecond/responseRounding)),
 	)
 }
 
 func (e *logEntry) Panic(v interface{}, stack []byte) {
 	e.logging = e.logging.With(
-		app.LogField{Key: "stack", Value: string(stack)},
-		app.LogField{Key: "panic", Value: fmt.Sprintf("%+v", v)},
+		app.BytesLogField("stack", stack),
+		app.StringLogField("panic", fmt.Sprintf("%+v", v)),
 	)
 }
 

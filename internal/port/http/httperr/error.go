@@ -38,7 +38,7 @@ func InternalServerError(slug string, err error, w http.ResponseWriter, r *http.
 }
 
 func httpRespondWithError(err error, slug string, w http.ResponseWriter, r *http.Request, logMSg string, status int) {
-	logging.Logger(r).Warn(logMSg, err, app.LogField{Key: "errorSlug", Value: slug})
+	logging.Logger(r).Warn(logMSg, err, app.StringLogField("errorSlug", slug))
 
 	var details string
 	if err != nil {

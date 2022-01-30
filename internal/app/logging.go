@@ -1,5 +1,10 @@
 package app
 
+import (
+	"strconv"
+	"time"
+)
+
 type LoggingService interface {
 	With(fields ...LogField) LoggingService
 	Debug(msg string, fields ...LogField)
@@ -10,6 +15,42 @@ type LoggingService interface {
 }
 
 type LogField struct {
-	Key   string
-	Value string
+	key   string
+	value string
+}
+
+func StringLogField(key, value string) LogField {
+	return LogField{
+		key:   key,
+		value: value,
+	}
+}
+
+func IntLogField(key string, value int) LogField {
+	return LogField{
+		key:   key,
+		value: strconv.Itoa(value),
+	}
+}
+
+func DurationLogField(key string, value time.Duration) LogField {
+	return LogField{
+		key:   key,
+		value: value.String(),
+	}
+}
+
+func BytesLogField(key string, value []byte) LogField {
+	return LogField{
+		key:   key,
+		value: string(value),
+	}
+}
+
+func (f LogField) Key() string {
+	return f.key
+}
+
+func (f LogField) Value() string {
+	return f.value
 }
