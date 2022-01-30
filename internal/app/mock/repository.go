@@ -201,6 +201,10 @@ func (m *PerformancesRepository) AddPerformance(_ context.Context, perf *perform
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	if _, ok := m.performances[perf.ID()]; ok {
+		return app.NewAlreadyExistsError(errDuplicateID)
+	}
+
 	m.performances[perf.ID()] = lockedPerformance{
 		performance: *perf,
 	}
