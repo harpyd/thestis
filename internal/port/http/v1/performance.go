@@ -24,8 +24,16 @@ func (h handler) StartNewPerformance(w http.ResponseWriter, r *http.Request, tes
 		w.Header().Set("Location", fmt.Sprintf("/performances/%s", perfID))
 
 		go func(reqID string) {
+			logField := app.StringLogField("requestId", reqID)
+
 			for m := range msg {
-				h.logger.Info(m.String(), app.StringLogField("requestId", reqID))
+				if m.Err() == nil || performance.IsFailedError(err) {
+					h.logger.Info(m.String(), logField)
+
+					continue
+				}
+
+				h.logger.Error(m.String(), m.Err(), logField)
 			}
 		}(middleware.GetReqID(r.Context()))
 
