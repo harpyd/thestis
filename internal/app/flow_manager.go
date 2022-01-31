@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 
@@ -15,20 +14,31 @@ type (
 	}
 
 	Message struct {
-		s string
+		s   string
+		err error
 	}
 )
 
-func newMessageFromStringer(s fmt.Stringer) Message {
-	return Message{s: s.String()}
+func newMessageFromStep(s performance.Step) Message {
+	return Message{
+		s:   s.String(),
+		err: s.Err(),
+	}
 }
 
 func newMessageFromError(err error) Message {
-	return Message{s: err.Error()}
+	return Message{
+		s:   err.Error(),
+		err: err,
+	}
 }
 
 func (m Message) String() string {
 	return m.s
+}
+
+func (m Message) Err() error {
+	return m.err
 }
 
 type everyStepSavingFlowManager struct {
@@ -90,7 +100,7 @@ func (m *everyStepSavingFlowManager) action(
 				msg <- newMessageFromError(err)
 			}
 
-			msg <- newMessageFromStringer(s)
+			msg <- newMessageFromStep(s)
 		}
 
 		flow := fr.FinallyReduce()
