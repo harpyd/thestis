@@ -12,15 +12,17 @@ import (
 )
 
 type StartNewPerformanceHandler struct {
-	manager   app.FlowManager
-	specsRepo app.SpecificationsRepository
-	perfsRepo app.PerformancesRepository
+	manager       app.FlowManager
+	specsRepo     app.SpecificationsRepository
+	perfsRepo     app.PerformancesRepository
+	performerOpts app.PerformerOptions
 }
 
 func NewStartPerformanceHandler(
 	manager app.FlowManager,
 	specsRepo app.SpecificationsRepository,
 	perfsRepo app.PerformancesRepository,
+	opts ...app.PerformerOption,
 ) StartNewPerformanceHandler {
 	if manager == nil {
 		panic("flow manager is nil")
@@ -35,9 +37,10 @@ func NewStartPerformanceHandler(
 	}
 
 	return StartNewPerformanceHandler{
-		manager:   manager,
-		specsRepo: specsRepo,
-		perfsRepo: perfsRepo,
+		manager:       manager,
+		specsRepo:     specsRepo,
+		perfsRepo:     perfsRepo,
+		performerOpts: opts,
 	}
 }
 
@@ -60,7 +63,9 @@ func (h StartNewPerformanceHandler) Handle(
 
 	perfID = uuid.New().String()
 
-	perf, err := performance.FromSpecification(spec, performance.WithID(perfID))
+	opts := append(h.performerOpts.ToPerformanceOptions(), performance.WithID(perfID))
+
+	perf, err := performance.FromSpecification(spec, opts...)
 	if err != nil {
 		return "", nil, err
 	}

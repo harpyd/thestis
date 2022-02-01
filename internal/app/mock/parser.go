@@ -12,9 +12,7 @@ type SpecificationParserService struct {
 }
 
 func NewSpecificationParserService(withErr bool) *SpecificationParserService {
-	return &SpecificationParserService{
-		withErr: withErr,
-	}
+	return &SpecificationParserService{withErr: withErr}
 }
 
 func (m *SpecificationParserService) ParseSpecification(
