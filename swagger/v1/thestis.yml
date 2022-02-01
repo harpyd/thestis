@@ -340,7 +340,7 @@ paths:
             Performance canceled if it was in process.
             If it was not executed, nothing happened.
         404:
-          description: Bad request.
+          description: Performance with such ID not found.
           content:
             application/json:
               schema:
