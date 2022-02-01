@@ -17,11 +17,21 @@ type (
 	}
 )
 
+// NewAction is factory function for unmarshalling from database.
 func NewAction(from, to string, thesis specification.Thesis, performerType PerformerType) Action {
 	return Action{
 		from:          from,
 		to:            to,
 		thesis:        thesis,
+		performerType: performerType,
+	}
+}
+
+// NewActionWithoutThesis is factory function for usage in tests.
+func NewActionWithoutThesis(from, to string, performerType PerformerType) Action {
+	return Action{
+		from:          from,
+		to:            to,
 		performerType: performerType,
 	}
 }
@@ -48,7 +58,7 @@ func unmarshalGraph(actions []Action) actionGraph {
 	for _, a := range actions {
 		initGraphActionsLazy(graph, a.From())
 
-		graph[a.From()][a.To()] = newThesisAction(a.From(), a.To(), a.Thesis())
+		graph[a.From()][a.To()] = a
 	}
 
 	return graph
