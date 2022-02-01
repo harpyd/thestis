@@ -239,6 +239,13 @@ func (m *PerformancesRepository) ExclusivelyDoWithPerformance(
 	return nil
 }
 
+func (m *PerformancesRepository) PerformancesNumber() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	return len(m.performances)
+}
+
 type FlowsRepository struct {
 	mu    sync.RWMutex
 	flows map[string]performance.Flow
