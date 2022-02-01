@@ -27,7 +27,7 @@ func (h handler) StartNewPerformance(w http.ResponseWriter, r *http.Request, tes
 			logField := app.StringLogField("requestId", reqID)
 
 			for m := range msg {
-				if m.Err() == nil || performance.IsFailedError(err) {
+				if m.Err() == nil || m.State() == performance.Failed {
 					h.logger.Info(m.String(), logField)
 
 					continue

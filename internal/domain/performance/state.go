@@ -3,7 +3,8 @@ package performance
 type State string
 
 const (
-	NotPerformed State = ""
+	NoState      State = ""
+	NotPerformed State = "not performed"
 	Performing   State = "performing"
 	Passed       State = "passed"
 	Failed       State = "failed"

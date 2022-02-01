@@ -14,22 +14,25 @@ type (
 	}
 
 	Message struct {
-		s   string
-		err error
+		s     string
+		state performance.State
+		err   error
 	}
 )
 
 func newMessageFromStep(s performance.Step) Message {
 	return Message{
-		s:   s.String(),
-		err: s.Err(),
+		s:     s.String(),
+		state: s.State(),
+		err:   s.Err(),
 	}
 }
 
 func newMessageFromError(err error) Message {
 	return Message{
-		s:   err.Error(),
-		err: err,
+		s:     err.Error(),
+		state: performance.NoState,
+		err:   err,
 	}
 }
 
@@ -39,6 +42,10 @@ func (m Message) String() string {
 
 func (m Message) Err() error {
 	return m.err
+}
+
+func (m Message) State() performance.State {
+	return m.state
 }
 
 type everyStepSavingFlowManager struct {
