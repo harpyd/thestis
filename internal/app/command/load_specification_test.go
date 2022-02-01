@@ -27,12 +27,12 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name                string
-		Command             app.LoadSpecificationCommand
-		TestCampaignFactory func() *testcampaign.TestCampaign
-		ParseWithErr        bool
-		ShouldBeErr         bool
-		IsErr               func(err error) bool
+		Name         string
+		Command      app.LoadSpecificationCommand
+		TestCampaign *testcampaign.TestCampaign
+		ParseWithErr bool
+		ShouldBeErr  bool
+		IsErr        func(err error) bool
 	}{
 		{
 			Name: "load_valid_specification",
@@ -41,17 +41,12 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 				LoadedByID:     "cb39a8e2-8f79-484b-bc48-51f83a8e8c33",
 				Content:        []byte(spec),
 			},
-			TestCampaignFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New(testcampaign.Params{
-					ID:       "35474763-28f4-43a6-a184-e8894f50cba8",
-					ViewName: "view name",
-					Summary:  "summary",
-					OwnerID:  "cb39a8e2-8f79-484b-bc48-51f83a8e8c33",
-				})
-				require.NoError(t, err)
-
-				return tc
-			},
+			TestCampaign: testcampaign.MustNew(testcampaign.Params{
+				ID:       "35474763-28f4-43a6-a184-e8894f50cba8",
+				ViewName: "view name",
+				Summary:  "summary",
+				OwnerID:  "cb39a8e2-8f79-484b-bc48-51f83a8e8c33",
+			}),
 			ParseWithErr: false,
 			ShouldBeErr:  false,
 		},
@@ -62,17 +57,12 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 				LoadedByID:     "dc0479de-33ed-4631-b9a4-2834c3efb7b1",
 				Content:        []byte(spec),
 			},
-			TestCampaignFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New(testcampaign.Params{
-					ID:       "f18fdd19-d69c-4afe-a639-8bcefd6c4af9",
-					ViewName: "view",
-					Summary:  "summary",
-					OwnerID:  "dc0479de-33ed-4631-b9a4-2834c3efb7b1",
-				})
-				require.NoError(t, err)
-
-				return tc
-			},
+			TestCampaign: testcampaign.MustNew(testcampaign.Params{
+				ID:       "f18fdd19-d69c-4afe-a639-8bcefd6c4af9",
+				ViewName: "view",
+				Summary:  "summary",
+				OwnerID:  "dc0479de-33ed-4631-b9a4-2834c3efb7b1",
+			}),
 			ParseWithErr: true,
 			ShouldBeErr:  true,
 			IsErr:        specification.IsBuildSpecificationError,
@@ -84,15 +74,10 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 				LoadedByID:     "1dccc358-2f91-427b-b2a8-f46169fc3a04",
 				Content:        []byte(spec),
 			},
-			TestCampaignFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New(testcampaign.Params{
-					ID:      "e7c57ccf-3bff-402b-ada5-71990e3ab0cd",
-					OwnerID: "98fd29f8-442b-420c-9cf8-e4d3c1f105e8",
-				})
-				require.NoError(t, err)
-
-				return tc
-			},
+			TestCampaign: testcampaign.MustNew(testcampaign.Params{
+				ID:      "e7c57ccf-3bff-402b-ada5-71990e3ab0cd",
+				OwnerID: "98fd29f8-442b-420c-9cf8-e4d3c1f105e8",
+			}),
 			ParseWithErr: false,
 			ShouldBeErr:  true,
 			IsErr:        user.IsUserCantSeeTestCampaignError,
@@ -107,7 +92,7 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 
 			var (
 				specsRepo = mock.NewSpecificationsRepository()
-				tcsRepo   = mock.NewTestCampaignsRepository(c.TestCampaignFactory())
+				tcsRepo   = mock.NewTestCampaignsRepository(c.TestCampaign)
 				parser    = mock.NewSpecificationParserService(c.ParseWithErr)
 				handler   = command.NewLoadSpecificationHandler(specsRepo, tcsRepo, parser)
 			)
