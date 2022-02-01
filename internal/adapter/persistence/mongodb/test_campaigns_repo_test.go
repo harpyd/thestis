@@ -116,11 +116,11 @@ func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
 
 func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 	testCases := []struct {
-		Name                 string
-		Before               func()
-		TestCampaignsFactory func() *testcampaign.TestCampaign
-		ShouldBeErr          bool
-		IsErr                func(err error) bool
+		Name         string
+		Before       func()
+		TestCampaign *testcampaign.TestCampaign
+		ShouldBeErr  bool
+		IsErr        func(err error) bool
 	}{
 		{
 			Name: "failed_adding_one_test_campaign_twice",
@@ -133,18 +133,13 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 
 				s.addTestCampaigns(tc)
 			},
-			TestCampaignsFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New(testcampaign.Params{
-					ID:        "d7822ba3-7bec-48c8-8b32-491108a75390",
-					OwnerID:   "42154bef-3d63-4341-a989-71932ecb4220",
-					ViewName:  "bbbbbo",
-					Summary:   "ssssso",
-					CreatedAt: time.Now().UTC(),
-				})
-				s.Require().NoError(err)
-
-				return tc
-			},
+			TestCampaign: testcampaign.MustNew(testcampaign.Params{
+				ID:        "d7822ba3-7bec-48c8-8b32-491108a75390",
+				OwnerID:   "42154bef-3d63-4341-a989-71932ecb4220",
+				ViewName:  "bbbbbo",
+				Summary:   "ssssso",
+				CreatedAt: time.Now().UTC(),
+			}),
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
 				return app.IsAlreadyExistsError(err) && mongo.IsDuplicateKeyError(err)
@@ -152,50 +147,35 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 		},
 		{
 			Name: "successful_adding_with_all_fields",
-			TestCampaignsFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New(testcampaign.Params{
-					ID:        "e75690c2-e659-409d-a528-ffd40d17c4bc",
-					ViewName:  "some campaign",
-					Summary:   "summary",
-					OwnerID:   "6c11693f-3376-4873-a8ef-a77a327ccb46",
-					CreatedAt: time.Now().UTC(),
-				})
-				s.Require().NoError(err)
-
-				return tc
-			},
+			TestCampaign: testcampaign.MustNew(testcampaign.Params{
+				ID:        "e75690c2-e659-409d-a528-ffd40d17c4bc",
+				ViewName:  "some campaign",
+				Summary:   "summary",
+				OwnerID:   "6c11693f-3376-4873-a8ef-a77a327ccb46",
+				CreatedAt: time.Now().UTC(),
+			}),
 			ShouldBeErr: false,
 		},
 		{
 			Name: "successful_adding_without_view_name",
-			TestCampaignsFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New(testcampaign.Params{
-					ID:        "1153796c-58d4-4b26-8c2f-f32a1a875dac",
-					ViewName:  "",
-					Summary:   "summary",
-					OwnerID:   "9c845592-5e9e-4160-8e2f-0309a6949f04",
-					CreatedAt: time.Now().UTC(),
-				})
-				s.Require().NoError(err)
-
-				return tc
-			},
+			TestCampaign: testcampaign.MustNew(testcampaign.Params{
+				ID:        "1153796c-58d4-4b26-8c2f-f32a1a875dac",
+				ViewName:  "",
+				Summary:   "summary",
+				OwnerID:   "9c845592-5e9e-4160-8e2f-0309a6949f04",
+				CreatedAt: time.Now().UTC(),
+			}),
 			ShouldBeErr: false,
 		},
 		{
 			Name: "successful_adding_without_summary",
-			TestCampaignsFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New(testcampaign.Params{
-					ID:        "9ed07209-7a4f-4dd9-bf0d-6f8b70280f85",
-					ViewName:  "view name name name",
-					Summary:   "",
-					OwnerID:   "54112816-3a55-4a28-82df-3c8e082fa0f8",
-					CreatedAt: time.Now().UTC(),
-				})
-				s.Require().NoError(err)
-
-				return tc
-			},
+			TestCampaign: testcampaign.MustNew(testcampaign.Params{
+				ID:        "9ed07209-7a4f-4dd9-bf0d-6f8b70280f85",
+				ViewName:  "view name name name",
+				Summary:   "",
+				OwnerID:   "54112816-3a55-4a28-82df-3c8e082fa0f8",
+				CreatedAt: time.Now().UTC(),
+			}),
 			ShouldBeErr: false,
 		},
 	}
@@ -206,9 +186,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 				c.Before()
 			}
 
-			testCampaign := c.TestCampaignsFactory()
-
-			err := s.repo.AddTestCampaign(context.Background(), testCampaign)
+			err := s.repo.AddTestCampaign(context.Background(), c.TestCampaign)
 
 			if c.ShouldBeErr {
 				s.Require().True(c.IsErr(err))
@@ -218,8 +196,8 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 
 			s.Require().NoError(err)
 
-			persistedTestCampaign := s.getTestCampaign(testCampaign.ID())
-			s.requireTestCampaignsEqual(testCampaign, persistedTestCampaign)
+			persistedTestCampaign := s.getTestCampaign(c.TestCampaign.ID())
+			s.requireTestCampaignsEqual(c.TestCampaign, persistedTestCampaign)
 		})
 	}
 }

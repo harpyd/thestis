@@ -23,6 +23,15 @@ type Params struct {
 	CreatedAt time.Time
 }
 
+func MustNew(params Params) *TestCampaign {
+	tc, err := New(params)
+	if err != nil {
+		panic(err)
+	}
+
+	return tc
+}
+
 func New(params Params) (*TestCampaign, error) {
 	if params.ID == "" {
 		return nil, NewEmptyIDError()
