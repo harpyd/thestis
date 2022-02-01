@@ -18,7 +18,7 @@ func (h handler) StartNewPerformance(w http.ResponseWriter, r *http.Request, tes
 		return
 	}
 
-	perfID, msg, err := h.app.Commands.StartNewPerformance.Handle(r.Context(), cmd)
+	perfID, messages, err := h.app.Commands.StartNewPerformance.Handle(r.Context(), cmd)
 	if err == nil {
 		w.WriteHeader(http.StatusAccepted)
 		w.Header().Set("Location", fmt.Sprintf("/performances/%s", perfID))
@@ -26,14 +26,14 @@ func (h handler) StartNewPerformance(w http.ResponseWriter, r *http.Request, tes
 		go func(reqID string) {
 			logField := app.StringLogField("requestId", reqID)
 
-			for m := range msg {
-				if m.Err() == nil || m.State() == performance.Failed {
-					h.logger.Info(m.String(), logField)
+			for msg := range messages {
+				if msg.Err() == nil || msg.State() == performance.Failed {
+					h.logger.Info(msg.String(), logField)
 
 					continue
 				}
 
-				h.logger.Error(m.String(), m.Err(), logField)
+				h.logger.Error(msg.String(), msg.Err(), logField)
 			}
 		}(middleware.GetReqID(r.Context()))
 

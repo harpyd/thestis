@@ -71,10 +71,10 @@ func (h StartNewPerformanceHandler) Handle(
 
 	actionCtx := context.Background()
 
-	msg, err := h.manager.ManageFlow(actionCtx, perf)
+	messages, err = h.manager.ManageFlow(actionCtx, perf)
 	if err != nil {
 		return "", nil, err
 	}
 
-	return perfID, msg, nil
+	return perfID, messages, nil
 }

@@ -80,22 +80,22 @@ func (m *everyStepSavingFlowManager) ManageFlow(
 		return nil, err
 	}
 
-	msg := make(chan Message)
+	messages := make(chan Message)
 
-	if err = m.perfsRepo.ExclusivelyDoWithPerformance(ctx, perf, m.action(ctx, steps, msg)); err != nil {
+	if err = m.perfsRepo.ExclusivelyDoWithPerformance(ctx, perf, m.action(ctx, steps, messages)); err != nil {
 		return nil, err
 	}
 
-	return msg, nil
+	return messages, nil
 }
 
 func (m *everyStepSavingFlowManager) action(
 	ctx context.Context,
 	steps <-chan performance.Step,
-	msg chan<- Message,
+	messages chan<- Message,
 ) func(perf *performance.Performance) {
 	return func(perf *performance.Performance) {
-		defer close(msg)
+		defer close(messages)
 
 		fr := performance.FlowFromPerformance(uuid.New().String(), perf)
 
@@ -104,15 +104,15 @@ func (m *everyStepSavingFlowManager) action(
 
 			flow := fr.Reduce()
 			if err := m.flowsRepo.UpsertFlow(ctx, flow); err != nil {
-				msg <- newMessageFromError(err)
+				messages <- newMessageFromError(err)
 			}
 
-			msg <- newMessageFromStep(s)
+			messages <- newMessageFromStep(s)
 		}
 
 		flow := fr.FinallyReduce()
 		if err := m.flowsRepo.UpsertFlow(ctx, flow); err != nil {
-			msg <- newMessageFromError(err)
+			messages <- newMessageFromError(err)
 		}
 	}
 }
