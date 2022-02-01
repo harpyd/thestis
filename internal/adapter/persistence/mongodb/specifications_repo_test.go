@@ -169,11 +169,11 @@ func (s *SpecificationsRepositoryTestSuite) TestGetActiveSpecificationByTestCamp
 
 func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 	testCases := []struct {
-		Name                 string
-		Before               func()
-		SpecificationFactory func() *specification.Specification
-		ShouldBeErr          bool
-		IsErr                func(err error) bool
+		Name          string
+		Before        func()
+		Specification *specification.Specification
+		ShouldBeErr   bool
+		IsErr         func(err error) bool
 	}{
 		{
 			Name: "failed_adding_one_specification_twice",
@@ -184,13 +184,11 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 
 				s.addSpecifications(spec)
 			},
-			SpecificationFactory: func() *specification.Specification {
-				return specification.NewBuilder().
-					WithID("62a4e06b-c00f-49a5-a1c1-5906e5e2e1d5").
-					WithAuthor("Djerys").
-					WithOwnerID("6c204a55-023f-49bf-8c3d-1e7915b64f3a").
-					ErrlessBuild()
-			},
+			Specification: specification.NewBuilder().
+				WithID("62a4e06b-c00f-49a5-a1c1-5906e5e2e1d5").
+				WithAuthor("Djerys").
+				WithOwnerID("6c204a55-023f-49bf-8c3d-1e7915b64f3a").
+				ErrlessBuild(),
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
 				return app.IsAlreadyExistsError(err) && mongo.IsDuplicateKeyError(err)
@@ -198,16 +196,14 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 		},
 		{
 			Name: "successful_adding",
-			SpecificationFactory: func() *specification.Specification {
-				return specification.NewBuilder().
-					WithID("f517f320-7d07-44a5-9fbf-7e1eb6889e87").
-					WithAuthor("Djerys").
-					WithTitle("Test title").
-					WithDescription("Test description").
-					WithOwnerID("393a989b-31a2-4c52-a6bd-abd83f5b2392").
-					WithTestCampaignID("e0a9361a-3605-4116-bb9b-957d9e0460f8").
-					ErrlessBuild()
-			},
+			Specification: specification.NewBuilder().
+				WithID("f517f320-7d07-44a5-9fbf-7e1eb6889e87").
+				WithAuthor("Djerys").
+				WithTitle("Test title").
+				WithDescription("Test description").
+				WithOwnerID("393a989b-31a2-4c52-a6bd-abd83f5b2392").
+				WithTestCampaignID("e0a9361a-3605-4116-bb9b-957d9e0460f8").
+				ErrlessBuild(),
 			ShouldBeErr: false,
 		},
 	}
@@ -218,9 +214,7 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 				c.Before()
 			}
 
-			spec := c.SpecificationFactory()
-
-			err := s.repo.AddSpecification(context.Background(), spec)
+			err := s.repo.AddSpecification(context.Background(), c.Specification)
 
 			if c.ShouldBeErr {
 				s.Require().True(c.IsErr(err))
@@ -230,8 +224,8 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 
 			s.Require().NoError(err)
 
-			persistedSpec := s.getSpecification(spec.ID())
-			s.Require().Equal(spec, persistedSpec)
+			persistedSpec := s.getSpecification(c.Specification.ID())
+			s.Require().Equal(c.Specification, persistedSpec)
 		})
 	}
 }
