@@ -50,7 +50,7 @@ func TestStartNewPerformanceHandler_Handle(t *testing.T) {
 				WithOwnerID("8ea9dca1-53da-4ed5-8f4b-660c8956ea45").
 				ErrlessBuild(),
 			ShouldBeErr: true,
-			IsErr:       user.IsUserCantSeeSpecificationError,
+			IsErr:       user.IsCantSeeSpecificationError,
 		},
 		{
 			Name: "success_performance_starting",

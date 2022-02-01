@@ -80,7 +80,7 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 			}),
 			ParseWithErr: false,
 			ShouldBeErr:  true,
-			IsErr:        user.IsUserCantSeeTestCampaignError,
+			IsErr:        user.IsCantSeeTestCampaignError,
 		},
 	}
 

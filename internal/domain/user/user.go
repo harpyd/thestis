@@ -14,7 +14,7 @@ func CanSeeTestCampaign(userID string, tc *testcampaign.TestCampaign) error {
 		return nil
 	}
 
-	return NewUserCantSeeTestCampaignError(userID, tc.OwnerID())
+	return NewCantSeeTestCampaignError(userID, tc.OwnerID())
 }
 
 func CanSeeSpecification(userID string, spec *specification.Specification) error {
@@ -22,51 +22,51 @@ func CanSeeSpecification(userID string, spec *specification.Specification) error
 		return nil
 	}
 
-	return NewUserCantSeeSpecificationError(userID, spec.OwnerID())
+	return NewCantSeeSpecificationError(userID, spec.OwnerID())
 }
 
 type (
-	userCantSeeTestCampaignError struct {
+	cantSeeTestCampaignError struct {
 		userID  string
 		ownerID string
 	}
 
-	userCantSeeSpecificationError struct {
+	cantSeeSpecificationError struct {
 		userID  string
 		ownerID string
 	}
 )
 
-func NewUserCantSeeTestCampaignError(userID, ownerID string) error {
-	return errors.WithStack(userCantSeeTestCampaignError{
+func NewCantSeeTestCampaignError(userID, ownerID string) error {
+	return errors.WithStack(cantSeeTestCampaignError{
 		userID:  userID,
 		ownerID: ownerID,
 	})
 }
 
-func IsUserCantSeeTestCampaignError(err error) bool {
-	var target userCantSeeTestCampaignError
+func IsCantSeeTestCampaignError(err error) bool {
+	var target cantSeeTestCampaignError
 
 	return errors.As(err, &target)
 }
 
-func (e userCantSeeTestCampaignError) Error() string {
+func (e cantSeeTestCampaignError) Error() string {
 	return fmt.Sprintf("user %s can't see user %s test campaign", e.userID, e.ownerID)
 }
 
-func NewUserCantSeeSpecificationError(userID, ownerID string) error {
-	return errors.WithStack(userCantSeeSpecificationError{
+func NewCantSeeSpecificationError(userID, ownerID string) error {
+	return errors.WithStack(cantSeeSpecificationError{
 		userID:  userID,
 		ownerID: ownerID,
 	})
 }
 
-func IsUserCantSeeSpecificationError(err error) bool {
-	var target userCantSeeSpecificationError
+func IsCantSeeSpecificationError(err error) bool {
+	var target cantSeeSpecificationError
 
 	return errors.As(err, &target)
 }
 
-func (e userCantSeeSpecificationError) Error() string {
+func (e cantSeeSpecificationError) Error() string {
 	return fmt.Sprintf("user %s can't see user %s specification", e.userID, e.ownerID)
 }

@@ -37,7 +37,7 @@ func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testC
 		return
 	}
 
-	if user.IsUserCantSeeTestCampaignError(err) {
+	if user.IsCantSeeTestCampaignError(err) {
 		httperr.Forbidden(string(ErrorSlugUserCantSeeTestCampaign), err, w, r)
 
 		return

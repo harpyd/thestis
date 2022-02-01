@@ -39,7 +39,7 @@ func TestCanSeeTestCampaign(t *testing.T) {
 				OwnerID: "f4f560a1-138c-4812-b152-0d7b71236d7f",
 			}),
 			ShouldBeErr: true,
-			IsErr:       user.IsUserCantSeeTestCampaignError,
+			IsErr:       user.IsCantSeeTestCampaignError,
 		},
 	}
 
@@ -89,7 +89,7 @@ func TestCanSeeSpecification(t *testing.T) {
 				WithOwnerID("4e28e13b-877f-4e53-bc85-0744164b7187").
 				ErrlessBuild(),
 			ShouldBeErr: true,
-			IsErr:       user.IsUserCantSeeSpecificationError,
+			IsErr:       user.IsCantSeeSpecificationError,
 		},
 	}
 
@@ -112,7 +112,7 @@ func TestCanSeeSpecification(t *testing.T) {
 	}
 }
 
-func TestIsUserCantSeeTestCampaignError(t *testing.T) {
+func TestIsCantSeeTestCampaignError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -121,13 +121,13 @@ func TestIsUserCantSeeTestCampaignError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "user_cant_see_test_campaign_error",
-			Err:       user.NewUserCantSeeTestCampaignError("user-id", "owner-id"),
+			Name:      "cant_see_test_campaign_error",
+			Err:       user.NewCantSeeTestCampaignError("user-id", "owner-id"),
 			IsSameErr: true,
 		},
 		{
 			Name:      "another_error",
-			Err:       user.NewUserCantSeeSpecificationError("user-id", "owner-id"),
+			Err:       user.NewCantSeeSpecificationError("user-id", "owner-id"),
 			IsSameErr: false,
 		},
 	}
@@ -138,12 +138,12 @@ func TestIsUserCantSeeTestCampaignError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, user.IsUserCantSeeTestCampaignError(c.Err))
+			require.Equal(t, c.IsSameErr, user.IsCantSeeTestCampaignError(c.Err))
 		})
 	}
 }
 
-func TestIsUserCantSeeSpecificationError(t *testing.T) {
+func TestIsCantSeeSpecificationError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -152,13 +152,13 @@ func TestIsUserCantSeeSpecificationError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "user_cant_see_specification_error",
-			Err:       user.NewUserCantSeeSpecificationError("user-id", "owner-id"),
+			Name:      "cant_see_specification_error",
+			Err:       user.NewCantSeeSpecificationError("user-id", "owner-id"),
 			IsSameErr: true,
 		},
 		{
 			Name:      "another_error",
-			Err:       user.NewUserCantSeeTestCampaignError("user-id", "owner-id"),
+			Err:       user.NewCantSeeTestCampaignError("user-id", "owner-id"),
 			IsSameErr: false,
 		},
 	}
@@ -169,7 +169,7 @@ func TestIsUserCantSeeSpecificationError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, user.IsUserCantSeeSpecificationError(c.Err))
+			require.Equal(t, c.IsSameErr, user.IsCantSeeSpecificationError(c.Err))
 		})
 	}
 }

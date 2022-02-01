@@ -40,7 +40,7 @@ func (h handler) StartNewPerformance(w http.ResponseWriter, r *http.Request, tes
 		return
 	}
 
-	if user.IsUserCantSeeTestCampaignError(err) {
+	if user.IsCantSeeTestCampaignError(err) {
 		httperr.Forbidden(string(ErrorSlugUserCantSeeTestCampaign), err, w, r)
 
 		return
