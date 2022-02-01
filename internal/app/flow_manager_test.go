@@ -7,8 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/app/mock"
+	appMock "github.com/harpyd/thestis/internal/app/mock"
 	"github.com/harpyd/thestis/internal/domain/performance"
+	perfMock "github.com/harpyd/thestis/internal/domain/performance/mock"
+	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
 func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
@@ -16,7 +18,7 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 
 	testCases := []struct {
 		Name               string
-		PerformanceFactory func() *performance.Performance
+		PerformanceFactory func(opts ...performance.Option) *performance.Performance
 		AddPerformance     bool
 		ShouldBeErr        bool
 		IsErr              func(err error) bool
@@ -24,7 +26,7 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 	}{
 		{
 			Name: "already_started_performance",
-			PerformanceFactory: func() *performance.Performance {
+			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
 				perf := performance.UnmarshalFromDatabase(performance.Params{
 					OwnerID:         "f7b42682-cf52-4699-9bba-f8dac902efb0",
 					SpecificationID: "73a7c5f6-f239-4abf-8837-cc4763d59d5f",
@@ -35,7 +37,7 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 							performance.HTTPPerformer,
 						),
 					},
-				})
+				}, opts...)
 
 				_, err := perf.Start(context.Background())
 				require.NoError(t, err)
@@ -48,11 +50,11 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 		},
 		{
 			Name: "exclusive_action_with_performance_failed",
-			PerformanceFactory: func() *performance.Performance {
+			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
 				return performance.UnmarshalFromDatabase(performance.Params{
 					OwnerID:         "1baf3001-00ad-4eca-8fea-117ca68d9bc5",
 					SpecificationID: "8bc587a9-b7dd-40f8-bf2f-98287518241e",
-				})
+				}, opts...)
 			},
 			AddPerformance: false,
 			ShouldBeErr:    true,
@@ -60,7 +62,7 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 		},
 		{
 			Name: "success_flow_managing",
-			PerformanceFactory: func() *performance.Performance {
+			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
 				return performance.UnmarshalFromDatabase(performance.Params{
 					OwnerID:         "d1e0470e-ec44-4d57-b3eb-ef9ed8fe8f01",
 					SpecificationID: "e597e3a2-54a2-4076-b1a0-1045e9aeaa7d",
@@ -76,15 +78,15 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 							performance.AssertionPerformer,
 						),
 					},
-				})
+				}, opts...)
 			},
 			AddPerformance: true,
 			ShouldBeErr:    false,
 			Messages: []string{
-				"Flow step performing `first -(HTTP)-> second`",
-				"Flow step not performed `first -(HTTP)-> second`",
-				"Flow step performing `second -(assertion)-> third`",
-				"Flow step not performed `second -(assertion)-> third`",
+				"Flow step `first -(HTTP)-> second` performing",
+				"Flow step `first -(HTTP)-> second` passed",
+				"Flow step `second -(assertion)-> third` performing",
+				"Flow step `second -(assertion)-> third` passed",
 			},
 		},
 	}
@@ -95,11 +97,15 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			perf := c.PerformanceFactory()
+			perf := c.PerformanceFactory(
+				performance.WithID("e148737a-5825-4a39-bca2-9c671f2e0386"),
+				performance.WithHTTP(passedPerformer(t)),
+				performance.WithAssertion(passedPerformer(t)),
+			)
 
 			var (
-				perfsRepo = mock.NewPerformancesRepository()
-				flowsRepo = mock.NewFlowsRepository()
+				perfsRepo = appMock.NewPerformancesRepository()
+				flowsRepo = appMock.NewFlowsRepository()
 			)
 
 			if c.AddPerformance {
@@ -128,4 +134,12 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 			require.ElementsMatch(t, c.Messages, readMessages)
 		})
 	}
+}
+
+func passedPerformer(t *testing.T) performance.Performer {
+	t.Helper()
+
+	return perfMock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
+		return performance.Pass()
+	})
 }

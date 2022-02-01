@@ -356,7 +356,7 @@ func (s performStep) Err() error {
 }
 
 func (s performStep) String() string {
-	msg := fmt.Sprintf("Flow step %s `%s -(%s)-> %s`", s.state, s.from, s.performerType, s.to)
+	msg := fmt.Sprintf("Flow step `%s -(%s)-> %s` %s", s.from, s.performerType, s.to, s.state)
 
 	if s.err != nil {
 		msg = fmt.Sprintf("%s (with err: %s)", msg, s.err)
