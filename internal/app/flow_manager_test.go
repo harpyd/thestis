@@ -125,15 +125,20 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 
 			require.NoError(t, err)
 
-			readMessages := make([]string, 0, len(c.Messages))
-
-			for msg := range messages {
-				readMessages = append(readMessages, msg.String())
-			}
-
-			require.ElementsMatch(t, c.Messages, readMessages)
+			requireMessagesStringEqual(t, c.Messages, messages)
 		})
 	}
+}
+
+func requireMessagesStringEqual(t *testing.T, expected []string, actual <-chan app.Message) {
+	t.Helper()
+
+	readMessages := make([]string, 0, len(expected))
+	for msg := range actual {
+		readMessages = append(readMessages, msg.String())
+	}
+
+	require.ElementsMatch(t, expected, readMessages)
 }
 
 func passedPerformer(t *testing.T) performance.Performer {
