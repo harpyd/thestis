@@ -40,7 +40,7 @@ func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
 	testCases := []struct {
 		Name        string
 		Before      func()
-		FlowFactory func() performance.Flow
+		Flow        performance.Flow
 		ShouldBeErr bool
 		IsErr       func(err error) bool
 	}{
@@ -49,14 +49,12 @@ func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
 			Before: func() {
 				// do not insert before
 			},
-			FlowFactory: func() performance.Flow {
-				return performance.UnmarshalFlowFromDatabase(performance.FlowParams{
-					ID:            "60b7b0eb-eb62-49bc-bf76-d4fca3ad48b8",
-					PerformanceID: "b1728f29-c897-4258-bad8-dd824b8f84cf",
-					State:         performance.Performing,
-					Transitions:   s.transitions(),
-				})
-			},
+			Flow: performance.UnmarshalFlowFromDatabase(performance.FlowParams{
+				ID:            "60b7b0eb-eb62-49bc-bf76-d4fca3ad48b8",
+				PerformanceID: "b1728f29-c897-4258-bad8-dd824b8f84cf",
+				State:         performance.Performing,
+				Transitions:   s.transitions(),
+			}),
 			ShouldBeErr: false,
 		},
 		{
@@ -71,14 +69,12 @@ func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
 
 				s.addFlows(flow)
 			},
-			FlowFactory: func() performance.Flow {
-				return performance.UnmarshalFlowFromDatabase(performance.FlowParams{
-					ID:            "07e3468b-a195-4b30-81df-8e3e8d389da9",
-					PerformanceID: "407b3e37-a4b2-4fa1-aa47-4d75e658e455",
-					State:         performance.Passed,
-					Transitions:   s.transitions(),
-				})
-			},
+			Flow: performance.UnmarshalFlowFromDatabase(performance.FlowParams{
+				ID:            "07e3468b-a195-4b30-81df-8e3e8d389da9",
+				PerformanceID: "407b3e37-a4b2-4fa1-aa47-4d75e658e455",
+				State:         performance.Passed,
+				Transitions:   s.transitions(),
+			}),
 			ShouldBeErr: false,
 		},
 	}
@@ -87,9 +83,7 @@ func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
 		s.Run(c.Name, func() {
 			c.Before()
 
-			flow := c.FlowFactory()
-
-			err := s.repo.UpsertFlow(context.Background(), flow)
+			err := s.repo.UpsertFlow(context.Background(), c.Flow)
 
 			if c.ShouldBeErr {
 				s.Require().True(c.IsErr(err))
@@ -99,8 +93,8 @@ func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
 
 			s.Require().NoError(err)
 
-			persistedFlow := s.getFlow(flow.ID())
-			s.Require().Equal(flow, persistedFlow)
+			persistedFlow := s.getFlow(c.Flow.ID())
+			s.Require().Equal(c.Flow, persistedFlow)
 		})
 	}
 }
