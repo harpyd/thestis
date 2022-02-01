@@ -16,19 +16,19 @@ import (
 	"github.com/harpyd/thestis/internal/domain/user"
 )
 
-func TestStartNewPerformanceHandler_Handle(t *testing.T) {
+func TestStartPerformanceHandler_Handle(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		Name          string
-		Command       app.StartNewPerformanceCommand
+		Command       app.StartPerformanceCommand
 		Specification *specification.Specification
 		ShouldBeErr   bool
 		IsErr         func(err error) bool
 	}{
 		{
 			Name: "specification_with_such_test_campaign_id_not_found",
-			Command: app.StartNewPerformanceCommand{
+			Command: app.StartPerformanceCommand{
 				TestCampaignID: "68baf422-777f-4a0e-b35a-4fff5858af2d",
 				StartedByID:    "d8d1e4ab-8f24-4c79-a1f2-49e24b3f119a",
 			},
@@ -41,7 +41,7 @@ func TestStartNewPerformanceHandler_Handle(t *testing.T) {
 		},
 		{
 			Name: "user_cannot_see_specification",
-			Command: app.StartNewPerformanceCommand{
+			Command: app.StartPerformanceCommand{
 				TestCampaignID: "5ee6228e-5b0b-4d40-b4e5-9a138bef9f84",
 				StartedByID:    "fb883739-2c8c-4a4e-bca2-f96b204f4ac8",
 			},
@@ -54,7 +54,7 @@ func TestStartNewPerformanceHandler_Handle(t *testing.T) {
 		},
 		{
 			Name: "success_performance_starting",
-			Command: app.StartNewPerformanceCommand{
+			Command: app.StartPerformanceCommand{
 				TestCampaignID: "70c8e87d-395d-4ae6-b53e-3b2f587039a3",
 				StartedByID:    "aa584d3d-c790-4ed3-8bfa-19e1b6fed88e",
 			},
@@ -76,9 +76,9 @@ func TestStartNewPerformanceHandler_Handle(t *testing.T) {
 				specsRepo = appMock.NewSpecificationsRepository(c.Specification)
 				perfsRepo = appMock.NewPerformancesRepository()
 				handler   = command.NewStartPerformanceHandler(
-					appMock.NewFlowManager(false),
 					specsRepo,
 					perfsRepo,
+					appMock.NewFlowManager(false),
 					app.WithHTTPPerformer(passedPerformer(t)),
 					app.WithAssertionPerformer(failedPerformer(t)),
 				)

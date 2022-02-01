@@ -186,7 +186,7 @@ paths:
     post:
       tags:
         - performance
-      operationId: startNewPerformance
+      operationId: startPerformance
       summary: Asynchronously starts performing of test campaign active specification performance.
       parameters:
         - in: path

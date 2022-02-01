@@ -9,9 +9,9 @@ type Application struct {
 
 type (
 	Commands struct {
-		CreateTestCampaign  createTestCampaignHandler
-		LoadSpecification   loadSpecificationHandler
-		StartNewPerformance startNewPerformanceHandler
+		CreateTestCampaign createTestCampaignHandler
+		LoadSpecification  loadSpecificationHandler
+		StartPerformance   startPerformanceHandler
 	}
 
 	createTestCampaignHandler interface {
@@ -22,8 +22,8 @@ type (
 		Handle(ctx context.Context, cmd LoadSpecificationCommand) (string, error)
 	}
 
-	startNewPerformanceHandler interface {
-		Handle(ctx context.Context, cmd StartNewPerformanceCommand) (string, <-chan Message, error)
+	startPerformanceHandler interface {
+		Handle(ctx context.Context, cmd StartPerformanceCommand) (string, <-chan Message, error)
 	}
 )
 

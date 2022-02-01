@@ -13,7 +13,7 @@ type (
 		Content        []byte
 	}
 
-	StartNewPerformanceCommand struct {
+	StartPerformanceCommand struct {
 		TestCampaignID string
 		StartedByID    string
 	}

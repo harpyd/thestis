@@ -11,23 +11,19 @@ import (
 	"github.com/harpyd/thestis/internal/domain/user"
 )
 
-type StartNewPerformanceHandler struct {
-	manager       app.FlowManager
+type StartPerformanceHandler struct {
 	specsRepo     app.SpecificationsRepository
 	perfsRepo     app.PerformancesRepository
+	manager       app.FlowManager
 	performerOpts app.PerformerOptions
 }
 
 func NewStartPerformanceHandler(
-	manager app.FlowManager,
 	specsRepo app.SpecificationsRepository,
 	perfsRepo app.PerformancesRepository,
+	manager app.FlowManager,
 	opts ...app.PerformerOption,
-) StartNewPerformanceHandler {
-	if manager == nil {
-		panic("flow manager is nil")
-	}
-
+) StartPerformanceHandler {
 	if specsRepo == nil {
 		panic("specification repository is nil")
 	}
@@ -36,17 +32,21 @@ func NewStartPerformanceHandler(
 		panic("performances repository is nil")
 	}
 
-	return StartNewPerformanceHandler{
-		manager:       manager,
+	if manager == nil {
+		panic("flow manager is nil")
+	}
+
+	return StartPerformanceHandler{
 		specsRepo:     specsRepo,
 		perfsRepo:     perfsRepo,
+		manager:       manager,
 		performerOpts: opts,
 	}
 }
 
-func (h StartNewPerformanceHandler) Handle(
+func (h StartPerformanceHandler) Handle(
 	ctx context.Context,
-	cmd app.StartNewPerformanceCommand,
+	cmd app.StartPerformanceCommand,
 ) (perfID string, messages <-chan app.Message, err error) {
 	defer func() {
 		err = errors.Wrap(err, "new performance starting")

@@ -164,10 +164,10 @@ func (c *runnerContext) initApplication() {
 				c.persistent.testCampaignsRepo,
 				c.specParser,
 			),
-			StartNewPerformance: command.NewStartPerformanceHandler(
-				c.flowManager,
+			StartPerformance: command.NewStartPerformanceHandler(
 				c.persistent.specsRepo,
 				c.persistent.perfsRepo,
+				c.flowManager,
 			),
 		},
 		Queries: app.Queries{

@@ -39,7 +39,7 @@ type ServerInterface interface {
 	GetTestCampaign(w http.ResponseWriter, r *http.Request, testCampaignId string)
 	// Asynchronously starts performing of test campaign active specification performance.
 	// (POST /test-campaigns/{testCampaignId}/performance)
-	StartNewPerformance(w http.ResponseWriter, r *http.Request, testCampaignId string)
+	StartPerformance(w http.ResponseWriter, r *http.Request, testCampaignId string)
 	// Returns performances history.
 	// (GET /test-campaigns/{testCampaignId}/performances)
 	GetPerformancesHistory(w http.ResponseWriter, r *http.Request, testCampaignId string)
@@ -242,8 +242,8 @@ func (siw *ServerInterfaceWrapper) GetTestCampaign(w http.ResponseWriter, r *htt
 	handler(w, r.WithContext(ctx))
 }
 
-// StartNewPerformance operation middleware
-func (siw *ServerInterfaceWrapper) StartNewPerformance(w http.ResponseWriter, r *http.Request) {
+// StartPerformance operation middleware
+func (siw *ServerInterfaceWrapper) StartPerformance(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
@@ -258,7 +258,7 @@ func (siw *ServerInterfaceWrapper) StartNewPerformance(w http.ResponseWriter, r 
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.StartNewPerformance(w, r, testCampaignId)
+		siw.Handler.StartPerformance(w, r, testCampaignId)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -382,7 +382,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/test-campaigns/{testCampaignId}", wrapper.GetTestCampaign)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/test-campaigns/{testCampaignId}/performance", wrapper.StartNewPerformance)
+		r.Post(options.BaseURL+"/test-campaigns/{testCampaignId}/performance", wrapper.StartPerformance)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-campaigns/{testCampaignId}/performances", wrapper.GetPerformancesHistory)

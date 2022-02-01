@@ -12,13 +12,13 @@ import (
 	"github.com/harpyd/thestis/internal/port/http/httperr"
 )
 
-func (h handler) StartNewPerformance(w http.ResponseWriter, r *http.Request, testCampaignID string) {
-	cmd, ok := unmarshalStartNewPerformanceCommand(w, r, testCampaignID)
+func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCampaignID string) {
+	cmd, ok := unmarshalStartPerformanceCommand(w, r, testCampaignID)
 	if !ok {
 		return
 	}
 
-	perfID, messages, err := h.app.Commands.StartNewPerformance.Handle(r.Context(), cmd)
+	perfID, messages, err := h.app.Commands.StartPerformance.Handle(r.Context(), cmd)
 	if err == nil {
 		w.WriteHeader(http.StatusAccepted)
 		w.Header().Set("Location", fmt.Sprintf("/performances/%s", perfID))
