@@ -14,40 +14,30 @@ func TestCanSeeTestCampaign(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name                string
-		UserID              string
-		TestCampaignFactory func() *testcampaign.TestCampaign
-		ShouldBeErr         bool
-		IsErr               func(err error) bool
+		Name         string
+		UserID       string
+		TestCampaign *testcampaign.TestCampaign
+		ShouldBeErr  bool
+		IsErr        func(err error) bool
 	}{
 		{
 			Name:   "can_see",
 			UserID: "6e36006d-ec59-40fc-b132-08b2cdd28fc6",
-			TestCampaignFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New(testcampaign.Params{
-					ID:       "10fe3333-e6be-498d-a788-5b48aab998cf",
-					OwnerID:  "6e36006d-ec59-40fc-b132-08b2cdd28fc6",
-					ViewName: "test",
-					Summary:  "tests",
-				})
-				require.NoError(t, err)
-
-				return tc
-			},
+			TestCampaign: testcampaign.MustNew(testcampaign.Params{
+				ID:       "10fe3333-e6be-498d-a788-5b48aab998cf",
+				OwnerID:  "6e36006d-ec59-40fc-b132-08b2cdd28fc6",
+				ViewName: "test",
+				Summary:  "tests",
+			}),
 			ShouldBeErr: false,
 		},
 		{
 			Name:   "cannot_see",
 			UserID: "3ef42ce3-b4e2-4c64-b41c-92d881d44658",
-			TestCampaignFactory: func() *testcampaign.TestCampaign {
-				tc, err := testcampaign.New(testcampaign.Params{
-					ID:      "c316d7d8-28df-4bce-b28a-80a4364c8c07",
-					OwnerID: "f4f560a1-138c-4812-b152-0d7b71236d7f",
-				})
-				require.NoError(t, err)
-
-				return tc
-			},
+			TestCampaign: testcampaign.MustNew(testcampaign.Params{
+				ID:      "c316d7d8-28df-4bce-b28a-80a4364c8c07",
+				OwnerID: "f4f560a1-138c-4812-b152-0d7b71236d7f",
+			}),
 			ShouldBeErr: true,
 			IsErr:       user.IsUserCantSeeTestCampaignError,
 		},
@@ -59,7 +49,7 @@ func TestCanSeeTestCampaign(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			err := user.CanSeeTestCampaign(c.UserID, c.TestCampaignFactory())
+			err := user.CanSeeTestCampaign(c.UserID, c.TestCampaign)
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))
