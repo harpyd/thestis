@@ -12,6 +12,11 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+const (
+	from = "from"
+	to   = "to"
+)
+
 func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 	t.Parallel()
 
@@ -31,8 +36,8 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 					SpecificationID: "73a7c5f6-f239-4abf-8837-cc4763d59d5f",
 					Actions: []performance.Action{
 						performance.NewAction(
-							"from",
-							"to",
+							from,
+							to,
 							specification.NewThesisBuilder().ErrlessBuild("some"),
 							performance.HTTPPerformer,
 						),
