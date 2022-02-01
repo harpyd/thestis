@@ -6,7 +6,6 @@ import (
 	"github.com/harpyd/thestis/internal/app"
 )
 
-// nolint
 func unmarshalStartNewPerformanceCommand(
 	w http.ResponseWriter, r *http.Request,
 	testCampaignID string,
