@@ -9,12 +9,6 @@ import (
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/mock"
 	"github.com/harpyd/thestis/internal/domain/performance"
-	"github.com/harpyd/thestis/internal/domain/specification"
-)
-
-const (
-	from = "from"
-	to   = "to"
 )
 
 func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
@@ -35,10 +29,9 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 					OwnerID:         "f7b42682-cf52-4699-9bba-f8dac902efb0",
 					SpecificationID: "73a7c5f6-f239-4abf-8837-cc4763d59d5f",
 					Actions: []performance.Action{
-						performance.NewAction(
-							from,
-							to,
-							specification.NewThesisBuilder().ErrlessBuild("some"),
+						performance.NewActionWithoutThesis(
+							"from",
+							"to",
 							performance.HTTPPerformer,
 						),
 					},
@@ -64,6 +57,35 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 			AddPerformance: false,
 			ShouldBeErr:    true,
 			IsErr:          app.IsPerformanceNotFoundError,
+		},
+		{
+			Name: "success_flow_managing",
+			PerformanceFactory: func() *performance.Performance {
+				return performance.UnmarshalFromDatabase(performance.Params{
+					OwnerID:         "d1e0470e-ec44-4d57-b3eb-ef9ed8fe8f01",
+					SpecificationID: "e597e3a2-54a2-4076-b1a0-1045e9aeaa7d",
+					Actions: []performance.Action{
+						performance.NewActionWithoutThesis(
+							"first",
+							"second",
+							performance.HTTPPerformer,
+						),
+						performance.NewActionWithoutThesis(
+							"second",
+							"third",
+							performance.AssertionPerformer,
+						),
+					},
+				})
+			},
+			AddPerformance: true,
+			ShouldBeErr:    false,
+			Messages: []string{
+				"Flow step performing `first -(HTTP)-> second`",
+				"Flow step not performed `first -(HTTP)-> second`",
+				"Flow step performing `second -(assertion)-> third`",
+				"Flow step not performed `second -(assertion)-> third`",
+			},
 		},
 	}
 
@@ -97,7 +119,7 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 
 			require.NoError(t, err)
 
-			readMessages := make([]string, len(c.Messages))
+			readMessages := make([]string, 0, len(c.Messages))
 
 			for msg := range messages {
 				readMessages = append(readMessages, msg.String())
