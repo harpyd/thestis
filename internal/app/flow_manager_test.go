@@ -82,7 +82,7 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 
 			fm := app.NewEveryStepSavingFlowManager(perfsRepo, flowsRepo)
 
-			msg, err := fm.ManageFlow(context.Background(), perf)
+			messages, err := fm.ManageFlow(context.Background(), perf)
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))
@@ -92,13 +92,13 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 
 			require.NoError(t, err)
 
-			rMsg := make([]string, len(c.Messages))
+			readMessages := make([]string, len(c.Messages))
 
-			for m := range msg {
-				rMsg = append(rMsg, m.String())
+			for msg := range messages {
+				readMessages = append(readMessages, msg.String())
 			}
 
-			require.ElementsMatch(t, c.Messages, rMsg)
+			require.ElementsMatch(t, c.Messages, readMessages)
 		})
 	}
 }
