@@ -126,14 +126,6 @@ func TestLoadSpecificationHandler_Handle(t *testing.T) {
 			require.NoError(t, err)
 			require.NotEmpty(t, specID)
 			require.Equal(t, 1, specsRepo.SpecificationsNumber())
-
-			persistedSpec, err := specsRepo.GetActiveSpecificationByTestCampaignID(
-				context.Background(),
-				c.Command.TestCampaignID,
-			)
-			require.NoError(t, err)
-
-			require.Equal(t, c.Command.TestCampaignID, persistedSpec.TestCampaignID())
 		})
 	}
 }
