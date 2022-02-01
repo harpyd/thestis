@@ -42,11 +42,11 @@ func TestPerformancesRepository(t *testing.T) {
 
 func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 	testCases := []struct {
-		Name               string
-		Before             func()
-		PerformanceFactory func() *performance.Performance
-		ShouldBeErr        bool
-		IsErr              func(err error) bool
+		Name        string
+		Before      func()
+		Performance *performance.Performance
+		ShouldBeErr bool
+		IsErr       func(err error) bool
 	}{
 		{
 			Name: "failed_adding_one_performance_twice",
@@ -57,13 +57,11 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 
 				s.addPerformances(perf)
 			},
-			PerformanceFactory: func() *performance.Performance {
-				return performance.UnmarshalFromDatabase(performance.Params{
-					OwnerID:         "05bf69e9-d7b5-4e7a-8fab-24227dca033a",
-					SpecificationID: "1a63b6ea-df5f-4a68-bf04-c2e30044f2ef",
-					Actions:         s.actions(),
-				}, performance.WithID("a4a2906d-4df5-42f1-8832-77a33cba4d7f"))
-			},
+			Performance: performance.UnmarshalFromDatabase(performance.Params{
+				OwnerID:         "05bf69e9-d7b5-4e7a-8fab-24227dca033a",
+				SpecificationID: "1a63b6ea-df5f-4a68-bf04-c2e30044f2ef",
+				Actions:         s.actions(),
+			}, performance.WithID("a4a2906d-4df5-42f1-8832-77a33cba4d7f")),
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
 				return app.IsAlreadyExistsError(err) && mongo.IsDuplicateKeyError(err)
@@ -71,13 +69,11 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 		},
 		{
 			Name: "successful_adding",
-			PerformanceFactory: func() *performance.Performance {
-				return performance.UnmarshalFromDatabase(performance.Params{
-					OwnerID:         "3614a95c-c278-4687-84e2-97b95b11d399",
-					SpecificationID: "4e4465b0-a312-4f86-9051-a3ae72965215",
-					Actions:         s.actions(),
-				}, performance.WithID("3ce098e1-81ae-4610-8372-2f635b1b6a0c"))
-			},
+			Performance: performance.UnmarshalFromDatabase(performance.Params{
+				OwnerID:         "3614a95c-c278-4687-84e2-97b95b11d399",
+				SpecificationID: "4e4465b0-a312-4f86-9051-a3ae72965215",
+				Actions:         s.actions(),
+			}, performance.WithID("3ce098e1-81ae-4610-8372-2f635b1b6a0c")),
 			ShouldBeErr: false,
 		},
 	}
@@ -88,9 +84,7 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 				c.Before()
 			}
 
-			perf := c.PerformanceFactory()
-
-			err := s.repo.AddPerformance(context.Background(), perf)
+			err := s.repo.AddPerformance(context.Background(), c.Performance)
 
 			if c.ShouldBeErr {
 				s.Require().True(c.IsErr(err))
@@ -100,8 +94,8 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 
 			s.Require().NoError(err)
 
-			persistedPerf := s.getPerformance(perf.ID())
-			s.requirePerformancesEqual(perf, persistedPerf)
+			persistedPerf := s.getPerformance(c.Performance.ID())
+			s.requirePerformancesEqual(c.Performance, persistedPerf)
 		})
 	}
 }
