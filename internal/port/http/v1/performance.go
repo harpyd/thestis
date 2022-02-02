@@ -23,10 +23,10 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 		w.WriteHeader(http.StatusAccepted)
 		w.Header().Set("Location", fmt.Sprintf("/performances/%s", perfID))
 
-		go func(reqID string) {
+		go func() {
 			logFields := []app.LogField{
 				app.BoolLogField("isNew", true),
-				app.StringLogField("requestId", reqID),
+				app.StringLogField("requestId", middleware.GetReqID(r.Context())),
 				app.StringLogField("performanceId", perfID),
 			}
 
@@ -39,7 +39,7 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 
 				h.logger.Error(msg.String(), msg.Err(), logFields...)
 			}
-		}(middleware.GetReqID(r.Context()))
+		}()
 
 		return
 	}
