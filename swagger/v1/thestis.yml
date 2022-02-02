@@ -307,7 +307,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        423:
+        409:
           description: Performance in progress, cannot restart.
           content:
             application/json:
