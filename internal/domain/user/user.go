@@ -2,10 +2,10 @@ package user
 
 import (
 	"fmt"
-	"github.com/harpyd/thestis/internal/domain/performance"
 
 	"github.com/pkg/errors"
 
+	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )

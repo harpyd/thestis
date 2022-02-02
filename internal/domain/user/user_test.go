@@ -1,12 +1,12 @@
 package user_test
 
 import (
-	"github.com/harpyd/thestis/internal/domain/performance"
-	"github.com/pkg/errors"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
+	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 	"github.com/harpyd/thestis/internal/domain/user"
