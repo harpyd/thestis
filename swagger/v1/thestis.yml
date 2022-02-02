@@ -222,12 +222,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        409:
-          description: Performance already started. Only one performing can be start at a time.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
 
   /test-campaigns/{testCampaignId}/performances:
     get:

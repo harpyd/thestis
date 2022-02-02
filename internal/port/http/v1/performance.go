@@ -56,12 +56,6 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 		return
 	}
 
-	if performance.IsAlreadyStartedError(err) {
-		httperr.Conflict(string(ErrorSlugPerformanceAlreadyStarted), err, w, r)
-
-		return
-	}
-
 	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
