@@ -12,6 +12,7 @@ type (
 		CreateTestCampaign createTestCampaignHandler
 		LoadSpecification  loadSpecificationHandler
 		StartPerformance   startPerformanceHandler
+		RestartPerformance restartPerformanceHandler
 	}
 
 	createTestCampaignHandler interface {
@@ -24,6 +25,10 @@ type (
 
 	startPerformanceHandler interface {
 		Handle(ctx context.Context, cmd StartPerformanceCommand) (string, <-chan Message, error)
+	}
+
+	restartPerformanceHandler interface {
+		Handle(ctx context.Context, cmd RestartPerformanceCommand) (<-chan Message, error)
 	}
 )
 
