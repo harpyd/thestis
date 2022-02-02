@@ -27,7 +27,7 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 			logFields := []app.LogField{
 				app.BoolLogField("isNew", true),
 				app.StringLogField("requestId", reqID),
-				app.StringLogField("performanceID", perfID),
+				app.StringLogField("performanceId", perfID),
 			}
 
 			for msg := range messages {
