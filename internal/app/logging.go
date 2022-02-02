@@ -33,6 +33,13 @@ func IntLogField(key string, value int) LogField {
 	}
 }
 
+func BoolLogField(key string, value bool) LogField {
+	return LogField{
+		key:   key,
+		value: strconv.FormatBool(value),
+	}
+}
+
 func DurationLogField(key string, value time.Duration) LogField {
 	return LogField{
 		key:   key,

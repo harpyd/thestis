@@ -24,16 +24,20 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 		w.Header().Set("Location", fmt.Sprintf("/performances/%s", perfID))
 
 		go func(reqID string) {
-			logField := app.StringLogField("requestId", reqID)
+			logFields := []app.LogField{
+				app.BoolLogField("isNew", true),
+				app.StringLogField("requestId", reqID),
+				app.StringLogField("performanceID", perfID),
+			}
 
 			for msg := range messages {
 				if msg.Err() == nil || msg.State() == performance.Failed {
-					h.logger.Info(msg.String(), logField)
+					h.logger.Info(msg.String(), logFields...)
 
 					continue
 				}
 
-				h.logger.Error(msg.String(), msg.Err(), logField)
+				h.logger.Error(msg.String(), msg.Err(), logFields...)
 			}
 		}(middleware.GetReqID(r.Context()))
 
