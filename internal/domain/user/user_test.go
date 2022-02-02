@@ -1,6 +1,8 @@
 package user_test
 
 import (
+	"github.com/harpyd/thestis/internal/domain/performance"
+	"github.com/pkg/errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -112,6 +114,54 @@ func TestCanSeeSpecification(t *testing.T) {
 	}
 }
 
+func TestCanSeePerformance(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name        string
+		UserID      string
+		Performance *performance.Performance
+		ShouldBeErr bool
+		IsErr       func(err error) bool
+	}{
+		{
+			Name:   "can_see",
+			UserID: "e7b9f695-ea8d-4d31-a4ce-cfd5521d52c2",
+			Performance: performance.UnmarshalFromDatabase(performance.Params{
+				OwnerID: "e7b9f695-ea8d-4d31-a4ce-cfd5521d52c2",
+			}),
+			ShouldBeErr: false,
+		},
+		{
+			Name:   "cannot_see",
+			UserID: "732563f6-08a3-4b61-bbfc-818225f58b0b",
+			Performance: performance.UnmarshalFromDatabase(performance.Params{
+				OwnerID: "f36b38e0-829d-4bdf-af2d-de4e8e43b0c0",
+			}),
+			ShouldBeErr: true,
+			IsErr:       user.IsCantSeePerformanceError,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			err := user.CanSeePerformance(c.UserID, c.Performance)
+
+			if c.ShouldBeErr {
+				require.True(t, c.IsErr(err))
+
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestIsCantSeeTestCampaignError(t *testing.T) {
 	t.Parallel()
 
@@ -170,6 +220,37 @@ func TestIsCantSeeSpecificationError(t *testing.T) {
 			t.Parallel()
 
 			require.Equal(t, c.IsSameErr, user.IsCantSeeSpecificationError(c.Err))
+		})
+	}
+}
+
+func TestIsCantSeePerformanceError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "cant_see_performance_error",
+			Err:       user.NewCantSeePerformanceError("user-id", "owner-id"),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error",
+			Err:       errors.New("user user-id can't see performance user owner-id performance"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, user.IsCantSeePerformanceError(c.Err))
 		})
 	}
 }
