@@ -17,4 +17,9 @@ type (
 		TestCampaignID string
 		StartedByID    string
 	}
+
+	RestartPerformanceCommand struct {
+		PerformanceID string
+		StartedByID   string
+	}
 )

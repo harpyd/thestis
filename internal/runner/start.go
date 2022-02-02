@@ -169,6 +169,7 @@ func (c *runnerContext) initApplication() {
 				c.persistent.perfsRepo,
 				c.flowManager,
 			),
+			RestartPerformance: command.NewRestartPerformanceHandler(c.persistent.perfsRepo, c.flowManager),
 		},
 		Queries: app.Queries{
 			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(c.persistent.specificTestCampaignRM),
