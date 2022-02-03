@@ -12,4 +12,4 @@ auth:
 firebase:
   serviceAccountFile: ${SERVICE_ACCOUNT_FILE}
 performance:
-  flowTimeout: 1d
+  flowTimeout: 24h
