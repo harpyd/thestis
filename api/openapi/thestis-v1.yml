@@ -367,6 +367,7 @@ components:
         - unable-to-verify-jwt
         - unauthorized-user
         - user-cant-see-test-campaign
+        - user-cant-see-performance
         - performance-already-started
 
     CreateTestCampaignRequest:

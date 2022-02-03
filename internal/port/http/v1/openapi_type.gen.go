@@ -36,6 +36,8 @@ const (
 
 	ErrorSlugUnexpectedError ErrorSlug = "unexpected-error"
 
+	ErrorSlugUserCantSeePerformance ErrorSlug = "user-cant-see-performance"
+
 	ErrorSlugUserCantSeeTestCampaign ErrorSlug = "user-cant-see-test-campaign"
 )
 
