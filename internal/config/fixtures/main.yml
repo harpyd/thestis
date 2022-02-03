@@ -12,3 +12,5 @@ auth:
   with: ${AUTH_TYPE:fake}
 firebase:
   serviceAccountFile: ${SERVICE_ACCOUNT_FILE}
+performance:
+  flowTimeout: 24h

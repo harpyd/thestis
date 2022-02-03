@@ -29,6 +29,7 @@ type (
 		Mongo       Mongo
 		Auth        Auth
 		Firebase    Firebase
+		Performance Performance
 	}
 
 	HTTP struct {
@@ -51,6 +52,10 @@ type (
 
 	Firebase struct {
 		ServiceAccountFile string
+	}
+
+	Performance struct {
+		FlowTimeout time.Duration
 	}
 )
 
@@ -158,6 +163,10 @@ func unmarshal(cfg *Config) error {
 	}
 
 	if err := viper.UnmarshalKey("auth", &cfg.Auth); err != nil {
+		return err
+	}
+
+	if err := viper.UnmarshalKey("performance", &cfg.Performance); err != nil {
 		return err
 	}
 
