@@ -20,3 +20,19 @@ func unmarshalStartPerformanceCommand(
 		StartedByID:    user.UUID,
 	}, true
 }
+
+func unmarshalRestartPerformanceCommand(
+	w http.ResponseWriter,
+	r *http.Request,
+	performanceID string,
+) (cmd app.RestartPerformanceCommand, ok bool) {
+	user, ok := unmarshalUser(w, r)
+	if !ok {
+		return
+	}
+
+	return app.RestartPerformanceCommand{
+		PerformanceID: performanceID,
+		StartedByID:   user.UUID,
+	}, true
+}
