@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -51,11 +52,13 @@ func (m Message) State() performance.State {
 type everyStepSavingFlowManager struct {
 	perfsRepo PerformancesRepository
 	flowsRepo FlowsRepository
+	timeout   time.Duration
 }
 
 func NewEveryStepSavingFlowManager(
 	perfsRepo PerformancesRepository,
 	flowsRepo FlowsRepository,
+	timeout time.Duration,
 ) FlowManager {
 	if perfsRepo == nil {
 		panic("performance repository is nil")
@@ -68,6 +71,7 @@ func NewEveryStepSavingFlowManager(
 	return &everyStepSavingFlowManager{
 		perfsRepo: perfsRepo,
 		flowsRepo: flowsRepo,
+		timeout:   timeout,
 	}
 }
 
@@ -96,6 +100,9 @@ func (m *everyStepSavingFlowManager) action(
 ) func(perf *performance.Performance) {
 	return func(perf *performance.Performance) {
 		defer close(messages)
+
+		ctx, cancel := context.WithTimeout(ctx, m.timeout)
+		defer cancel()
 
 		fr := performance.FlowFromPerformance(uuid.New().String(), perf)
 

@@ -70,6 +70,9 @@ func TestFromPath(t *testing.T) {
 				Auth: config.Auth{
 					With: "fake",
 				},
+				Performance: config.Performance{
+					FlowTimeout: 24 * time.Hour,
+				},
 			},
 			ShouldBeErr: false,
 		},

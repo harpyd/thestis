@@ -11,3 +11,5 @@ auth:
   with: ${AUTH_TYPE:firebase}
 firebase:
   serviceAccountFile: ${SERVICE_ACCOUNT_FILE}
+performance:
+  flowTimeout: 1d

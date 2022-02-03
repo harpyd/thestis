@@ -52,9 +52,7 @@ func (h RestartPerformanceHandler) Handle(
 		return nil, err
 	}
 
-	actionCtx := context.Background()
-
-	messages, err = h.manager.ManageFlow(actionCtx, perf)
+	messages, err = h.manager.ManageFlow(context.Background(), perf)
 	if err != nil {
 		return nil, err
 	}

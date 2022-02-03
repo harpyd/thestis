@@ -192,7 +192,11 @@ func (c *runnerContext) initMetrics() {
 }
 
 func (c *runnerContext) initFlowManager() {
-	c.flowManager = app.NewEveryStepSavingFlowManager(c.persistent.perfsRepo, c.persistent.flowsRepo)
+	c.flowManager = app.NewEveryStepSavingFlowManager(
+		c.persistent.perfsRepo,
+		c.persistent.flowsRepo,
+		c.config.Performance.FlowTimeout,
+	)
 }
 
 func (c *runnerContext) initAuthenticationProvider() {

@@ -3,6 +3,7 @@ package app_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -113,7 +114,9 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			fm := app.NewEveryStepSavingFlowManager(perfsRepo, flowsRepo)
+			const timeout = 10 * time.Second
+
+			fm := app.NewEveryStepSavingFlowManager(perfsRepo, flowsRepo, timeout)
 
 			messages, err := fm.ManageFlow(context.Background(), perf)
 
