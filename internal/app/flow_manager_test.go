@@ -128,12 +128,12 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 
 			require.NoError(t, err)
 
-			requireMessagesStringEqual(t, c.Messages, messages)
+			requireMessageStringsEqual(t, c.Messages, messages)
 		})
 	}
 }
 
-func requireMessagesStringEqual(t *testing.T, expected []string, actual <-chan app.Message) {
+func requireMessageStringsEqual(t *testing.T, expected []string, actual <-chan app.Message) {
 	t.Helper()
 
 	readMessages := make([]string, 0, len(expected))
