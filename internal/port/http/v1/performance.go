@@ -58,7 +58,7 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 	if err == nil {
 		w.WriteHeader(http.StatusNoContent)
 
-		go h.logMessages(r, messages, app.BoolLogField("isNew", true))
+		go h.logMessages(r, messages, app.BoolLogField("isNew", false))
 
 		return
 	}
