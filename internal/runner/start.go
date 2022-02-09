@@ -6,18 +6,18 @@ import (
 	"strings"
 
 	fireauth "firebase.google.com/go/auth"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/zap"
 
-	"github.com/go-chi/chi/v5/middleware"
-	fakeAuth "github.com/harpyd/thestis/internal/adapter/auth/fake"
-	firebaseAuth "github.com/harpyd/thestis/internal/adapter/auth/firebase"
-	zapadap "github.com/harpyd/thestis/internal/adapter/logger/zap"
+	fakeAdapter "github.com/harpyd/thestis/internal/adapter/auth/fake"
+	firebaseAdapter "github.com/harpyd/thestis/internal/adapter/auth/firebase"
+	zapAdapter "github.com/harpyd/thestis/internal/adapter/logger/zap"
 	"github.com/harpyd/thestis/internal/adapter/metrics/prometheus"
 	"github.com/harpyd/thestis/internal/adapter/parser/yaml"
-	mongoadap "github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
+	mongoAdapter "github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/command"
 	"github.com/harpyd/thestis/internal/app/query"
@@ -95,7 +95,7 @@ func (c *runnerContext) initLogger() func() {
 		_ = logger.Sync()
 	}
 
-	c.logger = zapadap.NewLoggingService(logger)
+	c.logger = zapAdapter.NewLoggingService(logger)
 
 	return sync
 }
@@ -116,10 +116,10 @@ func (c *runnerContext) initPersistent() {
 	logField := app.StringLogField("db", "mongo")
 
 	var (
-		testCampaignsRepo = mongoadap.NewTestCampaignsRepository(db)
-		specsRepo         = mongoadap.NewSpecificationsRepository(db)
-		perfsRepo         = mongoadap.NewPerformancesRepository(db)
-		flowsRepo         = mongoadap.NewFlowsRepository(db)
+		testCampaignsRepo = mongoAdapter.NewTestCampaignsRepository(db)
+		specsRepo         = mongoAdapter.NewSpecificationsRepository(db)
+		perfsRepo         = mongoAdapter.NewPerformancesRepository(db)
+		flowsRepo         = mongoAdapter.NewFlowsRepository(db)
 	)
 
 	c.persistent.testCampaignsRepo = testCampaignsRepo
@@ -204,9 +204,9 @@ func (c *runnerContext) initAuthenticationProvider() {
 
 	switch authType {
 	case config.FakeAuth:
-		c.authProvider = fakeAuth.NewProvider()
+		c.authProvider = fakeAdapter.NewProvider()
 	case config.FirebaseAuth:
-		c.authProvider = firebaseAuth.NewProvider(c.firebaseClient())
+		c.authProvider = firebaseAdapter.NewProvider(c.firebaseClient())
 	default:
 		c.logger.Fatal(
 			"Invalid auth type",
