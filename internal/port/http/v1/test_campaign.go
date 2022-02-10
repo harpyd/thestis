@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/harpyd/thestis/internal/app"
-
 	"github.com/harpyd/thestis/internal/port/http/httperr"
 )
 
