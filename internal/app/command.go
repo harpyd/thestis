@@ -22,4 +22,9 @@ type (
 		PerformanceID string
 		StartedByID   string
 	}
+
+	CancelPerformanceCommand struct {
+		PerformanceID string
+		CanceledByID  string
+	}
 )
