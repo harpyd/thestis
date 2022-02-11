@@ -246,44 +246,10 @@ func (r *FlowReducer) copyGraph() map[string]map[string]Transition {
 	return graph
 }
 
-// WithStep is method for step by step collecting Step's to for their
+// WithStep is method for step by step collecting Step's for their
 // further reduction with FlowReducer's Reduce or FinallyReduce.
-//
-// Also, this method defines Flow common state transition rules:
-// NotPerformed -> NotPerformed => NotPerformed;
-// NotPerformed -> Performing => Performing;
-// NotPerformed -> Passed => Performing;
-// NotPerformed -> Failed => Failed;
-// NotPerformed -> Crashed => Crashed;
-// NotPerformed -> Canceled => Canceled;
-//
-// Performing -> NotPerformed => Performing;
-// Performing -> Performing => Performing;
-// Performing -> Passed => Performing;
-// Performing -> Failed => Failed;
-// Performing -> Crashed => Crashed;
-// Performing -> Canceled => Canceled;
-//
-// Failed -> NotPerformed => Failed;
-// Failed -> Performing => Failed;
-// Failed -> Passed => Failed;
-// Failed -> Failed => Failed;
-// Failed -> Crashed => Crashed;
-// Failed -> Canceled => Failed;
-//
-// Crashed -> NotPerformed => Crashed;
-// Crashed -> Performing => Crashed;
-// Crashed -> Passed => Crashed;
-// Crashed -> Failed => Crashed;
-// Crashed -> Crashed => Crashed;
-// Crashed -> Canceled => Canceled;
-//
-// Canceled -> NotPerformed => Canceled;
-// Canceled -> Performing => Canceled;
-// Canceled -> Passed => Canceled;
-// Canceled -> Failed => Failed;
-// Canceled -> Crashed => Crashed;
-// Canceled -> Canceled => Canceled.
+// Flow common state changes from call to call relying on the
+// state transition rules.
 func (r *FlowReducer) WithStep(step Step) *FlowReducer {
 	r.state = r.commonRules.apply(r.state, step.State())
 
