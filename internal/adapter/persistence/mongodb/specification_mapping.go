@@ -44,8 +44,8 @@ type (
 	}
 
 	statementDocument struct {
-		Keyword   string `bson:"keyword"`
-		Behaviour string `bson:"behaviour"`
+		Keyword  string `bson:"keyword"`
+		Behavior string `bson:"behavior"`
 	}
 
 	httpDocument struct {
@@ -140,8 +140,8 @@ func marshalToThesisDocument(thesis specification.Thesis) thesisDocument {
 		Slug:  thesis.Slug(),
 		After: thesis.Dependencies(),
 		Statement: statementDocument{
-			Keyword:   thesis.Statement().Stage().String(),
-			Behaviour: thesis.Statement().Behavior(),
+			Keyword:  thesis.Statement().Stage().String(),
+			Behavior: thesis.Statement().Behavior(),
 		},
 		HTTP:      marshalToHTTPDocument(thesis.HTTP()),
 		Assertion: marshalToAssertionDocument(thesis.Assertion()),
@@ -226,7 +226,7 @@ func (d scenarioDocument) unmarshalToScenarioBuildFn() func(builder *specificati
 func (d thesisDocument) unmarshalToThesisBuildFn() func(builder *specification.ThesisBuilder) {
 	return func(builder *specification.ThesisBuilder) {
 		builder.
-			WithStatement(d.Statement.Keyword, d.Statement.Behaviour).
+			WithStatement(d.Statement.Keyword, d.Statement.Behavior).
 			WithHTTP(d.HTTP.unmarshalToHTTPBuildFn()).
 			WithAssertion(d.Assertion.unmarshalToAssertionBuildFn())
 
@@ -334,7 +334,7 @@ func (d thesisDocument) unmarshalToThesis() app.Thesis {
 func (d statementDocument) unmarshalToStatement() app.Statement {
 	return app.Statement{
 		Keyword:  d.Keyword,
-		Behavior: d.Behaviour,
+		Behavior: d.Behavior,
 	}
 }
 
