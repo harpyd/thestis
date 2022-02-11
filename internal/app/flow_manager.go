@@ -86,7 +86,7 @@ func (m *everyStepSavingFlowManager) ManageFlow(
 
 	messages := make(chan Message)
 
-	if err = m.perfsRepo.ExclusivelyDoWithPerformance(ctx, perf, m.action(ctx, steps, messages)); err != nil {
+	if err = m.perfsRepo.ExclusivelyDoWithPerformance(ctx, perf, m.action(steps, messages)); err != nil {
 		return nil, err
 	}
 
@@ -94,11 +94,10 @@ func (m *everyStepSavingFlowManager) ManageFlow(
 }
 
 func (m *everyStepSavingFlowManager) action(
-	ctx context.Context,
 	steps <-chan performance.Step,
 	messages chan<- Message,
-) func(perf *performance.Performance) {
-	return func(perf *performance.Performance) {
+) PerformanceAction {
+	return func(ctx context.Context, perf *performance.Performance) {
 		defer close(messages)
 
 		ctx, cancel := context.WithTimeout(ctx, m.timeout)
