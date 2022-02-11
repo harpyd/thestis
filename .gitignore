@@ -13,6 +13,8 @@
 
 *.env
 
+.DS_Store
+
 .secrets/
 .bin/
 .idea/
