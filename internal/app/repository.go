@@ -48,7 +48,7 @@ type (
 		GetPerformance(ctx context.Context, perfID string) (*performance.Performance, error)
 		AddPerformance(ctx context.Context, perf *performance.Performance) error
 		SignalPerformance(ctx context.Context, perfID string) error
-		PerformanceSignaled(ctx context.Context, perfID string) (<-chan struct{}, error)
+		PerformanceSignal(ctx context.Context, perfID string) (<-chan struct{}, error)
 		ExclusivelyDoWithPerformance(
 			ctx context.Context,
 			perf *performance.Performance,

@@ -227,7 +227,7 @@ func (m *PerformancesRepository) SignalPerformance(ctx context.Context, perfID s
 	return nil
 }
 
-func (m *PerformancesRepository) PerformanceSignaled(ctx context.Context, perfID string) (<-chan struct{}, error) {
+func (m *PerformancesRepository) PerformanceSignal(ctx context.Context, perfID string) (<-chan struct{}, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
