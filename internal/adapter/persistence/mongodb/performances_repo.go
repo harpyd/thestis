@@ -18,14 +18,15 @@ type PerformancesRepository struct {
 	locks        *lock.Client
 }
 
-const performancesCollection = "performances"
+const (
+	performancesCollection     = "performances"
+	performanceLocksCollection = "performanceLocks"
+)
 
 func NewPerformancesRepository(db *mongo.Database) *PerformancesRepository {
-	performances := db.Collection(performancesCollection)
-
 	r := &PerformancesRepository{
-		performances: performances,
-		locks:        lock.NewClient(performances),
+		performances: db.Collection(performancesCollection),
+		locks:        lock.NewClient(db.Collection(performanceLocksCollection)),
 	}
 
 	if err := r.locks.CreateIndexes(context.Background()); err != nil {
