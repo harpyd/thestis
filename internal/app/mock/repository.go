@@ -213,7 +213,7 @@ func (m *PerformancesRepository) AddPerformance(_ context.Context, perf *perform
 }
 
 func (m *PerformancesRepository) ExclusivelyDoWithPerformance(
-	_ context.Context,
+	ctx context.Context,
 	perf *performance.Performance,
 	action app.PerformanceAction,
 ) error {
@@ -233,7 +233,7 @@ func (m *PerformancesRepository) ExclusivelyDoWithPerformance(
 	go func() {
 		defer atomic.StoreUint32(&lp.lock, 0)
 
-		action(perf)
+		action(ctx, perf)
 	}()
 
 	return nil

@@ -82,7 +82,7 @@ func (r *PerformancesRepository) ExclusivelyDoWithPerformance(
 	go func() {
 		defer r.releaseLock(context.Background(), perf.ID())
 
-		action(perf)
+		action(ctx, perf)
 	}()
 
 	return nil

@@ -54,7 +54,7 @@ type (
 		) error
 	}
 
-	PerformanceAction func(perf *performance.Performance)
+	PerformanceAction func(context.Context, *performance.Performance)
 )
 
 type FlowsRepository interface {

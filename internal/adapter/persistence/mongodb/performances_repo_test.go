@@ -131,7 +131,7 @@ func (s *PerformancesRepositoryTestSuite) TestExclusivelyDoWithPerformance_concu
 
 				perfCopy := s.getPerformance(perf.ID())
 
-				if err := s.repo.ExclusivelyDoWithPerformance(ctx, perfCopy, func(perf *performance.Performance) {
+				if err := s.repo.ExclusivelyDoWithPerformance(ctx, perfCopy, func(_ context.Context, perf *performance.Performance) {
 					finish <- true
 				}); err != nil {
 					errors <- err
