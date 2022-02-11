@@ -74,7 +74,7 @@ func (r *PerformancesRepository) SignalPerformance(ctx context.Context, perfID s
 	return nil
 }
 
-func (r *PerformancesRepository) PerformanceSignaled(ctx context.Context, perfID string) (<-chan struct{}, error) {
+func (r *PerformancesRepository) PerformanceSignal(ctx context.Context, perfID string) (<-chan struct{}, error) {
 	return nil, nil
 }
 
