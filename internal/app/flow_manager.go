@@ -86,7 +86,11 @@ func (m *everyStepSavingFlowManager) ManageFlow(
 
 	messages := make(chan Message)
 
-	if err = m.perfsRepo.ExclusivelyDoWithPerformance(ctx, perf, m.action(steps, messages)); err != nil {
+	if err = m.perfsRepo.ExclusivelyDoWithPerformance(
+		ctx,
+		perf,
+		m.action(steps, messages),
+	); err != nil {
 		return nil, err
 	}
 
