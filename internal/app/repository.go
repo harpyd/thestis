@@ -47,6 +47,8 @@ type (
 	PerformancesRepository interface {
 		GetPerformance(ctx context.Context, perfID string) (*performance.Performance, error)
 		AddPerformance(ctx context.Context, perf *performance.Performance) error
+		AcquirePerformance(ctx context.Context, perfID string) (*performance.Performance, error)
+		ReleasePerformance(ctx context.Context, perfID string) error
 		ExclusivelyDoWithPerformance(
 			ctx context.Context,
 			perf *performance.Performance,
