@@ -185,6 +185,36 @@ func NewPerformancesRepository(perfs ...*performance.Performance) *PerformancesR
 	return m
 }
 
+func (m *PerformancesRepository) AcquirePerformance(_ context.Context, perfID string) (*performance.Performance, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	pp, ok := m.performances[perfID]
+	if !ok {
+		return nil, app.NewPerformanceNotFoundError(errNoSuchID)
+	}
+
+	if !atomic.CompareAndSwapUint32(&pp.lock, 0, 1) {
+		return nil, performance.NewAlreadyStartedError()
+	}
+
+	return &pp.performance, nil
+}
+
+func (m *PerformancesRepository) ReleasePerformance(_ context.Context, perfID string) error {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	pp, ok := m.performances[perfID]
+	if !ok {
+		return app.NewPerformanceNotFoundError(errNoSuchID)
+	}
+
+	atomic.StoreUint32(&pp.lock, 0)
+
+	return nil
+}
+
 func (m *PerformancesRepository) GetPerformance(_ context.Context, perfID string) (*performance.Performance, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

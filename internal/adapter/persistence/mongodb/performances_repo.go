@@ -45,6 +45,14 @@ func (r *PerformancesRepository) GetPerformance(ctx context.Context, perfID stri
 	return document.unmarshalToPerformance(), nil
 }
 
+func (r *PerformancesRepository) AcquirePerformance(_ context.Context, _ string) (*performance.Performance, error) {
+	return nil, nil
+}
+
+func (r *PerformancesRepository) ReleasePerformance(_ context.Context, _ string) error {
+	return nil
+}
+
 func (r *PerformancesRepository) getPerformanceDocument(
 	ctx context.Context,
 	filter bson.M,
