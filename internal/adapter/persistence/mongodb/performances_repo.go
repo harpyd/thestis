@@ -70,14 +70,6 @@ func (r *PerformancesRepository) AddPerformance(ctx context.Context, perf *perfo
 	return app.NewDatabaseError(err)
 }
 
-func (r *PerformancesRepository) SignalPerformance(ctx context.Context, perfID string) error {
-	return nil
-}
-
-func (r *PerformancesRepository) PerformanceSignal(ctx context.Context, perfID string) (<-chan struct{}, error) {
-	return nil, nil
-}
-
 func (r *PerformancesRepository) ExclusivelyDoWithPerformance(
 	ctx context.Context,
 	perf *performance.Performance,

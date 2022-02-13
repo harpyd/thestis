@@ -167,7 +167,6 @@ type (
 
 	persistentPerformance struct {
 		lock        uint32
-		signaled    chan struct{}
 		performance performance.Performance
 	}
 )
@@ -211,32 +210,6 @@ func (m *PerformancesRepository) AddPerformance(_ context.Context, perf *perform
 	}
 
 	return nil
-}
-
-func (m *PerformancesRepository) SignalPerformance(ctx context.Context, perfID string) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	pp, ok := m.performances[perfID]
-	if !ok {
-		return app.NewPerformanceNotFoundError(errNoSuchID)
-	}
-
-	pp.signaled <- struct{}{}
-
-	return nil
-}
-
-func (m *PerformancesRepository) PerformanceSignal(ctx context.Context, perfID string) (<-chan struct{}, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	pp, ok := m.performances[perfID]
-	if !ok {
-		return nil, app.NewPerformanceNotFoundError(errNoSuchID)
-	}
-
-	return pp.signaled, nil
 }
 
 func (m *PerformancesRepository) ExclusivelyDoWithPerformance(
