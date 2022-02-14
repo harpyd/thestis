@@ -13,3 +13,4 @@ firebase:
   serviceAccountFile: ${SERVICE_ACCOUNT_FILE}
 performance:
   flowTimeout: 24h
+  saveTimeout: 10s

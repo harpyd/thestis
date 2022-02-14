@@ -11,8 +11,10 @@ import (
 )
 
 const (
-	defaultHTTPPort      = 8080
-	defaultHTTPRWTimeout = 10 * time.Second
+	defaultHTTPPort               = 8080
+	defaultHTTPRWTimeout          = 10 * time.Second
+	defaultPerformanceFlowTimeout = 24 * time.Hour
+	defaultPerformanceSaveTimeout = 10 * time.Second
 )
 
 const LocalEnv = "local"
@@ -56,6 +58,7 @@ type (
 
 	Performance struct {
 		FlowTimeout time.Duration
+		SaveTimeout time.Duration
 	}
 )
 
@@ -85,6 +88,8 @@ func setDefaults() {
 	viper.SetDefault("http.port", defaultHTTPPort)
 	viper.SetDefault("http.readTimeout", defaultHTTPRWTimeout)
 	viper.SetDefault("http.writeTimeout", defaultHTTPRWTimeout)
+	viper.SetDefault("performance.flowTimeout", defaultPerformanceFlowTimeout)
+	viper.SetDefault("performance.saveTimeout", defaultPerformanceSaveTimeout)
 }
 
 func parseConfig(configsPath, env string) error {
