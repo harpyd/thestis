@@ -21,7 +21,7 @@ type (
 	}
 )
 
-func newMessageFromStep(s performance.Step) Message {
+func NewMessageFromStep(s performance.Step) Message {
 	return Message{
 		s:     s.String(),
 		state: s.State(),
@@ -29,7 +29,7 @@ func newMessageFromStep(s performance.Step) Message {
 	}
 }
 
-func newMessageFromError(err error) Message {
+func NewMessageFromError(err error) Message {
 	return Message{
 		s:     err.Error(),
 		state: performance.NoState,
@@ -114,15 +114,15 @@ func (m *everyStepSavingFlowManager) action(
 
 			flow := fr.Reduce()
 			if err := m.flowsRepo.UpsertFlow(ctx, flow); err != nil {
-				messages <- newMessageFromError(err)
+				messages <- NewMessageFromError(err)
 			}
 
-			messages <- newMessageFromStep(s)
+			messages <- NewMessageFromStep(s)
 		}
 
 		flow := fr.FinallyReduce()
 		if err := m.flowsRepo.UpsertFlow(ctx, flow); err != nil {
-			messages <- newMessageFromError(err)
+			messages <- NewMessageFromError(err)
 		}
 	}
 }
