@@ -11,11 +11,11 @@ type SpecificationParserService struct {
 	withErr bool
 }
 
-func NewSpecificationParserService(withErr bool) *SpecificationParserService {
-	return &SpecificationParserService{withErr: withErr}
+func NewSpecificationParserService(withErr bool) SpecificationParserService {
+	return SpecificationParserService{withErr: withErr}
 }
 
-func (m *SpecificationParserService) ParseSpecification(
+func (m SpecificationParserService) ParseSpecification(
 	_ io.Reader,
 	opts ...app.ParserOption,
 ) (*specification.Specification, error) {

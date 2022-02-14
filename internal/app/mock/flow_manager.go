@@ -11,11 +11,11 @@ type FlowManager struct {
 	withErr bool
 }
 
-func NewFlowManager(withErr bool) *FlowManager {
-	return &FlowManager{withErr: withErr}
+func NewFlowManager(withErr bool) FlowManager {
+	return FlowManager{withErr: withErr}
 }
 
-func (m *FlowManager) ManageFlow(_ context.Context, _ *performance.Performance) (<-chan app.Message, error) {
+func (m FlowManager) ManageFlow(_ context.Context, _ *performance.Performance) (<-chan app.Message, error) {
 	if m.withErr {
 		return nil, performance.NewAlreadyStartedError()
 	}
