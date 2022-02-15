@@ -9,45 +9,45 @@ type Application struct {
 
 type (
 	Commands struct {
-		CreateTestCampaign createTestCampaignHandler
-		LoadSpecification  loadSpecificationHandler
-		StartPerformance   startPerformanceHandler
-		RestartPerformance restartPerformanceHandler
-		CancelPerformance  cancelPerformanceHandler
+		CreateTestCampaign CreateTestCampaignHandler
+		LoadSpecification  LoadSpecificationHandler
+		StartPerformance   StartPerformanceHandler
+		RestartPerformance RestartPerformanceHandler
+		CancelPerformance  CancelPerformanceHandler
 	}
 
-	createTestCampaignHandler interface {
+	CreateTestCampaignHandler interface {
 		Handle(ctx context.Context, cmd CreateTestCampaignCommand) (string, error)
 	}
 
-	loadSpecificationHandler interface {
+	LoadSpecificationHandler interface {
 		Handle(ctx context.Context, cmd LoadSpecificationCommand) (string, error)
 	}
 
-	startPerformanceHandler interface {
+	StartPerformanceHandler interface {
 		Handle(ctx context.Context, cmd StartPerformanceCommand) (string, <-chan Message, error)
 	}
 
-	restartPerformanceHandler interface {
+	RestartPerformanceHandler interface {
 		Handle(ctx context.Context, cmd RestartPerformanceCommand) (<-chan Message, error)
 	}
 
-	cancelPerformanceHandler interface {
+	CancelPerformanceHandler interface {
 		Handle(ctx context.Context, cmd CancelPerformanceCommand) error
 	}
 )
 
 type (
 	Queries struct {
-		SpecificTestCampaign  specificTestCampaignHandler
-		SpecificSpecification specificSpecificationHandler
+		SpecificTestCampaign  SpecificTestCampaignHandler
+		SpecificSpecification SpecificSpecificationHandler
 	}
 
-	specificTestCampaignHandler interface {
+	SpecificTestCampaignHandler interface {
 		Handle(ctx context.Context, qry SpecificTestCampaignQuery) (SpecificTestCampaign, error)
 	}
 
-	specificSpecificationHandler interface {
+	SpecificSpecificationHandler interface {
 		Handle(ctx context.Context, qry SpecificSpecificationQuery) (SpecificSpecification, error)
 	}
 )
