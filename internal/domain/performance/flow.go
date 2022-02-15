@@ -286,7 +286,7 @@ type performStep struct {
 	performerType PerformerType
 }
 
-func newPerformingStep(from, to string, performerType PerformerType) Step {
+func NewPerformingStep(from, to string, performerType PerformerType) Step {
 	return performStep{
 		from:          from,
 		to:            to,
@@ -295,7 +295,7 @@ func newPerformingStep(from, to string, performerType PerformerType) Step {
 	}
 }
 
-func newPerformedStep(from, to string, performerType PerformerType, result Result) Step {
+func NewStepFromResult(from, to string, performerType PerformerType, result Result) Step {
 	return performStep{
 		from:          from,
 		to:            to,
@@ -332,6 +332,10 @@ func (s performStep) String() string {
 }
 
 type cancelStep struct{}
+
+func NewCanceledStep() Step {
+	return cancelStep{}
+}
 
 func newCanceledStep() Step {
 	return cancelStep{}
