@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/performance"
-	"github.com/harpyd/thestis/internal/domain/performance/mock"
 )
 
 const (
@@ -649,10 +648,10 @@ func step(t *testing.T, state performance.State) performance.Step {
 	t.Helper()
 
 	if state == performance.Canceled {
-		return mock.NewCanceledStep()
+		return performance.NewCanceledStep()
 	}
 
-	return mock.NewTransitionStep(state, from, to)
+	return performance.NewPerformingStep(from, to, performance.HTTPPerformer)
 }
 
 func requireStepNotError(t *testing.T, step performance.Step) {
