@@ -226,11 +226,11 @@ func (p *Performance) startAction(
 		return err
 	}
 
-	steps <- newPerformingStep(a.from, a.to, a.performerType)
+	steps <- NewPerformingStep(a.from, a.to, a.performerType)
 
 	result := p.perform(env, a)
 
-	steps <- newPerformedStep(a.from, a.to, a.performerType, result)
+	steps <- NewStepFromResult(a.from, a.to, a.performerType, result)
 
 	if result.State() == Failed || result.State() == Crashed {
 		return errTerminated
