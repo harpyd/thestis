@@ -180,7 +180,7 @@ const defaultEnvStoreInitialSize = 10
 func (p *Performance) startActions(ctx context.Context, steps chan Step) {
 	select {
 	case <-ctx.Done():
-		steps <- newCanceledStep()
+		steps <- NewCanceledStep()
 
 		return
 	default:
@@ -198,8 +198,8 @@ func (p *Performance) startActions(ctx context.Context, steps chan Step) {
 		}
 	}
 
-	if err := g.Wait(); errors.Is(err, errCanceled) {
-		steps <- newCanceledStep()
+	if err := g.Wait(); err != nil && errors.Is(err, ctx.Err()) {
+		steps <- NewCanceledStep()
 	}
 }
 
@@ -228,7 +228,11 @@ func (p *Performance) startAction(
 
 	steps <- NewPerformingStep(a.from, a.to, a.performerType)
 
-	result := p.perform(env, a)
+	result := p.perform(ctx, env, a)
+
+	if result.Err() != nil && errors.Is(result.Err(), ctx.Err()) {
+		return ctx.Err()
+	}
 
 	steps <- NewStepFromResult(a.from, a.to, a.performerType, result)
 
@@ -251,7 +255,7 @@ func (p *Performance) waitActionLocks(ctx context.Context, lockGraph lockGraph, 
 		select {
 		case <-lock:
 		case <-ctx.Done():
-			return errCanceled
+			return ctx.Err()
 		}
 	}
 
@@ -262,7 +266,7 @@ func (p *Performance) unlockAction(lockGraph lockGraph, from, to string) {
 	close(lockGraph[from][to])
 }
 
-func (p *Performance) perform(env *Environment, a Action) Result {
+func (p *Performance) perform(ctx context.Context, env *Environment, a Action) Result {
 	if a.performerType == EmptyPerformer {
 		return Pass()
 	}
@@ -272,7 +276,18 @@ func (p *Performance) perform(env *Environment, a Action) Result {
 		return NotPerform()
 	}
 
-	return performer.Perform(env, a.thesis)
+	result := make(chan Result)
+
+	go func() {
+		result <- performer.Perform(env, a.thesis)
+	}()
+
+	select {
+	case res := <-result:
+		return res
+	case <-ctx.Done():
+		return Crash(ctx.Err())
+	}
 }
 
 type cyclicGraphError struct {
@@ -298,7 +313,6 @@ func (e cyclicGraphError) Error() string {
 }
 
 var (
-	errCanceled       = errors.New("performance canceled")
 	errTerminated     = errors.New("performance terminated")
 	errAlreadyStarted = errors.New("performance already started")
 )
