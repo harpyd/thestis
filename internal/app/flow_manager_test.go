@@ -28,7 +28,7 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 		{
 			Name: "already_started_performance",
 			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
-				perf := performance.UnmarshalFromDatabase(performance.Params{
+				perf := performance.Unmarshal(performance.Params{
 					OwnerID:         "f7b42682-cf52-4699-9bba-f8dac902efb0",
 					SpecificationID: "73a7c5f6-f239-4abf-8837-cc4763d59d5f",
 					Actions: []performance.Action{
@@ -52,7 +52,7 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 		{
 			Name: "exclusive_action_with_performance_failed",
 			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
-				return performance.UnmarshalFromDatabase(performance.Params{
+				return performance.Unmarshal(performance.Params{
 					OwnerID:         "1baf3001-00ad-4eca-8fea-117ca68d9bc5",
 					SpecificationID: "8bc587a9-b7dd-40f8-bf2f-98287518241e",
 				}, opts...)
@@ -64,7 +64,7 @@ func TestEveryStepSavingFlowManager_ManageFlow(t *testing.T) {
 		{
 			Name: "success_flow_managing",
 			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
-				return performance.UnmarshalFromDatabase(performance.Params{
+				return performance.Unmarshal(performance.Params{
 					OwnerID:         "d1e0470e-ec44-4d57-b3eb-ef9ed8fe8f01",
 					SpecificationID: "e597e3a2-54a2-4076-b1a0-1045e9aeaa7d",
 					Actions: []performance.Action{

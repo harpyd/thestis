@@ -110,7 +110,7 @@ type FlowParams struct {
 	Transitions   []Transition
 }
 
-func UnmarshalFlowFromDatabase(params FlowParams) Flow {
+func UnmarshalFlow(params FlowParams) Flow {
 	return Flow{
 		id:            params.ID,
 		performanceID: params.PerformanceID,

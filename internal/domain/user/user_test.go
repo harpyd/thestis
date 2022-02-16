@@ -127,7 +127,7 @@ func TestCanSeePerformance(t *testing.T) {
 		{
 			Name:   "can_see",
 			UserID: "e7b9f695-ea8d-4d31-a4ce-cfd5521d52c2",
-			Performance: performance.UnmarshalFromDatabase(performance.Params{
+			Performance: performance.Unmarshal(performance.Params{
 				OwnerID: "e7b9f695-ea8d-4d31-a4ce-cfd5521d52c2",
 			}),
 			ShouldBeErr: false,
@@ -135,7 +135,7 @@ func TestCanSeePerformance(t *testing.T) {
 		{
 			Name:   "cannot_see",
 			UserID: "732563f6-08a3-4b61-bbfc-818225f58b0b",
-			Performance: performance.UnmarshalFromDatabase(performance.Params{
+			Performance: performance.Unmarshal(performance.Params{
 				OwnerID: "f36b38e0-829d-4bdf-af2d-de4e8e43b0c0",
 			}),
 			ShouldBeErr: true,

@@ -73,7 +73,7 @@ type (
 
 const defaultPerformersSize = 2
 
-func UnmarshalFromDatabase(params Params, opts ...Option) *Performance {
+func Unmarshal(params Params, opts ...Option) *Performance {
 	p := &Performance{
 		ownerID:         params.OwnerID,
 		specificationID: params.SpecificationID,
