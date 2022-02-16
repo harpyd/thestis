@@ -51,13 +51,13 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 		{
 			Name: "failed_adding_one_performance_twice",
 			Before: func() {
-				perf := performance.UnmarshalFromDatabase(performance.Params{
+				perf := performance.Unmarshal(performance.Params{
 					SpecificationID: "1a63b6ea-df5f-4a68-bf04-c2e30044f2ef",
 				}, performance.WithID("a4a2906d-4df5-42f1-8832-77a33cba4d7f"))
 
 				s.addPerformances(perf)
 			},
-			Performance: performance.UnmarshalFromDatabase(performance.Params{
+			Performance: performance.Unmarshal(performance.Params{
 				OwnerID:         "05bf69e9-d7b5-4e7a-8fab-24227dca033a",
 				SpecificationID: "1a63b6ea-df5f-4a68-bf04-c2e30044f2ef",
 				Actions:         s.actions(),
@@ -69,7 +69,7 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 		},
 		{
 			Name: "successful_adding",
-			Performance: performance.UnmarshalFromDatabase(performance.Params{
+			Performance: performance.Unmarshal(performance.Params{
 				OwnerID:         "3614a95c-c278-4687-84e2-97b95b11d399",
 				SpecificationID: "4e4465b0-a312-4f86-9051-a3ae72965215",
 				Actions:         s.actions(),
@@ -101,7 +101,7 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 }
 
 func (s *PerformancesRepositoryTestSuite) TestExclusivelyDoWithPerformance_concurrent_actions() {
-	perf := performance.UnmarshalFromDatabase(performance.Params{
+	perf := performance.Unmarshal(performance.Params{
 		OwnerID:         "e6cd6e6d-f58f-4a3e-a4d3-6b23dce29750",
 		SpecificationID: "d91da0ce-1caa-43d6-95c0-1a03a9d3cd52",
 		Actions:         s.actions(),

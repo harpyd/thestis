@@ -51,7 +51,7 @@ func marshalToTransitionDocument(transition performance.Transition) transitionDo
 }
 
 func (d flowDocument) unmarshalToFlow() performance.Flow {
-	return performance.UnmarshalFlowFromDatabase(performance.FlowParams{
+	return performance.UnmarshalFlow(performance.FlowParams{
 		ID:            d.ID,
 		PerformanceID: d.PerformanceID,
 		State:         d.State,

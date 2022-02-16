@@ -50,7 +50,7 @@ func (d performanceDocument) unmarshalToPerformance() *performance.Performance {
 		actions = append(actions, a.unmarshalToAction())
 	}
 
-	return performance.UnmarshalFromDatabase(performance.Params{
+	return performance.Unmarshal(performance.Params{
 		OwnerID:         d.OwnerID,
 		SpecificationID: d.SpecificationID,
 		Actions:         actions,
