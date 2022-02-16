@@ -325,16 +325,20 @@ func (s performStep) String() string {
 	msg := fmt.Sprintf("Flow step `%s -(%s)-> %s` %s", s.from, s.performerType, s.to, s.state)
 
 	if s.err != nil {
-		msg = fmt.Sprintf("%s (with err: %s)", msg, s.err)
+		msg = fmt.Sprintf("%s with err = %s", msg, s.err)
 	}
 
 	return msg
 }
 
-type cancelStep struct{}
+type cancelStep struct {
+	cause error
+}
 
-func NewCanceledStep() Step {
-	return cancelStep{}
+func NewCanceledStep(cause error) Step {
+	return cancelStep{
+		cause: cause,
+	}
 }
 
 func (s cancelStep) FromTo() (from, to string, ok bool) {
@@ -350,11 +354,11 @@ func (s cancelStep) State() State {
 }
 
 func (s cancelStep) Err() error {
-	return nil
+	return s.cause
 }
 
 func (s cancelStep) String() string {
-	return fmt.Sprintf("Flow step %s", Canceled)
+	return fmt.Sprintf("Flow step %s with cause = %s", Canceled, s.cause)
 }
 
 type testStep struct {
