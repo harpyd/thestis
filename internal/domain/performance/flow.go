@@ -337,10 +337,6 @@ func NewCanceledStep() Step {
 	return cancelStep{}
 }
 
-func newCanceledStep() Step {
-	return cancelStep{}
-}
-
 func (s cancelStep) FromTo() (from, to string, ok bool) {
 	return "", "", false
 }
