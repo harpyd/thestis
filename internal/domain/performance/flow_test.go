@@ -413,13 +413,13 @@ func TestFlowReducer_WithStep_flow_common_state(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			b := performance.FlowFromState(
+			b := performance.TestFlowFromState(
 				c.StartCommonState,
 				performance.NotPerformed,
 				from, to,
 			)
 
-			b.WithStep(step(t, c.StepState))
+			b.WithStep(performance.NewTestStep(from, to, c.StepState))
 
 			flow := b.Reduce()
 			finalFlow := b.FinallyReduce()
@@ -627,13 +627,13 @@ func TestFlowReducer_WithStep_transition_state(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			b := performance.FlowFromState(
+			b := performance.TestFlowFromState(
 				performance.NotPerformed,
 				c.StartTransitionState,
 				from, to,
 			)
 
-			b.WithStep(step(t, c.StepState))
+			b.WithStep(performance.NewTestStep(from, to, c.StepState))
 
 			flow := b.Reduce()
 			finalFlow := b.FinallyReduce()
@@ -642,16 +642,6 @@ func TestFlowReducer_WithStep_transition_state(t *testing.T) {
 			require.Equal(t, c.ExpectedTransitionState, finalFlow.Transitions()[0].State())
 		})
 	}
-}
-
-func step(t *testing.T, state performance.State) performance.Step {
-	t.Helper()
-
-	if state == performance.Canceled {
-		return performance.NewCanceledStep()
-	}
-
-	return performance.NewPerformingStep(from, to, performance.HTTPPerformer)
 }
 
 func requireStepNotError(t *testing.T, step performance.Step) {
