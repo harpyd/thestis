@@ -164,7 +164,7 @@ func FlowFromPerformance(id string, perf *Performance) *FlowReducer {
 	}
 }
 
-func FlowFromState(commonState, transitionState State, from, to string) *FlowReducer {
+func TestFlowFromState(commonState, transitionState State, from, to string) *FlowReducer {
 	graph := map[string]map[string]*Transition{
 		from: {
 			to: &Transition{
@@ -355,4 +355,38 @@ func (s cancelStep) Err() error {
 
 func (s cancelStep) String() string {
 	return fmt.Sprintf("Flow step %s", Canceled)
+}
+
+type testStep struct {
+	from  string
+	to    string
+	state State
+}
+
+func NewTestStep(from, to string, state State) Step {
+	return testStep{
+		from:  from,
+		to:    to,
+		state: state,
+	}
+}
+
+func (s testStep) FromTo() (from, to string, ok bool) {
+	return s.from, s.to, true
+}
+
+func (s testStep) PerformerType() PerformerType {
+	return UnknownPerformer
+}
+
+func (s testStep) State() State {
+	return s.state
+}
+
+func (s testStep) Err() error {
+	return nil
+}
+
+func (s testStep) String() string {
+	return fmt.Sprintf("Flow test step %s", s.state)
 }

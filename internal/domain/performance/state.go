@@ -93,7 +93,7 @@ func fromPassedTransitionRules() map[State]State {
 		Passed:       Passed,
 		Failed:       Failed,
 		Crashed:      Crashed,
-		Canceled:     Canceled,
+		Canceled:     Passed,
 	}
 }
 
