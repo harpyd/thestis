@@ -38,11 +38,8 @@ type (
 		err   error
 	}
 
-	// FlowReducer builds Flow instance using WithStep,
-	// Reduce and FinallyReduce methods.
-	//
-	// FlowReducer defines Flow common state transition rules
-	// in WithStep method.
+	// FlowReducer builds Flow instance using WithStep 
+	// and Reduce and methods.
 	FlowReducer struct {
 		id            string
 		performanceID string
@@ -237,9 +234,10 @@ func (r *FlowReducer) copyGraph() map[string]map[string]Transition {
 	return graph
 }
 
-// WithStep is method for step by step collecting Step's for their
-// further reduction with FlowReducer's Reduce or FinallyReduce.
-// Flow common state changes from call to call relying on the
+// WithStep is method for step by step collecting Step's for
+// their further reduction with FlowReducer's Reduce.
+//
+// Flow state changes from call to call relying on the
 // state transition rules.
 func (r *FlowReducer) WithStep(step Step) *FlowReducer {
 	r.state = r.commonRules.apply(r.state, step.State())
