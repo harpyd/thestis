@@ -14,14 +14,14 @@ import (
 type StartPerformanceHandler struct {
 	specsRepo     app.SpecificationsRepository
 	perfsRepo     app.PerformancesRepository
-	manager       app.FlowManager
+	maintainer    app.PerformanceMaintainer
 	performerOpts app.PerformerOptions
 }
 
 func NewStartPerformanceHandler(
 	specsRepo app.SpecificationsRepository,
 	perfsRepo app.PerformancesRepository,
-	manager app.FlowManager,
+	maintainer app.PerformanceMaintainer,
 	opts ...app.PerformerOption,
 ) StartPerformanceHandler {
 	if specsRepo == nil {
@@ -32,14 +32,14 @@ func NewStartPerformanceHandler(
 		panic("performances repository is nil")
 	}
 
-	if manager == nil {
-		panic("flow manager is nil")
+	if maintainer == nil {
+		panic("performance maintainer is nil")
 	}
 
 	return StartPerformanceHandler{
 		specsRepo:     specsRepo,
 		perfsRepo:     perfsRepo,
-		manager:       manager,
+		maintainer:    maintainer,
 		performerOpts: opts,
 	}
 }
@@ -74,7 +74,7 @@ func (h StartPerformanceHandler) Handle(
 		return "", nil, err
 	}
 
-	messages, err = h.manager.ManageFlow(context.Background(), perf)
+	messages, err = h.maintainer.MaintainPerformance(context.Background(), perf)
 	if err != nil {
 		return "", nil, err
 	}

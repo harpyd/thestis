@@ -11,26 +11,26 @@ import (
 
 type RestartPerformanceHandler struct {
 	perfsRepo     app.PerformancesRepository
-	manager       app.FlowManager
+	maintainer    app.PerformanceMaintainer
 	performerOpts app.PerformerOptions
 }
 
 func NewRestartPerformanceHandler(
 	perfsRepo app.PerformancesRepository,
-	manager app.FlowManager,
+	maintainer app.PerformanceMaintainer,
 	opts ...app.PerformerOption,
 ) RestartPerformanceHandler {
 	if perfsRepo == nil {
 		panic("performances repository is nil")
 	}
 
-	if manager == nil {
-		panic("flow manager is nil")
+	if maintainer == nil {
+		panic("performance maintainer is nil")
 	}
 
 	return RestartPerformanceHandler{
 		perfsRepo:     perfsRepo,
-		manager:       manager,
+		maintainer:    maintainer,
 		performerOpts: opts,
 	}
 }
@@ -52,7 +52,7 @@ func (h RestartPerformanceHandler) Handle(
 		return nil, err
 	}
 
-	messages, err = h.manager.ManageFlow(context.Background(), perf)
+	messages, err = h.maintainer.MaintainPerformance(context.Background(), perf)
 	if err != nil {
 		return nil, err
 	}

@@ -73,13 +73,13 @@ func TestStartPerformanceHandler_Handle(t *testing.T) {
 			t.Parallel()
 
 			var (
-				specsRepo = appMock.NewSpecificationsRepository(c.Specification)
-				perfsRepo = appMock.NewPerformancesRepository()
-				manager   = appMock.NewFlowManager(false)
-				handler   = command.NewStartPerformanceHandler(
+				specsRepo  = appMock.NewSpecificationsRepository(c.Specification)
+				perfsRepo  = appMock.NewPerformancesRepository()
+				maintainer = appMock.NewPerformanceMaintainer(false)
+				handler    = command.NewStartPerformanceHandler(
 					specsRepo,
 					perfsRepo,
-					manager,
+					maintainer,
 					app.WithHTTPPerformer(passedPerformer(t)),
 					app.WithAssertionPerformer(failedPerformer(t)),
 				)
