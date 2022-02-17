@@ -77,3 +77,37 @@ func (m *performanceMaintainer) MaintainPerformance(
 
 	return messages, nil
 }
+
+type Message struct {
+	s     string
+	state performance.State
+	err   error
+}
+
+func NewMessageFromStep(s performance.Step) Message {
+	return Message{
+		s:     s.String(),
+		state: s.State(),
+		err:   s.Err(),
+	}
+}
+
+func NewMessageFromError(err error) Message {
+	return Message{
+		s:     err.Error(),
+		state: performance.NoState,
+		err:   err,
+	}
+}
+
+func (m Message) String() string {
+	return m.s
+}
+
+func (m Message) Err() error {
+	return m.err
+}
+
+func (m Message) State() performance.State {
+	return m.state
+}

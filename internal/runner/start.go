@@ -43,12 +43,17 @@ type runnerContext struct {
 	persistent   persistentContext
 	specParser   app.SpecificationParserService
 	metrics      app.MetricsService
-	flowManager  app.FlowManager
+	performance  performanceContext
 	app          *app.Application
 	authProvider auth.Provider
 	server       *server.Server
 
 	cancel func()
+}
+
+type performanceContext struct {
+	policy     app.StepsPolicy
+	maintainer app.PerformanceMaintainer
 }
 
 type persistentContext struct {
@@ -68,7 +73,8 @@ func newRunner(configsPath string) *runnerContext {
 	c.initPersistent()
 	c.initSpecificationParser()
 	c.initMetrics()
-	c.initFlowManager()
+	c.initStepsPolicy()
+	c.initPerformanceMaintainer()
 	c.initApplication()
 	c.initAuthenticationProvider()
 	c.initServer()
@@ -167,9 +173,9 @@ func (c *runnerContext) initApplication() {
 			StartPerformance: command.NewStartPerformanceHandler(
 				c.persistent.specsRepo,
 				c.persistent.perfsRepo,
-				c.flowManager,
+				c.performance.maintainer,
 			),
-			RestartPerformance: command.NewRestartPerformanceHandler(c.persistent.perfsRepo, c.flowManager),
+			RestartPerformance: command.NewRestartPerformanceHandler(c.persistent.perfsRepo, c.performance.maintainer),
 		},
 		Queries: app.Queries{
 			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(c.persistent.specificTestCampaignRM),
@@ -191,12 +197,36 @@ func (c *runnerContext) initMetrics() {
 	c.logger.Info("Metrics registration completed", app.StringLogField("db", "prometheus"))
 }
 
-func (c *runnerContext) initFlowManager() {
-	c.flowManager = app.NewEveryStepSavingFlowManager(
+func (c *runnerContext) initStepsPolicy() {
+	if c.config.Performance.Policy == config.EveryStepSavingPolicy {
+		c.performance.policy = app.NewEveryStepSavingPolicy(
+			c.persistent.flowsRepo,
+			c.config.EveryStepSaving.SaveTimeout,
+		)
+
+		c.logger.Info(
+			"Steps policy initialization completed",
+			app.StringLogField("policy", c.config.Performance.Policy),
+		)
+
+		return
+	}
+
+	c.logger.Fatal(
+		"Invalid steps policy",
+		errors.Errorf("%s is not valid steps policy", c.config.Performance.Policy),
+		app.StringLogField("allowed", config.EveryStepSavingPolicy),
+	)
+}
+
+func (c *runnerContext) initPerformanceMaintainer() {
+	c.performance.maintainer = app.NewPerformanceMaintainer(
 		c.persistent.perfsRepo,
-		c.persistent.flowsRepo,
+		c.performance.policy,
 		c.config.Performance.FlowTimeout,
 	)
+
+	c.logger.Info("Performance maintainer initialization completed")
 }
 
 func (c *runnerContext) initAuthenticationProvider() {

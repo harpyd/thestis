@@ -234,6 +234,14 @@ func performanceWithHTTPPerformer(t *testing.T, from, to string, performer perfo
 	}, performance.WithHTTP(performer))
 }
 
+func passedPerformer(t *testing.T) performance.Performer {
+	t.Helper()
+
+	return perfMock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
+		return performance.Pass()
+	})
+}
+
 func requireMessagesEqual(t *testing.T, expected []app.Message, actual <-chan app.Message) {
 	t.Helper()
 

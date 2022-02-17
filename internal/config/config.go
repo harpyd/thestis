@@ -24,9 +24,11 @@ type StepsPolicy = string
 
 const EveryStepSavingPolicy StepsPolicy = "everyStepSaving"
 
+type AuthType = string
+
 const (
-	FakeAuth     = "fake"
-	FirebaseAuth = "firebase"
+	FakeAuth     AuthType = "fake"
+	FirebaseAuth AuthType = "firebase"
 )
 
 type (

@@ -82,11 +82,11 @@ func TestRestartPerformanceHandler_Handle(t *testing.T) {
 			t.Parallel()
 
 			var (
-				perfsRepo = mock.NewPerformancesRepository(c.Performance)
-				manager   = mock.NewFlowManager(c.PerformanceAlreadyStarted)
-				handler   = command.NewRestartPerformanceHandler(
+				perfsRepo  = mock.NewPerformancesRepository(c.Performance)
+				maintainer = mock.NewPerformanceMaintainer(c.PerformanceAlreadyStarted)
+				handler    = command.NewRestartPerformanceHandler(
 					perfsRepo,
-					manager,
+					maintainer,
 					app.WithHTTPPerformer(passedPerformer(t)),
 					app.WithAssertionPerformer(failedPerformer(t)),
 				)
