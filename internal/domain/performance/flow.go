@@ -183,36 +183,27 @@ func TestFlowFromState(commonState, transitionState State, from, to string) *Flo
 	}
 }
 
-// Reduce creates intermediate version of Flow from FlowReducer.
-// Flow created using this method can't have a State equal
-// to Passed.
+// Reduce creates current version of Flow from FlowReducer.
+// This is useful for accumulating performance Step's and
+// storing the state of performance Flow.
 //
-// You need to use FinallyReduce method to create
-// final version of Flow.
+// For example:
+//  fr := performance.FlowFromPerformance("id", perf)
+//
+//  for s := range steps {
+//   fr.WithStep(s)
+//   save(ctx, fr.Reduce())
+//  }
 func (r *FlowReducer) Reduce() Flow {
 	return Flow{
 		id:            r.id,
 		performanceID: r.performanceID,
-		state:         r.state,
+		state:         r.reducedState(),
 		graph:         r.copyGraph(),
 	}
 }
 
-// FinallyReduce creates final version of Flow from FlowReducer.
-// Flow created using this method represents final Performance's Flow.
-//
-// If all transitions have Passed states and common State equal
-// to Performing, final version of Flow will have Passed State.
-func (r *FlowReducer) FinallyReduce() Flow {
-	return Flow{
-		id:            r.id,
-		performanceID: r.performanceID,
-		state:         r.finalState(),
-		graph:         r.copyGraph(),
-	}
-}
-
-func (r *FlowReducer) finalState() State {
+func (r *FlowReducer) reducedState() State {
 	if r.state == Performing && r.allPassed() {
 		return Passed
 	}

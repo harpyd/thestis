@@ -116,294 +116,196 @@ func TestFlowReducer_WithStep_from_performance_start(t *testing.T) {
 		flow := b.Reduce()
 		require.Equal(t, performance.Performing, flow.State())
 	}
-
-	flow := b.FinallyReduce()
-	require.Equal(t, performance.Passed, flow.State())
 }
 
 func TestFlowReducer_WithStep_flow_common_state(t *testing.T) {
 	t.Parallel()
 
-	type expectedStates struct {
-		CommonState      performance.State
-		FinalCommonState performance.State
-	}
-
 	testCases := []struct {
-		Name             string
-		StartCommonState performance.State
-		StepState        performance.State
-		Expected         expectedStates
+		Name                string
+		StartCommonState    performance.State
+		StepState           performance.State
+		ExpectedCommonState performance.State
 	}{
 		{
-			Name:             "NotPerformed -> NotPerformed => (NotPerformed, NotPerformed)",
-			StartCommonState: performance.NotPerformed,
-			StepState:        performance.NotPerformed,
-			Expected: expectedStates{
-				CommonState:      performance.NotPerformed,
-				FinalCommonState: performance.NotPerformed,
-			},
+			Name:                "NotPerformed -> NotPerformed => NotPerformed",
+			StartCommonState:    performance.NotPerformed,
+			StepState:           performance.NotPerformed,
+			ExpectedCommonState: performance.NotPerformed,
 		},
 		{
-			Name:             "NotPerformed -> Performing => (Performing, Performing)",
-			StartCommonState: performance.NotPerformed,
-			StepState:        performance.Performing,
-			Expected: expectedStates{
-				CommonState:      performance.Performing,
-				FinalCommonState: performance.Performing,
-			},
+			Name:                "NotPerformed -> Performing => Performing",
+			StartCommonState:    performance.NotPerformed,
+			StepState:           performance.Performing,
+			ExpectedCommonState: performance.Performing,
 		},
 		{
-			Name:             "NotPerformed -> Passed => (Performing, Passed)",
-			StartCommonState: performance.NotPerformed,
-			StepState:        performance.Passed,
-			Expected: expectedStates{
-				CommonState:      performance.Performing,
-				FinalCommonState: performance.Passed,
-			},
+			Name:                "NotPerformed -> Passed => Passed",
+			StartCommonState:    performance.NotPerformed,
+			StepState:           performance.Passed,
+			ExpectedCommonState: performance.Passed,
 		},
 		{
-			Name:             "NotPerformed -> Failed => (Failed, Failed)",
-			StartCommonState: performance.NotPerformed,
-			StepState:        performance.Failed,
-			Expected: expectedStates{
-				CommonState:      performance.Failed,
-				FinalCommonState: performance.Failed,
-			},
+			Name:                "NotPerformed -> Failed => Failed",
+			StartCommonState:    performance.NotPerformed,
+			StepState:           performance.Failed,
+			ExpectedCommonState: performance.Failed,
 		},
 		{
-			Name:             "NotPerformed -> Crashed => (Crashed, Crashed)",
-			StartCommonState: performance.NotPerformed,
-			StepState:        performance.Crashed,
-			Expected: expectedStates{
-				CommonState:      performance.Crashed,
-				FinalCommonState: performance.Crashed,
-			},
+			Name:                "NotPerformed -> Crashed => Crashed",
+			StartCommonState:    performance.NotPerformed,
+			StepState:           performance.Crashed,
+			ExpectedCommonState: performance.Crashed,
 		},
 		{
-			Name:             "NotPerformed -> Canceled => (Canceled, Canceled)",
-			StartCommonState: performance.NotPerformed,
-			StepState:        performance.Canceled,
-			Expected: expectedStates{
-				CommonState:      performance.Canceled,
-				FinalCommonState: performance.Canceled,
-			},
+			Name:                "NotPerformed -> Canceled => Canceled",
+			StartCommonState:    performance.NotPerformed,
+			StepState:           performance.Canceled,
+			ExpectedCommonState: performance.Canceled,
 		},
 		{
-			Name:             "Performing -> NotPerformed => (Performing, Performing)",
-			StartCommonState: performance.Performing,
-			StepState:        performance.NotPerformed,
-			Expected: expectedStates{
-				CommonState:      performance.Performing,
-				FinalCommonState: performance.Performing,
-			},
+			Name:                "Performing -> NotPerformed => Performing",
+			StartCommonState:    performance.Performing,
+			StepState:           performance.NotPerformed,
+			ExpectedCommonState: performance.Performing,
 		},
 		{
-			Name:             "Performing -> Performing => (Performing, Performing)",
-			StartCommonState: performance.Performing,
-			StepState:        performance.Performing,
-			Expected: expectedStates{
-				CommonState:      performance.Performing,
-				FinalCommonState: performance.Performing,
-			},
+			Name:                "Performing -> Performing => Performing",
+			StartCommonState:    performance.Performing,
+			StepState:           performance.Performing,
+			ExpectedCommonState: performance.Performing,
 		},
 		{
-			Name:             "Performing -> Passed => (Performing, Passed)",
-			StartCommonState: performance.Performing,
-			StepState:        performance.Passed,
-			Expected: expectedStates{
-				CommonState:      performance.Performing,
-				FinalCommonState: performance.Passed,
-			},
+			Name:                "Performing -> Passed => Passed",
+			StartCommonState:    performance.Performing,
+			StepState:           performance.Passed,
+			ExpectedCommonState: performance.Passed,
 		},
 		{
-			Name:             "Performing -> Failed => (Failed, Failed)",
-			StartCommonState: performance.Performing,
-			StepState:        performance.Failed,
-			Expected: expectedStates{
-				CommonState:      performance.Failed,
-				FinalCommonState: performance.Failed,
-			},
+			Name:                "Performing -> Failed => Failed",
+			StartCommonState:    performance.Performing,
+			StepState:           performance.Failed,
+			ExpectedCommonState: performance.Failed,
 		},
 		{
-			Name:             "Performing -> Crashed => (Crashed, Crashed)",
-			StartCommonState: performance.Performing,
-			StepState:        performance.Crashed,
-			Expected: expectedStates{
-				CommonState:      performance.Crashed,
-				FinalCommonState: performance.Crashed,
-			},
+			Name:                "Performing -> Crashed => Crashed",
+			StartCommonState:    performance.Performing,
+			StepState:           performance.Crashed,
+			ExpectedCommonState: performance.Crashed,
 		},
 		{
-			Name:             "Performing -> Canceled => (Canceled, Canceled)",
-			StartCommonState: performance.Performing,
-			StepState:        performance.Canceled,
-			Expected: expectedStates{
-				CommonState:      performance.Canceled,
-				FinalCommonState: performance.Canceled,
-			},
+			Name:                "Performing -> Canceled => Canceled",
+			StartCommonState:    performance.Performing,
+			StepState:           performance.Canceled,
+			ExpectedCommonState: performance.Canceled,
 		},
 		{
-			Name:             "Failed -> NotPerformed => (Failed, Failed)",
-			StartCommonState: performance.Failed,
-			StepState:        performance.NotPerformed,
-			Expected: expectedStates{
-				CommonState:      performance.Failed,
-				FinalCommonState: performance.Failed,
-			},
+			Name:                "Failed -> NotPerformed => Failed",
+			StartCommonState:    performance.Failed,
+			StepState:           performance.NotPerformed,
+			ExpectedCommonState: performance.Failed,
 		},
 		{
-			Name:             "Failed -> Performing => (Failed, Failed)",
-			StartCommonState: performance.Failed,
-			StepState:        performance.Performing,
-			Expected: expectedStates{
-				CommonState:      performance.Failed,
-				FinalCommonState: performance.Failed,
-			},
+			Name:                "Failed -> Performing => Failed",
+			StartCommonState:    performance.Failed,
+			StepState:           performance.Performing,
+			ExpectedCommonState: performance.Failed,
 		},
 		{
-			Name:             "Failed -> Passed => (Failed, Failed)",
-			StartCommonState: performance.Failed,
-			StepState:        performance.Passed,
-			Expected: expectedStates{
-				CommonState:      performance.Failed,
-				FinalCommonState: performance.Failed,
-			},
+			Name:                "Failed -> Passed => Failed",
+			StartCommonState:    performance.Failed,
+			StepState:           performance.Passed,
+			ExpectedCommonState: performance.Failed,
 		},
 		{
-			Name:             "Failed -> Failed => (Failed, Failed)",
-			StartCommonState: performance.Failed,
-			StepState:        performance.Failed,
-			Expected: expectedStates{
-				CommonState:      performance.Failed,
-				FinalCommonState: performance.Failed,
-			},
+			Name:                "Failed -> Failed => Failed",
+			StartCommonState:    performance.Failed,
+			StepState:           performance.Failed,
+			ExpectedCommonState: performance.Failed,
 		},
 		{
-			Name:             "Failed -> Crashed => (Crashed, Crashed)",
-			StartCommonState: performance.Failed,
-			StepState:        performance.Crashed,
-			Expected: expectedStates{
-				CommonState:      performance.Crashed,
-				FinalCommonState: performance.Crashed,
-			},
+			Name:                "Failed -> Crashed => Crashed",
+			StartCommonState:    performance.Failed,
+			StepState:           performance.Crashed,
+			ExpectedCommonState: performance.Crashed,
 		},
 		{
-			Name:             "Failed -> Canceled => (Failed, Failed)",
-			StartCommonState: performance.Failed,
-			StepState:        performance.Canceled,
-			Expected: expectedStates{
-				CommonState:      performance.Failed,
-				FinalCommonState: performance.Failed,
-			},
+			Name:                "Failed -> Canceled => Failed",
+			StartCommonState:    performance.Failed,
+			StepState:           performance.Canceled,
+			ExpectedCommonState: performance.Failed,
 		},
 		{
-			Name:             "Crashed -> NotPerformed => (Crashed, Crashed)",
-			StartCommonState: performance.Crashed,
-			StepState:        performance.NotPerformed,
-			Expected: expectedStates{
-				CommonState:      performance.Crashed,
-				FinalCommonState: performance.Crashed,
-			},
+			Name:                "Crashed -> NotPerformed => Crashed",
+			StartCommonState:    performance.Crashed,
+			StepState:           performance.NotPerformed,
+			ExpectedCommonState: performance.Crashed,
 		},
 		{
-			Name:             "Crashed -> Performing => (Crashed, Crashed)",
-			StartCommonState: performance.Crashed,
-			StepState:        performance.Performing,
-			Expected: expectedStates{
-				CommonState:      performance.Crashed,
-				FinalCommonState: performance.Crashed,
-			},
+			Name:                "Crashed -> Performing => Crashed",
+			StartCommonState:    performance.Crashed,
+			StepState:           performance.Performing,
+			ExpectedCommonState: performance.Crashed,
 		},
 		{
-			Name:             "Crashed -> Passed => (Crashed, Crashed)",
-			StartCommonState: performance.Crashed,
-			StepState:        performance.Passed,
-			Expected: expectedStates{
-				CommonState:      performance.Crashed,
-				FinalCommonState: performance.Crashed,
-			},
+			Name:                "Crashed -> Passed => Crashed",
+			StartCommonState:    performance.Crashed,
+			StepState:           performance.Passed,
+			ExpectedCommonState: performance.Crashed,
 		},
 		{
-			Name:             "Crashed -> Failed => (Crashed, Crashed)",
-			StartCommonState: performance.Crashed,
-			StepState:        performance.Failed,
-			Expected: expectedStates{
-				CommonState:      performance.Crashed,
-				FinalCommonState: performance.Crashed,
-			},
+			Name:                "Crashed -> Failed => Crashed",
+			StartCommonState:    performance.Crashed,
+			StepState:           performance.Failed,
+			ExpectedCommonState: performance.Crashed,
 		},
 		{
-			Name:             "Crashed -> Crashed => (Crashed, Crashed)",
-			StartCommonState: performance.Crashed,
-			StepState:        performance.Crashed,
-			Expected: expectedStates{
-				CommonState:      performance.Crashed,
-				FinalCommonState: performance.Crashed,
-			},
+			Name:                "Crashed -> Crashed => Crashed",
+			StartCommonState:    performance.Crashed,
+			StepState:           performance.Crashed,
+			ExpectedCommonState: performance.Crashed,
 		},
 		{
-			Name:             "Crashed -> Canceled => (Crashed, Crashed)",
-			StartCommonState: performance.Crashed,
-			StepState:        performance.Canceled,
-			Expected: expectedStates{
-				CommonState:      performance.Crashed,
-				FinalCommonState: performance.Crashed,
-			},
+			Name:                "Crashed -> Canceled => Crashed",
+			StartCommonState:    performance.Crashed,
+			StepState:           performance.Canceled,
+			ExpectedCommonState: performance.Crashed,
 		},
 		{
-			Name:             "Canceled -> NotPerformed => (Canceled, Canceled)",
-			StartCommonState: performance.Canceled,
-			StepState:        performance.NotPerformed,
-			Expected: expectedStates{
-				CommonState:      performance.Canceled,
-				FinalCommonState: performance.Canceled,
-			},
+			Name:                "Canceled -> NotPerformed => Canceled",
+			StartCommonState:    performance.Canceled,
+			StepState:           performance.NotPerformed,
+			ExpectedCommonState: performance.Canceled,
 		},
 		{
-			Name:             "Canceled -> Performing => (Canceled, Canceled)",
-			StartCommonState: performance.Canceled,
-			StepState:        performance.Performing,
-			Expected: expectedStates{
-				CommonState:      performance.Canceled,
-				FinalCommonState: performance.Canceled,
-			},
+			Name:                "Canceled -> Performing => Canceled",
+			StartCommonState:    performance.Canceled,
+			StepState:           performance.Performing,
+			ExpectedCommonState: performance.Canceled,
 		},
 		{
-			Name:             "Canceled -> Passed => (Canceled, Canceled)",
-			StartCommonState: performance.Canceled,
-			StepState:        performance.Passed,
-			Expected: expectedStates{
-				CommonState:      performance.Canceled,
-				FinalCommonState: performance.Canceled,
-			},
+			Name:                "Canceled -> Passed => Canceled",
+			StartCommonState:    performance.Canceled,
+			StepState:           performance.Passed,
+			ExpectedCommonState: performance.Canceled,
 		},
 		{
-			Name:             "Canceled -> Failed => (Failed, Failed)",
-			StartCommonState: performance.Canceled,
-			StepState:        performance.Failed,
-			Expected: expectedStates{
-				CommonState:      performance.Failed,
-				FinalCommonState: performance.Failed,
-			},
+			Name:                "Canceled -> Failed => Failed",
+			StartCommonState:    performance.Canceled,
+			StepState:           performance.Failed,
+			ExpectedCommonState: performance.Failed,
 		},
 		{
-			Name:             "Canceled -> Crashed => (Crashed, Crashed)",
-			StartCommonState: performance.Canceled,
-			StepState:        performance.Crashed,
-			Expected: expectedStates{
-				CommonState:      performance.Crashed,
-				FinalCommonState: performance.Crashed,
-			},
+			Name:                "Canceled -> Crashed => Crashed",
+			StartCommonState:    performance.Canceled,
+			StepState:           performance.Crashed,
+			ExpectedCommonState: performance.Crashed,
 		},
 		{
-			Name:             "Canceled -> Canceled => (Canceled, Canceled)",
-			StartCommonState: performance.Canceled,
-			StepState:        performance.Canceled,
-			Expected: expectedStates{
-				CommonState:      performance.Canceled,
-				FinalCommonState: performance.Canceled,
-			},
+			Name:                "Canceled -> Canceled => Canceled",
+			StartCommonState:    performance.Canceled,
+			StepState:           performance.Canceled,
+			ExpectedCommonState: performance.Canceled,
 		},
 	}
 
@@ -422,10 +324,8 @@ func TestFlowReducer_WithStep_flow_common_state(t *testing.T) {
 			b.WithStep(performance.NewTestStep(from, to, c.StepState))
 
 			flow := b.Reduce()
-			finalFlow := b.FinallyReduce()
 
-			require.Equal(t, c.Expected.CommonState, flow.State())
-			require.Equal(t, c.Expected.FinalCommonState, finalFlow.State())
+			require.Equal(t, c.ExpectedCommonState, flow.State())
 		})
 	}
 }
@@ -636,10 +536,8 @@ func TestFlowReducer_WithStep_transition_state(t *testing.T) {
 			b.WithStep(performance.NewTestStep(from, to, c.StepState))
 
 			flow := b.Reduce()
-			finalFlow := b.FinallyReduce()
 
 			require.Equal(t, c.ExpectedTransitionState, flow.Transitions()[0].State())
-			require.Equal(t, c.ExpectedTransitionState, finalFlow.Transitions()[0].State())
 		})
 	}
 }
