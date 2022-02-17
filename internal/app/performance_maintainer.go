@@ -13,7 +13,11 @@ type PerformanceReleaser interface {
 	ReleasePerformance(ctx context.Context, perfID string) error
 }
 
-type PerformanceMaintainer struct {
+type PerformanceMaintainer interface {
+	MaintainPerformance(ctx context.Context, perf *performance.Performance) (<-chan Message, error)
+}
+
+type performanceMaintainer struct {
 	releaser    PerformanceReleaser
 	stepsPolicy StepsPolicy
 	timeout     time.Duration
@@ -23,7 +27,7 @@ func NewPerformanceMaintainer(
 	releaser PerformanceReleaser,
 	stepsPolicy StepsPolicy,
 	flowTimeout time.Duration,
-) *PerformanceMaintainer {
+) PerformanceMaintainer {
 	if releaser == nil {
 		panic("performance releaser is nil")
 	}
@@ -32,14 +36,14 @@ func NewPerformanceMaintainer(
 		panic("steps policy is nil")
 	}
 
-	return &PerformanceMaintainer{
+	return &performanceMaintainer{
 		releaser:    releaser,
 		stepsPolicy: stepsPolicy,
 		timeout:     flowTimeout,
 	}
 }
 
-func (m *PerformanceMaintainer) MaintainPerformance(
+func (m *performanceMaintainer) MaintainPerformance(
 	ctx context.Context,
 	perf *performance.Performance,
 ) (<-chan Message, error) {
