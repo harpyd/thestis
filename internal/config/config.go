@@ -14,10 +14,15 @@ const (
 	defaultHTTPPort               = 8080
 	defaultHTTPRWTimeout          = 10 * time.Second
 	defaultPerformanceFlowTimeout = 24 * time.Hour
-	defaultPerformanceSaveTimeout = 10 * time.Second
 )
 
-const LocalEnv = "local"
+type Env = string
+
+const LocalEnv Env = "local"
+
+type StepsPolicy = string
+
+const EveryStepSavingPolicy StepsPolicy = "everyStepSaving"
 
 const (
 	FakeAuth     = "fake"
@@ -26,12 +31,13 @@ const (
 
 type (
 	Config struct {
-		Environment string
-		HTTP        HTTP
-		Mongo       Mongo
-		Auth        Auth
-		Firebase    Firebase
-		Performance Performance
+		Environment     Env
+		HTTP            HTTP
+		Mongo           Mongo
+		Auth            Auth
+		Firebase        Firebase
+		Performance     Performance
+		EveryStepSaving EveryStepSaving
 	}
 
 	HTTP struct {
@@ -58,6 +64,10 @@ type (
 
 	Performance struct {
 		FlowTimeout time.Duration
+		Policy      StepsPolicy
+	}
+
+	EveryStepSaving struct {
 		SaveTimeout time.Duration
 	}
 )
@@ -89,7 +99,6 @@ func setDefaults() {
 	viper.SetDefault("http.readTimeout", defaultHTTPRWTimeout)
 	viper.SetDefault("http.writeTimeout", defaultHTTPRWTimeout)
 	viper.SetDefault("performance.flowTimeout", defaultPerformanceFlowTimeout)
-	viper.SetDefault("performance.saveTimeout", defaultPerformanceSaveTimeout)
 }
 
 func parseConfig(configsPath, env string) error {
@@ -172,6 +181,10 @@ func unmarshal(cfg *Config) error {
 	}
 
 	if err := viper.UnmarshalKey("performance", &cfg.Performance); err != nil {
+		return err
+	}
+
+	if err := viper.UnmarshalKey("everyStepSaving", &cfg.EveryStepSaving); err != nil {
 		return err
 	}
 
