@@ -2,15 +2,18 @@ http:
   port: ${HTTP_PORT:8080}
   readTimeout: 4s
   writeTimeout: 10s
+
 mongo:
   uri: ${MONGO_URI}
   databaseName: ${MONGO_DATABASE:thestis}
   username: ${MONGO_USERNAME:admin}
   password: ${MONGO_PASSWORD:qwerty}
+
 auth:
   with: ${AUTH_TYPE:firebase}
 firebase:
   serviceAccountFile: ${SERVICE_ACCOUNT_FILE}
+
 performance:
   flowTimeout: 24h
   policy: everyStepSaving
