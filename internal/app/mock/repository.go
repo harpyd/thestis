@@ -36,7 +36,13 @@ func NewTestCampaignsRepository(tcs ...*testcampaign.TestCampaign) *TestCampaign
 	return tcm
 }
 
-func (m *TestCampaignsRepository) GetTestCampaign(_ context.Context, tcID string) (*testcampaign.TestCampaign, error) {
+func (m *TestCampaignsRepository) GetTestCampaign(ctx context.Context, tcID string) (*testcampaign.TestCampaign, error) {
+	select {
+	case <-ctx.Done():
+		return nil, app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -48,7 +54,13 @@ func (m *TestCampaignsRepository) GetTestCampaign(_ context.Context, tcID string
 	return &tc, nil
 }
 
-func (m *TestCampaignsRepository) AddTestCampaign(_ context.Context, tc *testcampaign.TestCampaign) error {
+func (m *TestCampaignsRepository) AddTestCampaign(ctx context.Context, tc *testcampaign.TestCampaign) error {
+	select {
+	case <-ctx.Done():
+		return app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -66,6 +78,12 @@ func (m *TestCampaignsRepository) UpdateTestCampaign(
 	tcID string,
 	updateFn app.TestCampaignUpdater,
 ) error {
+	select {
+	case <-ctx.Done():
+		return app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -109,9 +127,15 @@ func NewSpecificationsRepository(specs ...*specification.Specification) *Specifi
 }
 
 func (m *SpecificationsRepository) GetSpecification(
-	_ context.Context,
+	ctx context.Context,
 	specID string,
 ) (*specification.Specification, error) {
+	select {
+	case <-ctx.Done():
+		return nil, app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -124,9 +148,15 @@ func (m *SpecificationsRepository) GetSpecification(
 }
 
 func (m *SpecificationsRepository) GetActiveSpecificationByTestCampaignID(
-	_ context.Context,
+	ctx context.Context,
 	tcID string,
 ) (*specification.Specification, error) {
+	select {
+	case <-ctx.Done():
+		return nil, app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -139,7 +169,16 @@ func (m *SpecificationsRepository) GetActiveSpecificationByTestCampaignID(
 	return nil, app.NewSpecificationNotFoundError(errNoSpecWithTestCampaignID)
 }
 
-func (m *SpecificationsRepository) AddSpecification(_ context.Context, spec *specification.Specification) error {
+func (m *SpecificationsRepository) AddSpecification(
+	ctx context.Context,
+	spec *specification.Specification,
+) error {
+	select {
+	case <-ctx.Done():
+		return app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -185,7 +224,13 @@ func NewPerformancesRepository(perfs ...*performance.Performance) *PerformancesR
 	return m
 }
 
-func (m *PerformancesRepository) AcquirePerformance(_ context.Context, perfID string) (*performance.Performance, error) {
+func (m *PerformancesRepository) AcquirePerformance(ctx context.Context, perfID string) (*performance.Performance, error) {
+	select {
+	case <-ctx.Done():
+		return nil, app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -201,7 +246,13 @@ func (m *PerformancesRepository) AcquirePerformance(_ context.Context, perfID st
 	return &pp.performance, nil
 }
 
-func (m *PerformancesRepository) ReleasePerformance(_ context.Context, perfID string) error {
+func (m *PerformancesRepository) ReleasePerformance(ctx context.Context, perfID string) error {
+	select {
+	case <-ctx.Done():
+		return app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -215,7 +266,13 @@ func (m *PerformancesRepository) ReleasePerformance(_ context.Context, perfID st
 	return nil
 }
 
-func (m *PerformancesRepository) GetPerformance(_ context.Context, perfID string) (*performance.Performance, error) {
+func (m *PerformancesRepository) GetPerformance(ctx context.Context, perfID string) (*performance.Performance, error) {
+	select {
+	case <-ctx.Done():
+		return nil, app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -227,7 +284,13 @@ func (m *PerformancesRepository) GetPerformance(_ context.Context, perfID string
 	return &pp.performance, nil
 }
 
-func (m *PerformancesRepository) AddPerformance(_ context.Context, perf *performance.Performance) error {
+func (m *PerformancesRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
+	select {
+	case <-ctx.Done():
+		return app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -247,6 +310,12 @@ func (m *PerformancesRepository) ExclusivelyDoWithPerformance(
 	perf *performance.Performance,
 	action app.PerformanceAction,
 ) error {
+	select {
+	case <-ctx.Done():
+		return app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.RLock()
 
 	pp, ok := m.performances[perf.ID()]
@@ -293,7 +362,13 @@ func NewFlowsRepository(flows ...performance.Flow) *FlowsRepository {
 	return m
 }
 
-func (m *FlowsRepository) GetFlow(_ context.Context, flowID string) (performance.Flow, error) {
+func (m *FlowsRepository) GetFlow(ctx context.Context, flowID string) (performance.Flow, error) {
+	select {
+	case <-ctx.Done():
+		return performance.Flow{}, app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -305,7 +380,13 @@ func (m *FlowsRepository) GetFlow(_ context.Context, flowID string) (performance
 	return flow, nil
 }
 
-func (m *FlowsRepository) UpsertFlow(_ context.Context, flow performance.Flow) error {
+func (m *FlowsRepository) UpsertFlow(ctx context.Context, flow performance.Flow) error {
+	select {
+	case <-ctx.Done():
+		return app.NewDatabaseError(ctx.Err())
+	default:
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
