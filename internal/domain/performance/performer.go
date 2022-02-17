@@ -40,14 +40,14 @@ func Pass() Result {
 func Fail(err error) Result {
 	return Result{
 		state: Failed,
-		err:   errors.WithStack(newFailedError(err)),
+		err:   newFailedError(err),
 	}
 }
 
 func Crash(err error) Result {
 	return Result{
 		state: Crashed,
-		err:   errors.WithStack(newCrashedError(err)),
+		err:   newCrashedError(err),
 	}
 }
 
@@ -96,7 +96,7 @@ func newFailedError(err error) error {
 		return nil
 	}
 
-	return wrappingFailedError{err: err}
+	return errors.WithStack(wrappingFailedError{err: err})
 }
 
 func IsFailedError(err error) bool {
@@ -129,7 +129,7 @@ func newCrashedError(err error) error {
 		return nil
 	}
 
-	return wrappingCrashedError{err: err}
+	return errors.WithStack(wrappingCrashedError{err: err})
 }
 
 func IsCrashedError(err error) bool {
