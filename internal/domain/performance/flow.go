@@ -184,8 +184,8 @@ func TestFlowFromState(commonState, transitionState State, from, to string) *Flo
 }
 
 // Reduce creates current version of Flow from FlowReducer.
-// This is useful for accumulating performance Step's and
-// storing the state of performance Flow.
+// This is useful for accumulating Performance Step's and
+// storing the state of Performance Flow.
 //
 // For example:
 //  fr := performance.FlowFromPerformance("id", perf)
