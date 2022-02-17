@@ -119,10 +119,5 @@ func (m *everyStepSavingFlowManager) action(
 
 			messages <- NewMessageFromStep(s)
 		}
-
-		flow := fr.FinallyReduce()
-		if err := m.flowsRepo.UpsertFlow(ctx, flow); err != nil {
-			messages <- NewMessageFromError(err)
-		}
 	}
 }
