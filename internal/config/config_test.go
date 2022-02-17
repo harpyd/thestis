@@ -72,7 +72,10 @@ func TestFromPath(t *testing.T) {
 				},
 				Performance: config.Performance{
 					FlowTimeout: 24 * time.Hour,
-					SaveTimeout: 10 * time.Second,
+					Policy:      config.EveryStepSavingPolicy,
+				},
+				EveryStepSaving: config.EveryStepSaving{
+					SaveTimeout: 30 * time.Second,
 				},
 			},
 			ShouldBeErr: false,
