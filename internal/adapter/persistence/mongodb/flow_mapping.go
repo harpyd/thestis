@@ -11,10 +11,10 @@ type (
 	}
 
 	transitionDocument struct {
-		From  string            `bson:"from"`
-		To    string            `bson:"to"`
-		State performance.State `bson:"state"`
-		Error string            `bson:"error"`
+		From         string            `bson:"from"`
+		To           string            `bson:"to"`
+		State        performance.State `bson:"state"`
+		OccurredErrs []string          `bson:"occurredErrs"`
 	}
 )
 
@@ -37,16 +37,11 @@ func marshalToTransitionDocuments(transitions []performance.Transition) []transi
 }
 
 func marshalToTransitionDocument(transition performance.Transition) transitionDocument {
-	var errMsg string
-	if transition.Err() != nil {
-		errMsg = transition.Err().Error()
-	}
-
 	return transitionDocument{
-		From:  transition.From(),
-		To:    transition.To(),
-		State: transition.State(),
-		Error: errMsg,
+		From:         transition.From(),
+		To:           transition.To(),
+		State:        transition.State(),
+		OccurredErrs: transition.OccurredErrs(),
 	}
 }
 
@@ -69,5 +64,5 @@ func unmarshalToTransitions(documents []transitionDocument) []performance.Transi
 }
 
 func (d transitionDocument) unmarshalToTransition() performance.Transition {
-	return performance.NewTransition(d.State, d.From, d.To, d.Error)
+	return performance.NewTransition(d.State, d.From, d.To, d.OccurredErrs...)
 }

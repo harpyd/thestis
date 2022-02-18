@@ -60,67 +60,38 @@ func (r Result) Err() error {
 }
 
 type (
-	wrappingFailedError struct {
-		err error
-	}
-
-	failedErr struct {
-		s string
-	}
-
-	wrappingCrashedError struct {
+	failedError struct {
 		err error
 	}
 
 	crashedError struct {
-		s string
+		err error
 	}
 )
-
-func newTransitionError(state State, errMsg string) error {
-	if errMsg == "" {
-		return nil
-	}
-
-	if state == Failed {
-		return failedErr{s: errMsg}
-	} else if state == Crashed {
-		return crashedError{s: errMsg}
-	}
-
-	return errors.New(errMsg)
-}
 
 func newFailedError(err error) error {
 	if err == nil {
 		return nil
 	}
 
-	return errors.WithStack(wrappingFailedError{err: err})
+	return errors.WithStack(failedError{err: err})
 }
 
 func IsFailedError(err error) bool {
-	var (
-		werr wrappingFailedError
-		ferr failedErr
-	)
+	var target failedError
 
-	return errors.As(err, &werr) || errors.As(err, &ferr)
+	return errors.As(err, &target)
 }
 
-func (e wrappingFailedError) Error() string {
+func (e failedError) Error() string {
 	return fmt.Sprintf("performance failed: %s", e.err)
 }
 
-func (e failedErr) Error() string {
-	return e.s
-}
-
-func (e wrappingFailedError) Cause() error {
+func (e failedError) Cause() error {
 	return e.err
 }
 
-func (e wrappingFailedError) Unwrap() error {
+func (e failedError) Unwrap() error {
 	return e.err
 }
 
@@ -129,30 +100,23 @@ func newCrashedError(err error) error {
 		return nil
 	}
 
-	return errors.WithStack(wrappingCrashedError{err: err})
+	return errors.WithStack(crashedError{err: err})
 }
 
 func IsCrashedError(err error) bool {
-	var (
-		werr wrappingCrashedError
-		cerr crashedError
-	)
+	var target crashedError
 
-	return errors.As(err, &werr) || errors.As(err, &cerr)
-}
-
-func (e wrappingCrashedError) Error() string {
-	return fmt.Sprintf("performance crashed: %s", e.err)
+	return errors.As(err, &target)
 }
 
 func (e crashedError) Error() string {
-	return e.s
+	return fmt.Sprintf("performance crashed: %s", e.err)
 }
 
-func (e wrappingCrashedError) Cause() error {
+func (e crashedError) Cause() error {
 	return e.err
 }
 
-func (e wrappingCrashedError) Unwrap() error {
+func (e crashedError) Unwrap() error {
 	return e.err
 }

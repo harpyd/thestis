@@ -1,10 +1,6 @@
 package performance
 
-import (
-	"fmt"
-
-	"go.uber.org/multierr"
-)
+import "fmt"
 
 type (
 	// Step is one unit of information
@@ -32,13 +28,13 @@ type (
 	}
 
 	Transition struct {
-		from  string
-		to    string
-		state State
-		err   error
+		from         string
+		to           string
+		state        State
+		occurredErrs []string
 	}
 
-	// FlowReducer builds Flow instance using WithStep 
+	// FlowReducer builds Flow instance using WithStep
 	// and Reduce and methods.
 	FlowReducer struct {
 		id            string
@@ -75,12 +71,12 @@ func (f Flow) Transitions() []Transition {
 	return transitions
 }
 
-func NewTransition(state State, from, to, errMsg string) Transition {
+func NewTransition(state State, from, to string, errMessages ...string) Transition {
 	return Transition{
-		from:  from,
-		to:    to,
-		state: state,
-		err:   newTransitionError(state, errMsg),
+		from:         from,
+		to:           to,
+		state:        state,
+		occurredErrs: errMessages,
 	}
 }
 
@@ -96,8 +92,11 @@ func (t Transition) State() State {
 	return t.state
 }
 
-func (t Transition) Err() error {
-	return t.err
+func (t Transition) OccurredErrs() []string {
+	occurredErrs := make([]string, len(t.occurredErrs))
+	copy(occurredErrs, t.occurredErrs)
+
+	return occurredErrs
 }
 
 type FlowParams struct {
@@ -248,7 +247,7 @@ func (r *FlowReducer) WithStep(step Step) *FlowReducer {
 	}
 
 	t.state = r.specificRules.apply(t.state, step.State())
-	t.err = multierr.Append(t.err, step.Err())
+	t.occurredErrs = append(t.occurredErrs, step.Err().Error())
 
 	return r
 }

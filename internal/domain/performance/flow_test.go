@@ -18,40 +18,44 @@ func TestNewTransition(t *testing.T) {
 	t.Parallel()
 
 	type params struct {
-		State performance.State
-		Error string
+		State        performance.State
+		OccurredErrs []string
 	}
 
 	testCases := []struct {
-		Name    string
-		Params  params
-		WithErr bool
-		IsErr   func(err error) bool
+		Name     string
+		Params   params
+		WithErrs bool
+		IsErr    func(err error) bool
 	}{
 		{
 			Name: "without_error",
 			Params: params{
 				State: performance.Performing,
 			},
-			WithErr: false,
+			WithErrs: false,
 		},
 		{
 			Name: "with_failed_error",
 			Params: params{
 				State: performance.Failed,
-				Error: "performance failed: something wrong",
+				OccurredErrs: []string{
+					"performance failed: something wrong",
+				},
 			},
-			WithErr: true,
-			IsErr:   performance.IsFailedError,
+			WithErrs: true,
+			IsErr:    performance.IsFailedError,
 		},
 		{
 			Name: "with_crashed_error",
 			Params: params{
 				State: performance.Crashed,
-				Error: "performance crashed: something wrong",
+				OccurredErrs: []string{
+					"performance crashed: something wrong",
+				},
 			},
-			WithErr: true,
-			IsErr:   performance.IsCrashedError,
+			WithErrs: true,
+			IsErr:    performance.IsCrashedError,
 		},
 	}
 
@@ -61,13 +65,14 @@ func TestNewTransition(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			transition := performance.NewTransition(c.Params.State, from, to, c.Params.Error)
+			transition := performance.NewTransition(
+				c.Params.State,
+				from,
+				to,
+				c.Params.OccurredErrs...,
+			)
 
-			if c.WithErr {
-				require.True(t, c.IsErr(transition.Err()))
-				require.EqualError(t, transition.Err(), c.Params.Error)
-			}
-
+			require.ElementsMatch(t, c.Params.OccurredErrs, transition.OccurredErrs())
 			require.Equal(t, c.Params.State, transition.State())
 			require.Equal(t, from, transition.From())
 			require.Equal(t, to, transition.To())
