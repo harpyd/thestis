@@ -87,11 +87,11 @@ func TestEveryStepSavingPolicy_HandleSteps(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			const saveTImeout = 3 * time.Second
+			const saveTimeout = 3 * time.Second
 
 			var (
 				flowsRepo = mock.NewFlowsRepository()
-				policy    = app.NewEveryStepSavingPolicy(flowsRepo, saveTImeout)
+				policy    = app.NewEveryStepSavingPolicy(flowsRepo, saveTimeout)
 			)
 
 			var (
