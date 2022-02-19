@@ -107,7 +107,7 @@ func (s *FlowsRepositoryTestSuite) transitions() []performance.Transition {
 			performance.Passed,
 			"stage.give",
 			"story.scenario.to",
-			"",
+			"some err occurred",
 		),
 	}
 }
