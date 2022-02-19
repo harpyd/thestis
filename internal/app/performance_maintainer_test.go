@@ -27,14 +27,12 @@ func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
 		StartPerformance   bool
 		ShouldBeErr        bool
 		IsErr              func(err error) bool
-		Messages           []app.Message
+		ExpectedMessages   []app.Message
 	}{
 		{
 			Name: "already_started_performance",
 			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
 				return performance.Unmarshal(performance.Params{
-					OwnerID:         "f7b42682-cf52-4699-9bba-f8dac902efb0",
-					SpecificationID: "73a7c5f6-f239-4abf-8837-cc4763d59d5f",
 					Actions: []performance.Action{
 						performance.NewActionWithoutThesis("from", "to", performance.HTTPPerformer),
 					},
@@ -49,8 +47,6 @@ func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
 			Name: "performance_release_error",
 			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
 				return performance.Unmarshal(performance.Params{
-					OwnerID:         "3fe69ab2-ebd0-4890-babf-4970a5d4d1d1",
-					SpecificationID: "d62b068f-39cc-4ac1-9245-f74aba314d78",
 					Actions: []performance.Action{
 						performance.NewActionWithoutThesis("a", "b", performance.HTTPPerformer),
 					},
@@ -59,7 +55,7 @@ func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
 			Releaser: appMock.PerformanceReleaser(func(ctx context.Context, perfID string) error {
 				return errPerformanceRelease
 			}),
-			Messages: []app.Message{
+			ExpectedMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewPerformingStep("a", "b", performance.HTTPPerformer),
 				),
@@ -73,8 +69,6 @@ func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
 			Name: "successfully_maintain_performance",
 			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
 				return performance.Unmarshal(performance.Params{
-					OwnerID:         "52f42fbb-572c-47f3-9774-52107dffec03",
-					SpecificationID: "6b28440c-fe30-4f6f-8290-bf783c8e36c2",
 					Actions: []performance.Action{
 						performance.NewActionWithoutThesis("a", "c", performance.HTTPPerformer),
 						performance.NewActionWithoutThesis("b", "c", performance.HTTPPerformer),
@@ -83,7 +77,7 @@ func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
 				}, opts...)
 			},
 			Releaser: emptyPerformanceReleaser(t),
-			Messages: []app.Message{
+			ExpectedMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewPerformingStep("a", "c", performance.HTTPPerformer),
 				),
@@ -120,7 +114,6 @@ func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
 			)
 
 			perf := c.PerformanceFactory(
-				performance.WithID("e148737a-5825-4a39-bca2-9c671f2e0386"),
 				performance.WithHTTP(passedPerformer(t)),
 				performance.WithAssertion(passedPerformer(t)),
 			)
@@ -141,79 +134,75 @@ func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
 
 			require.NoError(t, err)
 
-			requireMessagesEqual(t, c.Messages, messages)
+			requireMessagesEqual(t, c.ExpectedMessages, messages)
 		})
 	}
 }
 
-func TestPerformanceMaintainer_MaintainPerformance_timeout_exceeded(t *testing.T) {
+func TestPerformanceMaintainer_MaintainPerformance_cancelation(t *testing.T) {
 	t.Parallel()
 
-	const flowTimeout = 1 * time.Millisecond
-
-	var (
-		releaser    = emptyPerformanceReleaser(t)
-		stepsPolicy = appMock.NewStepsPolicy()
-		maintainer  = app.NewPerformanceMaintainer(releaser, stepsPolicy, flowTimeout)
-	)
-
-	finish := make(chan struct{})
-	defer close(finish)
-
-	performer := perfMock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		<-finish
-
-		return performance.Pass()
-	})
-
-	perf := performanceWithHTTPPerformer(t, "a", "b", performer)
-
-	messages, err := maintainer.MaintainPerformance(context.Background(), perf)
-	require.NoError(t, err)
-
-	requireMessagesEqual(
-		t,
-		[]app.Message{
-			app.NewMessageFromStep(performance.NewPerformingStep("a", "b", performance.HTTPPerformer)),
-			app.NewMessageFromStep(performance.NewCanceledStep(context.DeadlineExceeded)),
+	testCases := []struct {
+		Name             string
+		ContextCanceled  bool
+		FlowTimeout      time.Duration
+		ExpectedMessages []app.Message
+	}{
+		{
+			Name:            "context_cancelation",
+			ContextCanceled: true,
+			FlowTimeout:     1 * time.Second,
+			ExpectedMessages: []app.Message{
+				app.NewMessageFromStep(performance.NewCanceledStep(context.Canceled)),
+			},
 		},
-		messages,
-	)
-}
+		{
+			Name:            "flow_timeout_exceeded",
+			ContextCanceled: false,
+			FlowTimeout:     1 * time.Millisecond,
+			ExpectedMessages: []app.Message{
+				app.NewMessageFromStep(performance.NewPerformingStep("a", "b", performance.HTTPPerformer)),
+				app.NewMessageFromStep(performance.NewCanceledStep(context.DeadlineExceeded)),
+			},
+		},
+	}
 
-func TestPerformanceMaintainer_MaintainPerformance_context_canceled(t *testing.T) {
-	t.Parallel()
+	for _, c := range testCases {
+		c := c
 
-	const flowTimeout = 3 * time.Second
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
 
-	var (
-		releaser    = emptyPerformanceReleaser(t)
-		stepsPolicy = appMock.NewStepsPolicy()
-		maintainer  = app.NewPerformanceMaintainer(releaser, stepsPolicy, flowTimeout)
-	)
+			var (
+				releaser    = emptyPerformanceReleaser(t)
+				stepsPolicy = appMock.NewStepsPolicy()
+				maintainer  = app.NewPerformanceMaintainer(releaser, stepsPolicy, c.FlowTimeout)
+			)
 
-	finish := make(chan struct{})
-	defer close(finish)
+			finish := make(chan struct{})
+			defer close(finish)
 
-	performer := perfMock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		<-finish
+			performer := perfMock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
+				<-finish
 
-		return performance.Pass()
-	})
+				return performance.Pass()
+			})
 
-	perf := performanceWithHTTPPerformer(t, "a", "b", performer)
+			perf := performanceWithHTTPPerformer(t, "a", "b", performer)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
 
-	messages, err := maintainer.MaintainPerformance(ctx, perf)
-	require.NoError(t, err)
+			if c.ContextCanceled {
+				cancel()
+			}
 
-	requireMessagesEqual(
-		t,
-		[]app.Message{app.NewMessageFromStep(performance.NewCanceledStep(context.Canceled))},
-		messages,
-	)
+			messages, err := maintainer.MaintainPerformance(ctx, perf)
+			require.NoError(t, err)
+
+			requireMessagesEqual(t, c.ExpectedMessages, messages)
+		})
+	}
 }
 
 func emptyPerformanceReleaser(t *testing.T) app.PerformanceReleaser {
