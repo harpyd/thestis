@@ -247,7 +247,10 @@ func (r *FlowReducer) WithStep(step Step) *FlowReducer {
 	}
 
 	t.state = r.specificRules.apply(t.state, step.State())
-	t.occurredErrs = append(t.occurredErrs, step.Err().Error())
+
+	if step.Err() != nil {
+		t.occurredErrs = append(t.occurredErrs, step.Err().Error())
+	}
 
 	return r
 }
