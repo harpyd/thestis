@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 
-	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/domain/performance"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/harpyd/thestis/internal/app"
+	"github.com/harpyd/thestis/internal/domain/performance"
 )
 
 type PerformanceGuard struct {
@@ -26,9 +28,10 @@ func (g *PerformanceGuard) AcquirePerformance(ctx context.Context, perfID string
 	var (
 		filter = bson.M{"_id": perfID}
 		update = bson.M{"$set": bson.M{"locked": true}}
+		opt    = options.FindOneAndUpdate().SetProjection(bson.M{"_id": 0, "locked": 1})
 	)
 
-	if err := g.performances.FindOneAndUpdate(ctx, filter, update).Decode(&document); err != nil {
+	if err := g.performances.FindOneAndUpdate(ctx, filter, update, opt).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return app.NewPerformanceNotFoundError(err)
 		}

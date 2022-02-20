@@ -6,9 +6,10 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/domain/performance"
-	"github.com/stretchr/testify/suite"
 )
 
 type PerformanceGuardTestSuite struct {
