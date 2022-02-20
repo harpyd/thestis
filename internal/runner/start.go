@@ -195,6 +195,7 @@ func (c *runnerContext) initApplication() {
 				c.performance.maintainer,
 			),
 			RestartPerformance: command.NewRestartPerformanceHandler(c.persistent.perfsRepo, c.performance.maintainer),
+			CancelPerformance:  command.NewCancelPerformanceHandler(c.persistent.perfsRepo, mock.NewPerformanceCancelPubsub()),
 		},
 		Queries: app.Queries{
 			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(c.persistent.specificTestCampaignRM),
