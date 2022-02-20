@@ -26,7 +26,7 @@ func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
 	testCases := []struct {
 		Name               string
 		PerformanceFactory func(opts ...performance.Option) *performance.Performance
-		Guard              app.PerformanceGuard
+		Guard              *appMock.PerformanceGuard
 		StartPerformance   bool
 		ShouldBeErr        bool
 		IsErr              func(err error) bool
@@ -150,6 +150,8 @@ func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
 			require.NoError(t, err)
 
 			requireMessagesEqual(t, c.ExpectedMessages, messages)
+
+			require.Equal(t, c.Guard.ReleaseCalls(), 1)
 		})
 	}
 }
@@ -247,11 +249,13 @@ func TestPerformanceMaintainer_MaintainPerformance_cancelation(t *testing.T) {
 			}
 
 			requireMessagesEqual(t, c.ExpectedMessages, messages)
+
+			require.Equal(t, guard.ReleaseCalls(), 1)
 		})
 	}
 }
 
-func errlessPerformanceGuard(t *testing.T) app.PerformanceGuard {
+func errlessPerformanceGuard(t *testing.T) *appMock.PerformanceGuard {
 	t.Helper()
 
 	return appMock.NewPerformanceGuard(nil, nil)
