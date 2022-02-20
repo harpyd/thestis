@@ -91,7 +91,7 @@ func newRunner(configsPath string) *runnerContext {
 	return c
 }
 
-func (c *runnerContext) newMongoDatabase() *mongo.Database {
+func (c *runnerContext) mongoDatabase() *mongo.Database {
 	c.mongoDB.once.Do(func() {
 		client, err := mongodb.NewClient(
 			c.config.Mongo.URI,
@@ -146,7 +146,7 @@ func (c *runnerContext) initConfig(configsPath string) {
 }
 
 func (c *runnerContext) initPersistent() {
-	db := c.newMongoDatabase()
+	db := c.mongoDatabase()
 	logField := app.StringLogField("db", "mongo")
 
 	var (
@@ -234,7 +234,7 @@ func (c *runnerContext) initPerformance() {
 }
 
 func (c *runnerContext) initPerformanceGuard() {
-	c.performance.guard = mongoAdapter.NewPerformanceGuard(c.newMongoDatabase())
+	c.performance.guard = mongoAdapter.NewPerformanceGuard(c.mongoDatabase())
 }
 
 func (c *runnerContext) initStepsPolicy() {
@@ -278,6 +278,8 @@ func (c *runnerContext) firebaseClient() *fireauth.Client {
 	if err != nil {
 		c.logger.Fatal("Failed to create Firebase Auth client", err)
 	}
+
+	c.logger.Info("Firebase Auth client created")
 
 	return client
 }
