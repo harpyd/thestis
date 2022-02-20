@@ -68,7 +68,7 @@ type (
 		OwnerID         string
 		SpecificationID string
 		Actions         []Action
-		Locked          bool
+		Started         bool
 	}
 )
 
@@ -80,7 +80,7 @@ func Unmarshal(params Params, opts ...Option) *Performance {
 		specificationID: params.SpecificationID,
 		actionGraph:     unmarshalGraph(params.Actions),
 		performers:      make(map[PerformerType]Performer, defaultPerformersSize),
-		lockState:       newLockState(params.Locked),
+		lockState:       newLockState(params.Started),
 	}
 
 	p.applyOpts(opts)
@@ -88,8 +88,8 @@ func Unmarshal(params Params, opts ...Option) *Performance {
 	return p
 }
 
-func newLockState(isLocked bool) lockState {
-	if isLocked {
+func newLockState(started bool) lockState {
+	if started {
 		return locked
 	}
 
@@ -146,8 +146,16 @@ func (p *Performance) Actions() []Action {
 	return actions
 }
 
-func (p *Performance) Locked() bool {
-	return p.lockState == locked
+func (p *Performance) Started() bool {
+	return atomic.CompareAndSwapUint32(&p.lockState, locked, locked)
+}
+
+func (p *Performance) MustBeStarted() error {
+	if p.Started() {
+		return nil
+	}
+
+	return NewNotStartedError()
 }
 
 // Start asynchronously starts performing of Performance action graph.
@@ -328,6 +336,7 @@ func (e cyclicGraphError) Error() string {
 var (
 	errTerminated     = errors.New("performance terminated")
 	errAlreadyStarted = errors.New("performance already started")
+	errNotStarted     = errors.New("performance not started")
 )
 
 func NewAlreadyStartedError() error {
@@ -336,4 +345,12 @@ func NewAlreadyStartedError() error {
 
 func IsAlreadyStartedError(err error) bool {
 	return errors.Is(err, errAlreadyStarted)
+}
+
+func NewNotStartedError() error {
+	return errNotStarted
+}
+
+func IsNotStartedError(err error) bool {
+	return errors.Is(err, errNotStarted)
 }
