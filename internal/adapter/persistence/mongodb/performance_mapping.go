@@ -11,6 +11,7 @@ type (
 		OwnerID         string           `bson:"ownerId"`
 		SpecificationID string           `bson:"specificationId"`
 		Actions         []actionDocument `bson:"actions"`
+		Locked          bool             `bson:"locked"`
 	}
 
 	actionDocument struct {
@@ -27,6 +28,7 @@ func marshalToPerformanceDocument(perf *performance.Performance) performanceDocu
 		OwnerID:         perf.OwnerID(),
 		SpecificationID: perf.SpecificationID(),
 		Actions:         marshalToActionDocuments(perf.Actions()),
+		Locked:          perf.Locked(),
 	}
 }
 
@@ -54,6 +56,7 @@ func (d performanceDocument) unmarshalToPerformance() *performance.Performance {
 		OwnerID:         d.OwnerID,
 		SpecificationID: d.SpecificationID,
 		Actions:         actions,
+		Locked:          d.Locked,
 	}, performance.WithID(d.ID))
 }
 

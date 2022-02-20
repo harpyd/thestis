@@ -68,6 +68,7 @@ type (
 		OwnerID         string
 		SpecificationID string
 		Actions         []Action
+		Locked          bool
 	}
 )
 
@@ -79,12 +80,20 @@ func Unmarshal(params Params, opts ...Option) *Performance {
 		specificationID: params.SpecificationID,
 		actionGraph:     unmarshalGraph(params.Actions),
 		performers:      make(map[PerformerType]Performer, defaultPerformersSize),
-		lockState:       unlocked,
+		lockState:       newLockState(params.Locked),
 	}
 
 	p.applyOpts(opts)
 
 	return p
+}
+
+func newLockState(isLocked bool) lockState {
+	if isLocked {
+		return locked
+	}
+
+	return unlocked
 }
 
 func FromSpecification(spec *specification.Specification, opts ...Option) (*Performance, error) {
@@ -135,6 +144,10 @@ func (p *Performance) Actions() []Action {
 	}
 
 	return actions
+}
+
+func (p *Performance) Locked() bool {
+	return p.lockState == locked
 }
 
 // Start asynchronously starts performing of Performance action graph.
