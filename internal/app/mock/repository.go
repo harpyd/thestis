@@ -3,7 +3,6 @@ package mock
 import (
 	"context"
 	"sync"
-	"sync/atomic"
 
 	"github.com/pkg/errors"
 
@@ -201,69 +200,20 @@ func (m *SpecificationsRepository) SpecificationsNumber() int {
 type (
 	PerformancesRepository struct {
 		mu           sync.RWMutex
-		performances map[string]persistentPerformance
-	}
-
-	persistentPerformance struct {
-		lock        uint32
-		performance performance.Performance
+		performances map[string]performance.Performance
 	}
 )
 
 func NewPerformancesRepository(perfs ...*performance.Performance) *PerformancesRepository {
 	m := &PerformancesRepository{
-		performances: make(map[string]persistentPerformance, len(perfs)),
+		performances: make(map[string]performance.Performance, len(perfs)),
 	}
 
 	for _, p := range perfs {
-		m.performances[p.ID()] = persistentPerformance{
-			performance: *p,
-		}
+		m.performances[p.ID()] = *p
 	}
 
 	return m
-}
-
-func (m *PerformancesRepository) AcquirePerformance(ctx context.Context, perfID string) (*performance.Performance, error) {
-	select {
-	case <-ctx.Done():
-		return nil, app.NewDatabaseError(ctx.Err())
-	default:
-	}
-
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	pp, ok := m.performances[perfID]
-	if !ok {
-		return nil, app.NewPerformanceNotFoundError(errNoSuchID)
-	}
-
-	if !atomic.CompareAndSwapUint32(&pp.lock, 0, 1) {
-		return nil, performance.NewAlreadyStartedError()
-	}
-
-	return &pp.performance, nil
-}
-
-func (m *PerformancesRepository) ReleasePerformance(ctx context.Context, perfID string) error {
-	select {
-	case <-ctx.Done():
-		return app.NewDatabaseError(ctx.Err())
-	default:
-	}
-
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	pp, ok := m.performances[perfID]
-	if !ok {
-		return app.NewPerformanceNotFoundError(errNoSuchID)
-	}
-
-	atomic.StoreUint32(&pp.lock, 0)
-
-	return nil
 }
 
 func (m *PerformancesRepository) GetPerformance(ctx context.Context, perfID string) (*performance.Performance, error) {
@@ -276,12 +226,12 @@ func (m *PerformancesRepository) GetPerformance(ctx context.Context, perfID stri
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	pp, ok := m.performances[perfID]
+	perf, ok := m.performances[perfID]
 	if !ok {
 		return nil, app.NewPerformanceNotFoundError(errNoSuchID)
 	}
 
-	return &pp.performance, nil
+	return &perf, nil
 }
 
 func (m *PerformancesRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
@@ -298,42 +248,7 @@ func (m *PerformancesRepository) AddPerformance(ctx context.Context, perf *perfo
 		return app.NewAlreadyExistsError(errDuplicateID)
 	}
 
-	m.performances[perf.ID()] = persistentPerformance{
-		performance: *perf,
-	}
-
-	return nil
-}
-
-func (m *PerformancesRepository) ExclusivelyDoWithPerformance(
-	ctx context.Context,
-	perf *performance.Performance,
-	action app.PerformanceAction,
-) error {
-	select {
-	case <-ctx.Done():
-		return app.NewDatabaseError(ctx.Err())
-	default:
-	}
-
-	m.mu.RLock()
-
-	pp, ok := m.performances[perf.ID()]
-	if !ok {
-		return app.NewPerformanceNotFoundError(errNoSuchID)
-	}
-
-	m.mu.RUnlock()
-
-	if !atomic.CompareAndSwapUint32(&pp.lock, 0, 1) {
-		return performance.NewAlreadyStartedError()
-	}
-
-	go func() {
-		defer atomic.StoreUint32(&pp.lock, 0)
-
-		action(ctx, perf)
-	}()
+	m.performances[perf.ID()] = *perf
 
 	return nil
 }

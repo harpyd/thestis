@@ -4,6 +4,7 @@ import (
 	"fmt"
 	stdhttp "net/http"
 	"strings"
+	"sync"
 
 	fireauth "firebase.google.com/go/auth"
 	"github.com/go-chi/chi/v5/middleware"
@@ -20,6 +21,7 @@ import (
 	mongoAdapter "github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/command"
+	"github.com/harpyd/thestis/internal/app/mock"
 	"github.com/harpyd/thestis/internal/app/query"
 	"github.com/harpyd/thestis/internal/config"
 	"github.com/harpyd/thestis/internal/port/http"
@@ -38,6 +40,8 @@ func Start(configsPath string) {
 }
 
 type runnerContext struct {
+	mongoDB mongoConnection
+
 	logger       app.LoggingService
 	config       *config.Config
 	persistent   persistentContext
@@ -51,9 +55,15 @@ type runnerContext struct {
 	cancel func()
 }
 
+type mongoConnection struct {
+	once sync.Once
+	db   *mongo.Database
+}
+
 type performanceContext struct {
-	policy     app.StepsPolicy
-	maintainer app.PerformanceMaintainer
+	guard       app.PerformanceGuard
+	stepsPolicy app.StepsPolicy
+	maintainer  app.PerformanceMaintainer
 }
 
 type persistentContext struct {
@@ -73,13 +83,31 @@ func newRunner(configsPath string) *runnerContext {
 	c.initPersistent()
 	c.initSpecificationParser()
 	c.initMetrics()
-	c.initStepsPolicy()
-	c.initPerformanceMaintainer()
+	c.initPerformance()
 	c.initApplication()
 	c.initAuthenticationProvider()
 	c.initServer()
 
 	return c
+}
+
+func (c *runnerContext) connectToMongoDB() *mongo.Database {
+	c.mongoDB.once.Do(func() {
+		client, err := mongodb.NewClient(
+			c.config.Mongo.URI,
+			c.config.Mongo.Username,
+			c.config.Mongo.Password,
+		)
+		if err != nil {
+			c.logger.Fatal("Failed to connect to MongoDB", err)
+		}
+
+		c.mongoDB.db = client.Database(c.config.Mongo.DatabaseName)
+
+		c.logger.Info("Connected to MongoDB")
+	})
+
+	return c.mongoDB.db
 }
 
 func (c *runnerContext) start() {
@@ -118,7 +146,7 @@ func (c *runnerContext) initConfig(configsPath string) {
 }
 
 func (c *runnerContext) initPersistent() {
-	db := c.mongoDatabase()
+	db := c.connectToMongoDB()
 	logField := app.StringLogField("db", "mongo")
 
 	var (
@@ -150,15 +178,6 @@ func (c *runnerContext) initPersistent() {
 func (c *runnerContext) initSpecificationParser() {
 	c.specParser = yaml.NewSpecificationParserService()
 	c.logger.Info("Specification parser service initialization completed", app.StringLogField("type", "yaml"))
-}
-
-func (c *runnerContext) mongoDatabase() *mongo.Database {
-	client, err := mongodb.NewClient(c.config.Mongo.URI, c.config.Mongo.Username, c.config.Mongo.Password)
-	if err != nil {
-		c.logger.Fatal("Failed to connect to MongoDB", err)
-	}
-
-	return client.Database(c.config.Mongo.DatabaseName)
 }
 
 func (c *runnerContext) initApplication() {
@@ -197,16 +216,32 @@ func (c *runnerContext) initMetrics() {
 	c.logger.Info("Metrics registration completed", app.StringLogField("db", "prometheus"))
 }
 
+func (c *runnerContext) initPerformance() {
+	c.initPerformanceGuard()
+	c.initStepsPolicy()
+
+	c.performance.maintainer = app.NewPerformanceMaintainer(
+		c.performance.guard,
+		mock.NewPerformanceCancelPubsub(),
+		c.performance.stepsPolicy,
+		c.config.Performance.FlowTimeout,
+	)
+
+	c.logger.Info(
+		"Performance maintainer initialized",
+		app.StringLogField("stepsPolicy", c.config.Performance.Policy),
+	)
+}
+
+func (c *runnerContext) initPerformanceGuard() {
+	c.performance.guard = mongoAdapter.NewPerformanceGuard(c.connectToMongoDB())
+}
+
 func (c *runnerContext) initStepsPolicy() {
 	if c.config.Performance.Policy == config.EveryStepSavingPolicy {
-		c.performance.policy = app.NewEveryStepSavingPolicy(
+		c.performance.stepsPolicy = app.NewEveryStepSavingPolicy(
 			c.persistent.flowsRepo,
 			c.config.EveryStepSaving.SaveTimeout,
-		)
-
-		c.logger.Info(
-			"Steps policy initialization completed",
-			app.StringLogField("policy", c.config.Performance.Policy),
 		)
 
 		return
@@ -217,16 +252,6 @@ func (c *runnerContext) initStepsPolicy() {
 		errors.Errorf("%s is not valid steps policy", c.config.Performance.Policy),
 		app.StringLogField("allowed", config.EveryStepSavingPolicy),
 	)
-}
-
-func (c *runnerContext) initPerformanceMaintainer() {
-	c.performance.maintainer = app.NewPerformanceMaintainer(
-		c.persistent.perfsRepo,
-		c.performance.policy,
-		c.config.Performance.FlowTimeout,
-	)
-
-	c.logger.Info("Performance maintainer initialization completed")
 }
 
 func (c *runnerContext) initAuthenticationProvider() {
