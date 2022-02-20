@@ -67,9 +67,10 @@ func (s *PerformanceGuardTestSuite) TestAcquirePerformance_many_tries() {
 
 	var wg sync.WaitGroup
 
-	var acquiredCount int32 = 0
+	var acquiredCount int32
 
 	wg.Add(triesCount)
+
 	for i := 1; i <= triesCount; i++ {
 		go func() {
 			defer wg.Done()
