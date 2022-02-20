@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/harpyd/thestis/internal/domain/performance"
-	"github.com/harpyd/thestis/pkg/signals"
 )
 
 type PerformanceGuard interface {
@@ -92,42 +91,30 @@ func (m *performanceMaintainer) MaintainPerformance(
 
 	go func() {
 		defer cancel()
-
-		fr := performance.FlowFromPerformance(uuid.New().String(), perf)
-
-		handled := m.handleSteps(ctx, perf.ID(), fr, steps, messages)
-
-		<-signals.Or(handled, canceled)
-	}()
-
-	return messages, nil
-}
-
-func (m *performanceMaintainer) handleSteps(
-	ctx context.Context,
-	perfID string,
-	fr *performance.FlowReducer,
-	steps <-chan performance.Step,
-	messages chan<- Message,
-) <-chan struct{} {
-	handled := make(chan struct{})
-
-	go func() {
-		defer close(handled)
 		defer close(messages)
 		defer func() {
 			if err := m.guard.ReleasePerformance(
 				context.Background(),
-				perfID,
+				perf.ID(),
 			); err != nil {
 				messages <- NewMessageFromError(err)
+			}
+		}()
+
+		fr := performance.FlowFromPerformance(uuid.New().String(), perf)
+
+		go func() {
+			select {
+			case <-ctx.Done():
+			case <-canceled:
+				cancel()
 			}
 		}()
 
 		m.stepsPolicy.HandleSteps(ctx, fr, steps, messages)
 	}()
 
-	return handled
+	return messages, nil
 }
 
 type Message struct {
