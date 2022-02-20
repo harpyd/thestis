@@ -1,6 +1,7 @@
 package mongodb
 
 import (
+	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
@@ -46,18 +47,20 @@ func marshalToActionDocuments(actions []performance.Action) []actionDocument {
 	return documents
 }
 
-func (d performanceDocument) unmarshalToPerformance() *performance.Performance {
+func (d performanceDocument) unmarshalToPerformance(opts app.PerformerOptions) *performance.Performance {
 	actions := make([]performance.Action, 0, len(d.Actions))
 	for _, a := range d.Actions {
 		actions = append(actions, a.unmarshalToAction())
 	}
+
+	options := append(opts.ToPerformanceOptions(), performance.WithID(d.ID))
 
 	return performance.Unmarshal(performance.Params{
 		OwnerID:         d.OwnerID,
 		SpecificationID: d.SpecificationID,
 		Actions:         actions,
 		Started:         d.Started,
-	}, performance.WithID(d.ID))
+	}, options...)
 }
 
 func (d actionDocument) unmarshalToAction() performance.Action {
