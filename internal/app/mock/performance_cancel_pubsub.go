@@ -11,6 +11,8 @@ type PerformanceCancelPubsub struct {
 	mu          sync.RWMutex
 	subscribers map[string][]chan app.Canceled
 	closed      bool
+
+	pubCalls int
 }
 
 func NewPerformanceCancelPubsub() *PerformanceCancelPubsub {
@@ -20,6 +22,8 @@ func NewPerformanceCancelPubsub() *PerformanceCancelPubsub {
 }
 
 func (ps *PerformanceCancelPubsub) PublishPerformanceCancel(ctx context.Context, perfID string) error {
+	ps.pubCalls++
+
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -80,4 +84,8 @@ func (ps *PerformanceCancelPubsub) Close() error {
 	}
 
 	return nil
+}
+
+func (ps *PerformanceCancelPubsub) PublishCalls() int {
+	return ps.pubCalls
 }

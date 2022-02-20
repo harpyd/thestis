@@ -60,7 +60,7 @@ func (s *PerformanceGuardTestSuite) TestAcquirePerformance() {
 	persistedPerf, err := s.repo.GetPerformance(context.Background(), s.perfID)
 	s.Require().NoError(err)
 
-	s.Require().True(persistedPerf.Locked())
+	s.Require().True(persistedPerf.Started())
 }
 
 func (s *PerformanceGuardTestSuite) TestAcquirePerformance_many_tries() {
@@ -94,7 +94,7 @@ func (s *PerformanceGuardTestSuite) TestReleasePerformance() {
 	persistedPerf, err := s.repo.GetPerformance(context.Background(), s.perfID)
 	s.Require().NoError(err)
 
-	s.Require().True(persistedPerf.Locked())
+	s.Require().True(persistedPerf.Started())
 
 	err = s.guard.ReleasePerformance(context.Background(), s.perfID)
 	s.Require().NoError(err)
@@ -102,5 +102,5 @@ func (s *PerformanceGuardTestSuite) TestReleasePerformance() {
 	persistedPerf, err = s.repo.GetPerformance(context.Background(), s.perfID)
 	s.Require().NoError(err)
 
-	s.Require().False(persistedPerf.Locked())
+	s.Require().False(persistedPerf.Started())
 }

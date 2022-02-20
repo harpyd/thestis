@@ -27,8 +27,8 @@ func (g *PerformanceGuard) AcquirePerformance(ctx context.Context, perfID string
 
 	var (
 		filter = bson.M{"_id": perfID}
-		update = bson.M{"$set": bson.M{"locked": true}}
-		opt    = options.FindOneAndUpdate().SetProjection(bson.M{"_id": 0, "locked": 1})
+		update = bson.M{"$set": bson.M{"started": true}}
+		opt    = options.FindOneAndUpdate().SetProjection(bson.M{"_id": 0, "started": 1})
 	)
 
 	if err := g.performances.FindOneAndUpdate(ctx, filter, update, opt).Decode(&document); err != nil {
@@ -39,7 +39,7 @@ func (g *PerformanceGuard) AcquirePerformance(ctx context.Context, perfID string
 		return app.NewDatabaseError(err)
 	}
 
-	if document.Locked {
+	if document.Started {
 		return performance.NewAlreadyStartedError()
 	}
 
@@ -47,7 +47,7 @@ func (g *PerformanceGuard) AcquirePerformance(ctx context.Context, perfID string
 }
 
 func (g *PerformanceGuard) ReleasePerformance(ctx context.Context, perfID string) error {
-	update := bson.M{"$set": bson.M{"locked": false}}
+	update := bson.M{"$set": bson.M{"started": false}}
 
 	_, err := g.performances.UpdateByID(ctx, perfID, update)
 	if errors.Is(err, mongo.ErrNoDocuments) {

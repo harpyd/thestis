@@ -284,6 +284,37 @@ func TestIsAlreadyStartedError(t *testing.T) {
 	}
 }
 
+func TestIsNotStartedError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name      string
+		Err       error
+		IsSameErr bool
+	}{
+		{
+			Name:      "performance_not_started_error",
+			Err:       performance.NewNotStartedError(),
+			IsSameErr: true,
+		},
+		{
+			Name:      "another_error",
+			Err:       errors.New("performance not started"),
+			IsSameErr: false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.IsSameErr, performance.IsNotStartedError(c.Err))
+		})
+	}
+}
+
 func passingPerformer(t *testing.T) performance.Performer {
 	t.Helper()
 
