@@ -151,7 +151,7 @@ func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
 
 			requireMessagesEqual(t, c.ExpectedMessages, messages)
 
-			require.Equal(t, c.Guard.ReleaseCalls(), 1)
+			require.Equal(t, 1, c.Guard.ReleaseCalls())
 		})
 	}
 }
@@ -250,7 +250,7 @@ func TestPerformanceMaintainer_MaintainPerformance_cancelation(t *testing.T) {
 
 			requireMessagesEqual(t, c.ExpectedMessages, messages)
 
-			require.Equal(t, guard.ReleaseCalls(), 1)
+			require.Equal(t, 1, guard.ReleaseCalls())
 		})
 	}
 }
