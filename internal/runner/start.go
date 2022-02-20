@@ -91,7 +91,7 @@ func newRunner(configsPath string) *runnerContext {
 	return c
 }
 
-func (c *runnerContext) connectToMongoDB() *mongo.Database {
+func (c *runnerContext) newMongoDatabase() *mongo.Database {
 	c.mongoDB.once.Do(func() {
 		client, err := mongodb.NewClient(
 			c.config.Mongo.URI,
@@ -146,7 +146,7 @@ func (c *runnerContext) initConfig(configsPath string) {
 }
 
 func (c *runnerContext) initPersistent() {
-	db := c.connectToMongoDB()
+	db := c.newMongoDatabase()
 	logField := app.StringLogField("db", "mongo")
 
 	var (
@@ -234,7 +234,7 @@ func (c *runnerContext) initPerformance() {
 }
 
 func (c *runnerContext) initPerformanceGuard() {
-	c.performance.guard = mongoAdapter.NewPerformanceGuard(c.connectToMongoDB())
+	c.performance.guard = mongoAdapter.NewPerformanceGuard(c.newMongoDatabase())
 }
 
 func (c *runnerContext) initStepsPolicy() {
