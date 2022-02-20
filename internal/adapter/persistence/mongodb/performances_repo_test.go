@@ -2,7 +2,6 @@ package mongodb_test
 
 import (
 	"context"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -98,61 +97,6 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 			s.requirePerformancesEqual(c.Performance, persistedPerf)
 		})
 	}
-}
-
-func (s *PerformancesRepositoryTestSuite) TestExclusivelyDoWithPerformance_concurrent_actions() {
-	perf := performance.Unmarshal(performance.Params{
-		OwnerID:         "e6cd6e6d-f58f-4a3e-a4d3-6b23dce29750",
-		SpecificationID: "d91da0ce-1caa-43d6-95c0-1a03a9d3cd52",
-		Actions:         s.actions(),
-	}, performance.WithID("9a07bd86-3b6a-4202-88ec-633c1b5a1e91"))
-
-	s.addPerformances(perf)
-
-	const actionsNumber = 100
-
-	var (
-		finish = make(chan bool)
-		errors = make(chan error)
-	)
-
-	go func() {
-		defer close(errors)
-
-		ctx := context.Background()
-
-		var wg sync.WaitGroup
-
-		wg.Add(actionsNumber)
-
-		for i := 1; i <= actionsNumber; i++ {
-			go func() {
-				defer wg.Done()
-
-				perfCopy := s.getPerformance(perf.ID())
-
-				if err := s.repo.ExclusivelyDoWithPerformance(ctx, perfCopy, func(_ context.Context, perf *performance.Performance) {
-					finish <- true
-				}); err != nil {
-					errors <- err
-				}
-			}()
-		}
-
-		wg.Wait()
-	}()
-
-	alreadyStartedErrsCount := 0
-
-	for err := range errors {
-		if performance.IsAlreadyStartedError(err) {
-			alreadyStartedErrsCount++
-		}
-	}
-
-	s.Require().Equal(actionsNumber-1, alreadyStartedErrsCount)
-
-	<-finish
 }
 
 func (s *PerformancesRepositoryTestSuite) actions() []performance.Action {

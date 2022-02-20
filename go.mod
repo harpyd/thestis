@@ -14,7 +14,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spf13/viper v1.9.0
-	github.com/square/mongo-lock v0.0.0-20201208161834-4db518ed7fb2
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/negroni v1.0.0
 	go.mongodb.org/mongo-driver v1.8.1

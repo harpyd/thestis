@@ -2,10 +2,8 @@ package mongodb
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
-	lock "github.com/square/mongo-lock"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -15,22 +13,13 @@ import (
 
 type PerformancesRepository struct {
 	performances *mongo.Collection
-	locks        *lock.Client
 }
 
-const (
-	performancesCollection     = "performances"
-	performanceLocksCollection = "performanceLocks"
-)
+const performancesCollection = "performances"
 
 func NewPerformancesRepository(db *mongo.Database) *PerformancesRepository {
 	r := &PerformancesRepository{
 		performances: db.Collection(performancesCollection),
-		locks:        lock.NewClient(db.Collection(performanceLocksCollection)),
-	}
-
-	if err := r.locks.CreateIndexes(context.Background()); err != nil {
-		panic(err)
 	}
 
 	return r
@@ -43,14 +32,6 @@ func (r *PerformancesRepository) GetPerformance(ctx context.Context, perfID stri
 	}
 
 	return document.unmarshalToPerformance(), nil
-}
-
-func (r *PerformancesRepository) AcquirePerformance(_ context.Context, _ string) (*performance.Performance, error) {
-	return nil, nil
-}
-
-func (r *PerformancesRepository) ReleasePerformance(_ context.Context, _ string) error {
-	return nil
 }
 
 func (r *PerformancesRepository) getPerformanceDocument(
@@ -76,45 +57,6 @@ func (r *PerformancesRepository) AddPerformance(ctx context.Context, perf *perfo
 	}
 
 	return app.NewDatabaseError(err)
-}
-
-func (r *PerformancesRepository) ExclusivelyDoWithPerformance(
-	ctx context.Context,
-	perf *performance.Performance,
-	action app.PerformanceAction,
-) error {
-	if err := r.acquireLock(ctx, perf.ID()); err != nil {
-		return err
-	}
-
-	go func() {
-		defer r.releaseLock(context.Background(), perf.ID())
-
-		action(ctx, perf)
-	}()
-
-	return nil
-}
-
-func (r *PerformancesRepository) acquireLock(ctx context.Context, perfID string) error {
-	lockName := performanceLock(perfID)
-
-	err := r.locks.XLock(ctx, lockName, lockName, lock.LockDetails{})
-	if errors.Is(err, lock.ErrAlreadyLocked) {
-		return performance.NewAlreadyStartedError()
-	}
-
-	return app.NewDatabaseError(err)
-}
-
-func (r *PerformancesRepository) releaseLock(ctx context.Context, perfID string) {
-	if _, err := r.locks.Unlock(ctx, performanceLock(perfID)); err != nil {
-		panic(app.NewDatabaseError(err))
-	}
-}
-
-func performanceLock(perfID string) string {
-	return fmt.Sprintf("performance#%s", perfID)
 }
 
 func (r *PerformancesRepository) RemoveAllPerformances(ctx context.Context) error {

@@ -7,29 +7,51 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/harpyd/thestis/internal/domain/performance"
+	"github.com/harpyd/thestis/pkg/signals"
 )
 
-type PerformanceReleaser interface {
+type PerformanceGuard interface {
+	AcquirePerformance(ctx context.Context, perfID string) error
 	ReleasePerformance(ctx context.Context, perfID string) error
 }
+
+type (
+	PerformanceCancelPublisher interface {
+		PublishPerformanceCancel(ctx context.Context, perfID string) error
+		Close() error
+	}
+
+	PerformanceCancelSubscriber interface {
+		SubscribePerformanceCancel(ctx context.Context, perfID string) (<-chan Canceled, error)
+		Close() error
+	}
+
+	Canceled = struct{}
+)
 
 type PerformanceMaintainer interface {
 	MaintainPerformance(ctx context.Context, perf *performance.Performance) (<-chan Message, error)
 }
 
 type performanceMaintainer struct {
-	releaser    PerformanceReleaser
+	guard       PerformanceGuard
+	subscriber  PerformanceCancelSubscriber
 	stepsPolicy StepsPolicy
 	timeout     time.Duration
 }
 
 func NewPerformanceMaintainer(
-	releaser PerformanceReleaser,
+	guard PerformanceGuard,
+	cancelSub PerformanceCancelSubscriber,
 	stepsPolicy StepsPolicy,
 	flowTimeout time.Duration,
 ) PerformanceMaintainer {
-	if releaser == nil {
-		panic("performance releaser is nil")
+	if guard == nil {
+		panic("performance guard is nil")
+	}
+
+	if cancelSub == nil {
+		panic("performance cancel receiver is nil")
 	}
 
 	if stepsPolicy == nil {
@@ -37,7 +59,8 @@ func NewPerformanceMaintainer(
 	}
 
 	return &performanceMaintainer{
-		releaser:    releaser,
+		guard:       guard,
+		subscriber:  cancelSub,
 		stepsPolicy: stepsPolicy,
 		timeout:     flowTimeout,
 	}
@@ -47,7 +70,14 @@ func (m *performanceMaintainer) MaintainPerformance(
 	ctx context.Context,
 	perf *performance.Performance,
 ) (<-chan Message, error) {
-	messages := make(chan Message)
+	if err := m.guard.AcquirePerformance(ctx, perf.ID()); err != nil {
+		return nil, err
+	}
+
+	canceled, err := m.subscriber.SubscribePerformanceCancel(ctx, perf.ID())
+	if err != nil {
+		return nil, err
+	}
 
 	ctx, cancel := context.WithTimeout(ctx, m.timeout)
 
@@ -58,24 +88,46 @@ func (m *performanceMaintainer) MaintainPerformance(
 		return nil, err
 	}
 
+	messages := make(chan Message)
+
 	go func() {
 		defer cancel()
+
+		fr := performance.FlowFromPerformance(uuid.New().String(), perf)
+
+		handled := m.handleSteps(ctx, perf.ID(), fr, steps, messages)
+
+		<-signals.Or(handled, canceled)
+	}()
+
+	return messages, nil
+}
+
+func (m *performanceMaintainer) handleSteps(
+	ctx context.Context,
+	perfID string,
+	fr *performance.FlowReducer,
+	steps <-chan performance.Step,
+	messages chan<- Message,
+) <-chan struct{} {
+	handled := make(chan struct{})
+
+	go func() {
+		defer close(handled)
 		defer close(messages)
 		defer func() {
-			if err := m.releaser.ReleasePerformance(
+			if err := m.guard.ReleasePerformance(
 				context.Background(),
-				perf.ID(),
+				perfID,
 			); err != nil {
 				messages <- NewMessageFromError(err)
 			}
 		}()
 
-		fr := performance.FlowFromPerformance(uuid.New().String(), perf)
-
 		m.stepsPolicy.HandleSteps(ctx, fr, steps, messages)
 	}()
 
-	return messages, nil
+	return handled
 }
 
 type Message struct {
