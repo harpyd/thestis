@@ -43,7 +43,7 @@ func (h RestartPerformanceHandler) Handle(
 		err = errors.Wrap(err, "performance restarting")
 	}()
 
-	perf, err := h.perfsRepo.GetPerformance(ctx, cmd.PerformanceID)
+	perf, err := h.perfsRepo.GetPerformance(ctx, cmd.PerformanceID, h.performerOpts...)
 	if err != nil {
 		return nil, err
 	}

@@ -216,7 +216,11 @@ func NewPerformancesRepository(perfs ...*performance.Performance) *PerformancesR
 	return m
 }
 
-func (m *PerformancesRepository) GetPerformance(ctx context.Context, perfID string) (*performance.Performance, error) {
+func (m *PerformancesRepository) GetPerformance(
+	ctx context.Context,
+	perfID string,
+	opts ...app.PerformerOption,
+) (*performance.Performance, error) {
 	select {
 	case <-ctx.Done():
 		return nil, app.NewDatabaseError(ctx.Err())
