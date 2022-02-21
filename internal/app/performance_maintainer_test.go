@@ -238,7 +238,7 @@ func TestPerformanceMaintainer_MaintainPerformance_cancelation(t *testing.T) {
 			}
 
 			if c.PublishCancel {
-				err := cancelPubsub.PublishPerformanceCancel(context.Background(), "id")
+				err := cancelPubsub.PublishPerformanceCancel("id")
 				require.NoError(t, err)
 			}
 
