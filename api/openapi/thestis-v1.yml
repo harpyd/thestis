@@ -4,7 +4,7 @@ info:
   description: Thestis is a service for auto tests with a declarative description of tests
   version: 0.0.1
 servers:
-  - url: 'https://{hostname}/v1'
+  - url: "https://{hostname}/v1"
 
 paths:
   /test-campaigns:
@@ -19,7 +19,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateTestCampaignRequest'
+              $ref: "#/components/schemas/CreateTestCampaignRequest"
       responses:
         201:
           description: Test campaign is created.
@@ -33,7 +33,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     get:
       tags:
         - test-campaign
@@ -45,7 +45,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestCampaignResponse'
+                $ref: "#/components/schemas/TestCampaignResponse"
 
   /test-campaigns/{testCampaignId}:
     get:
@@ -67,13 +67,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestCampaignResponse'
+                $ref: "#/components/schemas/TestCampaignResponse"
         404:
           description: Test campaign with such ID not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     delete:
       tags:
         - test-campaign
@@ -95,7 +95,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /test-campaigns/{testCampaignId}/specification:
     post:
@@ -120,7 +120,7 @@ paths:
         content:
           application/x-yaml:
             schema:
-              $ref: '#/components/schemas/SpecificationSource'
+              $ref: "#/components/schemas/SpecificationSource"
       responses:
         201:
           description: Specification is loaded.
@@ -134,25 +134,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         404:
           description: Test campaign with such ID not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         422:
           description: Invalid specification source file.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         403:
           description: User cant see test campaign with such ID.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /specifications/{specificationId}:
     get:
@@ -174,13 +174,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SpecificationResponse'
+                $ref: "#/components/schemas/SpecificationResponse"
         404:
           description: Specification with such ID not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /test-campaigns/{testCampaignId}/performance:
     post:
@@ -209,19 +209,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         403:
           description: User cannot see test campaign and start performance.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         404:
           description: Test campaign with such ID not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /test-campaigns/{testCampaignId}/performances:
     get:
@@ -244,13 +244,13 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/PerformanceResponse'
+                  $ref: "#/components/schemas/PerformanceResponse"
         404:
           description: Test campaign with such ID not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /performances/{performanceId}:
     get:
@@ -272,13 +272,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PerformanceResponse'
+                $ref: "#/components/schemas/PerformanceResponse"
         404:
           description: Performance with such ID not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     put:
       tags:
         - performance
@@ -300,19 +300,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         404:
           description: Performance with such ID not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         409:
           description: Performance in progress, cannot restart.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /performances/{performanceId}/canceled:
     put:
@@ -330,15 +330,28 @@ paths:
           description: Performance ID to cancel performance.
       responses:
         204:
-          description: >
-            Performance canceled if it was in process.
-            If it was not executed, nothing happened.
+          description: Performance canceled if it was in process.
+
+        403:
+          description: "User cannot see performance to cancel it."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
         404:
           description: Performance with such ID not found.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
+
+        409:
+          description: Performance has not started yet, cannot cancel.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   schemas:
@@ -349,7 +362,7 @@ components:
         - details
       properties:
         slug:
-          $ref: '#/components/schemas/ErrorSlug'
+          $ref: "#/components/schemas/ErrorSlug"
         details:
           type: string
 
@@ -369,6 +382,7 @@ components:
         - user-cant-see-test-campaign
         - user-cant-see-performance
         - performance-already-started
+        - performance-not-started
 
     CreateTestCampaignRequest:
       type: object
@@ -414,7 +428,7 @@ components:
         sourceUri:
           type: string
         specification:
-          $ref: '#/components/schemas/Specification'
+          $ref: "#/components/schemas/Specification"
       example:
         sourceUri: https://some-file-hosting/example
         specification:
@@ -446,7 +460,7 @@ components:
                             code: HRN-3134141
                             batchSize: 103
                         response:
-                          allowedCodes: [ 201 ]
+                          allowedCodes: [201]
                           allowedContentType: application/json
                     - slug: deliverHooves
                       given: hooves delivered to the warehouse
@@ -461,7 +475,7 @@ components:
                             code: HVS-3123313
                             batchSize: 313
                         response:
-                          allowedCodes: [ 201 ]
+                          allowedCodes: [201]
                           allowedContentType: application/json
                     - slug: sellHornsAndHooves
                       when: selling horns and hooves
@@ -479,7 +493,7 @@ components:
                                 itemsCount: 20
                                 itemPrice: 1003
                         response:
-                          allowedCodes: [ 201 ]
+                          allowedCodes: [201]
                           allowedContentType: application/json
                     - slug: getSoldProducts
                       then: get sold products
@@ -488,7 +502,7 @@ components:
                           method: GET
                           url: https://api.warehouse/v1/{{sellHornsAndHooves.response.headers.Content-Location}}
                         response:
-                          allowedCodes: [ 200 ]
+                          allowedCodes: [200]
                           allowedContentType: application/json
                     - slug: checkSoldProducts
                       then: check that products added to sold products
@@ -498,7 +512,7 @@ components:
                         with: JSONPATH
                         assert:
                           - actual: getSoldProducts.response.body.products..itemsCount
-                            expected: [ 103, 21 ]
+                            expected: [103, 21]
 
     StartPerformanceRequest:
       type: object
@@ -548,7 +562,7 @@ components:
         stories:
           type: array
           items:
-            $ref: '#/components/schemas/Story'
+            $ref: "#/components/schemas/Story"
 
     Story:
       type: object
@@ -569,7 +583,7 @@ components:
         scenarios:
           type: array
           items:
-            $ref: '#/components/schemas/Scenario'
+            $ref: "#/components/schemas/Scenario"
 
     Scenario:
       type: object
@@ -584,7 +598,7 @@ components:
         theses:
           type: array
           items:
-            $ref: '#/components/schemas/Thesis'
+            $ref: "#/components/schemas/Thesis"
 
     Thesis:
       type: object
@@ -596,15 +610,15 @@ components:
         slug:
           type: string
         statement:
-          $ref: '#/components/schemas/Statement'
+          $ref: "#/components/schemas/Statement"
         after:
           type: array
           items:
             type: string
         http:
-          $ref: '#/components/schemas/Http'
+          $ref: "#/components/schemas/Http"
         assertion:
-          $ref: '#/components/schemas/Assertion'
+          $ref: "#/components/schemas/Assertion"
 
     Statement:
       type: object
@@ -621,9 +635,9 @@ components:
       type: object
       properties:
         request:
-          $ref: '#/components/schemas/HttpRequest'
+          $ref: "#/components/schemas/HttpRequest"
         response:
-          $ref: '#/components/schemas/HttpResponse'
+          $ref: "#/components/schemas/HttpResponse"
 
     HttpRequest:
       type: object
@@ -632,7 +646,7 @@ components:
         - url
       properties:
         method:
-          $ref: '#/components/schemas/HttpMethod'
+          $ref: "#/components/schemas/HttpMethod"
         url:
           type: string
         contentType:
@@ -672,11 +686,11 @@ components:
         - assert
       properties:
         with:
-          $ref: '#/components/schemas/AssertionMethod'
+          $ref: "#/components/schemas/AssertionMethod"
         assert:
           type: array
           items:
-            $ref: '#/components/schemas/Assert'
+            $ref: "#/components/schemas/Assert"
 
     AssertionMethod:
       type: string
@@ -698,11 +712,11 @@ components:
       type: object
       properties:
         state:
-          $ref: '#/components/schemas/PerformanceState'
+          $ref: "#/components/schemas/PerformanceState"
         storiesPerformance:
           type: array
           items:
-            $ref: '#/components/schemas/StoryPerformance'
+            $ref: "#/components/schemas/StoryPerformance"
       example:
         state: PERFORMING_FAILED
         storiesPerformance:
@@ -733,11 +747,11 @@ components:
         slug:
           type: string
         state:
-          $ref: '#/components/schemas/PerformanceState'
+          $ref: "#/components/schemas/PerformanceState"
         scenariosPerformance:
           type: array
           items:
-            $ref: '#/components/schemas/ScenarioPerformance'
+            $ref: "#/components/schemas/ScenarioPerformance"
 
     ScenarioPerformance:
       type: object
@@ -748,11 +762,11 @@ components:
         slug:
           type: string
         state:
-          $ref: '#/components/schemas/PerformanceState'
+          $ref: "#/components/schemas/PerformanceState"
         thesesPerformance:
           type: array
           items:
-            $ref: '#/components/schemas/ThesisPerformance'
+            $ref: "#/components/schemas/ThesisPerformance"
 
     ThesisPerformance:
       type: object
@@ -763,7 +777,7 @@ components:
         slug:
           type: string
         state:
-          $ref: '#/components/schemas/PerformanceState'
+          $ref: "#/components/schemas/PerformanceState"
         errorDetails:
           type: string
         failDetails:
