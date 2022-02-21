@@ -2,9 +2,11 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/domain/performance"
 )
@@ -16,13 +18,11 @@ type PerformanceGuard interface {
 
 type (
 	PerformanceCancelPublisher interface {
-		PublishPerformanceCancel(ctx context.Context, perfID string) error
-		Close() error
+		PublishPerformanceCancel(perfID string) error
 	}
 
 	PerformanceCancelSubscriber interface {
 		SubscribePerformanceCancel(ctx context.Context, perfID string) (<-chan Canceled, error)
-		Close() error
 	}
 
 	Canceled = struct{}
@@ -149,4 +149,66 @@ func (m Message) Err() error {
 
 func (m Message) State() performance.State {
 	return m.state
+}
+
+type (
+	publishCancelError struct {
+		err error
+	}
+
+	subscribeCancelError struct {
+		err error
+	}
+)
+
+func NewPublishCancelError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(publishCancelError{err: err})
+}
+
+func IsPublishCancelError(err error) bool {
+	var target publishCancelError
+
+	return errors.As(err, &target)
+}
+
+func (e publishCancelError) Cause() error {
+	return e.err
+}
+
+func (e publishCancelError) Unwrap() error {
+	return e.err
+}
+
+func (e publishCancelError) Error() string {
+	return fmt.Sprintf("publish cancel: %s", e.err)
+}
+
+func NewSubscribeCancelError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(subscribeCancelError{err: err})
+}
+
+func IsSubscribeCancelError(err error) bool {
+	var target subscribeCancelError
+
+	return errors.As(err, &target)
+}
+
+func (e subscribeCancelError) Cause() error {
+	return e.err
+}
+
+func (e subscribeCancelError) Unwrap() error {
+	return e.err
+}
+
+func (e subscribeCancelError) Error() string {
+	return fmt.Sprintf("subscribe cancel: %s", e.err)
 }

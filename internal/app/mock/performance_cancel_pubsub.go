@@ -2,15 +2,17 @@ package mock
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/harpyd/thestis/internal/app"
 )
 
+var errChannelNotFound = errors.New("channel not found")
+
 type PerformanceCancelPubsub struct {
 	mu          sync.RWMutex
 	subscribers map[string][]chan app.Canceled
-	closed      bool
 
 	pubCalls int
 }
@@ -21,25 +23,15 @@ func NewPerformanceCancelPubsub() *PerformanceCancelPubsub {
 	}
 }
 
-func (ps *PerformanceCancelPubsub) PublishPerformanceCancel(ctx context.Context, perfID string) error {
+func (ps *PerformanceCancelPubsub) PublishPerformanceCancel(perfID string) error {
 	ps.pubCalls++
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
 
 	ps.mu.RLock()
 	defer ps.mu.RUnlock()
 
-	if ps.closed {
-		return nil
-	}
-
 	channels, ok := ps.subscribers[perfID]
 	if !ok {
-		return nil
+		return app.NewPublishCancelError(errChannelNotFound)
 	}
 
 	for _, ch := range channels {
@@ -54,7 +46,7 @@ func (ps *PerformanceCancelPubsub) PublishPerformanceCancel(ctx context.Context,
 func (ps *PerformanceCancelPubsub) SubscribePerformanceCancel(ctx context.Context, perfID string) (<-chan app.Canceled, error) {
 	select {
 	case <-ctx.Done():
-		return nil, ctx.Err()
+		return nil, app.NewSubscribeCancelError(ctx.Err())
 	default:
 	}
 
@@ -65,25 +57,6 @@ func (ps *PerformanceCancelPubsub) SubscribePerformanceCancel(ctx context.Contex
 	ps.subscribers[perfID] = append(ps.subscribers[perfID], ch)
 
 	return ch, nil
-}
-
-func (ps *PerformanceCancelPubsub) Close() error {
-	ps.mu.Lock()
-	defer ps.mu.Unlock()
-
-	if ps.closed {
-		return nil
-	}
-
-	ps.closed = true
-
-	for _, sub := range ps.subscribers {
-		for _, ch := range sub {
-			close(ch)
-		}
-	}
-
-	return nil
 }
 
 func (ps *PerformanceCancelPubsub) PublishCalls() int {

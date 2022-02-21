@@ -50,5 +50,5 @@ func (h CancelPerformanceHandler) Handle(ctx context.Context, cmd app.CancelPerf
 		return err
 	}
 
-	return h.publisher.PublishPerformanceCancel(ctx, perf.ID())
+	return h.publisher.PublishPerformanceCancel(perf.ID())
 }
