@@ -36,3 +36,19 @@ func unmarshalRestartPerformanceCommand(
 		StartedByID:   user.UUID,
 	}, true
 }
+
+func unmarshalCancelPerformanceCommand(
+	w http.ResponseWriter,
+	r *http.Request,
+	performanceID string,
+) (cmd app.CancelPerformanceCommand, ok bool) {
+	user, ok := unmarshalUser(w, r)
+	if !ok {
+		return
+	}
+
+	return app.CancelPerformanceCommand{
+		PerformanceID: performanceID,
+		CanceledByID:  user.UUID,
+	}, false
+}

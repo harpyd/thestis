@@ -84,15 +84,45 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
+func (h handler) CancelPerformance(w http.ResponseWriter, r *http.Request, performanceID string) {
+	cmd, ok := unmarshalCancelPerformanceCommand(w, r, performanceID)
+	if !ok {
+		return
+	}
+
+	err := h.app.Commands.CancelPerformance.Handle(r.Context(), cmd)
+	if err == nil {
+		w.WriteHeader(http.StatusNoContent)
+
+		return
+	}
+
+	if user.IsCantSeePerformanceError(err) {
+		httperr.Forbidden(string(ErrorSlugUserCantSeePerformance), err, w, r)
+
+		return
+	}
+
+	if app.IsPerformanceNotFoundError(err) {
+		httperr.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
+
+		return
+	}
+
+	if performance.IsNotStartedError(err) {
+		httperr.Conflict(string(ErrorSlugPerformanceNotStarted), err, w, r)
+
+		return
+	}
+
+	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
+}
+
 func (h handler) GetPerformancesHistory(w http.ResponseWriter, _ *http.Request, _ string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 func (h handler) GetPerformance(w http.ResponseWriter, _ *http.Request, _ string) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-func (h handler) CancelPerformance(w http.ResponseWriter, _ *http.Request, _ string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
