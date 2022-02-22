@@ -69,8 +69,8 @@ func TestPerformance_Start(t *testing.T) {
 
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(passingPerformer(t)),
-		performance.WithAssertion(passingPerformer(t)),
+		performance.WithHTTP(mock.NewPassingPerformer()),
+		performance.WithAssertion(mock.NewPassingPerformer()),
 	)
 	require.NoError(t, err)
 
@@ -131,8 +131,8 @@ func TestPerformance_Start_with_cancel_context_while_steps_reading(t *testing.T)
 
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(passingPerformer(t)),
-		performance.WithAssertion(passingPerformer(t)),
+		performance.WithHTTP(mock.NewPassingPerformer()),
+		performance.WithAssertion(mock.NewPassingPerformer()),
 	)
 	require.NoError(t, err)
 
@@ -158,8 +158,8 @@ func TestPerformance_Start_with_failed_performer(t *testing.T) {
 
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(passingPerformer(t)),
-		performance.WithAssertion(failingPerformer(t)),
+		performance.WithHTTP(mock.NewPassingPerformer()),
+		performance.WithAssertion(mock.NewFailingPerformer()),
 	)
 	require.NoError(t, err)
 
@@ -176,8 +176,8 @@ func TestPerformance_Start_with_crashed_performer(t *testing.T) {
 
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(crashingPerformer(t)),
-		performance.WithAssertion(passingPerformer(t)),
+		performance.WithHTTP(mock.NewCrashingPerformer()),
+		performance.WithAssertion(mock.NewPassingPerformer()),
 	)
 	require.NoError(t, err)
 
@@ -315,30 +315,6 @@ func TestIsNotStartedError(t *testing.T) {
 	}
 }
 
-func passingPerformer(t *testing.T) performance.Performer {
-	t.Helper()
-
-	return mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		return performance.Pass()
-	})
-}
-
-func failingPerformer(t *testing.T) performance.Performer {
-	t.Helper()
-
-	return mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		return performance.Fail(errors.New("something wrong"))
-	})
-}
-
-func crashingPerformer(t *testing.T) performance.Performer {
-	t.Helper()
-
-	return mock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		return performance.Crash(errors.New("something wrong"))
-	})
-}
-
 func requireLastCanceledStep(t *testing.T, steps <-chan performance.Step) {
 	t.Helper()
 
@@ -348,9 +324,7 @@ func requireLastCanceledStep(t *testing.T, steps <-chan performance.Step) {
 		step = s
 	}
 
-	if step.State() != performance.Canceled {
-		require.Failf(t, "No last %s step", performance.Canceled.String())
-	}
+	require.Equal(t, performance.Canceled, step.State())
 }
 
 func requireStep(t *testing.T, steps <-chan performance.Step, state performance.State) {

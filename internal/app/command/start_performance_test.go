@@ -4,13 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/command"
 	appMock "github.com/harpyd/thestis/internal/app/mock"
-	"github.com/harpyd/thestis/internal/domain/performance"
 	perfMock "github.com/harpyd/thestis/internal/domain/performance/mock"
 	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/user"
@@ -80,8 +78,8 @@ func TestStartPerformanceHandler_Handle(t *testing.T) {
 					specsRepo,
 					perfsRepo,
 					maintainer,
-					app.WithHTTPPerformer(passedPerformer(t)),
-					app.WithAssertionPerformer(failedPerformer(t)),
+					app.WithHTTPPerformer(perfMock.NewPassingPerformer()),
+					app.WithAssertionPerformer(perfMock.NewFailingPerformer()),
 				)
 			)
 
@@ -103,20 +101,4 @@ func TestStartPerformanceHandler_Handle(t *testing.T) {
 			require.Equal(t, 1, perfsRepo.PerformancesNumber())
 		})
 	}
-}
-
-func passedPerformer(t *testing.T) performance.Performer {
-	t.Helper()
-
-	return perfMock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		return performance.Pass()
-	})
-}
-
-func failedPerformer(t *testing.T) performance.Performer {
-	t.Helper()
-
-	return perfMock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		return performance.Fail(errors.New("something wrong"))
-	})
 }

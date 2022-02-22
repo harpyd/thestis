@@ -129,8 +129,8 @@ func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
 			)
 
 			perf := c.PerformanceFactory(
-				performance.WithHTTP(passedPerformer(t)),
-				performance.WithAssertion(passedPerformer(t)),
+				performance.WithHTTP(perfMock.NewPassingPerformer()),
+				performance.WithAssertion(perfMock.NewPassingPerformer()),
 			)
 
 			if c.StartPerformance {
@@ -173,7 +173,9 @@ func TestPerformanceMaintainer_MaintainPerformance_cancelation(t *testing.T) {
 			FlowTimeout:   1 * time.Second,
 			PublishCancel: false,
 			ExpectedMessages: []app.Message{
-				app.NewMessageFromStep(performance.NewCanceledStep(context.Canceled)),
+				app.NewMessageFromStep(
+					performance.NewCanceledStep(context.Canceled),
+				),
 			},
 			Contains: true,
 		},
@@ -183,8 +185,12 @@ func TestPerformanceMaintainer_MaintainPerformance_cancelation(t *testing.T) {
 			FlowTimeout:   10 * time.Millisecond,
 			PublishCancel: false,
 			ExpectedMessages: []app.Message{
-				app.NewMessageFromStep(performance.NewPerformingStep("a", "b", performance.HTTPPerformer)),
-				app.NewMessageFromStep(performance.NewCanceledStep(context.DeadlineExceeded)),
+				app.NewMessageFromStep(
+					performance.NewPerformingStep("a", "b", performance.HTTPPerformer),
+				),
+				app.NewMessageFromStep(
+					performance.NewCanceledStep(context.DeadlineExceeded),
+				),
 			},
 		},
 		{
@@ -193,7 +199,9 @@ func TestPerformanceMaintainer_MaintainPerformance_cancelation(t *testing.T) {
 			FlowTimeout:   1 * time.Second,
 			PublishCancel: true,
 			ExpectedMessages: []app.Message{
-				app.NewMessageFromStep(performance.NewCanceledStep(context.Canceled)),
+				app.NewMessageFromStep(
+					performance.NewCanceledStep(context.Canceled),
+				),
 			},
 			Contains: true,
 		},
@@ -215,8 +223,16 @@ func TestPerformanceMaintainer_MaintainPerformance_cancelation(t *testing.T) {
 			finish := make(chan struct{})
 			defer close(finish)
 
-			performer := perfMock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-				<-finish
+			performer := perfMock.Performer(func(
+				ctx context.Context,
+				_ *performance.Environment,
+				_ specification.Thesis,
+			) performance.Result {
+				select {
+				case <-finish:
+				case <-ctx.Done():
+					return performance.Cancel(ctx.Err())
+				}
 
 				return performance.Pass()
 			})
@@ -259,14 +275,6 @@ func errlessPerformanceGuard(t *testing.T) *appMock.PerformanceGuard {
 	t.Helper()
 
 	return appMock.NewPerformanceGuard(nil, nil)
-}
-
-func passedPerformer(t *testing.T) performance.Performer {
-	t.Helper()
-
-	return perfMock.Performer(func(_ *performance.Environment, _ specification.Thesis) performance.Result {
-		return performance.Pass()
-	})
 }
 
 func requireMessagesEqual(t *testing.T, expected []app.Message, actual <-chan app.Message) {
