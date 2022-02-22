@@ -26,7 +26,7 @@ const EveryStepSavingPolicy StepsPolicy = "everyStepSaving"
 
 type SignalBus = string
 
-const NatsIO SignalBus = "natsio"
+const Nats SignalBus = "nats"
 
 type AuthType = string
 
@@ -44,6 +44,7 @@ type (
 		Firebase        Firebase
 		Performance     Performance
 		EveryStepSaving EveryStepSaving
+		Nats            NatsServer
 	}
 
 	HTTP struct {
@@ -76,6 +77,10 @@ type (
 
 	EveryStepSaving struct {
 		SaveTimeout time.Duration
+	}
+
+	NatsServer struct {
+		URL string
 	}
 )
 
@@ -192,6 +197,10 @@ func unmarshal(cfg *Config) error {
 	}
 
 	if err := viper.UnmarshalKey("everyStepSaving", &cfg.EveryStepSaving); err != nil {
+		return err
+	}
+
+	if err := viper.UnmarshalKey("nats", &cfg.Nats); err != nil {
 		return err
 	}
 

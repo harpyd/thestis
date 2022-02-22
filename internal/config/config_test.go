@@ -73,10 +73,13 @@ func TestFromPath(t *testing.T) {
 				Performance: config.Performance{
 					FlowTimeout: 24 * time.Hour,
 					Policy:      config.EveryStepSavingPolicy,
-					SignalBus:   config.NatsIO,
+					SignalBus:   config.Nats,
 				},
 				EveryStepSaving: config.EveryStepSaving{
 					SaveTimeout: 30 * time.Second,
+				},
+				Nats: config.NatsServer{
+					URL: "nats://nats:4222",
 				},
 			},
 			ShouldBeErr: false,
