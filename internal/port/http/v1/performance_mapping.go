@@ -50,5 +50,5 @@ func unmarshalCancelPerformanceCommand(
 	return app.CancelPerformanceCommand{
 		PerformanceID: performanceID,
 		CanceledByID:  user.UUID,
-	}, false
+	}, true
 }
