@@ -26,7 +26,7 @@ const EveryStepSavingPolicy StepsPolicy = "everyStepSaving"
 
 type SignalBus = string
 
-const Natsio SignalBus = "natsio"
+const NatsIO SignalBus = "natsio"
 
 type AuthType = string
 
