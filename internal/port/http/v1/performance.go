@@ -27,7 +27,7 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 			r,
 			messages,
 			app.StringLogField("performanceId", perfID),
-			app.BoolLogField("isNew", true),
+			app.BoolLogField("restarted", false),
 		)
 
 		return
@@ -58,7 +58,7 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 	if err == nil {
 		w.WriteHeader(http.StatusNoContent)
 
-		go h.logMessages(r, messages, app.BoolLogField("isNew", false))
+		go h.logMessages(r, messages, app.BoolLogField("restarted", true))
 
 		return
 	}
