@@ -24,6 +24,10 @@ type StepsPolicy = string
 
 const EveryStepSavingPolicy StepsPolicy = "everyStepSaving"
 
+type EventBus = string
+
+const Natsio EventBus = "natsio"
+
 type AuthType = string
 
 const (
@@ -67,6 +71,7 @@ type (
 	Performance struct {
 		FlowTimeout time.Duration
 		Policy      StepsPolicy
+		Bus         EventBus
 	}
 
 	EveryStepSaving struct {
