@@ -134,12 +134,12 @@ func (c *runnerContext) natsConnection() *nats.Conn {
 	c.natsSingletone.once.Do(func() {
 		conn, err := nats.Connect(c.config.Nats.URL)
 		if err != nil {
-			c.logger.Fatal("Failed to connect to Nats server", err)
+			c.logger.Fatal("Failed to connect to NATS server", err)
 		}
 
 		c.natsSingletone.conn = conn
 
-		c.logger.Info("Connected to Nats")
+		c.logger.Info("Connected to NATS server")
 	})
 
 	return c.natsSingletone.conn
