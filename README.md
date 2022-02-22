@@ -26,6 +26,10 @@ sequenceDiagram
     Thestis-->>-Thestis: Release performance and complete parallel task
     User->>+Thestis: Restart performance by id PUT /v1/performances/{id}
     Thestis-->>-User: Performance restarted
+    Thestis->>+Thestis: Acquire performance and start it as parallel task
+    User-->>+Thestis: Cancel performance by id PUT /v1/performances/{id}/canceled
+    Thestis-->>-User: Performance canceled
+    Thestis-->>-Thestis: Release performance and cancel parallel task
 ```
 
 ## Project structure
