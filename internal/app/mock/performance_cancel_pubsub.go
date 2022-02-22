@@ -1,7 +1,6 @@
 package mock
 
 import (
-	"context"
 	"sync"
 
 	"github.com/harpyd/thestis/internal/app"
@@ -39,13 +38,7 @@ func (ps *PerformanceCancelPubsub) PublishPerformanceCancel(perfID string) error
 	return nil
 }
 
-func (ps *PerformanceCancelPubsub) SubscribePerformanceCancel(ctx context.Context, perfID string) (<-chan app.CancelSignal, error) {
-	select {
-	case <-ctx.Done():
-		return nil, app.NewSubscribeCancelError(ctx.Err())
-	default:
-	}
-
+func (ps *PerformanceCancelPubsub) SubscribePerformanceCancel(perfID string) (<-chan app.CancelSignal, error) {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 

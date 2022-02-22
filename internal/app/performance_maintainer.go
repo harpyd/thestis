@@ -22,7 +22,7 @@ type (
 	}
 
 	PerformanceCancelSubscriber interface {
-		SubscribePerformanceCancel(ctx context.Context, perfID string) (<-chan CancelSignal, error)
+		SubscribePerformanceCancel(perfID string) (<-chan CancelSignal, error)
 	}
 
 	CancelSignal = struct{}
@@ -73,7 +73,7 @@ func (m *performanceMaintainer) MaintainPerformance(
 		return nil, err
 	}
 
-	canceled, err := m.subscriber.SubscribePerformanceCancel(ctx, perf.ID())
+	canceled, err := m.subscriber.SubscribePerformanceCancel(perf.ID())
 	if err != nil {
 		return nil, err
 	}
