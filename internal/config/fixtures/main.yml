@@ -15,6 +15,8 @@ firebase:
 performance:
   flowTimeout: 24h
   policy: everyStepSaving
-  signalBus: natsio
+  signalBus: nats
 everyStepSaving:
   saveTimeout: 30s
+nats:
+  url: nats://nats:4222
