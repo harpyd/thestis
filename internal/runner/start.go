@@ -8,6 +8,7 @@ import (
 
 	fireauth "firebase.google.com/go/auth"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/nats-io/nats.go"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,9 +20,9 @@ import (
 	"github.com/harpyd/thestis/internal/adapter/metrics/prometheus"
 	"github.com/harpyd/thestis/internal/adapter/parser/yaml"
 	mongoAdapter "github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
+	"github.com/harpyd/thestis/internal/adapter/pubsub/natsio"
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/command"
-	"github.com/harpyd/thestis/internal/app/mock"
 	"github.com/harpyd/thestis/internal/app/query"
 	"github.com/harpyd/thestis/internal/config"
 	"github.com/harpyd/thestis/internal/port/http"
@@ -40,7 +41,9 @@ func Start(configsPath string) {
 }
 
 type runnerContext struct {
-	mongoDB mongoConnection
+	mongoSingletone
+	natsSingletone
+	firebaseSingletone
 
 	logger       app.LoggingService
 	config       *config.Config
@@ -48,6 +51,7 @@ type runnerContext struct {
 	specParser   app.SpecificationParserService
 	metrics      app.MetricsService
 	performance  performanceContext
+	signalBus    signalBusContext
 	app          *app.Application
 	authProvider auth.Provider
 	server       *server.Server
@@ -55,9 +59,19 @@ type runnerContext struct {
 	cancel func()
 }
 
-type mongoConnection struct {
+type mongoSingletone struct {
 	once sync.Once
 	db   *mongo.Database
+}
+
+type natsSingletone struct {
+	once sync.Once
+	conn *nats.Conn
+}
+
+type firebaseSingletone struct {
+	once   sync.Once
+	client *fireauth.Client
 }
 
 type performanceContext struct {
@@ -75,6 +89,11 @@ type persistentContext struct {
 	specificSpecRM         app.SpecificSpecificationReadModel
 }
 
+type signalBusContext struct {
+	publisher  app.PerformanceCancelPublisher
+	subscriber app.PerformanceCancelSubscriber
+}
+
 func newRunner(configsPath string) *runnerContext {
 	c := &runnerContext{}
 
@@ -83,6 +102,7 @@ func newRunner(configsPath string) *runnerContext {
 	c.initPersistent()
 	c.initSpecificationParser()
 	c.initMetrics()
+	c.initSignalBus()
 	c.initPerformance()
 	c.initApplication()
 	c.initAuthenticationProvider()
@@ -92,7 +112,7 @@ func newRunner(configsPath string) *runnerContext {
 }
 
 func (c *runnerContext) mongoDatabase() *mongo.Database {
-	c.mongoDB.once.Do(func() {
+	c.mongoSingletone.once.Do(func() {
 		client, err := mongodb.NewClient(
 			c.config.Mongo.URI,
 			c.config.Mongo.Username,
@@ -102,12 +122,42 @@ func (c *runnerContext) mongoDatabase() *mongo.Database {
 			c.logger.Fatal("Failed to connect to MongoDB", err)
 		}
 
-		c.mongoDB.db = client.Database(c.config.Mongo.DatabaseName)
+		c.mongoSingletone.db = client.Database(c.config.Mongo.DatabaseName)
 
 		c.logger.Info("Connected to MongoDB")
 	})
 
-	return c.mongoDB.db
+	return c.mongoSingletone.db
+}
+
+func (c *runnerContext) natsConnection() *nats.Conn {
+	c.natsSingletone.once.Do(func() {
+		conn, err := nats.Connect(c.config.Nats.URL)
+		if err != nil {
+			c.logger.Fatal("Failed to connect to Nats server", err)
+		}
+
+		c.natsSingletone.conn = conn
+
+		c.logger.Info("Connected to Nats")
+	})
+
+	return c.natsSingletone.conn
+}
+
+func (c *runnerContext) firebaseClient() *fireauth.Client {
+	c.firebaseSingletone.once.Do(func() {
+		client, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
+		if err != nil {
+			c.logger.Fatal("Failed to create Firebase Auth client", err)
+		}
+
+		c.firebaseSingletone.client = client
+
+		c.logger.Info("Firebase Auth client created")
+	})
+
+	return c.firebaseSingletone.client
 }
 
 func (c *runnerContext) start() {
@@ -195,7 +245,7 @@ func (c *runnerContext) initApplication() {
 				c.performance.maintainer,
 			),
 			RestartPerformance: command.NewRestartPerformanceHandler(c.persistent.perfsRepo, c.performance.maintainer),
-			CancelPerformance:  command.NewCancelPerformanceHandler(c.persistent.perfsRepo, mock.NewPerformanceCancelPubsub()),
+			CancelPerformance:  command.NewCancelPerformanceHandler(c.persistent.perfsRepo, c.signalBus.publisher),
 		},
 		Queries: app.Queries{
 			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(c.persistent.specificTestCampaignRM),
@@ -217,13 +267,33 @@ func (c *runnerContext) initMetrics() {
 	c.logger.Info("Metrics registration completed", app.StringLogField("db", "prometheus"))
 }
 
+func (c *runnerContext) initSignalBus() {
+	if c.config.Performance.SignalBus == config.Nats {
+		bus := natsio.NewPerformanceCancelSignalBus(c.natsConnection())
+
+		c.signalBus.publisher = bus
+		c.signalBus.subscriber = bus
+	} else {
+		c.logger.Fatal(
+			"Invalid performance signal bus",
+			errors.Errorf("%s is not valid signal bus", c.config.Performance.SignalBus),
+			app.StringLogField("allowed", config.Nats),
+		)
+	}
+
+	c.logger.Info(
+		"Signal bus initialization completed",
+		app.StringLogField("signalBus", c.config.Performance.SignalBus),
+	)
+}
+
 func (c *runnerContext) initPerformance() {
 	c.initPerformanceGuard()
 	c.initStepsPolicy()
 
 	c.performance.maintainer = app.NewPerformanceMaintainer(
 		c.performance.guard,
-		mock.NewPerformanceCancelPubsub(),
+		c.signalBus.subscriber,
 		c.performance.stepsPolicy,
 		c.config.Performance.FlowTimeout,
 	)
@@ -249,7 +319,7 @@ func (c *runnerContext) initStepsPolicy() {
 	}
 
 	c.logger.Fatal(
-		"Invalid steps policy",
+		"Invalid performance steps policy",
 		errors.Errorf("%s is not valid steps policy", c.config.Performance.Policy),
 		app.StringLogField("allowed", config.EveryStepSavingPolicy),
 	)
@@ -272,17 +342,6 @@ func (c *runnerContext) initAuthenticationProvider() {
 	}
 
 	c.logger.Info("Authentication provider initialization completed", app.StringLogField("auth", authType))
-}
-
-func (c *runnerContext) firebaseClient() *fireauth.Client {
-	client, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
-	if err != nil {
-		c.logger.Fatal("Failed to create Firebase Auth client", err)
-	}
-
-	c.logger.Info("Firebase Auth client created")
-
-	return client
 }
 
 func (c *runnerContext) initServer() {
