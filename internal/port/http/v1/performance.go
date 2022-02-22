@@ -20,8 +20,8 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 
 	perfID, messages, err := h.app.Commands.StartPerformance.Handle(r.Context(), cmd)
 	if err == nil {
-		w.WriteHeader(http.StatusAccepted)
 		w.Header().Set("Location", fmt.Sprintf("/performances/%s", perfID))
+		w.WriteHeader(http.StatusAccepted)
 
 		go h.logMessages(
 			r,
