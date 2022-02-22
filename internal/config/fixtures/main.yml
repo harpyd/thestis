@@ -15,6 +15,6 @@ firebase:
 performance:
   flowTimeout: 24h
   policy: everyStepSaving
-  bus: natsio
+  signalBus: natsio
 everyStepSaving:
   saveTimeout: 30s
