@@ -8,7 +8,7 @@ Thestis is a service for auto tests with declarative description of tests
 
 ```mermaid
 sequenceDiagram
-    User->>+Thestis: Creates tests campaign POST /v1/tests-campaigns
+    User->>+Thestis: Create tests campaign POST /v1/tests-campaigns
     Thestis-->>-User: Return test campaign id in Location HTTP header
     User->>+Thestis: Get test campaign by id GET /v1/test-campaigns/{id}
     Thestis-->>-User: Return test campaign data
