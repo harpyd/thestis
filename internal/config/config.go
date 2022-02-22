@@ -71,7 +71,7 @@ type (
 	Performance struct {
 		FlowTimeout time.Duration
 		Policy      StepsPolicy
-		Bus         SignalBus
+		SignalBus   SignalBus
 	}
 
 	EveryStepSaving struct {
