@@ -32,6 +32,36 @@ sequenceDiagram
     Thestis-->>-Thestis: Release performance and cancel parallel task
 ```
 
+## Flow
+
+`Flow` — is unit of `Performance` work. Every working `Performance` parallel task accumulate `Performance` progress information and context in this entity.
+
+`Flow` consists of theses transitions (each with `Thesis` state and occurred errors) and common state. Every transition has state that represents `Thesis` performance progress. But common state is general status of `Performance`. Possible transitions are shown in the diagram:
+
+```mermaid
+stateDiagram-v2
+    Canceled --> Canceled
+
+    Crashed --> Crashed
+    Crashed --> Canceled
+
+    Failed --> Failed
+    Failed --> Crashed
+    Failed --> Canceled
+
+    Performing --> Performing
+    Performing --> Passed
+    Performing --> Failed
+    Performing --> Crashed
+    Performing --> Canceled
+
+    NotPerformed --> Performing
+    NotPerformed --> Passed
+    NotPerformed --> Failed
+    NotPerformed --> Crashed
+    NotPerformed --> Canceled
+```
+
 ## Project structure
 
 * `api` — API contract files like _OpenAPI_ files or _proto_ files
