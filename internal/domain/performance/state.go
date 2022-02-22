@@ -62,6 +62,7 @@ func fromNotPerformedTransitionRules(commonState bool) map[State]State {
 	}
 
 	if commonState {
+		rules[NotPerformed] = Crashed
 		rules[Passed] = Performing
 		rules[Canceled] = Canceled
 	}
@@ -71,7 +72,7 @@ func fromNotPerformedTransitionRules(commonState bool) map[State]State {
 
 func fromPerformingTransitionRules(commonState bool) map[State]State {
 	rules := map[State]State{
-		NotPerformed: Performing,
+		NotPerformed: NotPerformed,
 		Performing:   Performing,
 		Passed:       Passed,
 		Failed:       Failed,
@@ -79,6 +80,7 @@ func fromPerformingTransitionRules(commonState bool) map[State]State {
 	}
 
 	if commonState {
+		rules[NotPerformed] = Crashed
 		rules[Passed] = Performing
 		rules[Canceled] = Canceled
 	}
@@ -107,7 +109,8 @@ func fromFailedTransitionRules(commonState bool) map[State]State {
 	}
 
 	if commonState {
-		rules[Canceled] = Failed
+		rules[NotPerformed] = Crashed
+		rules[Canceled] = Canceled
 	}
 
 	return rules
@@ -123,7 +126,7 @@ func fromCrashedTransitionRules(commonState bool) map[State]State {
 	}
 
 	if commonState {
-		rules[Canceled] = Crashed
+		rules[Canceled] = Canceled
 	}
 
 	return rules
@@ -134,8 +137,8 @@ func fromCanceledTransitionRules() map[State]State {
 		NotPerformed: Canceled,
 		Performing:   Canceled,
 		Passed:       Canceled,
-		Failed:       Failed,
-		Crashed:      Crashed,
+		Failed:       Canceled,
+		Crashed:      Canceled,
 		Canceled:     Canceled,
 	}
 }
