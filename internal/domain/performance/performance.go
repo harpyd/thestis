@@ -201,7 +201,7 @@ const defaultEnvStoreInitialSize = 10
 func (p *Performance) startActions(ctx context.Context, steps chan Step) {
 	select {
 	case <-ctx.Done():
-		steps <- NewCanceledStep(newCanceledError(ctx.Err()))
+		steps <- NewCanceledStep(ctx.Err())
 
 		return
 	default:
