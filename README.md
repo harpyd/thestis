@@ -4,6 +4,28 @@
 
 Thestis is a service for auto tests with declarative description of tests
 
+## Sequence diagram
+
+sequenceDiagram
+    User->>+Thestis: Creates tests campaign POST /v1/tests-campaigns
+    Thestis-->>-User: Return test campaign id in Location HTTP header
+    User->>+Thestis: Get test campaign by id GET /v1/test-campaigns/{id}
+    Thestis-->>-User: Return test campaign data
+    User->>+Thestis: Load active specification in test campaign POST /v1/test-campaigns/{id}/specification
+    Thestis-->>-User: Return specification id in Location HTTP header
+    User->>+Thestis: Get specification by id GET /v1/specifications/{id}
+    Thestis-->>-User: Return specification data
+    User->>+Thestis: Start performance by test campaign id POST /v1/test-campaigns/{id}/performances
+    Thestis-->>-User: Return performance id in Location HTTP header
+    Thestis->>+Thestis: Acquire performance and start it as parallel task
+    loop Restart tries
+        User->>+Thestis: Restart performance by id PUT /v1/performances/{id}
+        Thestis-->>-User: Already started performance 409 Conflict
+    end
+    Thestis-->>-Thestis: Release performance and complete parallel task
+    User->>+Thestis: Restart performance by id PUT /v1/performances/{id}
+    Thestis-->>-User: Performance restarted
+
 ## Project structure
 
 * `api` — API contract files like _OpenAPI_ files or _proto_ files
