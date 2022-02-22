@@ -30,20 +30,32 @@ test-unit:
 
 test-integration:
 	make run-test-db
-	MallocNanoZone=0 go test -v -race -coverprofile=integration.out ./internal/adapter/... ./internal/config/... || (make stop-test-db && exit 1)
+	make run-test-nats
+	MallocNanoZone=0 go test -v -race -coverprofile=integration.out ./internal/adapter/... ./internal/config/... || (make stop-test-nats && make stop-test-db && exit 1)
 	make stop-test-db
+	make stop-test-nats
 
 test-cover:
 	go install github.com/wadey/gocovmerge@latest
 	gocovmerge unit.out integration.out > cover.out
 	go tool cover -html=cover.out -o cover.html
 
+
 export TEST_DB_URI=mongodb://localhost:27019
 export TEST_DB_NAME=test
-export TEST_CONTAINER_NAME=test-db
+export TEST_DB_CONTAINER_NAME=test-db
 
 run-test-db:
-	docker run --rm -d -p 27019:27017 --name $$TEST_CONTAINER_NAME -e MONGODB_DATABASE=$$TEST_DB_NAME mongo:4.4-bionic
+	docker run --rm -d -p 27019:27017 --name $$TEST_DB_CONTAINER_NAME -e MONGODB_DATABASE=$$TEST_DB_NAME mongo:4.4-bionic
 
 stop-test-db:
-	docker stop $$TEST_CONTAINER_NAME
+	docker stop $$TEST_DB_CONTAINER_NAME
+
+
+export TEST_NATS_CONTAINER_NAME=test-nats
+
+run-test-nats:
+	docker run --rm -d -p 4222:4222 -ti --name $$TEST_NATS_CONTAINER_NAME nats:latest
+
+stop-test-nats:
+	docker stop $$TEST_NATS_CONTAINER_NAME
