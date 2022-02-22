@@ -26,16 +26,18 @@ func WithAssertionPerformer(performer performance.Performer) PerformerOption {
 }
 
 func (o PerformerOption) ToPerformanceOption() performance.Option {
+	emptyPerformer := func(p *performance.Performance) {}
+
 	perfOpts := map[performance.PerformerType]performance.Option{
-		performance.UnknownPerformer:   func(p *performance.Performance) {},
-		performance.EmptyPerformer:     func(p *performance.Performance) {},
+		performance.UnknownPerformer:   emptyPerformer,
+		performance.EmptyPerformer:     emptyPerformer,
 		performance.HTTPPerformer:      performance.WithHTTP(o.performer),
 		performance.AssertionPerformer: performance.WithAssertion(o.performer),
 	}
 
 	opt, ok := perfOpts[o.performerType]
 	if !ok {
-		return func(p *performance.Performance) {}
+		return emptyPerformer
 	}
 
 	return opt
