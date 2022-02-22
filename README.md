@@ -6,6 +6,7 @@ Thestis is a service for auto tests with declarative description of tests
 
 ## Sequence diagram
 
+```mermaid
 sequenceDiagram
     User->>+Thestis: Creates tests campaign POST /v1/tests-campaigns
     Thestis-->>-User: Return test campaign id in Location HTTP header
@@ -25,6 +26,7 @@ sequenceDiagram
     Thestis-->>-Thestis: Release performance and complete parallel task
     User->>+Thestis: Restart performance by id PUT /v1/performances/{id}
     Thestis-->>-User: Performance restarted
+```
 
 ## Project structure
 
