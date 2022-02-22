@@ -30,6 +30,8 @@ Thestis is a service for auto tests with declarative description of tests
             * `yaml` — service for parsing specification from _yaml_ files
         * `persistence` — implementation of persistence interfaces
             * `mongodb` — repositories and read models using MongoDB as persistence provider
+        * `pubsub` — implementation of pub/sum mechanism
+            * `nats` — signal event bus publisher and subscriber using NATS.io
     * `app` — application level interfaces and orchestration code
         * `command` — write operation use cases
         * `mock` — application level interfaces mocks
