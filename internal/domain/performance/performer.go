@@ -1,6 +1,7 @@
 package performance
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -12,13 +13,18 @@ type (
 	// Performer carries performing of thesis.
 	// Performance creators should provide own implementation.
 	Performer interface {
-		Perform(env *Environment, thesis specification.Thesis) Result
+		Perform(
+			ctx context.Context,
+			env *Environment,
+			thesis specification.Thesis,
+		) Result
 	}
 
 	// Result presents a result of Performer work.
 	//
-	// It can be in four states:
-	// NotPerformed, Passed, Failed, Crashed.
+	// It can be in five states:
+	// NotPerformed, Passed, Failed,
+	// Crashed, Canceled.
 	Result struct {
 		state State
 		err   error
@@ -51,6 +57,13 @@ func Crash(err error) Result {
 	}
 }
 
+func Cancel(err error) Result {
+	return Result{
+		state: Canceled,
+		err:   newCanceledError(err),
+	}
+}
+
 func (r Result) State() State {
 	return r.state
 }
@@ -60,6 +73,10 @@ func (r Result) Err() error {
 }
 
 type (
+	canceledError struct {
+		err error
+	}
+
 	failedError struct {
 		err error
 	}
@@ -68,6 +85,32 @@ type (
 		err error
 	}
 )
+
+func newCanceledError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.WithStack(canceledError{err: err})
+}
+
+func IsCanceledError(err error) bool {
+	var target canceledError
+
+	return errors.As(err, &target)
+}
+
+func (e canceledError) Error() string {
+	return fmt.Sprintf("performance canceled: %s", e.err)
+}
+
+func (e canceledError) Cause() error {
+	return e.err
+}
+
+func (e canceledError) Unwrap() error {
+	return e.err
+}
 
 func newFailedError(err error) error {
 	if err == nil {

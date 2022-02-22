@@ -8,8 +8,9 @@ import (
 
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/command"
-	"github.com/harpyd/thestis/internal/app/mock"
+	appMock "github.com/harpyd/thestis/internal/app/mock"
 	"github.com/harpyd/thestis/internal/domain/performance"
+	perfMock "github.com/harpyd/thestis/internal/domain/performance/mock"
 	"github.com/harpyd/thestis/internal/domain/user"
 )
 
@@ -82,13 +83,13 @@ func TestRestartPerformanceHandler_Handle(t *testing.T) {
 			t.Parallel()
 
 			var (
-				perfsRepo  = mock.NewPerformancesRepository(c.Performance)
-				maintainer = mock.NewPerformanceMaintainer(c.PerformanceAlreadyStarted)
+				perfsRepo  = appMock.NewPerformancesRepository(c.Performance)
+				maintainer = appMock.NewPerformanceMaintainer(c.PerformanceAlreadyStarted)
 				handler    = command.NewRestartPerformanceHandler(
 					perfsRepo,
 					maintainer,
-					app.WithHTTPPerformer(passedPerformer(t)),
-					app.WithAssertionPerformer(failedPerformer(t)),
+					app.WithHTTPPerformer(perfMock.NewPassingPerformer()),
+					app.WithAssertionPerformer(perfMock.NewFailingPerformer()),
 				)
 			)
 

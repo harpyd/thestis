@@ -201,7 +201,7 @@ const defaultEnvStoreInitialSize = 10
 func (p *Performance) startActions(ctx context.Context, steps chan Step) {
 	select {
 	case <-ctx.Done():
-		steps <- NewCanceledStep(ctx.Err())
+		steps <- NewCanceledStep(newCanceledError(ctx.Err()))
 
 		return
 	default:
@@ -219,7 +219,7 @@ func (p *Performance) startActions(ctx context.Context, steps chan Step) {
 		}
 	}
 
-	if err := g.Wait(); err != nil && errors.Is(err, ctx.Err()) {
+	if err := g.Wait(); IsCanceledError(err) {
 		steps <- NewCanceledStep(err)
 	}
 }
@@ -246,13 +246,14 @@ func (p *Performance) startAction(
 	if err := p.waitActionLocks(ctx, lockGraph, a.from); err != nil {
 		return err
 	}
+	defer p.unlockAction(lockGraph, a.from, a.to)
 
 	steps <- NewPerformingStep(a.from, a.to, a.performerType)
 
 	result := p.perform(ctx, env, a)
 
-	if result.Err() != nil && errors.Is(result.Err(), ctx.Err()) {
-		return ctx.Err()
+	if result.State() == Canceled {
+		return result.Err()
 	}
 
 	steps <- NewStepFromResult(a.from, a.to, a.performerType, result)
@@ -260,8 +261,6 @@ func (p *Performance) startAction(
 	if result.State() == Failed || result.State() == Crashed {
 		return errTerminated
 	}
-
-	p.unlockAction(lockGraph, a.from, a.to)
 
 	return nil
 }
@@ -276,7 +275,7 @@ func (p *Performance) waitActionLocks(ctx context.Context, lockGraph lockGraph, 
 		select {
 		case <-lock:
 		case <-ctx.Done():
-			return ctx.Err()
+			return newCanceledError(ctx.Err())
 		}
 	}
 
@@ -297,18 +296,7 @@ func (p *Performance) perform(ctx context.Context, env *Environment, a Action) R
 		return NotPerform()
 	}
 
-	result := make(chan Result)
-
-	go func() {
-		result <- performer.Perform(env, a.thesis)
-	}()
-
-	select {
-	case res := <-result:
-		return res
-	case <-ctx.Done():
-		return Crash(ctx.Err())
-	}
+	return performer.Perform(ctx, env, a.thesis)
 }
 
 type cyclicGraphError struct {

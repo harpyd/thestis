@@ -327,6 +327,10 @@ type cancelStep struct {
 }
 
 func NewCanceledStep(cause error) Step {
+	if !IsCanceledError(cause) {
+		cause = newCanceledError(cause)
+	}
+
 	return cancelStep{
 		cause: cause,
 	}

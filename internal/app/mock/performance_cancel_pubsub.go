@@ -2,13 +2,10 @@ package mock
 
 import (
 	"context"
-	"errors"
 	"sync"
 
 	"github.com/harpyd/thestis/internal/app"
 )
-
-var errChannelNotFound = errors.New("channel not found")
 
 type PerformanceCancelPubsub struct {
 	mu          sync.RWMutex
@@ -29,10 +26,7 @@ func (ps *PerformanceCancelPubsub) PublishPerformanceCancel(perfID string) error
 	ps.mu.RLock()
 	defer ps.mu.RUnlock()
 
-	channels, ok := ps.subscribers[perfID]
-	if !ok {
-		return app.NewPublishCancelError(errChannelNotFound)
-	}
+	channels := ps.subscribers[perfID]
 
 	for _, ch := range channels {
 		go func(ch chan<- app.Canceled) {

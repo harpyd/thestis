@@ -1,6 +1,7 @@
 package performance_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -43,4 +44,13 @@ func TestCrash(t *testing.T) {
 
 	require.Equal(t, performance.Crashed, res.State())
 	require.True(t, performance.IsCrashedError(res.Err()))
+}
+
+func TestCancel(t *testing.T) {
+	t.Parallel()
+
+	res := performance.Cancel(context.Canceled)
+
+	require.Equal(t, performance.Canceled, res.State())
+	require.True(t, performance.IsCanceledError(res.Err()))
 }

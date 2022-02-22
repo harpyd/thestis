@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/performance"
+	"github.com/harpyd/thestis/internal/domain/performance/mock"
 )
 
 const (
@@ -102,8 +103,8 @@ func TestFlowReducer_WithStep_from_performance_start(t *testing.T) {
 
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(passingPerformer(t)),
-		performance.WithAssertion(passingPerformer(t)),
+		performance.WithHTTP(mock.NewPassingPerformer()),
+		performance.WithAssertion(mock.NewPassingPerformer()),
 	)
 	require.NoError(t, err)
 
