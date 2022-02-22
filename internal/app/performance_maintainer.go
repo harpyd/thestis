@@ -22,10 +22,10 @@ type (
 	}
 
 	PerformanceCancelSubscriber interface {
-		SubscribePerformanceCancel(ctx context.Context, perfID string) (<-chan Canceled, error)
+		SubscribePerformanceCancel(ctx context.Context, perfID string) (<-chan CancelSignal, error)
 	}
 
-	Canceled = struct{}
+	CancelSignal = struct{}
 )
 
 type PerformanceMaintainer interface {

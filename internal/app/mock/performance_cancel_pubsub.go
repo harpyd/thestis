@@ -9,14 +9,14 @@ import (
 
 type PerformanceCancelPubsub struct {
 	mu          sync.RWMutex
-	subscribers map[string][]chan app.Canceled
+	subscribers map[string][]chan app.CancelSignal
 
 	pubCalls int
 }
 
 func NewPerformanceCancelPubsub() *PerformanceCancelPubsub {
 	return &PerformanceCancelPubsub{
-		subscribers: make(map[string][]chan app.Canceled),
+		subscribers: make(map[string][]chan app.CancelSignal),
 	}
 }
 
@@ -29,15 +29,17 @@ func (ps *PerformanceCancelPubsub) PublishPerformanceCancel(perfID string) error
 	channels := ps.subscribers[perfID]
 
 	for _, ch := range channels {
-		go func(ch chan<- app.Canceled) {
-			ch <- app.Canceled{}
+		go func(ch chan<- app.CancelSignal) {
+			close(ch)
 		}(ch)
 	}
+
+	ps.subscribers[perfID] = nil
 
 	return nil
 }
 
-func (ps *PerformanceCancelPubsub) SubscribePerformanceCancel(ctx context.Context, perfID string) (<-chan app.Canceled, error) {
+func (ps *PerformanceCancelPubsub) SubscribePerformanceCancel(ctx context.Context, perfID string) (<-chan app.CancelSignal, error) {
 	select {
 	case <-ctx.Done():
 		return nil, app.NewSubscribeCancelError(ctx.Err())
@@ -47,7 +49,7 @@ func (ps *PerformanceCancelPubsub) SubscribePerformanceCancel(ctx context.Contex
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
-	ch := make(chan app.Canceled, 1)
+	ch := make(chan app.CancelSignal, 1)
 	ps.subscribers[perfID] = append(ps.subscribers[perfID], ch)
 
 	return ch, nil
