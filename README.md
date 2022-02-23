@@ -189,9 +189,9 @@ The __application__ has everything you need for the overall operation of the app
 * _interfaces_ (parsers, metrics, logging, etc.) — all sorts of interfaces, by implementing which you can choose the technology that the application will use in its work
 * _policies_ — application level policies interfaces and internal implementations.
 
-The __adapters__ code contains implementations for application-level interfaces. In runner, the application context is assembled from a configuration file with the necessary environment settings. On this layer, you can find the code associated with the database in _persistence_, implementation of _pubsub_ with _NATS_, and so on.
+The __adapter__ code contains implementations for application-level interfaces. In runner, the application context is assembled from a configuration file with the necessary environment settings. On this layer, you can find the code associated with the database in _persistence_, implementation of _pubsub_ with _NATS_, and so on.
 
-The __ports__ layer contains the code that controls the application. A good example is an HTTP server that invokes a specific Application method on an endpoint call. Or a scheduler.
+The __port__ layer contains the code that controls the application. A good example is an HTTP server that invokes a specific Application method on an endpoint call. Or a scheduler.
 
 ## Project structure
 
