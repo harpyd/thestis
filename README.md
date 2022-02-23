@@ -134,7 +134,7 @@ flowchart LR
     when --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.sellHornsAndHooves
     sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.sellHornsAndHooves --> then
     then --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.getSoldProducts
-    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.getSoldProducts -> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.checkSoldProducts
+    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.getSoldProducts --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.checkSoldProducts
     then --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.checkSoldProducts
 ```
 
