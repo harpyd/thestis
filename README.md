@@ -47,11 +47,11 @@ The thesis can be either `given`, or `when`, or `then`:
 
 You can see an example of the `Specification` at the link [here](https://github.com/harpyd/thestis/tree/main/examples/specification).
 
-When you trigger the pipeline launch in some way, a `Performance` is created. We can say that the `Performance` looks like a program compiled from a `Specification`. The `Performance` is a kind of collected context about the test at the time of launch from the active `Specification` of the `TestCampaign`. Somewhat similar to Github Action. The `Performance` collects the entire dynamic context and the state of the current startup in the `Flow`.
+When you trigger the pipeline launch in some way, a `Performance` is created. We can say that `Performance` looks like a program compiled from a `Specification`. The `Performance` is a kind of collected context about the test at the time of launch from the active `Specification` of `TestCampaign`. Somewhat similar to Github Action.`Performance` collects the entire dynamic context and the state of the current startup in the `Flow`.
 
-A `Flow` is an analog of an attempt at Github Action. Stores information about the launch of the `Performance`. The `Performance` will always have one `Flow`. The `Performance` can be restarted (for example, if a test fails), each time the `Performance` is restarted, the number of `Flows` will increase.
+`Flow` is an analog of an attempt at Github Action. Stores information about the launch of `Performance`. `Performance` will always have at least one `Flow`. `Performance` can be restarted (for example, if a test fails), each time the `Performance` is restarted, the number of `Flows` will increase.
 
-During the test run, the `Flow` and each individual `thesis` execution status may end up in one of the states:
+During the test run, `Flow` and each individual `thesis` execution status may end up in one of the states:
 * __`NotPerformed`__
 * __`Performing`__
 * __`Passed`__
@@ -91,9 +91,60 @@ sequenceDiagram
     Thestis-->>-Thestis: Release performance and cancel parallel task
 ```
 
-## Flow
+## Entities
 
-`Flow` — is unit of `Performance` work. Every working `Performance` parallel task accumulates `Performance` progress information and context in this entity. Each run of `Performance` corresponds to one `Flow`.
+### Test campaign
+
+`TestCampaign` is your test, its whole history. You can compare it with a test campaign of some brand like Coca-Cola, a series of successful and not very successful tests. In a word, a test campaign.
+
+Contains general information about the test and user information. Each `Specification` update and `Performance` launch is associated with this entity. A `TestCampaign` can have only one active `Specification`, the rest are archived. You can also get a list of all `Performances` launched within the campaign.
+
+### Specification
+
+`Specification` is your code for the test. This entity can be collected from various sources, now, for example, in the API we get a specification in yaml format, but this is all changeable. `Specification` is format tolerant, any format will be converted to the internal format.
+
+`Specification` is described in BDD style, each working step of the test is described in the thesis. Each `thesis` can either make __HTTP__ requests or __assert__ the collected data.
+
+BDD tests consist of `given`, `when` and `then` stages. The stages are performed sequentially:
+
+```mermaid
+stateDiagram-v2
+    given --> when
+    when --> then
+```
+
+But `theses` within one stage will be executed in parallel by default. To specify a dependency, specify the name of the `thesis` in the `after` field. Then this thesis will be fulfilled after the specified one.
+
+### Performance
+
+`Performance` is the binary code of your test compiled from `Specification`. It starts automatically when it is created. It can also be restarted. For example, you can see that the test fell through no fault of your own, for example, there was some kind of network failure, you can restart the previously created `Performance`.
+
+`Performance` cannot be run more than once at any given time. That is, `Performance` will never have more than one active `Flow`.
+
+During assembly, an `actionGraph` is built from `Specification`, which is transformed into a `lockGraph` every time `Performance` is started.
+
+View of `Performance`'s [example](https://github.com/harpyd/thestis/blob/main/examples/specification/horns-and-hooves-test.yml) `actionGraph`:
+
+```mermaid
+flowchart LR
+    given --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHorns
+    given --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHooves
+    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHorns --> when
+    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHooves --> when
+    when --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.sellHornsAndHooves
+    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.sellHornsAndHooves --> then
+    then --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.getSoldProducts
+    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.getSoldProducts -> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.checkSoldProducts
+    then --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.checkSoldProducts
+```
+
+At each launch, `Performance` gives information about the execution `Step` by `Step`. Then, from the `Steps` received from `Performance`, a `Flow` is collected, showing the current state of the active `Performance`'s `Flow`.
+
+### Flow
+
+`Flow` is unit of `Performance` work. Every working `Performance` parallel task accumulates `Performance` progress information and context in this entity. Each run of `Performance` corresponds to one `Flow`.
+
+`Flow` reduced from `Steps` received during the execution of `Performance`.
 
 `Flow` consists of theses transitions (each with `Thesis` state and occurred errors) and common state. Every transition has state that represents `Thesis` performance progress. But common state is general status of `Performance`. `Flow` common state graph are shown in the diagram:
 
@@ -120,6 +171,27 @@ stateDiagram-v2
     NotPerformed --> Crashed
     NotPerformed --> Canceled
 ```
+
+### User
+
+`User` has knowledge about which resources can be accessed and which can be managed.
+
+## Architecture
+
+This project is written using the approaches described in Robert Martin's Pure Architecture and using a number of patterns from DDD.
+
+The __domain__ contains entities for working with tests: `TestCampaign`, `Specification`, `Performance`, `Flow`, `User`, etc.
+
+The __application__ has everything you need for the overall operation of the application. In this level you can find:
+* _command_ - a use case that changes the state of the system
+* _query_ - a use case that returns the state of the system
+* _repository_ - a description of the necessary methods that the data layer must have in order for the application to implement the use case
+* _interfaces_ (parsers, metrics, logging, etc.) — all sorts of interfaces, by implementing which you can choose the technology that the application will use in its work
+* _policies_ — application level policies interfaces and internal implementations.
+
+The __adapters__ code contains implementations for application-level interfaces. In runner, the application context is assembled from a configuration file with the necessary environment settings. On this layer, you can find the code associated with the database in _persistence_, implementation of _pubsub_ with _NATS_, and so on.
+
+The __ports__ layer contains the code that controls the application. A good example is an HTTP server that invokes a specific Application method on an endpoint call. Or a scheduler.
 
 ## Project structure
 
