@@ -5,7 +5,7 @@ import "github.com/harpyd/thestis/internal/domain/performance"
 type (
 	flowDocument struct {
 		ID            string               `bson:"_id"`
-		PerformanceID string               `bson:"performanceID"`
+		PerformanceID string               `bson:"performanceId"`
 		State         performance.State    `bson:"state"`
 		Transitions   []transitionDocument `bson:"transitions"`
 	}
