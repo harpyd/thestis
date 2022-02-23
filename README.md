@@ -8,7 +8,57 @@ __Thestis__ is a service for auto tests with declarative description of tests
 
 Imagine any CI/CD pipeline. For example you can pay attention to Github Actions. You must write workflow with declarative pipeline description and push it to remote. If you have specified `on.push` parameter, action with satisfying workflow will be started if you push. Or you can manually start Action pipeline. Pipeline may include linter, notifications, unit tests, integration tests, building, deploying, etc...
 
-__Thestis__ is integration tests pipeline for e2e tests. So far pipeline may include 2 thesis types, HTTP and assertion. 
+__Thestis__ is integration tests pipeline for e2e tests. So far pipeline may include 2 thesis types, HTTP and assertion.
+
+Usually, quite a lot of code is written for integration tests in one of the appropriate programming languages, it can be Java, Python, Go, etc. I've been on several development teams. Each team used something of its own, someone pure Python, someone wrote their own project-oriented framework for testing on Python, someone wrote tests using Java, each project had its own integration tests, in the language of the project.
+
+These tests could contain some errors, for example, in a self-written framework that I saw at work, the mapping of JSON fields into the structure was incorrectly written.
+
+Other tests did not use competitive execution, which is why they were slower than they could.
+
+In others, the code seemed to be correct, but it did not contain the business sense that the manager or analyst wanted, and, unfortunately, they do not understand the code.
+
+In others, the code is constantly flapping, no one knows why, and does not want to engage, because the code is scary.
+
+In general, there were enough problems. That's how the idea of a pipeline for e2e tests appeared. To get started, you need to create a `TestCampaign`.
+
+In fact, a `TestCampaign` is the name of your test, information about it, and the history of all uploaded `Specifications` and completed submissions.
+
+`Specification` is a declarative description of the test in BDD style, each test consists of `stories`, each `story` of `scenarios`, each `scenario` of `theses`. The `thesis` contains a description of the work of part of the test.
+
+```
+"Returns go to stock" — example of story
+
+"Refunded items should be returned to stock" — example of scenario
+```
+
+The thesis can be either `given`, or `when`, or `then`:
+
+```
+"Given that a customer previously bought a blue garment from me and I have two blue garments in stock and three black garments in stock" — example of given thesis
+
+"When they return the blue garment for a replacement in black" — example of when thesis
+
+"Then I should have three blue garments in stock and two black garments in stock" — example of then thesis
+```
+
+You can see an example of the `Specification` at the link [here](https://github.com/harpyd/thestis/tree/main/examples/specification).
+
+When you trigger the pipeline launch in some way, a `Performance` is created. We can say that the `Performance` looks like a program compiled from a `Specification`. The `Performance` is a kind of collected context about the test at the time of launch from the active `Specification` of the `TestCampaign`. Somewhat similar to Github Action. The `Performance` collects the entire dynamic context and the state of the current startup in the `Flow`.
+
+A `Flow` is an analog of an attempt at Github Action. Stores information about the launch of the `Performance`. The `Performance` will always have one `Flow`. The `Performance` can be restarted (for example, if a test fails), each time the `Performance` is restarted, the number of `Flows` will increase.
+
+During the test run, the `Flow` and each individual `thesis` execution status may end up in one of the states:
+* __NotPerformed__
+* __Performing__
+* __Passed__
+* __Failed__
+* __Crashed__
+* __Canceled__
+
+If the test is __NotPerformed__, the test has not started yet for some reason. If the test is in __Performing__, then you should expect it to end. If you are in __Passed__, you can relax, because the test is passed! If the test is in __Failed__ state, it is worth looking at either the test or the system under the tests. If something went wrong in __Crashed__, perhaps from the network, or maybe from our side. If it is __Canceled__, then the test was canceled, it is possible that you canceled it, and it is possible that we did too because of too long execution.
+
+It is worth noting that the tests achieve the most effective parallelization of the independent parts of the test. How? See below.
 
 ## Sequence diagram
 
