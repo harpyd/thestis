@@ -103,7 +103,7 @@ Contains general information about the test and user information. Each `Specific
 
 `Specification` is your code for the test. This entity can be collected from various sources, now, for example, in the API we get a specification in yaml format, but this is all changeable. `Specification` is format tolerant, any format will be converted to the internal format.
 
-`Specification` is described in BDD style, each working step of the test is described in the thesis. Each `thesis` can either make __HTTP__ requests or __assert__ the collected data.
+`Specification` is described in BDD style, each working step of the test is described in the `thesis`. Each `thesis` can either make __HTTP__ requests or __assert__ the collected data.
 
 BDD tests consist of `given`, `when` and `then` stages. The stages are performed sequentially:
 
