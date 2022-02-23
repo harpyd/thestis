@@ -108,7 +108,7 @@ Contains general information about the test and user information. Each `Specific
 BDD tests consist of `given`, `when` and `then` stages. The stages are performed sequentially:
 
 ```mermaid
-stateDiagram-v2
+flowchart LR
     given --> when
     when --> then
 ```
