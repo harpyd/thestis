@@ -183,9 +183,9 @@ This project is written using the approaches described in Robert Martin's Pure A
 The __domain__ contains entities for working with tests: `TestCampaign`, `Specification`, `Performance`, `Flow`, `User`, etc.
 
 The __application__ has everything you need for the overall operation of the application. In this level you can find:
-* _command_ - a use case that changes the state of the system
-* _query_ - a use case that returns the state of the system
-* _repository_ - a description of the necessary methods that the data layer must have in order for the application to implement the use case
+* _commands_ — use cases that changes the state of the system
+* _queries_ — use cases that returns the state of the system
+* _repositories_ — descriptions of the necessary methods that the data layer must have in order for the application to implement the use case
 * _interfaces_ (parsers, metrics, logging, etc.) — all sorts of interfaces, by implementing which you can choose the technology that the application will use in its work
 * _policies_ — application level policies interfaces and internal implementations.
 
