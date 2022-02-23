@@ -49,14 +49,14 @@ When you trigger the pipeline launch in some way, a `Performance` is created. We
 A `Flow` is an analog of an attempt at Github Action. Stores information about the launch of the `Performance`. The `Performance` will always have one `Flow`. The `Performance` can be restarted (for example, if a test fails), each time the `Performance` is restarted, the number of `Flows` will increase.
 
 During the test run, the `Flow` and each individual `thesis` execution status may end up in one of the states:
-* __NotPerformed__
-* __Performing__
-* __Passed__
-* __Failed__
-* __Crashed__
-* __Canceled__
+* __`NotPerformed`__
+* __`Performing`__
+* __`Passed`__
+* __`Failed`__
+* __`Crashed`__
+* __`Canceled`__
 
-If the test is __NotPerformed__, the test has not started yet for some reason. If the test is in __Performing__, then you should expect it to end. If you are in __Passed__, you can relax, because the test is passed! If the test is in __Failed__ state, it is worth looking at either the test or the system under the tests. If something went wrong in __Crashed__, perhaps from the network, or maybe from our side. If it is __Canceled__, then the test was canceled, it is possible that you canceled it, and it is possible that we did too because of too long execution.
+If the test is __`NotPerformed`__, the test has not started yet for some reason. If the test is in __`Performing`__, then you should expect it to end. If you are in __`Passed`__, you can relax, because the test is passed! If the test is in __`Failed`__ state, it is worth looking at either the test or the system under the tests. If something went wrong in __`Crashed`__, perhaps from the network, or maybe from our side. If it is __`Canceled`__, then the test was canceled, it is possible that you canceled it, and it is possible that we did too because of too long execution.
 
 It is worth noting that the tests achieve the most effective parallelization of the independent parts of the test. How? See below.
 
