@@ -22,7 +22,7 @@ In others, the code is constantly flapping, no one knows why, and does not want 
 
 In general, there were enough problems. That's how the idea of a pipeline for e2e tests appeared. To get started, you need to create a `TestCampaign`.
 
-In fact, a `TestCampaign` is the name of your test, information about it, and the history of all uploaded `Specifications` and completed submissions.
+In fact, a `TestCampaign` is the name of your test, information about it, and the history of all uploaded `Specifications` and completed `Performances`.
 
 `Specification` is a declarative description of the test in BDD style, each test consists of `stories`, each `story` of `scenarios`, each `scenario` of `theses`. The `thesis` contains a description of the work of part of the test.
 
