@@ -2,7 +2,13 @@
 
 [![codecov](https://codecov.io/gh/harpyd/thestis/branch/main/graph/badge.svg?token=3JN40B9T6H)](https://codecov.io/gh/harpyd/thestis)
 
-Thestis is a service for auto tests with declarative description of tests
+__Thestis__ is a service for auto tests with declarative description of tests
+
+## Description
+
+Imagine any CI/CD pipeline. For example you can pay attention to Github Actions. You must write workflow with declarative pipeline description and push it to remote. If you have specified `on.push` parameter, action with satisfying workflow will be started if you push. Or you can manually start Action pipeline. Pipeline may include linter, notifications, unit tests, integration tests, building, deploying, etc...
+
+__Thestis__ is integration tests pipeline for e2e tests. So far pipeline may include 2 thesis types, HTTP and assertion. 
 
 ## Sequence diagram
 
