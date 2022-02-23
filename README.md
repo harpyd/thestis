@@ -1,8 +1,7 @@
 # thestis
 
+<a href="https://github.com/harpyd/thestis/blob/main/api/openapi/thestis-v1.yml"><img src="https://user-images.githubusercontent.com/109659/40094839-2bc8f2ee-5897-11e8-8092-583c26e4d0df.png" width="30" height="30" alt="OpenAPI specification"/></a>
 [![codecov](https://codecov.io/gh/harpyd/thestis/branch/main/graph/badge.svg?token=3JN40B9T6H)](https://codecov.io/gh/harpyd/thestis)
-
-<a href="https://github.com/harpyd/thestis/blob/main/api/openapi/thestis-v1.yml"><img src="https://user-images.githubusercontent.com/109659/40094839-2bc8f2ee-5897-11e8-8092-583c26e4d0df.png" width="45" height="45" alt="OpenAPI specification"/></a>
 
 ___
 
