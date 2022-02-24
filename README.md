@@ -149,7 +149,7 @@ At each launch, `Performance` gives information about the execution `Step` by `S
 `Flow` consists of theses transitions (each with `Thesis` state and occurred errors) and common state. Every transition has state that represents `Thesis` performance progress. But common state is general status of `Performance`. `Flow` common state graph are shown in the diagram:
 
 ```mermaid
-stateDiagram-v2
+flowchart TD
     Canceled --> Canceled
 
     Crashed --> Crashed
