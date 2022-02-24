@@ -126,7 +126,7 @@ During assembly, an `actionGraph` is built from `Specification`, which is transf
 View of `Performance`'s [example](https://github.com/harpyd/thestis/blob/main/examples/specification/horns-and-hooves-test.yml) `actionGraph`:
 
 ```mermaid
-flowchart LR
+flowchart TD
     given --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHorns
     given --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHooves
     sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHorns --> when
