@@ -67,7 +67,7 @@ It is worth noting that the tests achieve the most effective parallelization of 
 
 ```mermaid
 sequenceDiagram
-    User->>+Thestis: Create tests campaign POST /v1/tests-campaigns
+    User->>+Thestis: Create test campaign POST /v1/tests-campaigns
     Thestis-->>-User: Return test campaign id in Location HTTP header
     User->>+Thestis: Get test campaign by id GET /v1/test-campaigns/{id}
     Thestis-->>-User: Return test campaign data
