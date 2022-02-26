@@ -108,7 +108,7 @@ func (s *PerformancesRepositoryTestSuite) actions() []performance.Action {
 			b.WithMethod("jsonpath")
 			b.WithAssert("some", "value")
 		}).
-		Build("to")
+		Build(specification.NewThesisSlug("story", "scenario", "to"))
 	s.Require().NoError(err)
 
 	return []performance.Action{
