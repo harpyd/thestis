@@ -112,8 +112,8 @@ func TestSlugIsValid(t *testing.T) {
 		},
 	}
 
-	for i := range testCases {
-		c := testCases[i]
+	for _, c := range testCases {
+		c := c
 
 		t.Run(c.ExpectedString, func(t *testing.T) {
 			t.Parallel()
