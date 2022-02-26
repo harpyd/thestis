@@ -10,8 +10,8 @@ import (
 
 type (
 	Thesis struct {
-		slug         string
-		dependencies []string
+		slug         Slug
+		dependencies []Slug
 		statement    Statement
 		http         HTTP
 		assertion    Assertion
@@ -40,11 +40,11 @@ const (
 	Then         Stage = "then"
 )
 
-func (t Thesis) Slug() string {
+func (t Thesis) Slug() Slug {
 	return t.slug
 }
 
-func (t Thesis) Dependencies() []string {
+func (t Thesis) Dependencies() []Slug {
 	return t.dependencies
 }
 
@@ -92,8 +92,8 @@ func NewThesisBuilder() *ThesisBuilder {
 	}
 }
 
-func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
-	if slug == "" {
+func (b *ThesisBuilder) Build(slug Slug) (Thesis, error) {
+	if slug.IsZero() {
 		return Thesis{}, NewThesisEmptySlugError()
 	}
 
@@ -108,7 +108,7 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 
 	thsis := Thesis{
 		slug:         slug,
-		dependencies: make([]string, len(b.dependencies)),
+		dependencies: make([]Slug, 0, len(b.dependencies)),
 		statement: Statement{
 			stage:    stage,
 			behavior: b.behavior,
@@ -117,12 +117,17 @@ func (b *ThesisBuilder) Build(slug string) (Thesis, error) {
 		assertion: assertion,
 	}
 
-	copy(thsis.dependencies, b.dependencies)
+	for _, dep := range b.dependencies {
+		thsis.dependencies = append(
+			thsis.dependencies,
+			NewThesisSlug(slug.Story(), slug.Scenario(), dep),
+		)
+	}
 
 	return thsis, NewBuildThesisError(multierr.Combine(stageErr, err), slug)
 }
 
-func (b *ThesisBuilder) ErrlessBuild(slug string) Thesis {
+func (b *ThesisBuilder) ErrlessBuild(slug Slug) Thesis {
 	t, _ := b.Build(slug)
 
 	return t
@@ -136,8 +141,8 @@ func (b *ThesisBuilder) Reset() {
 	b.httpBuilder.Reset()
 }
 
-func (b *ThesisBuilder) WithDependencies(deps string) *ThesisBuilder {
-	b.dependencies = append(b.dependencies, deps)
+func (b *ThesisBuilder) WithDependencies(dep string) *ThesisBuilder {
+	b.dependencies = append(b.dependencies, dep)
 
 	return b
 }
@@ -182,9 +187,9 @@ type (
 	}
 )
 
-func NewThesisSlugAlreadyExistsError(slug string) error {
+func NewThesisSlugAlreadyExistsError(slug Slug) error {
 	return errors.WithStack(thesisSlugAlreadyExistsError{
-		slug: slug,
+		slug: slug.String(),
 	})
 }
 
@@ -198,13 +203,13 @@ func (e thesisSlugAlreadyExistsError) Error() string {
 	return fmt.Sprintf("`%s` thesis already exists", e.slug)
 }
 
-func NewBuildThesisError(err error, slug string) error {
+func NewBuildThesisError(err error, slug Slug) error {
 	if err == nil {
 		return nil
 	}
 
 	return errors.WithStack(buildThesisError{
-		slug: slug,
+		slug: slug.String(),
 		err:  err,
 	})
 }

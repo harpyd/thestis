@@ -14,7 +14,7 @@ func TestStoryBuilder_Build_no_scenarios_error(t *testing.T) {
 
 	builder := specification.NewStoryBuilder()
 
-	_, err := builder.Build("story")
+	_, err := builder.Build(specification.NewStorySlug("story"))
 
 	require.True(t, specification.IsNoStoryScenariosError(err))
 }
@@ -24,17 +24,17 @@ func TestStoryBuilder_Build_slug(t *testing.T) {
 
 	testCases := []struct {
 		Name        string
-		Slug        string
+		Slug        specification.Slug
 		ShouldBeErr bool
 	}{
 		{
 			Name:        "build_with_slug",
-			Slug:        "story",
+			Slug:        specification.NewStorySlug("story"),
 			ShouldBeErr: false,
 		},
 		{
 			Name:        "dont_build_with_empty_slug",
-			Slug:        "",
+			Slug:        specification.Slug{},
 			ShouldBeErr: true,
 		},
 	}
@@ -66,7 +66,7 @@ func TestStoryBuilder_WithDescription(t *testing.T) {
 	builder := specification.NewStoryBuilder()
 	builder.WithDescription("description")
 
-	story := builder.ErrlessBuild("someStory")
+	story := builder.ErrlessBuild(specification.NewStorySlug("someStory"))
 
 	require.Equal(t, "description", story.Description())
 }
@@ -77,7 +77,7 @@ func TestStoryBuilder_WithAsA(t *testing.T) {
 	builder := specification.NewStoryBuilder()
 	builder.WithAsA("author")
 
-	story := builder.ErrlessBuild("someStory")
+	story := builder.ErrlessBuild(specification.NewStorySlug("story"))
 
 	require.Equal(t, "author", story.AsA())
 }
@@ -88,7 +88,7 @@ func TestStoryBuilder_WithInOrderTo(t *testing.T) {
 	builder := specification.NewStoryBuilder()
 	builder.WithInOrderTo("to do something")
 
-	story := builder.ErrlessBuild("someStory")
+	story := builder.ErrlessBuild(specification.NewStorySlug("some"))
 
 	require.Equal(t, "to do something", story.InOrderTo())
 }
@@ -99,7 +99,7 @@ func TestStoryBuilder_WithWantTo(t *testing.T) {
 	builder := specification.NewStoryBuilder()
 	builder.WithWantTo("do work")
 
-	story := builder.ErrlessBuild("someStory")
+	story := builder.ErrlessBuild(specification.NewStorySlug("what"))
 
 	require.Equal(t, "do work", story.WantTo())
 }
@@ -115,11 +115,11 @@ func TestStoryBuilder_WithScenario(t *testing.T) {
 		b.WithDescription("this is a second scenario")
 	})
 
-	story := builder.ErrlessBuild("someStory")
+	story := builder.ErrlessBuild(specification.NewStorySlug("are"))
 
 	expectedFirstScenario := specification.NewScenarioBuilder().
 		WithDescription("this is a first scenario").
-		ErrlessBuild("firstScenario")
+		ErrlessBuild(specification.NewScenarioSlug("are", "firstScenario"))
 
 	actualFirstScenario, ok := story.Scenario("firstScenario")
 	require.True(t, ok)
@@ -127,7 +127,7 @@ func TestStoryBuilder_WithScenario(t *testing.T) {
 
 	expectedSecondScenario := specification.NewScenarioBuilder().
 		WithDescription("this is a second scenario").
-		ErrlessBuild("secondScenario")
+		ErrlessBuild(specification.NewScenarioSlug("are", "secondScenario"))
 
 	actualSecondScenario, ok := story.Scenario("secondScenario")
 	require.True(t, ok)
@@ -145,7 +145,7 @@ func TestStoryBuilder_WithScenario_when_already_exists(t *testing.T) {
 		b.WithDescription("this is a same scenario")
 	})
 
-	_, err := builder.Build("story")
+	_, err := builder.Build(specification.NewStorySlug("you"))
 
 	require.True(t, specification.IsScenarioSlugAlreadyExistsError(err))
 }
@@ -160,7 +160,7 @@ func TestIsStorySlugAlreadyExistsError(t *testing.T) {
 	}{
 		{
 			Name:      "story_slug_already_exists_error",
-			Err:       specification.NewStorySlugAlreadyExistsError("story"),
+			Err:       specification.NewStorySlugAlreadyExistsError(specification.NewStorySlug("story")),
 			IsSameErr: true,
 		},
 		{
@@ -221,13 +221,19 @@ func TestIsBuildStoryError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "build_story_error",
-			Err:       specification.NewBuildStoryError(errors.New("boom"), "story"),
+			Name: "build_story_error",
+			Err: specification.NewBuildStoryError(
+				errors.New("boom"),
+				specification.NewStorySlug("doing"),
+			),
 			IsSameErr: true,
 		},
 		{
-			Name:      "another_error",
-			Err:       specification.NewBuildScenarioError(errors.New("boom"), "scenario"),
+			Name: "another_error",
+			Err: specification.NewBuildScenarioError(
+				errors.New("boom"),
+				specification.NewScenarioSlug("story", "scenario"),
+			),
 			IsSameErr: false,
 		},
 	}

@@ -131,7 +131,7 @@ func (b *Builder) Build() (*Specification, error) {
 
 	for _, stryFactory := range b.storyFactories {
 		stry, stryErr := stryFactory()
-		if _, ok := spec.stories[stry.Slug()]; ok {
+		if _, ok := spec.stories[stry.Slug().Story()]; ok {
 			err = multierr.Append(err, NewStorySlugAlreadyExistsError(stry.Slug()))
 
 			continue
@@ -139,7 +139,7 @@ func (b *Builder) Build() (*Specification, error) {
 
 		err = multierr.Append(err, stryErr)
 
-		spec.stories[stry.Slug()] = stry
+		spec.stories[stry.Slug().Story()] = stry
 	}
 
 	return spec, NewBuildSpecificationError(err)
@@ -205,7 +205,7 @@ func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder
 	buildFn(sb)
 
 	b.storyFactories = append(b.storyFactories, func() (Story, error) {
-		return sb.Build(slug)
+		return sb.Build(NewStorySlug(slug))
 	})
 
 	return b

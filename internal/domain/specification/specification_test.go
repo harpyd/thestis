@@ -112,7 +112,7 @@ func TestBuilder_WithStory(t *testing.T) {
 
 	expectedFirstStory := specification.NewStoryBuilder().
 		WithDescription("this is a first story").
-		ErrlessBuild("firstStory")
+		ErrlessBuild(specification.NewStorySlug("firstStory"))
 
 	actualFirstStory, ok := spec.Story("firstStory")
 	require.True(t, ok)
@@ -120,7 +120,7 @@ func TestBuilder_WithStory(t *testing.T) {
 
 	expectedSecondStory := specification.NewStoryBuilder().
 		WithDescription("this is a second story").
-		ErrlessBuild("secondStory")
+		ErrlessBuild(specification.NewStorySlug("secondStory"))
 
 	actualSecondStory, ok := spec.Story("secondStory")
 	require.True(t, ok)

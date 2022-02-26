@@ -9,7 +9,7 @@ import (
 
 type (
 	Story struct {
-		slug        string
+		slug        Slug
 		description string
 		asA         string
 		inOrderTo   string
@@ -25,10 +25,10 @@ type (
 		scenarioFactories []scenarioFactory
 	}
 
-	scenarioFactory func() (Scenario, error)
+	scenarioFactory func(storySlug Slug) (Scenario, error)
 )
 
-func (s Story) Slug() string {
+func (s Story) Slug() Slug {
 	return s.slug
 }
 
@@ -92,8 +92,8 @@ func NewStoryBuilder() *StoryBuilder {
 	return &StoryBuilder{}
 }
 
-func (b *StoryBuilder) Build(slug string) (Story, error) {
-	if slug == "" {
+func (b *StoryBuilder) Build(slug Slug) (Story, error) {
+	if slug.IsZero() {
 		return Story{}, NewStoryEmptySlugError()
 	}
 
@@ -113,8 +113,8 @@ func (b *StoryBuilder) Build(slug string) (Story, error) {
 	var err error
 
 	for _, scnFactory := range b.scenarioFactories {
-		scn, scnErr := scnFactory()
-		if _, ok := stry.scenarios[scn.Slug()]; ok {
+		scn, scnErr := scnFactory(slug)
+		if _, ok := stry.scenarios[scn.Slug().Scenario()]; ok {
 			err = multierr.Append(err, NewScenarioSlugAlreadyExistsError(scn.Slug()))
 
 			continue
@@ -122,13 +122,13 @@ func (b *StoryBuilder) Build(slug string) (Story, error) {
 
 		err = multierr.Append(err, scnErr)
 
-		stry.scenarios[scn.Slug()] = scn
+		stry.scenarios[scn.Slug().Scenario()] = scn
 	}
 
 	return stry, NewBuildStoryError(err, slug)
 }
 
-func (b *StoryBuilder) ErrlessBuild(slug string) Story {
+func (b *StoryBuilder) ErrlessBuild(slug Slug) Story {
 	s, _ := b.Build(slug)
 
 	return s
@@ -170,8 +170,8 @@ func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder
 	sb := NewScenarioBuilder()
 	buildFn(sb)
 
-	b.scenarioFactories = append(b.scenarioFactories, func() (Scenario, error) {
-		return sb.Build(slug)
+	b.scenarioFactories = append(b.scenarioFactories, func(storySlug Slug) (Scenario, error) {
+		return sb.Build(NewScenarioSlug(storySlug.Story(), slug))
 	})
 
 	return b
@@ -192,9 +192,9 @@ type (
 	}
 )
 
-func NewStorySlugAlreadyExistsError(slug string) error {
+func NewStorySlugAlreadyExistsError(slug Slug) error {
 	return errors.WithStack(storySlugAlreadyExistsError{
-		slug: slug,
+		slug: slug.String(),
 	})
 }
 
@@ -208,13 +208,13 @@ func (e storySlugAlreadyExistsError) Error() string {
 	return fmt.Sprintf("`%s` story already exists", e.slug)
 }
 
-func NewBuildStoryError(err error, slug string) error {
+func NewBuildStoryError(err error, slug Slug) error {
 	if err == nil {
 		return nil
 	}
 
 	return errors.WithStack(buildStoryError{
-		slug: slug,
+		slug: slug.String(),
 		err:  err,
 	})
 }

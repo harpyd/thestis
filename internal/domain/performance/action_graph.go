@@ -75,7 +75,7 @@ func buildGraph(spec *specification.Specification) (actionGraph, error) {
 		for _, scenario := range scenarios {
 			theses, _ := scenario.Theses()
 
-			addActions(graph, story, scenario, theses)
+			addActions(graph, theses)
 		}
 	}
 
@@ -88,8 +88,6 @@ func buildGraph(spec *specification.Specification) (actionGraph, error) {
 
 func addActions(
 	graph actionGraph,
-	story specification.Story,
-	scenario specification.Scenario,
 	theses []specification.Thesis,
 ) {
 	var (
@@ -104,24 +102,22 @@ func addActions(
 			whens = append(whens, thesis)
 		}
 
-		addDependenciesDependentActions(graph, story, scenario, thesis)
-		addStageDependentAction(graph, story, scenario, thesis)
+		addDependenciesDependentActions(graph, thesis)
+		addStageDependentAction(graph, thesis)
 	}
 
-	addThesesDependentEmptyActions(graph, story, scenario, givens, specification.When)
-	addThesesDependentEmptyActions(graph, story, scenario, whens, specification.Then)
+	addThesesDependentEmptyActions(graph, givens, specification.When)
+	addThesesDependentEmptyActions(graph, whens, specification.Then)
 }
 
 func addDependenciesDependentActions(
 	graph actionGraph,
-	story specification.Story,
-	scenario specification.Scenario,
 	thesis specification.Thesis,
 ) {
 	for _, dep := range thesis.Dependencies() {
 		var (
-			from = uniqueThesisName(story.Slug(), scenario.Slug(), dep)
-			to   = uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
+			from = dep.String()
+			to   = thesis.Slug().String()
 		)
 
 		initGraphActionsLazy(graph, from)
@@ -132,13 +128,11 @@ func addDependenciesDependentActions(
 
 func addStageDependentAction(
 	graph actionGraph,
-	story specification.Story,
-	scenario specification.Scenario,
 	thesis specification.Thesis,
 ) {
 	var (
-		from = uniqueStageName(story.Slug(), scenario.Slug(), thesis.Statement().Stage())
-		to   = uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
+		from = uniqueStageName(thesis.Slug().Story(), thesis.Slug().Scenario(), thesis.Statement().Stage())
+		to   = thesis.Slug().String()
 	)
 
 	initGraphActionsLazy(graph, from)
@@ -148,25 +142,19 @@ func addStageDependentAction(
 
 func addThesesDependentEmptyActions(
 	graph actionGraph,
-	story specification.Story,
-	scenario specification.Scenario,
 	theses []specification.Thesis,
 	nextStage specification.Stage,
 ) {
 	for _, thesis := range theses {
-		from := uniqueThesisName(story.Slug(), scenario.Slug(), thesis.Slug())
+		from := thesis.Slug().String()
 		if len(graph[from]) == 0 {
 			initGraphActionsLazy(graph, from)
 
-			to := uniqueStageName(story.Slug(), scenario.Slug(), nextStage)
+			to := uniqueStageName(thesis.Slug().Story(), thesis.Slug().Scenario(), nextStage)
 
 			graph[from][to] = newEmptyAction(from, to)
 		}
 	}
-}
-
-func uniqueThesisName(storySlug, scenarioSlug, thesisSlug string) string {
-	return strings.Join([]string{storySlug, scenarioSlug, thesisSlug}, ".")
 }
 
 func uniqueStageName(storySlug, scenarioSlug string, stage specification.Stage) string {

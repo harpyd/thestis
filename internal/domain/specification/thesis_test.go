@@ -15,7 +15,7 @@ func TestThesisBuilder_Build_no_http_or_assertion(t *testing.T) {
 
 	builder := specification.NewThesisBuilder()
 
-	_, err := builder.Build("thesis")
+	_, err := builder.Build(specification.NewThesisSlug("someStory", "foo", "bar"))
 
 	require.True(t, specification.IsNoThesisHTTPOrAssertionError(err))
 }
@@ -28,9 +28,14 @@ func TestThesisBuilder_WithDependencies(t *testing.T) {
 	builder.WithDependencies("anotherOneThesis")
 	builder.WithDependencies("anotherTwoThesis")
 
-	thesis := builder.ErrlessBuild("thesis")
+	expectedDependencies := []specification.Slug{
+		specification.NewThesisSlug("story", "scenario", "anotherOneThesis"),
+		specification.NewThesisSlug("story", "scenario", "anotherTwoThesis"),
+	}
 
-	require.ElementsMatch(t, []string{"anotherOneThesis", "anotherTwoThesis"}, thesis.Dependencies())
+	thesis := builder.ErrlessBuild(specification.NewThesisSlug("story", "scenario", "thesis"))
+
+	require.ElementsMatch(t, expectedDependencies, thesis.Dependencies())
 }
 
 func TestThesisBuilder_Build_slug(t *testing.T) {
@@ -38,17 +43,17 @@ func TestThesisBuilder_Build_slug(t *testing.T) {
 
 	testCases := []struct {
 		Name        string
-		Slug        string
+		Slug        specification.Slug
 		ShouldBeErr bool
 	}{
 		{
 			Name:        "build_with_slug",
-			Slug:        "thesis",
+			Slug:        specification.NewThesisSlug("story", "scenario", "thesis"),
 			ShouldBeErr: false,
 		},
 		{
 			Name:        "build_with_empty_slug",
-			Slug:        "",
+			Slug:        specification.Slug{},
 			ShouldBeErr: true,
 		},
 	}
@@ -120,13 +125,13 @@ func TestThesisBuilder_WithStatement(t *testing.T) {
 			builder.WithStatement(c.Keyword, c.Behavior)
 
 			if c.ShouldBeErr {
-				_, err := builder.Build("sellHooves")
+				_, err := builder.Build(specification.NewThesisSlug("story", "scenario", "sellHooves"))
 				require.True(t, specification.IsNotAllowedStageError(err))
 
 				return
 			}
 
-			thesis := builder.ErrlessBuild("sellHooves")
+			thesis := builder.ErrlessBuild(specification.NewThesisSlug("story", "scenario", "sellHooves"))
 			require.Equal(t, strings.ToLower(c.Keyword), thesis.Statement().Stage().String())
 			require.Equal(t, c.Behavior, thesis.Statement().Behavior())
 		})
@@ -143,7 +148,7 @@ func TestThesisBuilder_WithAssertion(t *testing.T) {
 		b.WithAssert("getSomeBody.response.body.type", "product")
 	})
 
-	thesis, err := builder.Build("someThesis")
+	thesis, err := builder.Build(specification.NewThesisSlug("story", "scenario", "someThesis"))
 
 	require.NoError(t, err)
 	expectedAssertion, err := specification.NewAssertionBuilder().
@@ -170,7 +175,7 @@ func TestThesisBuilder_WithHTTP(t *testing.T) {
 		})
 	})
 
-	thesis, err := builder.Build("someThesis")
+	thesis, err := builder.Build(specification.NewThesisSlug("story", "scenario", "thesis"))
 
 	require.NoError(t, err)
 	expectedHTTP, err := specification.NewHTTPBuilder().
@@ -196,8 +201,10 @@ func TestIsThesisSlugAlreadyExistsError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "thesis_slug_already_exists_error",
-			Err:       specification.NewThesisSlugAlreadyExistsError("thesis"),
+			Name: "thesis_slug_already_exists_error",
+			Err: specification.NewThesisSlugAlreadyExistsError(
+				specification.NewThesisSlug("story", "scenario", "thesis"),
+			),
 			IsSameErr: true,
 		},
 		{
@@ -258,8 +265,11 @@ func TestIsBuildThesisError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "build_thesis_error",
-			Err:       specification.NewBuildThesisError(errors.New("pew"), "thesis"),
+			Name: "build_thesis_error",
+			Err: specification.NewBuildThesisError(
+				errors.New("pew"),
+				specification.NewThesisSlug("foo", "bar", "baz"),
+			),
 			IsSameErr: true,
 		},
 		{
