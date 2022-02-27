@@ -49,7 +49,7 @@ func TestStoryBuilder_Build_slug(t *testing.T) {
 
 			if c.ShouldBeErr {
 				_, err := builder.Build(c.Slug)
-				require.True(t, specification.IsStoryEmptySlugError(err))
+				require.True(t, specification.IsEmptySlugError(err))
 
 				return
 			}
@@ -177,37 +177,6 @@ func TestIsStorySlugAlreadyExistsError(t *testing.T) {
 			t.Parallel()
 
 			require.Equal(t, c.IsSameErr, specification.IsStorySlugAlreadyExistsError(c.Err))
-		})
-	}
-}
-
-func TestIsStoryEmptySlugError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "story_empty_slug_error",
-			Err:       specification.NewStoryEmptySlugError(),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       errors.New("something wrong"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, specification.IsStoryEmptySlugError(c.Err))
 		})
 	}
 }

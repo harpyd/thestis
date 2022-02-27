@@ -49,7 +49,7 @@ func TestScenarioBuilder_Build_slug(t *testing.T) {
 
 			if c.ShouldBeErr {
 				_, err := builder.Build(c.Slug)
-				require.True(t, specification.IsScenarioEmptySlugError(err))
+				require.True(t, specification.IsEmptySlugError(err))
 
 				return
 			}
@@ -171,37 +171,6 @@ func TestIsScenarioSlugAlreadyExistsError(t *testing.T) {
 			t.Parallel()
 
 			require.Equal(t, c.IsSameErr, specification.IsScenarioSlugAlreadyExistsError(c.Err))
-		})
-	}
-}
-
-func TestIsScenarioEmptySlugError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "scenario_empty_slug_error",
-			Err:       specification.NewScenarioEmptySlugError(),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       errors.New("error"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, specification.IsScenarioEmptySlugError(c.Err))
 		})
 	}
 }

@@ -117,6 +117,16 @@ func replaceIfEmpty(s string) string {
 	return s
 }
 
+var errEmptySlug = errors.New("empty slug")
+
+func NewEmptySlugError() error {
+	return errEmptySlug
+}
+
+func IsEmptySlugError(err error) bool {
+	return errors.Is(err, errEmptySlug)
+}
+
 type (
 	storySlugAlreadyExistsError struct {
 		slug string

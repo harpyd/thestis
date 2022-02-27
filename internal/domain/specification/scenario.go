@@ -79,7 +79,7 @@ func NewScenarioBuilder() *ScenarioBuilder {
 
 func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
 	if slug.IsZero() {
-		return Scenario{}, NewScenarioEmptySlugError()
+		return Scenario{}, NewEmptySlugError()
 	}
 
 	scn := Scenario{
@@ -138,18 +138,7 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 	return b
 }
 
-var (
-	errScenarioEmptySlug = errors.New("empty scenario slug")
-	errNoScenarioTheses  = errors.New("no theses")
-)
-
-func NewScenarioEmptySlugError() error {
-	return errScenarioEmptySlug
-}
-
-func IsScenarioEmptySlugError(err error) bool {
-	return errors.Is(err, errScenarioEmptySlug)
-}
+var errNoScenarioTheses = errors.New("no theses")
 
 func NewNoScenarioThesesError() error {
 	return errNoScenarioTheses
