@@ -174,10 +174,6 @@ type (
 		err  error
 	}
 
-	noSuchThesisError struct {
-		slug string
-	}
-
 	notAllowedStageError struct {
 		keyword string
 	}
@@ -218,22 +214,6 @@ func (e buildThesisError) CommonError() string {
 
 func (e buildThesisError) Error() string {
 	return fmt.Sprintf("thesis `%s`: %s", e.slug, e.err)
-}
-
-func NewNoSuchThesisError(slug string) error {
-	return errors.WithStack(noSuchThesisError{
-		slug: slug,
-	})
-}
-
-func IsNoSuchThesisError(err error) bool {
-	var nerr noSuchThesisError
-
-	return errors.As(err, &nerr)
-}
-
-func (e noSuchThesisError) Error() string {
-	return fmt.Sprintf("no such thesis `%s`", e.slug)
 }
 
 func NewNotAllowedStageError(keyword string) error {

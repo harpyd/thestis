@@ -290,7 +290,7 @@ func TestIsBuildThesisError(t *testing.T) {
 	}
 }
 
-func TestIsNoSuchThesisError(t *testing.T) {
+func TestIsNoSuchThesisSlugError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -299,13 +299,15 @@ func TestIsNoSuchThesisError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "no_thesis_error",
-			Err:       specification.NewNoSuchThesisError("someThesis"),
+			Name: "no_thesis_error",
+			Err: specification.NewNoSuchSlugError(
+				specification.NewThesisSlug("story", "scenario", "thesis"),
+			),
 			IsSameErr: true,
 		},
 		{
 			Name:      "another_error",
-			Err:       specification.NewNoSuchStoryError("someStory"),
+			Err:       specification.NewNoSuchSlugError(specification.NewStorySlug("someStory")),
 			IsSameErr: false,
 		},
 	}

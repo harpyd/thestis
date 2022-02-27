@@ -179,3 +179,67 @@ func IsThesisSlugAlreadyExistsError(err error) bool {
 func (e thesisSlugAlreadyExistsError) Error() string {
 	return fmt.Sprintf("`%s` thesis already exists", e.slug)
 }
+
+type (
+	noSuchStorySlugError struct {
+		slug string
+	}
+
+	noSuchScenarioSlugError struct {
+		slug string
+	}
+
+	noSuchThesisSlugError struct {
+		slug string
+	}
+)
+
+func NewNoSuchSlugError(slug Slug) error {
+	switch slug.Kind() {
+	case StorySlug:
+		return errors.WithStack(noSuchStorySlugError{
+			slug: slug.String(),
+		})
+	case ScenarioSlug:
+		return errors.WithStack(noSuchScenarioSlugError{
+			slug: slug.String(),
+		})
+	case ThesisSlug:
+		return errors.WithStack(noSuchThesisSlugError{
+			slug: slug.String(),
+		})
+	case NoSlug:
+	}
+
+	return nil
+}
+
+func IsNoSuchStorySlugError(err error) bool {
+	var target noSuchStorySlugError
+
+	return errors.As(err, &target)
+}
+
+func (e noSuchStorySlugError) Error() string {
+	return fmt.Sprintf("no such story `%s`", e.slug)
+}
+
+func IsNoSuchScenarioError(err error) bool {
+	var target noSuchScenarioSlugError
+
+	return errors.As(err, &target)
+}
+
+func (e noSuchScenarioSlugError) Error() string {
+	return fmt.Sprintf("no such scenario `%s`", e.slug)
+}
+
+func IsNoSuchThesisError(err error) bool {
+	var target noSuchThesisSlugError
+
+	return errors.As(err, &target)
+}
+
+func (e noSuchThesisSlugError) Error() string {
+	return fmt.Sprintf("no such thesis `%s`", e.slug)
+}
