@@ -192,23 +192,36 @@ func TestThesisBuilder_WithHTTP(t *testing.T) {
 	require.Equal(t, expectedHTTP, thesis.HTTP())
 }
 
-func TestIsNotAllowedStageError(t *testing.T) {
+func TestThesisErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
+		Name     string
+		Err      error
+		IsErr    func(err error) bool
+		Reversed bool
 	}{
 		{
-			Name:      "not_allowed_stage_error",
-			Err:       specification.NewNotAllowedStageError("zen"),
-			IsSameErr: true,
+			Name:  "not_allowed_stage_error",
+			Err:   specification.NewNotAllowedStageError("zen"),
+			IsErr: specification.IsNotAllowedStageError,
 		},
 		{
-			Name:      "another_error",
-			Err:       specification.NewNotAllowedHTTPMethodError("zen"),
-			IsSameErr: false,
+			Name:     "NON_not_allowed_stage_error",
+			Err:      errors.New("zen"),
+			IsErr:    specification.IsNotAllowedStageError,
+			Reversed: true,
+		},
+		{
+			Name:  "no_thesis_http_or_assertion_error",
+			Err:   specification.NewNoThesisHTTPOrAssertionError(),
+			IsErr: specification.IsNoThesisHTTPOrAssertionError,
+		},
+		{
+			Name:     "NON_no_thesis_http_or_assertion_error",
+			Err:      errors.New("no thesis HTTP or assertion"),
+			IsErr:    specification.IsNoThesisHTTPOrAssertionError,
+			Reversed: true,
 		},
 	}
 
@@ -218,38 +231,13 @@ func TestIsNotAllowedStageError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, specification.IsNotAllowedStageError(c.Err))
-		})
-	}
-}
+			if c.Reversed {
+				require.False(t, c.IsErr(c.Err))
 
-func TestIsNoThesisHTTPOrAssertionError(t *testing.T) {
-	t.Parallel()
+				return
+			}
 
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "no_thesis_http_or_assertion_error",
-			Err:       specification.NewNoThesisHTTPOrAssertionError(),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       errors.Wrap(specification.NewNoStoryScenariosError(), "wrap"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, specification.IsNoThesisHTTPOrAssertionError(c.Err))
+			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }
