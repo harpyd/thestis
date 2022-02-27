@@ -158,7 +158,7 @@ func TestIsBuildSpecificationError(t *testing.T) {
 		},
 		{
 			Name:      "another_error",
-			Err:       specification.NewNoSuchStoryError("slug"),
+			Err:       specification.NewNoSuchSlugError(specification.NewStorySlug("slug")),
 			IsSameErr: false,
 		},
 	}

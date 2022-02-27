@@ -57,7 +57,12 @@ func (s Scenario) filteredTheses(slugs []string) ([]Thesis, error) {
 		if thesis, ok := s.Thesis(slug); ok {
 			theses = append(theses, thesis)
 		} else {
-			err = multierr.Append(err, NewNoSuchThesisError(slug))
+			err = multierr.Append(
+				err,
+				NewNoSuchSlugError(
+					NewThesisSlug(s.slug.story, s.slug.scenario, slug),
+				),
+			)
 		}
 	}
 
@@ -135,16 +140,10 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 	return b
 }
 
-type (
-	buildScenarioError struct {
-		slug string
-		err  error
-	}
-
-	noSuchScenarioError struct {
-		slug string
-	}
-)
+type buildScenarioError struct {
+	slug string
+	err  error
+}
 
 func NewBuildScenarioError(err error, slug Slug) error {
 	if err == nil {
@@ -181,22 +180,6 @@ func (e buildScenarioError) CommonError() string {
 
 func (e buildScenarioError) Error() string {
 	return fmt.Sprintf("scenario `%s`: %s", e.slug, e.err)
-}
-
-func NewNoSuchScenarioError(slug string) error {
-	return errors.WithStack(noSuchScenarioError{
-		slug: slug,
-	})
-}
-
-func IsNoSuchScenarioError(err error) bool {
-	var nerr noSuchScenarioError
-
-	return errors.As(err, &nerr)
-}
-
-func (e noSuchScenarioError) Error() string {
-	return fmt.Sprintf("no such scenario `%s`", e.slug)
 }
 
 var (

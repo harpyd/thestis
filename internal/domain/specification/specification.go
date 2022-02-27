@@ -90,7 +90,7 @@ func (s *Specification) filteredStories(slugs []string) ([]Story, error) {
 		if story, ok := s.Story(slug); ok {
 			stories = append(stories, story)
 		} else {
-			err = multierr.Append(err, NewNoSuchStoryError(slug))
+			err = multierr.Append(err, NewNoSuchSlugError(NewStorySlug(slug)))
 		}
 	}
 

@@ -249,7 +249,7 @@ func TestIsBuildStoryError(t *testing.T) {
 	}
 }
 
-func TestIsNoSuchStoryError(t *testing.T) {
+func TestIsNoSuchStorySlugError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -259,12 +259,12 @@ func TestIsNoSuchStoryError(t *testing.T) {
 	}{
 		{
 			Name:      "no_story_error",
-			Err:       specification.NewNoSuchStoryError("someStory"),
+			Err:       specification.NewNoSuchSlugError(specification.NewStorySlug("story")),
 			IsSameErr: true,
 		},
 		{
 			Name:      "another_error",
-			Err:       specification.NewNoSuchThesisError("someThesis"),
+			Err:       specification.NewNoSuchSlugError(specification.NewScenarioSlug("story", "someScenario")),
 			IsSameErr: false,
 		},
 	}
@@ -275,7 +275,7 @@ func TestIsNoSuchStoryError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, specification.IsNoSuchStoryError(c.Err))
+			require.Equal(t, c.IsSameErr, specification.IsNoSuchStorySlugError(c.Err))
 		})
 	}
 }

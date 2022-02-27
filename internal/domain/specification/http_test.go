@@ -406,7 +406,7 @@ func TestIsNotAllowedContentTypeError(t *testing.T) {
 		},
 		{
 			Name:      "another_error",
-			Err:       specification.NewNoSuchStoryError("some/content"),
+			Err:       specification.NewNoSuchSlugError(specification.NewStorySlug("some/content")),
 			IsSameErr: false,
 		},
 	}
@@ -437,7 +437,7 @@ func TestIsNotAllowedHTTPMethodError(t *testing.T) {
 		},
 		{
 			Name:      "another_error",
-			Err:       specification.NewNoSuchThesisError("POZT"),
+			Err:       specification.NewNoSuchSlugError(specification.NewStorySlug("story")),
 			IsSameErr: false,
 		},
 	}

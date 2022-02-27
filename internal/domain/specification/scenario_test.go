@@ -237,7 +237,7 @@ func TestIsBuildScenarioError(t *testing.T) {
 	}
 }
 
-func TestIsNoSuchScenarioError(t *testing.T) {
+func TestIsNoSuchScenarioSlugError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -246,13 +246,15 @@ func TestIsNoSuchScenarioError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "no_scenario_error",
-			Err:       specification.NewNoSuchScenarioError("someScenario"),
+			Name: "no_scenario_error",
+			Err: specification.NewNoSuchSlugError(
+				specification.NewScenarioSlug("story", "someScenario"),
+			),
 			IsSameErr: true,
 		},
 		{
 			Name:      "another_error",
-			Err:       specification.NewNoSuchThesisError("someThesis"),
+			Err:       specification.NewNoSuchSlugError(specification.NewStorySlug("story")),
 			IsSameErr: false,
 		},
 	}
