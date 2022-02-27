@@ -222,23 +222,47 @@ func TestPerformance_Start_sync_calls_in_a_row(t *testing.T) {
 	finish <- true
 }
 
-func TestIsCyclicGraphError(t *testing.T) {
+func TestPerformanceErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
+		Name     string
+		Err      error
+		IsErr    func(err error) bool
+		Reversed bool
 	}{
 		{
-			Name:      "cyclic_performance_error",
-			Err:       performance.NewCyclicGraphError("from", "to"),
-			IsSameErr: true,
+			Name:  "cyclic_performance_error",
+			Err:   performance.NewCyclicGraphError("from", "to"),
+			IsErr: performance.IsCyclicGraphError,
 		},
 		{
-			Name:      "another_error",
-			Err:       errors.New("from to"),
-			IsSameErr: false,
+			Name:     "NON_cyclic_performance_error",
+			Err:      errors.New("cyclic performance graph"),
+			IsErr:    performance.IsCyclicGraphError,
+			Reversed: true,
+		},
+		{
+			Name:  "performance_already_started_error",
+			Err:   performance.NewAlreadyStartedError(),
+			IsErr: performance.IsAlreadyStartedError,
+		},
+		{
+			Name:     "NON_performance_already_started_error",
+			Err:      errors.New("performance already started"),
+			IsErr:    performance.IsAlreadyStartedError,
+			Reversed: true,
+		},
+		{
+			Name:  "performance_not_started_error",
+			Err:   performance.NewNotStartedError(),
+			IsErr: performance.IsNotStartedError,
+		},
+		{
+			Name:     "NON_performance_not_started_error",
+			Err:      errors.New("performance not started"),
+			IsErr:    performance.IsNotStartedError,
+			Reversed: true,
 		},
 	}
 
@@ -248,69 +272,13 @@ func TestIsCyclicGraphError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, performance.IsCyclicGraphError(c.Err))
-		})
-	}
-}
+			if c.Reversed {
+				require.False(t, c.IsErr(c.Err))
 
-func TestIsAlreadyStartedError(t *testing.T) {
-	t.Parallel()
+				return
+			}
 
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "performance_already_started_error",
-			Err:       performance.NewAlreadyStartedError(),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       errors.New("performance already started"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, performance.IsAlreadyStartedError(c.Err))
-		})
-	}
-}
-
-func TestIsNotStartedError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "performance_not_started_error",
-			Err:       performance.NewNotStartedError(),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       errors.New("performance not started"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, performance.IsNotStartedError(c.Err))
+			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }
