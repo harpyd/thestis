@@ -3,7 +3,6 @@ package user_test
 import (
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/performance"
@@ -219,37 +218,6 @@ func TestUserErrors(t *testing.T) {
 			}
 
 			require.True(t, c.IsErr(c.Err))
-		})
-	}
-}
-
-func TestIsCantSeePerformanceError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "cant_see_performance_error",
-			Err:       user.NewCantSeePerformanceError("user-id", "owner-id"),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       errors.New("user user-id can't see performance user owner-id performance"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, user.IsCantSeePerformanceError(c.Err))
 		})
 	}
 }
