@@ -169,10 +169,6 @@ func (b *ThesisBuilder) WithHTTP(buildFn func(b *HTTPBuilder)) *ThesisBuilder {
 }
 
 type (
-	thesisSlugAlreadyExistsError struct {
-		slug string
-	}
-
 	buildThesisError struct {
 		slug string
 		err  error
@@ -186,22 +182,6 @@ type (
 		keyword string
 	}
 )
-
-func NewThesisSlugAlreadyExistsError(slug Slug) error {
-	return errors.WithStack(thesisSlugAlreadyExistsError{
-		slug: slug.String(),
-	})
-}
-
-func IsThesisSlugAlreadyExistsError(err error) bool {
-	var aerr thesisSlugAlreadyExistsError
-
-	return errors.As(err, &aerr)
-}
-
-func (e thesisSlugAlreadyExistsError) Error() string {
-	return fmt.Sprintf("`%s` thesis already exists", e.slug)
-}
 
 func NewBuildThesisError(err error, slug Slug) error {
 	if err == nil {

@@ -160,7 +160,7 @@ func TestIsStorySlugAlreadyExistsError(t *testing.T) {
 	}{
 		{
 			Name:      "story_slug_already_exists_error",
-			Err:       specification.NewStorySlugAlreadyExistsError(specification.NewStorySlug("story")),
+			Err:       specification.NewSlugAlreadyExistsError(specification.NewStorySlug("story")),
 			IsSameErr: true,
 		},
 		{

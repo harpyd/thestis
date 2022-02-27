@@ -202,7 +202,7 @@ func TestIsThesisSlugAlreadyExistsError(t *testing.T) {
 	}{
 		{
 			Name: "thesis_slug_already_exists_error",
-			Err: specification.NewThesisSlugAlreadyExistsError(
+			Err: specification.NewSlugAlreadyExistsError(
 				specification.NewThesisSlug("story", "scenario", "thesis"),
 			),
 			IsSameErr: true,

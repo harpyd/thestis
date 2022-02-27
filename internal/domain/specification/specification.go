@@ -132,7 +132,7 @@ func (b *Builder) Build() (*Specification, error) {
 	for _, stryFactory := range b.storyFactories {
 		stry, stryErr := stryFactory()
 		if _, ok := spec.stories[stry.Slug().Story()]; ok {
-			err = multierr.Append(err, NewStorySlugAlreadyExistsError(stry.Slug()))
+			err = multierr.Append(err, NewSlugAlreadyExistsError(stry.Slug()))
 
 			continue
 		}
