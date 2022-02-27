@@ -150,23 +150,25 @@ func TestStoryBuilder_WithScenario_when_already_exists(t *testing.T) {
 	require.True(t, specification.IsScenarioSlugAlreadyExistsError(err))
 }
 
-func TestIsNoStoryScenariosError(t *testing.T) {
+func TestStoryErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name      string
-		Err       error
-		IsNameErr bool
+		Name     string
+		Err      error
+		IsErr    func(err error) bool
+		Reversed bool
 	}{
 		{
-			Name:      "no_story_scenarios_error",
-			Err:       specification.NewNoStoryScenariosError(),
-			IsNameErr: true,
+			Name:  "no_story_scenarios_error",
+			Err:   specification.NewNoStoryScenariosError(),
+			IsErr: specification.IsNoStoryScenariosError,
 		},
 		{
-			Name:      "another_error",
-			Err:       errors.New("another"),
-			IsNameErr: false,
+			Name:     "NON_no_story_scenarios_error",
+			Err:      errors.New("no story scenarios"),
+			IsErr:    specification.IsNoStoryScenariosError,
+			Reversed: true,
 		},
 	}
 
@@ -176,7 +178,13 @@ func TestIsNoStoryScenariosError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsNameErr, specification.IsNoStoryScenariosError(c.Err))
+			if c.Reversed {
+				require.False(t, c.IsErr(c.Err))
+
+				return
+			}
+
+			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }
