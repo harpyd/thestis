@@ -142,23 +142,25 @@ func TestScenarioBuilder_WithThesis_when_already_exists(t *testing.T) {
 	require.True(t, specification.IsThesisSlugAlreadyExistsError(err))
 }
 
-func TestIsNoScenarioThesesError(t *testing.T) {
+func TestScenarioErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
+		Name     string
+		Err      error
+		IsErr    func(err error) bool
+		Reversed bool
 	}{
 		{
-			Name:      "no_scenario_theses_error",
-			Err:       specification.NewNoScenarioThesesError(),
-			IsSameErr: true,
+			Name:  "no_scenario_theses_error",
+			Err:   specification.NewNoScenarioThesesError(),
+			IsErr: specification.IsNoScenarioThesesError,
 		},
 		{
-			Name:      "another_err",
-			Err:       errors.New("another"),
-			IsSameErr: false,
+			Name:     "NON_no_scenario_theses_error",
+			Err:      errors.New("no scenario theses"),
+			IsErr:    specification.IsNoScenarioThesesError,
+			Reversed: true,
 		},
 	}
 
@@ -168,7 +170,13 @@ func TestIsNoScenarioThesesError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, specification.IsNoScenarioThesesError(c.Err))
+			if c.Reversed {
+				require.False(t, c.IsErr(c.Err))
+
+				return
+			}
+
+			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }
