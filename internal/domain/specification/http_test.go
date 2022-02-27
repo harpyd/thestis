@@ -298,23 +298,69 @@ func TestHTTPResponseBuilder_WithAllowedContentType(t *testing.T) {
 	}
 }
 
-func TestIsBuildHTTPError(t *testing.T) {
+func TestHTTPErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
+		Name     string
+		Err      error
+		IsErr    func(err error) bool
+		Reversed bool
 	}{
 		{
-			Name:      "build_http_error",
-			Err:       specification.NewBuildHTTPError(errors.New("wrong")),
-			IsSameErr: true,
+			Name:  "build_http_error",
+			Err:   specification.NewBuildHTTPError(errors.New("wrong")),
+			IsErr: specification.IsBuildHTTPError,
 		},
 		{
-			Name:      "another_error",
-			Err:       errors.New("wrong"),
-			IsSameErr: false,
+			Name:     "NON_build_http_error",
+			Err:      errors.New("wrong"),
+			IsErr:    specification.IsBuildHTTPError,
+			Reversed: true,
+		},
+		{
+			Name:  "build_http_request_error",
+			Err:   specification.NewBuildHTTPRequestError(errors.New("wrong")),
+			IsErr: specification.IsBuildHTTPRequestError,
+		},
+		{
+			Name:     "NON_build_http_request_error",
+			Err:      errors.New("wrong"),
+			IsErr:    specification.IsBuildHTTPRequestError,
+			Reversed: true,
+		},
+		{
+			Name:  "build_http_response_error",
+			Err:   specification.NewBuildHTTPResponseError(errors.New("something")),
+			IsErr: specification.IsBuildHTTPResponseError,
+		},
+		{
+			Name:     "NON_build_http_response_error",
+			Err:      errors.New("something"),
+			IsErr:    specification.IsBuildHTTPResponseError,
+			Reversed: true,
+		},
+		{
+			Name:  "not_allowed_content_type_error",
+			Err:   specification.NewNotAllowedContentTypeError("some/content"),
+			IsErr: specification.IsNotAllowedContentTypeError,
+		},
+		{
+			Name:     "NON_not_allowed_content_type_error",
+			Err:      errors.New("some/content"),
+			IsErr:    specification.IsNotAllowedContentTypeError,
+			Reversed: true,
+		},
+		{
+			Name:  "not_allowed_http_method_error",
+			Err:   specification.NewNotAllowedHTTPMethodError("POZT"),
+			IsErr: specification.IsNotAllowedHTTPMethodError,
+		},
+		{
+			Name:     "NON_not_allowed_http_method_error",
+			Err:      errors.New("POZT"),
+			IsErr:    specification.IsNotAllowedHTTPMethodError,
+			Reversed: true,
 		},
 	}
 
@@ -324,131 +370,13 @@ func TestIsBuildHTTPError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, specification.IsBuildHTTPError(c.Err))
-		})
-	}
-}
+			if c.Reversed {
+				require.False(t, c.IsErr(c.Err))
 
-func TestIsBuildHTTPRequestError(t *testing.T) {
-	t.Parallel()
+				return
+			}
 
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "build_http_request_error",
-			Err:       specification.NewBuildHTTPRequestError(errors.New("wrong")),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       errors.New("wrong"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, specification.IsBuildHTTPRequestError(c.Err))
-		})
-	}
-}
-
-func TestIsBuildHTTPResponseError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "build_http_response_error",
-			Err:       specification.NewBuildHTTPResponseError(errors.New("something")),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       errors.New("something"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, specification.IsBuildHTTPResponseError(c.Err))
-		})
-	}
-}
-
-func TestIsNotAllowedContentTypeError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "not_allowed_content_type_error",
-			Err:       specification.NewNotAllowedContentTypeError("some/content"),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       specification.NewNoSuchSlugError(specification.NewStorySlug("some/content")),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, specification.IsNotAllowedContentTypeError(c.Err))
-		})
-	}
-}
-
-func TestIsNotAllowedHTTPMethodError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "not_allowed_http_method_error",
-			Err:       specification.NewNotAllowedHTTPMethodError("POZT"),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       specification.NewNoSuchSlugError(specification.NewStorySlug("story")),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, specification.IsNotAllowedHTTPMethodError(c.Err))
+			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }
