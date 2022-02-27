@@ -69,7 +69,7 @@ func TestThesisBuilder_Build_slug(t *testing.T) {
 
 			if c.ShouldBeErr {
 				_, err := builder.Build(c.Slug)
-				require.True(t, specification.IsThesisEmptySlugError(err))
+				require.True(t, specification.IsEmptySlugError(err))
 
 				return
 			}
@@ -221,37 +221,6 @@ func TestIsThesisSlugAlreadyExistsError(t *testing.T) {
 			t.Parallel()
 
 			require.Equal(t, c.IsSameErr, specification.IsThesisSlugAlreadyExistsError(c.Err))
-		})
-	}
-}
-
-func TestIsThesisEmptySlugError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "thesis_empty_slug_error",
-			Err:       specification.NewThesisEmptySlugError(),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       errors.New("wrong wrong"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, specification.IsThesisEmptySlugError(c.Err))
 		})
 	}
 }

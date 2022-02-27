@@ -97,7 +97,7 @@ func NewStoryBuilder() *StoryBuilder {
 
 func (b *StoryBuilder) Build(slug Slug) (Story, error) {
 	if slug.IsZero() {
-		return Story{}, NewStoryEmptySlugError()
+		return Story{}, NewEmptySlugError()
 	}
 
 	stry := Story{
@@ -180,18 +180,7 @@ func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder
 	return b
 }
 
-var (
-	errStoryEmptySlug   = errors.New("empty story slug")
-	errNoStoryScenarios = errors.New("no scenarios")
-)
-
-func NewStoryEmptySlugError() error {
-	return errStoryEmptySlug
-}
-
-func IsStoryEmptySlugError(err error) bool {
-	return errors.Is(err, errStoryEmptySlug)
-}
+var errNoStoryScenarios = errors.New("no scenarios")
 
 func NewNoStoryScenariosError() error {
 	return errNoStoryScenarios

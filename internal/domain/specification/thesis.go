@@ -94,7 +94,7 @@ func NewThesisBuilder() *ThesisBuilder {
 
 func (b *ThesisBuilder) Build(slug Slug) (Thesis, error) {
 	if slug.IsZero() {
-		return Thesis{}, NewThesisEmptySlugError()
+		return Thesis{}, NewEmptySlugError()
 	}
 
 	stage, stageErr := stageFromString(b.stage)
@@ -192,18 +192,7 @@ func (e notAllowedStageError) Error() string {
 	return fmt.Sprintf("stage `%s` not allowed", e.keyword)
 }
 
-var (
-	errThesisEmptySlug         = errors.New("empty thesis slug")
-	errNoThesisHTTPOrAssertion = errors.New("no HTTP or assertion")
-)
-
-func NewThesisEmptySlugError() error {
-	return errThesisEmptySlug
-}
-
-func IsThesisEmptySlugError(err error) bool {
-	return errors.Is(err, errThesisEmptySlug)
-}
+var errNoThesisHTTPOrAssertion = errors.New("no HTTP or assertion")
 
 func NewNoThesisHTTPOrAssertionError() error {
 	return errNoThesisHTTPOrAssertion
