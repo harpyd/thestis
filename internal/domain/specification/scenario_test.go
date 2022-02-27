@@ -152,14 +152,14 @@ func TestIsScenarioSlugAlreadyExistsError(t *testing.T) {
 	}{
 		{
 			Name: "scenario_slug_already_exists_error",
-			Err: specification.NewScenarioSlugAlreadyExistsError(
+			Err: specification.NewSlugAlreadyExistsError(
 				specification.NewScenarioSlug("story", "scenario"),
 			),
 			IsSameErr: true,
 		},
 		{
 			Name:      "another_error",
-			Err:       specification.NewThesisSlugAlreadyExistsError(specification.NewStorySlug("story")),
+			Err:       specification.NewSlugAlreadyExistsError(specification.NewStorySlug("story")),
 			IsSameErr: false,
 		},
 	}

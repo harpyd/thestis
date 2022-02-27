@@ -94,7 +94,7 @@ func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
 	for _, thsisFactory := range b.thesisFactories {
 		thsis, thsisErr := thsisFactory(slug)
 		if _, ok := scn.theses[thsis.Slug().Thesis()]; ok {
-			err = multierr.Append(err, NewThesisSlugAlreadyExistsError(thsis.Slug()))
+			err = multierr.Append(err, NewSlugAlreadyExistsError(thsis.Slug()))
 
 			continue
 		}
@@ -136,10 +136,6 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 }
 
 type (
-	scenarioSlugAlreadyExistsError struct {
-		slug string
-	}
-
 	buildScenarioError struct {
 		slug string
 		err  error
@@ -149,22 +145,6 @@ type (
 		slug string
 	}
 )
-
-func NewScenarioSlugAlreadyExistsError(slug Slug) error {
-	return errors.WithStack(scenarioSlugAlreadyExistsError{
-		slug: slug.String(),
-	})
-}
-
-func IsScenarioSlugAlreadyExistsError(err error) bool {
-	var aerr scenarioSlugAlreadyExistsError
-
-	return errors.As(err, &aerr)
-}
-
-func (e scenarioSlugAlreadyExistsError) Error() string {
-	return fmt.Sprintf("`%s` scenario already exists", e.slug)
-}
 
 func NewBuildScenarioError(err error, slug Slug) error {
 	if err == nil {

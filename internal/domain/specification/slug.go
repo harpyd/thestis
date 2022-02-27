@@ -1,6 +1,11 @@
 package specification
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/pkg/errors"
+)
 
 type SlugKind string
 
@@ -109,4 +114,68 @@ func replaceIfEmpty(s string) string {
 	}
 
 	return s
+}
+
+type (
+	storySlugAlreadyExistsError struct {
+		slug string
+	}
+
+	scenarioSlugAlreadyExistsError struct {
+		slug string
+	}
+
+	thesisSlugAlreadyExistsError struct {
+		slug string
+	}
+)
+
+func NewSlugAlreadyExistsError(slug Slug) error {
+	switch slug.Kind() {
+	case StorySlug:
+		return errors.WithStack(storySlugAlreadyExistsError{
+			slug: slug.String(),
+		})
+	case ScenarioSlug:
+		return errors.WithStack(scenarioSlugAlreadyExistsError{
+			slug: slug.String(),
+		})
+	case ThesisSlug:
+		return errors.WithStack(thesisSlugAlreadyExistsError{
+			slug: slug.String(),
+		})
+	case NoSlug:
+	}
+
+	return nil
+}
+
+func IsStorySlugAlreadyExistsError(err error) bool {
+	var target storySlugAlreadyExistsError
+
+	return errors.As(err, &target)
+}
+
+func (e storySlugAlreadyExistsError) Error() string {
+	return fmt.Sprintf("`%s` story already exists", e.slug)
+}
+
+func IsScenarioSlugAlreadyExistsError(err error) bool {
+	var target scenarioSlugAlreadyExistsError
+
+	return errors.As(err, &target)
+}
+
+func (e scenarioSlugAlreadyExistsError) Error() string {
+	return fmt.Sprintf("`%s` scenario already exists", e.slug)
+}
+
+func IsThesisSlugAlreadyExistsError(err error) bool {
+	var target thesisSlugAlreadyExistsError
+
+	return errors.As(err, &target)
+}
+
+func (e thesisSlugAlreadyExistsError) Error() string {
+	return fmt.Sprintf("`%s` thesis already exists", e.slug)
 }
