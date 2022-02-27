@@ -146,14 +146,21 @@ func TestSlugErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name  string
-		Err   error
-		IsErr func(err error) bool
+		Name     string
+		Err      error
+		IsErr    func(err error) bool
+		Reversed bool
 	}{
 		{
 			Name:  "empty_slug_error",
 			Err:   specification.NewEmptySlugError(),
 			IsErr: specification.IsEmptySlugError,
+		},
+		{
+			Name:     "NON_empty_slug_error",
+			Err:      errors.New("empty slug"),
+			IsErr:    specification.IsEmptySlugError,
+			Reversed: true,
 		},
 		{
 			Name: "story_slug_already_exists_error",
@@ -163,11 +170,23 @@ func TestSlugErrors(t *testing.T) {
 			IsErr: specification.IsStorySlugAlreadyExistsError,
 		},
 		{
+			Name:     "NON_story_slug_already_exists_error",
+			Err:      errors.New("story"),
+			IsErr:    specification.IsStorySlugAlreadyExistsError,
+			Reversed: true,
+		},
+		{
 			Name: "scenario_slug_already_exists_error",
 			Err: specification.NewSlugAlreadyExistsError(
 				specification.NewScenarioSlug("story", "scenario"),
 			),
 			IsErr: specification.IsScenarioSlugAlreadyExistsError,
+		},
+		{
+			Name:     "NON_scenario_slug_already_exists_error",
+			Err:      errors.New("scenario"),
+			IsErr:    specification.IsScenarioSlugAlreadyExistsError,
+			Reversed: true,
 		},
 		{
 			Name: "thesis_slug_already_exists_error",
@@ -177,11 +196,23 @@ func TestSlugErrors(t *testing.T) {
 			IsErr: specification.IsThesisSlugAlreadyExistsError,
 		},
 		{
+			Name:     "NON_thesis_slug_already_exists_error",
+			Err:      errors.New("thesis"),
+			IsErr:    specification.IsThesisSlugAlreadyExistsError,
+			Reversed: true,
+		},
+		{
 			Name: "no_such_story_slug_error",
 			Err: specification.NewNoSuchSlugError(
 				specification.NewStorySlug("story"),
 			),
 			IsErr: specification.IsNoSuchStorySlugError,
+		},
+		{
+			Name:     "NON_no_such_story_slug_error",
+			Err:      errors.New("no such story"),
+			IsErr:    specification.IsNoSuchStorySlugError,
+			Reversed: true,
 		},
 		{
 			Name: "no_such_scenario_slug_error",
@@ -191,11 +222,23 @@ func TestSlugErrors(t *testing.T) {
 			IsErr: specification.IsNoSuchScenarioSlugError,
 		},
 		{
+			Name:     "NON_no_such_scenario_slug_error",
+			Err:      errors.New("no such scenario"),
+			IsErr:    specification.IsNoSuchScenarioSlugError,
+			Reversed: true,
+		},
+		{
 			Name: "no_such_thesis_slug_error",
 			Err: specification.NewNoSuchSlugError(
 				specification.NewThesisSlug("story", "scenario", "thesis"),
 			),
 			IsErr: specification.IsNoSuchThesisSlugError,
+		},
+		{
+			Name:     "NON_no_such_thesis_slug_error",
+			Err:      errors.New("no such thesis"),
+			IsErr:    specification.IsNoSuchThesisSlugError,
+			Reversed: true,
 		},
 		{
 			Name: "build_story_error",
@@ -206,12 +249,24 @@ func TestSlugErrors(t *testing.T) {
 			IsErr: specification.IsBuildStoryError,
 		},
 		{
+			Name:     "NON_build_story_error",
+			Err:      errors.New("foo"),
+			IsErr:    specification.IsBuildStoryError,
+			Reversed: true,
+		},
+		{
 			Name: "build_scenario_error",
 			Err: specification.NewBuildSluggedError(
 				errors.New("bar"),
 				specification.NewScenarioSlug("story", "scenario"),
 			),
 			IsErr: specification.IsBuildScenarioError,
+		},
+		{
+			Name:     "NON_build_scenario_error",
+			Err:      errors.New("bar"),
+			IsErr:    specification.IsBuildScenarioError,
+			Reversed: true,
 		},
 		{
 			Name: "build_thesis_error",
@@ -221,6 +276,12 @@ func TestSlugErrors(t *testing.T) {
 			),
 			IsErr: specification.IsBuildThesisError,
 		},
+		{
+			Name:     "NON_build_thesis_error",
+			Err:      errors.New("baz"),
+			IsErr:    specification.IsBuildThesisError,
+			Reversed: true,
+		},
 	}
 
 	for _, c := range testCases {
@@ -228,6 +289,12 @@ func TestSlugErrors(t *testing.T) {
 
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
+
+			if c.Reversed {
+				require.False(t, c.IsErr(c.Err))
+
+				return
+			}
 
 			require.True(t, c.IsErr(c.Err))
 		})
