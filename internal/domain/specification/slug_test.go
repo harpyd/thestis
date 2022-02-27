@@ -3,6 +3,7 @@ package specification_test
 import (
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/specification"
@@ -137,6 +138,98 @@ func TestSlugIsValid(t *testing.T) {
 			t.Run("kind", func(t *testing.T) {
 				require.Equal(t, c.ExpectedKind, c.GivenSlug.Kind())
 			})
+		})
+	}
+}
+
+func TestSlugErrors(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name  string
+		Err   error
+		IsErr func(err error) bool
+	}{
+		{
+			Name:  "empty_slug_error",
+			Err:   specification.NewEmptySlugError(),
+			IsErr: specification.IsEmptySlugError,
+		},
+		{
+			Name: "story_slug_already_exists_error",
+			Err: specification.NewSlugAlreadyExistsError(
+				specification.NewStorySlug("story"),
+			),
+			IsErr: specification.IsStorySlugAlreadyExistsError,
+		},
+		{
+			Name: "scenario_slug_already_exists_error",
+			Err: specification.NewSlugAlreadyExistsError(
+				specification.NewScenarioSlug("story", "scenario"),
+			),
+			IsErr: specification.IsScenarioSlugAlreadyExistsError,
+		},
+		{
+			Name: "thesis_slug_already_exists_error",
+			Err: specification.NewSlugAlreadyExistsError(
+				specification.NewThesisSlug("story", "scenario", "thesis"),
+			),
+			IsErr: specification.IsThesisSlugAlreadyExistsError,
+		},
+		{
+			Name: "no_such_story_slug_error",
+			Err: specification.NewNoSuchSlugError(
+				specification.NewStorySlug("story"),
+			),
+			IsErr: specification.IsNoSuchStorySlugError,
+		},
+		{
+			Name: "no_such_scenario_slug_error",
+			Err: specification.NewNoSuchSlugError(
+				specification.NewScenarioSlug("story", "scenario"),
+			),
+			IsErr: specification.IsNoSuchScenarioSlugError,
+		},
+		{
+			Name: "no_such_thesis_slug_error",
+			Err: specification.NewNoSuchSlugError(
+				specification.NewThesisSlug("story", "scenario", "thesis"),
+			),
+			IsErr: specification.IsNoSuchThesisSlugError,
+		},
+		{
+			Name: "build_story_error",
+			Err: specification.NewBuildSluggedError(
+				errors.New("foo"),
+				specification.NewStorySlug("story"),
+			),
+			IsErr: specification.IsBuildStoryError,
+		},
+		{
+			Name: "build_scenario_error",
+			Err: specification.NewBuildSluggedError(
+				errors.New("bar"),
+				specification.NewScenarioSlug("story", "scenario"),
+			),
+			IsErr: specification.IsBuildScenarioError,
+		},
+		{
+			Name: "build_thesis_error",
+			Err: specification.NewBuildSluggedError(
+				errors.New("baz"),
+				specification.NewThesisSlug("story", "scenario", "thesis"),
+			),
+			IsErr: specification.IsBuildThesisError,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }

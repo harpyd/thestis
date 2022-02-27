@@ -235,7 +235,7 @@ func (e noSuchStorySlugError) Error() string {
 	return fmt.Sprintf("no such story `%s`", e.slug)
 }
 
-func IsNoSuchScenarioError(err error) bool {
+func IsNoSuchScenarioSlugError(err error) bool {
 	var target noSuchScenarioSlugError
 
 	return errors.As(err, &target)
@@ -245,7 +245,7 @@ func (e noSuchScenarioSlugError) Error() string {
 	return fmt.Sprintf("no such scenario `%s`", e.slug)
 }
 
-func IsNoSuchThesisError(err error) bool {
+func IsNoSuchThesisSlugError(err error) bool {
 	var target noSuchThesisSlugError
 
 	return errors.As(err, &target)
