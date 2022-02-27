@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"go.uber.org/multierr"
 )
 
 type SlugKind string
@@ -242,4 +243,126 @@ func IsNoSuchThesisError(err error) bool {
 
 func (e noSuchThesisSlugError) Error() string {
 	return fmt.Sprintf("no such thesis `%s`", e.slug)
+}
+
+type (
+	buildStoryError struct {
+		slug string
+		err  error
+	}
+
+	buildScenarioError struct {
+		slug string
+		err  error
+	}
+
+	buildThesisError struct {
+		slug string
+		err  error
+	}
+)
+
+func NewBuildSluggedError(err error, slug Slug) error {
+	if err == nil {
+		return nil
+	}
+
+	switch slug.Kind() {
+	case StorySlug:
+		return errors.WithStack(buildStoryError{
+			slug: slug.String(),
+			err:  err,
+		})
+	case ScenarioSlug:
+		return errors.WithStack(buildScenarioError{
+			slug: slug.String(),
+			err:  err,
+		})
+	case ThesisSlug:
+		return errors.WithStack(buildThesisError{
+			slug: slug.String(),
+			err:  err,
+		})
+	case NoSlug:
+	}
+
+	return nil
+}
+
+func IsBuildStoryError(err error) bool {
+	var target buildStoryError
+
+	return errors.As(err, &target)
+}
+
+func (e buildStoryError) Cause() error {
+	return e.err
+}
+
+func (e buildStoryError) Unwrap() error {
+	return e.err
+}
+
+func (e buildStoryError) NestedErrors() []error {
+	return multierr.Errors(e.err)
+}
+
+func (e buildStoryError) CommonError() string {
+	return fmt.Sprintf("story `%s`", e.slug)
+}
+
+func (e buildStoryError) Error() string {
+	return fmt.Sprintf("story `%s`: %s", e.slug, e.err)
+}
+
+func IsBuildScenarioError(err error) bool {
+	var target buildScenarioError
+
+	return errors.As(err, &target)
+}
+
+func (e buildScenarioError) Cause() error {
+	return e.err
+}
+
+func (e buildScenarioError) Unwrap() error {
+	return e.err
+}
+
+func (e buildScenarioError) NestedErrors() []error {
+	return multierr.Errors(e.err)
+}
+
+func (e buildScenarioError) CommonError() string {
+	return fmt.Sprintf("scenario `%s`", e.slug)
+}
+
+func (e buildScenarioError) Error() string {
+	return fmt.Sprintf("scenario `%s`: %s", e.slug, e.err)
+}
+
+func IsBuildThesisError(err error) bool {
+	var berr buildThesisError
+
+	return errors.As(err, &berr)
+}
+
+func (e buildThesisError) Cause() error {
+	return e.err
+}
+
+func (e buildThesisError) Unwrap() error {
+	return e.err
+}
+
+func (e buildThesisError) NestedErrors() []error {
+	return multierr.Errors(e.err)
+}
+
+func (e buildThesisError) CommonError() string {
+	return fmt.Sprintf("thesis `%s`", e.slug)
+}
+
+func (e buildThesisError) Error() string {
+	return fmt.Sprintf("thesis `%s`: %s", e.slug, e.err)
 }

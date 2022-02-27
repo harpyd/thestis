@@ -266,7 +266,7 @@ func TestIsBuildThesisError(t *testing.T) {
 	}{
 		{
 			Name: "build_thesis_error",
-			Err: specification.NewBuildThesisError(
+			Err: specification.NewBuildSluggedError(
 				errors.New("pew"),
 				specification.NewThesisSlug("foo", "bar", "baz"),
 			),

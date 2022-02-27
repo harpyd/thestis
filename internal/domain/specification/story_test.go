@@ -222,7 +222,7 @@ func TestIsBuildStoryError(t *testing.T) {
 	}{
 		{
 			Name: "build_story_error",
-			Err: specification.NewBuildStoryError(
+			Err: specification.NewBuildSluggedError(
 				errors.New("boom"),
 				specification.NewStorySlug("doing"),
 			),
@@ -230,7 +230,7 @@ func TestIsBuildStoryError(t *testing.T) {
 		},
 		{
 			Name: "another_error",
-			Err: specification.NewBuildScenarioError(
+			Err: specification.NewBuildSluggedError(
 				errors.New("boom"),
 				specification.NewScenarioSlug("story", "scenario"),
 			),

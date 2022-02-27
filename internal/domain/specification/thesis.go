@@ -124,7 +124,7 @@ func (b *ThesisBuilder) Build(slug Slug) (Thesis, error) {
 		)
 	}
 
-	return thsis, NewBuildThesisError(multierr.Combine(stageErr, err), slug)
+	return thsis, NewBuildSluggedError(multierr.Combine(stageErr, err), slug)
 }
 
 func (b *ThesisBuilder) ErrlessBuild(slug Slug) Thesis {
@@ -168,52 +168,8 @@ func (b *ThesisBuilder) WithHTTP(buildFn func(b *HTTPBuilder)) *ThesisBuilder {
 	return b
 }
 
-type (
-	buildThesisError struct {
-		slug string
-		err  error
-	}
-
-	notAllowedStageError struct {
-		keyword string
-	}
-)
-
-func NewBuildThesisError(err error, slug Slug) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(buildThesisError{
-		slug: slug.String(),
-		err:  err,
-	})
-}
-
-func IsBuildThesisError(err error) bool {
-	var berr buildThesisError
-
-	return errors.As(err, &berr)
-}
-
-func (e buildThesisError) Cause() error {
-	return e.err
-}
-
-func (e buildThesisError) Unwrap() error {
-	return e.err
-}
-
-func (e buildThesisError) NestedErrors() []error {
-	return multierr.Errors(e.err)
-}
-
-func (e buildThesisError) CommonError() string {
-	return fmt.Sprintf("thesis `%s`", e.slug)
-}
-
-func (e buildThesisError) Error() string {
-	return fmt.Sprintf("thesis `%s`: %s", e.slug, e.err)
+type notAllowedStageError struct {
+	keyword string
 }
 
 func NewNotAllowedStageError(keyword string) error {
