@@ -215,8 +215,11 @@ func TestIsBuildScenarioError(t *testing.T) {
 		IsSameErr bool
 	}{
 		{
-			Name:      "build_scenario_error",
-			Err:       specification.NewBuildScenarioError(errors.New("wrong"), specification.NewScenarioSlug("story", "scenario")),
+			Name: "build_scenario_error",
+			Err: specification.NewBuildSluggedError(
+				errors.New("wrong"),
+				specification.NewScenarioSlug("story", "scenario"),
+			),
 			IsSameErr: true,
 		},
 		{

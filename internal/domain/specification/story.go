@@ -1,8 +1,6 @@
 package specification
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 )
@@ -112,7 +110,7 @@ func (b *StoryBuilder) Build(slug Slug) (Story, error) {
 	}
 
 	if len(b.scenarioFactories) == 0 {
-		return stry, NewBuildStoryError(NewNoStoryScenariosError(), slug)
+		return stry, NewBuildSluggedError(NewNoStoryScenariosError(), slug)
 	}
 
 	var err error
@@ -130,7 +128,7 @@ func (b *StoryBuilder) Build(slug Slug) (Story, error) {
 		stry.scenarios[scn.Slug().Scenario()] = scn
 	}
 
-	return stry, NewBuildStoryError(err, slug)
+	return stry, NewBuildSluggedError(err, slug)
 }
 
 func (b *StoryBuilder) ErrlessBuild(slug Slug) Story {
@@ -180,48 +178,6 @@ func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder
 	})
 
 	return b
-}
-
-type buildStoryError struct {
-	slug string
-	err  error
-}
-
-func NewBuildStoryError(err error, slug Slug) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(buildStoryError{
-		slug: slug.String(),
-		err:  err,
-	})
-}
-
-func IsBuildStoryError(err error) bool {
-	var berr buildStoryError
-
-	return errors.As(err, &berr)
-}
-
-func (e buildStoryError) Cause() error {
-	return e.err
-}
-
-func (e buildStoryError) Unwrap() error {
-	return e.err
-}
-
-func (e buildStoryError) NestedErrors() []error {
-	return multierr.Errors(e.err)
-}
-
-func (e buildStoryError) CommonError() string {
-	return fmt.Sprintf("story `%s`", e.slug)
-}
-
-func (e buildStoryError) Error() string {
-	return fmt.Sprintf("story `%s`: %s", e.slug, e.err)
 }
 
 var (

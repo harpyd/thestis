@@ -1,8 +1,6 @@
 package specification
 
 import (
-	"fmt"
-
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
 )
@@ -91,7 +89,7 @@ func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
 	}
 
 	if len(b.thesisFactories) == 0 {
-		return scn, NewBuildScenarioError(NewNoScenarioThesesError(), slug)
+		return scn, NewBuildSluggedError(NewNoScenarioThesesError(), slug)
 	}
 
 	var err error
@@ -109,7 +107,7 @@ func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
 		scn.theses[thsis.Slug().Thesis()] = thsis
 	}
 
-	return scn, NewBuildScenarioError(err, slug)
+	return scn, NewBuildSluggedError(err, slug)
 }
 
 func (b *ScenarioBuilder) ErrlessBuild(slug Slug) Scenario {
@@ -138,48 +136,6 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 	})
 
 	return b
-}
-
-type buildScenarioError struct {
-	slug string
-	err  error
-}
-
-func NewBuildScenarioError(err error, slug Slug) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(buildScenarioError{
-		slug: slug.String(),
-		err:  err,
-	})
-}
-
-func IsBuildScenarioError(err error) bool {
-	var berr buildScenarioError
-
-	return errors.As(err, &berr)
-}
-
-func (e buildScenarioError) Cause() error {
-	return e.err
-}
-
-func (e buildScenarioError) Unwrap() error {
-	return e.err
-}
-
-func (e buildScenarioError) NestedErrors() []error {
-	return multierr.Errors(e.err)
-}
-
-func (e buildScenarioError) CommonError() string {
-	return fmt.Sprintf("scenario `%s`", e.slug)
-}
-
-func (e buildScenarioError) Error() string {
-	return fmt.Sprintf("scenario `%s`: %s", e.slug, e.err)
 }
 
 var (
