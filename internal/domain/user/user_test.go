@@ -162,23 +162,47 @@ func TestCanSeePerformance(t *testing.T) {
 	}
 }
 
-func TestIsCantSeeTestCampaignError(t *testing.T) {
+func TestUserErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
+		Name     string
+		Err      error
+		IsErr    func(err error) bool
+		Reversed bool
 	}{
 		{
-			Name:      "cant_see_test_campaign_error",
-			Err:       user.NewCantSeeTestCampaignError("user-id", "owner-id"),
-			IsSameErr: true,
+			Name:  "cant_see_test_campaign_error",
+			Err:   user.NewCantSeeTestCampaignError("user-id", "owner-id"),
+			IsErr: user.IsCantSeeTestCampaignError,
 		},
 		{
-			Name:      "another_error",
-			Err:       user.NewCantSeeSpecificationError("user-id", "owner-id"),
-			IsSameErr: false,
+			Name:     "NON_cant_see_test_campaign_error",
+			Err:      user.NewCantSeePerformanceError("user-id", "owner-id"),
+			IsErr:    user.IsCantSeeTestCampaignError,
+			Reversed: true,
+		},
+		{
+			Name:  "cant_see_specification_error",
+			Err:   user.NewCantSeeSpecificationError("user-id", "owner-id"),
+			IsErr: user.IsCantSeeSpecificationError,
+		},
+		{
+			Name:     "NON_cant_see_specification_error",
+			Err:      user.NewCantSeeTestCampaignError("user-id", "owner-id"),
+			IsErr:    user.IsCantSeeSpecificationError,
+			Reversed: true,
+		},
+		{
+			Name:  "cant_see_performance_error",
+			Err:   user.NewCantSeePerformanceError("user-id", "owner-id"),
+			IsErr: user.IsCantSeePerformanceError,
+		},
+		{
+			Name:     "NON_cant_see_performance_error",
+			Err:      user.NewCantSeeSpecificationError("user-id", "owner-id"),
+			IsErr:    user.IsCantSeePerformanceError,
+			Reversed: true,
 		},
 	}
 
@@ -188,38 +212,13 @@ func TestIsCantSeeTestCampaignError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, user.IsCantSeeTestCampaignError(c.Err))
-		})
-	}
-}
+			if c.Reversed {
+				require.False(t, c.IsErr(c.Err))
 
-func TestIsCantSeeSpecificationError(t *testing.T) {
-	t.Parallel()
+				return
+			}
 
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "cant_see_specification_error",
-			Err:       user.NewCantSeeSpecificationError("user-id", "owner-id"),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       user.NewCantSeeTestCampaignError("user-id", "owner-id"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, user.IsCantSeeSpecificationError(c.Err))
+			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }
