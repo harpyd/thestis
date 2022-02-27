@@ -135,9 +135,9 @@ func NewBuildAssertionError(err error) error {
 }
 
 func IsBuildAssertionError(err error) bool {
-	var berr buildAssertionError
+	var target buildAssertionError
 
-	return errors.As(err, &berr)
+	return errors.As(err, &target)
 }
 
 func (e buildAssertionError) Cause() error {
@@ -167,9 +167,9 @@ func NewNotAllowedAssertionMethodError(method string) error {
 }
 
 func IsNotAllowedAssertionMethodError(err error) bool {
-	var nerr notAllowedAssertionMethodError
+	var target notAllowedAssertionMethodError
 
-	return errors.As(err, &nerr)
+	return errors.As(err, &target)
 }
 
 func (e notAllowedAssertionMethodError) Error() string {
