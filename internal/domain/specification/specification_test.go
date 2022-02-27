@@ -143,23 +143,36 @@ func TestBuilder_WithStory_when_already_exists(t *testing.T) {
 	require.True(t, specification.IsStorySlugAlreadyExistsError(err))
 }
 
-func TestIsBuildSpecificationError(t *testing.T) {
+func TestSpecificationErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
+		Name     string
+		Err      error
+		IsErr    func(err error) bool
+		Reversed bool
 	}{
 		{
-			Name:      "build_specification_error",
-			Err:       specification.NewBuildSpecificationError(errors.New("badaboom")),
-			IsSameErr: true,
+			Name:  "build_specification_error",
+			Err:   specification.NewBuildSpecificationError(errors.New("badaboom")),
+			IsErr: specification.IsBuildSpecificationError,
 		},
 		{
-			Name:      "another_error",
-			Err:       specification.NewNoSuchSlugError(specification.NewStorySlug("slug")),
-			IsSameErr: false,
+			Name:     "NON_build_specification_error",
+			Err:      errors.New("badaboom"),
+			IsErr:    specification.IsBuildSpecificationError,
+			Reversed: true,
+		},
+		{
+			Name:  "no_specification_stories_error",
+			Err:   specification.NewNoSpecificationStoriesError(),
+			IsErr: specification.IsNoSpecificationStoriesError,
+		},
+		{
+			Name:     "NON_no_specification_stories_error",
+			Err:      errors.New("another"),
+			IsErr:    specification.IsNoSpecificationStoriesError,
+			Reversed: true,
 		},
 	}
 
@@ -169,38 +182,13 @@ func TestIsBuildSpecificationError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, specification.IsBuildSpecificationError(c.Err))
-		})
-	}
-}
+			if c.Reversed {
+				require.False(t, c.IsErr(c.Err))
 
-func TestIsNoSpecificationStoriesError(t *testing.T) {
-	t.Parallel()
+				return
+			}
 
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "no_specification_stories_error",
-			Err:       specification.NewNoSpecificationStoriesError(),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       errors.New("another"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, specification.IsNoSpecificationStoriesError(c.Err))
+			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }
