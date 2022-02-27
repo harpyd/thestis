@@ -226,9 +226,9 @@ func NewBuildSpecificationError(err error) error {
 }
 
 func IsBuildSpecificationError(err error) bool {
-	var berr buildSpecificationError
+	var target buildSpecificationError
 
-	return errors.As(err, &berr)
+	return errors.As(err, &target)
 }
 
 func (e buildSpecificationError) Cause() error {

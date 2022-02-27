@@ -322,9 +322,9 @@ func NewBuildHTTPError(err error) error {
 }
 
 func IsBuildHTTPError(err error) bool {
-	var berr buildHTTPError
+	var target buildHTTPError
 
-	return errors.As(err, &berr)
+	return errors.As(err, &target)
 }
 
 func (e buildHTTPError) Cause() error {
@@ -358,9 +358,9 @@ func NewBuildHTTPRequestError(err error) error {
 }
 
 func IsBuildHTTPRequestError(err error) bool {
-	var berr buildHTTPRequestError
+	var target buildHTTPRequestError
 
-	return errors.As(err, &berr)
+	return errors.As(err, &target)
 }
 
 func (e buildHTTPRequestError) Cause() error {
@@ -394,9 +394,9 @@ func NewBuildHTTPResponseError(err error) error {
 }
 
 func IsBuildHTTPResponseError(err error) bool {
-	var berr buildHTTPResponseError
+	var target buildHTTPResponseError
 
-	return errors.As(err, &berr)
+	return errors.As(err, &target)
 }
 
 func (e buildHTTPResponseError) Cause() error {
@@ -426,9 +426,9 @@ func NewNotAllowedContentTypeError(contentType string) error {
 }
 
 func IsNotAllowedContentTypeError(err error) bool {
-	var nerr notAllowedContentTypeError
+	var target notAllowedContentTypeError
 
-	return errors.As(err, &nerr)
+	return errors.As(err, &target)
 }
 
 func (e notAllowedContentTypeError) Error() string {
@@ -442,9 +442,9 @@ func NewNotAllowedHTTPMethodError(method string) error {
 }
 
 func IsNotAllowedHTTPMethodError(err error) bool {
-	var nerr notAllowedHTTPMethodError
+	var target notAllowedHTTPMethodError
 
-	return errors.As(err, &nerr)
+	return errors.As(err, &target)
 }
 
 func (e notAllowedHTTPMethodError) Error() string {

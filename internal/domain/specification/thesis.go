@@ -179,9 +179,9 @@ func NewNotAllowedStageError(keyword string) error {
 }
 
 func IsNotAllowedStageError(err error) bool {
-	var nerr notAllowedStageError
+	var target notAllowedStageError
 
-	return errors.As(err, &nerr)
+	return errors.As(err, &target)
 }
 
 func (e notAllowedStageError) Error() string {
