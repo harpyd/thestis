@@ -76,23 +76,36 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestIsEmptyIDError(t *testing.T) {
+func TestTestCampaignErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
+		Name     string
+		Err      error
+		IsErr    func(err error) bool
+		Reversed bool
 	}{
 		{
-			Name:      "empty_id_error",
-			Err:       testcampaign.NewEmptyIDError(),
-			IsSameErr: true,
+			Name:  "empty_id_error",
+			Err:   testcampaign.NewEmptyIDError(),
+			IsErr: testcampaign.IsEmptyIDError,
 		},
 		{
-			Name:      "another_error",
-			Err:       errors.New("some err"),
-			IsSameErr: false,
+			Name:     "NON_empty_id_error",
+			Err:      errors.New("empty id"),
+			IsErr:    testcampaign.IsEmptyIDError,
+			Reversed: true,
+		},
+		{
+			Name:  "empty_user_id_error",
+			Err:   testcampaign.NewEmptyOwnerIDError(),
+			IsErr: testcampaign.IsEmptyOwnerIDError,
+		},
+		{
+			Name:     "NON_empty_user_id_error",
+			Err:      errors.New("empty owner id"),
+			IsErr:    testcampaign.IsEmptyOwnerIDError,
+			Reversed: true,
 		},
 	}
 
@@ -102,38 +115,13 @@ func TestIsEmptyIDError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, testcampaign.IsEmptyIDError(c.Err))
-		})
-	}
-}
+			if c.Reversed {
+				require.False(t, c.IsErr(c.Err))
 
-func TestIsEmptyOwnerIDError(t *testing.T) {
-	t.Parallel()
+				return
+			}
 
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "empty_user_id_error",
-			Err:       testcampaign.NewEmptyOwnerIDError(),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       errors.New("another error"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, testcampaign.IsEmptyOwnerIDError(c.Err))
+			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }
