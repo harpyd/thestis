@@ -9,23 +9,25 @@ import (
 	"github.com/harpyd/thestis/internal/app"
 )
 
-func TestIsParsingError(t *testing.T) {
+func TestParserErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
+		Name     string
+		Err      error
+		IsErr    func(err error) bool
+		Reversed bool
 	}{
 		{
-			Name:      "parsing_error",
-			Err:       app.NewParsingError(errors.New("decoding failed")),
-			IsSameErr: true,
+			Name:  "parsing_error",
+			Err:   app.NewParsingError(errors.New("decoding failed")),
+			IsErr: app.IsParsingError,
 		},
 		{
-			Name:      "another_error",
-			Err:       errors.New("decoding failed"),
-			IsSameErr: false,
+			Name:     "NON_parsing_error",
+			Err:      errors.New("decoding failed"),
+			IsErr:    app.IsParsingError,
+			Reversed: true,
 		},
 	}
 
@@ -35,7 +37,13 @@ func TestIsParsingError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, app.IsParsingError(c.Err))
+			if c.Reversed {
+				require.False(t, c.IsErr(c.Err))
+
+				return
+			}
+
+			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }
