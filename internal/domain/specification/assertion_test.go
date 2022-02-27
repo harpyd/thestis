@@ -103,23 +103,36 @@ func mapAssertsToExpected(asserts []specification.Assert) []interface{} {
 	return actual
 }
 
-func TestIsBuildAssertionError(t *testing.T) {
+func TestAssertionErrors(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
+		Name     string
+		Err      error
+		IsErr    func(err error) bool
+		Reversed bool
 	}{
 		{
-			Name:      "build_assertion_error",
-			Err:       specification.NewBuildAssertionError(errors.New("some")),
-			IsSameErr: true,
+			Name:  "build_assertion_error",
+			Err:   specification.NewBuildAssertionError(errors.New("foo")),
+			IsErr: specification.IsBuildAssertionError,
 		},
 		{
-			Name:      "another_error",
-			Err:       errors.New("some"),
-			IsSameErr: false,
+			Name:     "NON_build_assertion_error",
+			Err:      errors.New("foo"),
+			IsErr:    specification.IsBuildAssertionError,
+			Reversed: true,
+		},
+		{
+			Name:  "not_allowed_assertion_method_error",
+			Err:   specification.NewNotAllowedAssertionMethodError("SSD"),
+			IsErr: specification.IsNotAllowedAssertionMethodError,
+		},
+		{
+			Name:     "NON_not_allowed_assertion_method_error",
+			Err:      errors.New("SSD"),
+			IsErr:    specification.IsNotAllowedAssertionMethodError,
+			Reversed: true,
 		},
 	}
 
@@ -129,38 +142,13 @@ func TestIsBuildAssertionError(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.IsSameErr, specification.IsBuildAssertionError(c.Err))
-		})
-	}
-}
+			if c.Reversed {
+				require.False(t, c.IsErr(c.Err))
 
-func TestIsNotAllowedAssertionMethodError(t *testing.T) {
-	t.Parallel()
+				return
+			}
 
-	testCases := []struct {
-		Name      string
-		Err       error
-		IsSameErr bool
-	}{
-		{
-			Name:      "not_allowed_assertion_method_error",
-			Err:       specification.NewNotAllowedAssertionMethodError("jzonpad"),
-			IsSameErr: true,
-		},
-		{
-			Name:      "another_error",
-			Err:       specification.NewNotAllowedStageError("jzonpad"),
-			IsSameErr: false,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			require.Equal(t, c.IsSameErr, specification.IsNotAllowedAssertionMethodError(c.Err))
+			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }
