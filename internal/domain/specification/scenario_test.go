@@ -1,6 +1,7 @@
 package specification_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -9,33 +10,26 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-func TestScenarioBuilder_Build_no_theses(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewScenarioBuilder()
-
-	_, err := builder.Build(specification.NewScenarioSlug("story", "scenario"))
-
-	require.True(t, specification.IsNoScenarioThesesError(err))
-}
-
-func TestScenarioBuilder_Build_slug(t *testing.T) {
+func TestBuildScenario(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		Name        string
-		Slug        specification.Slug
+		GivenSlug   specification.Slug
 		ShouldBeErr bool
+		IsErr       func(err error) bool
 	}{
 		{
-			Name:        "build_with_slug",
-			Slug:        specification.NewScenarioSlug("story", "scenario"),
+			Name:        "foo.bar",
+			GivenSlug:   specification.NewScenarioSlug("foo", "bar"),
 			ShouldBeErr: false,
+			IsErr:       specification.IsEmptySlugError,
 		},
 		{
-			Name:        "dont_build_with_empty_slug",
-			Slug:        specification.Slug{},
+			Name:        "empty_slug",
+			GivenSlug:   specification.Slug{},
 			ShouldBeErr: true,
+			IsErr:       specification.IsEmptySlugError,
 		},
 	}
 
@@ -47,120 +41,158 @@ func TestScenarioBuilder_Build_slug(t *testing.T) {
 
 			builder := specification.NewScenarioBuilder()
 
+			scenario, err := builder.Build(c.GivenSlug)
+
 			if c.ShouldBeErr {
-				_, err := builder.Build(c.Slug)
-				require.True(t, specification.IsEmptySlugError(err))
+				require.True(t, c.IsErr(err))
 
 				return
 			}
 
-			scenario := builder.ErrlessBuild(c.Slug)
+			require.False(t, c.IsErr(err))
 
-			require.Equal(t, c.Slug, scenario.Slug())
+			require.Equal(t, c.GivenSlug, scenario.Slug())
 		})
 	}
 }
 
-func TestScenarioBuilder_WithDescription(t *testing.T) {
+func TestBuildScenarioWithDescription(t *testing.T) {
 	t.Parallel()
 
-	builder := specification.NewScenarioBuilder()
-	builder.WithDescription("description")
-
-	scenario := builder.ErrlessBuild(specification.NewScenarioSlug("someStory", "someScenario"))
-
-	require.Equal(t, "description", scenario.Description())
-}
-
-func TestScenarioBuilder_WithThesis(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewScenarioBuilder()
-	builder.WithThesis("getBeer", func(b *specification.ThesisBuilder) {
-		b.WithStatement("when", "get beer")
-		b.WithHTTP(func(b *specification.HTTPBuilder) {
-			b.WithRequest(func(b *specification.HTTPRequestBuilder) {
-				b.WithMethod("GET")
-				b.WithURL("https://api/v1/products")
-			})
-			b.WithResponse(func(b *specification.HTTPResponseBuilder) {
-				b.WithAllowedCodes([]int{200})
-				b.WithAllowedContentType("application/json")
-			})
-		})
-	})
-	builder.WithThesis("checkBeer", func(b *specification.ThesisBuilder) {
-		b.WithStatement("then", "check beer")
-		b.WithAssertion(func(b *specification.AssertionBuilder) {
-			b.WithMethod("JSONPATH")
-			b.WithAssert("getSomeBody.response.body.product", "beer")
-		})
-	})
-
-	scenario := builder.ErrlessBuild(specification.NewScenarioSlug("story", "someScenario"))
-
-	expectedGetBeerThesis := specification.NewThesisBuilder().
-		WithStatement("when", "get beer").
-		WithHTTP(func(b *specification.HTTPBuilder) {
-			b.WithRequest(func(b *specification.HTTPRequestBuilder) {
-				b.WithMethod("GET")
-				b.WithURL("https://api/v1/products")
-			})
-			b.WithResponse(func(b *specification.HTTPResponseBuilder) {
-				b.WithAllowedCodes([]int{200})
-				b.WithAllowedContentType("application/json")
-			})
-		}).
-		ErrlessBuild(specification.NewThesisSlug("story", "someScenario", "getBeer"))
-
-	actualGetBeerThesis, ok := scenario.Thesis("getBeer")
-	require.True(t, ok)
-	require.Equal(t, expectedGetBeerThesis, actualGetBeerThesis)
-
-	expectedCheckBeerThesis := specification.NewThesisBuilder().
-		WithStatement("then", "check beer").
-		WithAssertion(func(b *specification.AssertionBuilder) {
-			b.WithMethod("jsonpath")
-			b.WithAssert("getSomeBody.response.body.product", "beer")
-		}).
-		ErrlessBuild(specification.NewThesisSlug("story", "someScenario", "checkBeer"))
-
-	actualCheckBeerThesis, ok := scenario.Thesis("checkBeer")
-	require.True(t, ok)
-	require.Equal(t, expectedCheckBeerThesis, actualCheckBeerThesis)
-}
-
-func TestScenarioBuilder_WithThesis_when_already_exists(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewScenarioBuilder()
-	builder.WithThesis("thesis", func(b *specification.ThesisBuilder) {})
-	builder.WithThesis("thesis", func(b *specification.ThesisBuilder) {})
-
-	_, err := builder.Build(specification.NewScenarioSlug("someStory", "scenario"))
-
-	require.True(t, specification.IsThesisSlugAlreadyExistsError(err))
-}
-
-func TestScenario_Theses(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewScenarioBuilder()
-	builder.WithThesis("foo", func(b *specification.ThesisBuilder) {})
-	builder.WithThesis("bar", func(b *specification.ThesisBuilder) {})
-
-	scenario := builder.ErrlessBuild(specification.NewScenarioSlug("baz", "bad"))
-
-	expected := []specification.Thesis{
-		specification.NewThesisBuilder().ErrlessBuild(
-			specification.NewThesisSlug("baz", "bad", "foo"),
-		),
-		specification.NewThesisBuilder().ErrlessBuild(
-			specification.NewThesisSlug("baz", "bad", "bar"),
-		),
+	testCases := []struct {
+		Prepare             func(b *specification.ScenarioBuilder)
+		ExpectedDescription string
+	}{
+		{
+			Prepare:             func(b *specification.ScenarioBuilder) {},
+			ExpectedDescription: "",
+		},
+		{
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithDescription("description")
+			},
+			ExpectedDescription: "description",
+		},
 	}
 
-	require.Equal(t, expected, scenario.Theses())
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			slug := specification.NewScenarioSlug("foo", "bar")
+
+			description := errlessBuildScenario(t, slug, c.Prepare).Description()
+
+			require.Equal(t, c.ExpectedDescription, description)
+		})
+	}
+}
+
+func TestBuildScenarioWithTheses(t *testing.T) {
+	t.Parallel()
+
+	scenarioSlug := specification.NewScenarioSlug("foo", "bar")
+
+	testCases := []struct {
+		Name           string
+		Prepare        func(b *specification.ScenarioBuilder)
+		ExpectedTheses []specification.Thesis
+		ShouldBeErr    bool
+		IsErr          func(err error) bool
+	}{
+		{
+			Name:        "no_theses",
+			Prepare:     func(b *specification.ScenarioBuilder) {},
+			ShouldBeErr: true,
+			IsErr:       specification.IsNoScenarioThesesError,
+		},
+		{
+			Name: "two_theses",
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("baz", func(b *specification.ThesisBuilder) {})
+				b.WithThesis("bad", func(b *specification.ThesisBuilder) {})
+			},
+			ExpectedTheses: []specification.Thesis{
+				specification.NewThesisBuilder().ErrlessBuild(
+					specification.NewThesisSlug(scenarioSlug.Story(), scenarioSlug.Scenario(), "baz"),
+				),
+				specification.NewThesisBuilder().ErrlessBuild(
+					specification.NewThesisSlug(scenarioSlug.Story(), scenarioSlug.Scenario(), "bad"),
+				),
+			},
+			ShouldBeErr: false,
+			IsErr:       specification.IsNoScenarioThesesError,
+		},
+		{
+			Name: "thesis_already_exists",
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("baz", func(b *specification.ThesisBuilder) {})
+				b.WithThesis("baz", func(b *specification.ThesisBuilder) {})
+			},
+			ShouldBeErr: true,
+			IsErr:       specification.IsThesisSlugAlreadyExistsError,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			builder := specification.NewScenarioBuilder()
+
+			c.Prepare(builder)
+
+			scenario, err := builder.Build(scenarioSlug)
+
+			if c.ShouldBeErr {
+				require.True(t, c.IsErr(err))
+
+				return
+			}
+
+			require.False(t, c.IsErr(err))
+
+			require.ElementsMatch(t, c.ExpectedTheses, scenario.Theses())
+		})
+	}
+}
+
+func TestGetScenarioThesisBySlug(t *testing.T) {
+	t.Parallel()
+
+	slug := specification.NewScenarioSlug("aaa", "bb")
+
+	scenario := errlessBuildScenario(t, slug, func(b *specification.ScenarioBuilder) {
+		b.WithThesis("c", func(b *specification.ThesisBuilder) {})
+		b.WithThesis("d", func(b *specification.ThesisBuilder) {})
+	})
+
+	c, ok := scenario.Thesis("c")
+	require.True(t, ok)
+	require.Equal(
+		t,
+		specification.NewThesisBuilder().ErrlessBuild(
+			specification.NewThesisSlug("aaa", "bb", "c"),
+		),
+		c,
+	)
+
+	d, ok := scenario.Thesis("d")
+	require.True(t, ok)
+	require.Equal(
+		t,
+		specification.NewThesisBuilder().ErrlessBuild(
+			specification.NewThesisSlug("aaa", "bb", "d"),
+		),
+		d,
+	)
+
+	_, ok = scenario.Thesis("f")
+	require.False(t, ok)
 }
 
 func TestScenarioErrors(t *testing.T) {
@@ -200,4 +232,18 @@ func TestScenarioErrors(t *testing.T) {
 			require.True(t, c.IsErr(c.Err))
 		})
 	}
+}
+
+func errlessBuildScenario(
+	t *testing.T,
+	slug specification.Slug,
+	prepare func(b *specification.ScenarioBuilder),
+) specification.Scenario {
+	t.Helper()
+
+	builder := specification.NewScenarioBuilder()
+
+	prepare(builder)
+
+	return builder.ErrlessBuild(slug)
 }
