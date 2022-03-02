@@ -24,7 +24,7 @@ const (
 	invalidNoThesesSpecPath          = fixturesPath + "/invalid-no-theses-spec.yml"
 )
 
-func TestSpecificationParserService_ParseSpecification(t *testing.T) {
+func TestParseSpecification(t *testing.T) {
 	t.Parallel()
 
 	if testing.Short() {

@@ -14,7 +14,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/user"
 )
 
-func TestRestartPerformanceHandler_Handle(t *testing.T) {
+func TestHandleRestartPerformance(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {

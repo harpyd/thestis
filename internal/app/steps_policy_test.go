@@ -17,7 +17,7 @@ type states struct {
 	TransitionState performance.State
 }
 
-func TestEveryStepSavingPolicy_HandleSteps(t *testing.T) {
+func TestHandleEveryStepSavingPolicy(t *testing.T) {
 	t.Parallel()
 
 	const (

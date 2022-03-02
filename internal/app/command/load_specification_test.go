@@ -23,7 +23,7 @@ description: declarative auto tests for horns-and-hooves API
 ...
 `
 
-func TestLoadSpecificationHandler_Handle(t *testing.T) {
+func TestHandleLoadSpecification(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
