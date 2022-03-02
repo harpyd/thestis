@@ -20,7 +20,7 @@ var (
 	errPerformanceRelease = errors.New("performance release")
 )
 
-func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
+func TestMaintainPerformance(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -156,7 +156,7 @@ func TestPerformanceMaintainer_MaintainPerformance(t *testing.T) {
 	}
 }
 
-func TestPerformanceMaintainer_MaintainPerformance_cancelation(t *testing.T) {
+func TestMaintainPerformanceCancelation(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {

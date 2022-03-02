@@ -11,7 +11,7 @@ import (
 	"github.com/harpyd/thestis/internal/app/mock"
 )
 
-func TestCreateTestCampaignHandler_Handle(t *testing.T) {
+func TestHandleCreateTestCampaign(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {

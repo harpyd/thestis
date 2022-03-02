@@ -63,7 +63,7 @@ func (s *PerformanceGuardTestSuite) TestAcquirePerformance() {
 	s.Require().True(persistedPerf.Started())
 }
 
-func (s *PerformanceGuardTestSuite) TestAcquirePerformance_many_tries() {
+func (s *PerformanceGuardTestSuite) TestAcquirePerformanceConcurrently() {
 	const triesCount = 100
 
 	var wg sync.WaitGroup

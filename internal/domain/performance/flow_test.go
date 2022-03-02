@@ -96,7 +96,7 @@ func TestFlowFromPerformance(t *testing.T) {
 	require.Len(t, flow.Transitions(), len(perf.Actions()))
 }
 
-func TestFlowReducer_WithStep_from_performance_start(t *testing.T) {
+func TestReduceFromSpecificationWithStep(t *testing.T) {
 	t.Parallel()
 
 	spec := validSpecification(t)
@@ -124,7 +124,7 @@ func TestFlowReducer_WithStep_from_performance_start(t *testing.T) {
 	require.Equal(t, performance.Passed, flow.State())
 }
 
-func TestFlowReducer_WithStep_flow_common_state(t *testing.T) {
+func TestFlowStateAfterReduce(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -336,7 +336,7 @@ func TestFlowReducer_WithStep_flow_common_state(t *testing.T) {
 	}
 }
 
-func TestFlowReducer_WithStep_transition_state(t *testing.T) {
+func TestFlowTransitionStateAfterReduce(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {

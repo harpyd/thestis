@@ -13,7 +13,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/user"
 )
 
-func TestCancelPerformanceHandler_Handle(t *testing.T) {
+func TestHandleCancelPerformance(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {

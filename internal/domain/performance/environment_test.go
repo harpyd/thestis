@@ -9,7 +9,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/performance"
 )
 
-func TestEnvironment_concurrent_RW_operations_not_panics(t *testing.T) {
+func TestConcurrentRWOperationsOnEnvironment(t *testing.T) {
 	t.Parallel()
 
 	env := performance.NewEnvironment(1)

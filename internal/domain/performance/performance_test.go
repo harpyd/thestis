@@ -62,7 +62,7 @@ func TestFromSpecification(t *testing.T) {
 	}
 }
 
-func TestPerformance_Start(t *testing.T) {
+func TestStartPerformance(t *testing.T) {
 	t.Parallel()
 
 	spec := validSpecification(t)
@@ -88,7 +88,7 @@ func TestPerformance_Start(t *testing.T) {
 	}
 }
 
-func TestPerformance_Start_one_at_a_time(t *testing.T) {
+func TestOnePerformanceFlowAtATime(t *testing.T) {
 	t.Parallel()
 
 	spec := validSpecification(t)
@@ -103,7 +103,7 @@ func TestPerformance_Start_one_at_a_time(t *testing.T) {
 	require.True(t, performance.IsAlreadyStartedError(err))
 }
 
-func TestPerformance_Start_with_cancel_context_before_steps_reading(t *testing.T) {
+func TestCancelPerformanceCtxBeforeStepsReading(t *testing.T) {
 	t.Parallel()
 
 	spec := validSpecification(t)
@@ -124,7 +124,7 @@ func TestPerformance_Start_with_cancel_context_before_steps_reading(t *testing.T
 	require.NoError(t, err)
 }
 
-func TestPerformance_Start_with_cancel_context_while_steps_reading(t *testing.T) {
+func TestCancelPerformanceCtxWhileStepsReading(t *testing.T) {
 	t.Parallel()
 
 	spec := validSpecification(t)
@@ -151,7 +151,7 @@ func TestPerformance_Start_with_cancel_context_while_steps_reading(t *testing.T)
 	require.NoError(t, err)
 }
 
-func TestPerformance_Start_with_failed_performer(t *testing.T) {
+func TestStartPerformanceWithFailingPerformer(t *testing.T) {
 	t.Parallel()
 
 	spec := validSpecification(t)
@@ -169,7 +169,7 @@ func TestPerformance_Start_with_failed_performer(t *testing.T) {
 	requireStep(t, steps, performance.Failed)
 }
 
-func TestPerformance_Start_with_crashed_performer(t *testing.T) {
+func TestStartPerformanceWithCrashingPerformer(t *testing.T) {
 	t.Parallel()
 
 	spec := validSpecification(t)
@@ -187,7 +187,7 @@ func TestPerformance_Start_with_crashed_performer(t *testing.T) {
 	requireStep(t, steps, performance.Crashed)
 }
 
-func TestPerformance_Start_sync_calls_in_a_row(t *testing.T) {
+func TestSyncStartPerformanceInARow(t *testing.T) {
 	t.Parallel()
 
 	spec := validSpecification(t)
