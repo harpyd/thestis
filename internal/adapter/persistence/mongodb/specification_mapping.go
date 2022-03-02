@@ -112,12 +112,10 @@ func marshalToScenarioDocuments(scenarios []specification.Scenario) []scenarioDo
 	documents := make([]scenarioDocument, 0, len(scenarios))
 
 	for _, scenario := range scenarios {
-		theses, _ := scenario.Theses()
-
 		documents = append(documents, scenarioDocument{
 			Slug:        scenario.Slug().Scenario(),
 			Description: scenario.Description(),
-			Theses:      marshalToThesisDocuments(theses),
+			Theses:      marshalToThesisDocuments(scenario.Theses()),
 		})
 	}
 

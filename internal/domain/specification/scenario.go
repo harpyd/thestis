@@ -28,15 +28,7 @@ func (s Scenario) Description() string {
 	return s.description
 }
 
-func (s Scenario) Theses(slugs ...string) ([]Thesis, error) {
-	if shouldGetAll(slugs) {
-		return s.allTheses(), nil
-	}
-
-	return s.filteredTheses(slugs)
-}
-
-func (s Scenario) allTheses() []Thesis {
+func (s Scenario) Theses() []Thesis {
 	theses := make([]Thesis, 0, len(s.theses))
 
 	for _, thesis := range s.theses {
@@ -44,27 +36,6 @@ func (s Scenario) allTheses() []Thesis {
 	}
 
 	return theses
-}
-
-func (s Scenario) filteredTheses(slugs []string) ([]Thesis, error) {
-	theses := make([]Thesis, 0, len(slugs))
-
-	var err error
-
-	for _, slug := range slugs {
-		if thesis, ok := s.Thesis(slug); ok {
-			theses = append(theses, thesis)
-		} else {
-			err = multierr.Append(
-				err,
-				NewNoSuchSlugError(
-					NewThesisSlug(s.slug.story, s.slug.scenario, slug),
-				),
-			)
-		}
-	}
-
-	return theses, err
 }
 
 func (s Scenario) Thesis(slug string) (thesis Thesis, ok bool) {

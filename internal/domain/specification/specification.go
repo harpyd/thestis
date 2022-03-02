@@ -107,10 +107,6 @@ func (s *Specification) StoriesCount() int {
 	return len(s.stories)
 }
 
-func shouldGetAll(slugs []string) bool {
-	return len(slugs) == 0
-}
-
 func NewBuilder() *Builder {
 	return &Builder{}
 }
