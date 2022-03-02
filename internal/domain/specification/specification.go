@@ -71,6 +71,30 @@ func (s *Specification) Stories(slugs ...string) ([]Story, error) {
 	return s.filteredStories(slugs)
 }
 
+func (s *Specification) Scenarios() []Scenario {
+	scenarios := make([]Scenario, 0, s.ScenariosCount())
+
+	for _, story := range s.stories {
+		for _, scenario := range story.scenarios {
+			scenarios = append(scenarios, scenario)
+		}
+	}
+
+	return scenarios
+}
+
+func (s *Specification) ScenariosCount() int {
+	count := 0
+
+	for _, story := range s.stories {
+		for range story.scenarios {
+			count++
+		}
+	}
+
+	return count
+}
+
 func (s *Specification) allStories() []Story {
 	stories := make([]Story, 0, len(s.stories))
 
