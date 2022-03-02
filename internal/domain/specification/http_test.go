@@ -11,7 +11,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-func TestBuildHTTPRequest(t *testing.T) {
+func TestBuildHTTPWithRequest(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
