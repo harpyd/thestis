@@ -11,7 +11,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-func TestBuildAssertionMethod(t *testing.T) {
+func TestBuildAssertionWithMethod(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -70,7 +70,7 @@ func TestBuildAssertionMethod(t *testing.T) {
 	}
 }
 
-func TestBuildAssertionAsserts(t *testing.T) {
+func TestBuildAssertionWithAsserts(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
