@@ -46,15 +46,7 @@ func (s Story) WantTo() string {
 	return s.wantTo
 }
 
-func (s Story) Scenarios(slugs ...string) ([]Scenario, error) {
-	if shouldGetAll(slugs) {
-		return s.allScenarios(), nil
-	}
-
-	return s.filteredScenarios(slugs)
-}
-
-func (s Story) allScenarios() []Scenario {
+func (s Story) Scenarios() []Scenario {
 	scenarios := make([]Scenario, 0, len(s.scenarios))
 
 	for _, scenario := range s.scenarios {
@@ -62,27 +54,6 @@ func (s Story) allScenarios() []Scenario {
 	}
 
 	return scenarios
-}
-
-func (s Story) filteredScenarios(slugs []string) ([]Scenario, error) {
-	scenarios := make([]Scenario, 0, len(slugs))
-
-	var err error
-
-	for _, slug := range slugs {
-		if scenario, ok := s.Scenario(slug); ok {
-			scenarios = append(scenarios, scenario)
-		} else {
-			err = multierr.Append(
-				err,
-				NewNoSuchSlugError(
-					NewScenarioSlug(s.slug.story, slug),
-				),
-			)
-		}
-	}
-
-	return scenarios, err
 }
 
 func (s Story) Scenario(slug string) (scenario Scenario, ok bool) {
