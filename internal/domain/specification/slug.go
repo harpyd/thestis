@@ -49,6 +49,30 @@ func NewThesisSlug(storySlug, scenarioSlug, thesisSlug string) Slug {
 	}
 }
 
+func (s Slug) MustBeStoryKind() error {
+	if s.kind == StorySlug {
+		return nil
+	}
+
+	return NewNotStorySlugError()
+}
+
+func (s Slug) MustBeScenarioKind() error {
+	if s.kind == ScenarioSlug {
+		return nil
+	}
+
+	return NewNotScenarioSlugError()
+}
+
+func (s Slug) MustBeThesisKind() error {
+	if s.kind == ThesisSlug {
+		return nil
+	}
+
+	return NewNotThesisSlugError()
+}
+
 func (s Slug) Story() string {
 	return s.story
 }
@@ -115,6 +139,36 @@ func replaceIfEmpty(s string) string {
 	}
 
 	return s
+}
+
+var (
+	errNotStorySlug    = errors.New("not story slug")
+	errNotScenarioSlug = errors.New("not scenario slug")
+	errNotThesisSlug   = errors.New("not thesis slug")
+)
+
+func NewNotStorySlugError() error {
+	return errNotStorySlug
+}
+
+func IsNotStorySlugError(err error) bool {
+	return errors.Is(err, errNotStorySlug)
+}
+
+func NewNotScenarioSlugError() error {
+	return errNotScenarioSlug
+}
+
+func IsNotScenarioSlugError(err error) bool {
+	return errors.Is(err, errNotScenarioSlug)
+}
+
+func NewNotThesisSlugError() error {
+	return errNotThesisSlug
+}
+
+func IsNotThesisSlugError(err error) bool {
+	return errors.Is(err, errNotThesisSlug)
 }
 
 var errEmptySlug = errors.New("empty slug")

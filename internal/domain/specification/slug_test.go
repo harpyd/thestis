@@ -142,6 +142,107 @@ func TestSlugIsValid(t *testing.T) {
 	}
 }
 
+func TestSlugMustBeOneOfKind(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name            string
+		GivenSlug       specification.Slug
+		GivenMustBeKind specification.SlugKind
+		ShouldBeErr     bool
+		IsErr           func(err error) bool
+	}{
+		{
+			Name:            "story_slug_is_story_slug",
+			GivenSlug:       specification.NewStorySlug("foo"),
+			GivenMustBeKind: specification.StorySlug,
+			ShouldBeErr:     false,
+		},
+		{
+			Name:            "story_slug_is_NOT_scenario_slug",
+			GivenSlug:       specification.NewStorySlug("foo"),
+			GivenMustBeKind: specification.ScenarioSlug,
+			ShouldBeErr:     true,
+			IsErr:           specification.IsNotScenarioSlugError,
+		},
+		{
+			Name:            "story_slug_is_NOT_thesis_slug",
+			GivenSlug:       specification.NewStorySlug("foo"),
+			GivenMustBeKind: specification.ThesisSlug,
+			ShouldBeErr:     true,
+			IsErr:           specification.IsNotThesisSlugError,
+		},
+		{
+			Name:            "scenario_slug_is_NOT_story_slug",
+			GivenSlug:       specification.NewScenarioSlug("foo", "bar"),
+			GivenMustBeKind: specification.StorySlug,
+			ShouldBeErr:     true,
+			IsErr:           specification.IsNotStorySlugError,
+		},
+		{
+			Name:            "scenario_slug_is_scenario_slug",
+			GivenSlug:       specification.NewScenarioSlug("foo", "bar"),
+			GivenMustBeKind: specification.ScenarioSlug,
+			ShouldBeErr:     false,
+		},
+		{
+			Name:            "scenario_slug_is_NOT_thesis_slug",
+			GivenSlug:       specification.NewScenarioSlug("foo", "bar"),
+			GivenMustBeKind: specification.ThesisSlug,
+			ShouldBeErr:     true,
+			IsErr:           specification.IsNotThesisSlugError,
+		},
+		{
+			Name:            "thesis_slug_is_NOT_story_slug",
+			GivenSlug:       specification.NewThesisSlug("foo", "bar", "baz"),
+			GivenMustBeKind: specification.StorySlug,
+			ShouldBeErr:     true,
+			IsErr:           specification.IsNotStorySlugError,
+		},
+		{
+			Name:            "thesis_slug_is_NOT_scenario_slug",
+			GivenSlug:       specification.NewThesisSlug("foo", "bar", "baz"),
+			GivenMustBeKind: specification.ScenarioSlug,
+			ShouldBeErr:     true,
+			IsErr:           specification.IsNotScenarioSlugError,
+		},
+		{
+			Name:            "thesis_slug_is_thesis_slug",
+			GivenSlug:       specification.NewThesisSlug("foo", "bar", "bad"),
+			GivenMustBeKind: specification.ThesisSlug,
+			ShouldBeErr:     false,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			var err error
+
+			switch c.GivenMustBeKind {
+			case specification.StorySlug:
+				err = c.GivenSlug.MustBeStoryKind()
+			case specification.ScenarioSlug:
+				err = c.GivenSlug.MustBeScenarioKind()
+			case specification.ThesisSlug:
+				err = c.GivenSlug.MustBeThesisKind()
+			case specification.NoSlug:
+			}
+
+			if c.ShouldBeErr {
+				require.True(t, c.IsErr(err))
+
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestSlugErrors(t *testing.T) {
 	t.Parallel()
 
@@ -151,6 +252,39 @@ func TestSlugErrors(t *testing.T) {
 		IsErr    func(err error) bool
 		Reversed bool
 	}{
+		{
+			Name:  "not_story_slug_error",
+			Err:   specification.NewNotStorySlugError(),
+			IsErr: specification.IsNotStorySlugError,
+		},
+		{
+			Name:     "NON_not_story_slug_error",
+			Err:      errors.New("not story slug"),
+			IsErr:    specification.IsNotStorySlugError,
+			Reversed: true,
+		},
+		{
+			Name:  "not_scenario_slug_error",
+			Err:   specification.NewNotScenarioSlugError(),
+			IsErr: specification.IsNotScenarioSlugError,
+		},
+		{
+			Name:     "NON_not_scenario_slug_error",
+			Err:      errors.New("not scenario slug"),
+			IsErr:    specification.IsNotScenarioSlugError,
+			Reversed: true,
+		},
+		{
+			Name:  "not_thesis_slug_error",
+			Err:   specification.NewNotThesisSlugError(),
+			IsErr: specification.IsNotThesisSlugError,
+		},
+		{
+			Name:     "NON_not_thesis_slug_error",
+			Err:      errors.New("not thesis slug"),
+			IsErr:    specification.IsNotThesisSlugError,
+			Reversed: true,
+		},
 		{
 			Name:  "empty_slug_error",
 			Err:   specification.NewEmptySlugError(),
