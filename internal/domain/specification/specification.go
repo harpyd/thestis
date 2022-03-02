@@ -63,14 +63,6 @@ func (s *Specification) Description() string {
 	return s.description
 }
 
-func (s *Specification) Stories(slugs ...string) ([]Story, error) {
-	if shouldGetAll(slugs) {
-		return s.allStories(), nil
-	}
-
-	return s.filteredStories(slugs)
-}
-
 func (s *Specification) Scenarios() []Scenario {
 	scenarios := make([]Scenario, 0, s.ScenariosCount())
 
@@ -93,6 +85,20 @@ func (s *Specification) ScenariosCount() int {
 	}
 
 	return count
+}
+
+func (s *Specification) Story(slug string) (story Story, ok bool) {
+	story, ok = s.stories[slug]
+
+	return
+}
+
+func (s *Specification) Stories(slugs ...string) ([]Story, error) {
+	if shouldGetAll(slugs) {
+		return s.allStories(), nil
+	}
+
+	return s.filteredStories(slugs)
 }
 
 func (s *Specification) allStories() []Story {
@@ -119,12 +125,6 @@ func (s *Specification) filteredStories(slugs []string) ([]Story, error) {
 	}
 
 	return stories, err
-}
-
-func (s *Specification) Story(slug string) (story Story, ok bool) {
-	story, ok = s.stories[slug]
-
-	return
 }
 
 func shouldGetAll(slugs []string) bool {
