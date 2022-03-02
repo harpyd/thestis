@@ -77,7 +77,7 @@ type (
 )
 
 func marshalToSpecificationDocument(spec *specification.Specification) specificationDocument {
-	stories, _ := spec.Stories()
+	stories := spec.Stories()
 
 	return specificationDocument{
 		ID:             spec.ID(),

@@ -67,9 +67,7 @@ func unmarshalGraph(actions []Action) actionGraph {
 func buildGraph(spec *specification.Specification) (actionGraph, error) {
 	graph := make(actionGraph)
 
-	stories, _ := spec.Stories()
-
-	for _, story := range stories {
+	for _, story := range spec.Stories() {
 		scenarios, _ := story.Scenarios()
 
 		for _, scenario := range scenarios {
