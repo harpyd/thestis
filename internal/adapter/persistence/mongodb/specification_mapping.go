@@ -95,15 +95,13 @@ func marshalToStoryDocuments(stories []specification.Story) []storyDocument {
 	documents := make([]storyDocument, 0, len(stories))
 
 	for _, story := range stories {
-		scenarios, _ := story.Scenarios()
-
 		documents = append(documents, storyDocument{
 			Slug:        story.Slug().Story(),
 			Description: story.Description(),
 			AsA:         story.AsA(),
 			InOrderTo:   story.InOrderTo(),
 			WantTo:      story.WantTo(),
-			Scenarios:   marshalToScenarioDocuments(scenarios),
+			Scenarios:   marshalToScenarioDocuments(story.Scenarios()),
 		})
 	}
 
