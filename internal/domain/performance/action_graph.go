@@ -68,9 +68,7 @@ func buildGraph(spec *specification.Specification) (actionGraph, error) {
 	graph := make(actionGraph)
 
 	for _, story := range spec.Stories() {
-		scenarios, _ := story.Scenarios()
-
-		for _, scenario := range scenarios {
+		for _, scenario := range story.Scenarios() {
 			theses, _ := scenario.Theses()
 
 			addActions(graph, theses)
