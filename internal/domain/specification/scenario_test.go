@@ -142,6 +142,27 @@ func TestScenarioBuilder_WithThesis_when_already_exists(t *testing.T) {
 	require.True(t, specification.IsThesisSlugAlreadyExistsError(err))
 }
 
+func TestScenario_Theses(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewScenarioBuilder()
+	builder.WithThesis("foo", func(b *specification.ThesisBuilder) {})
+	builder.WithThesis("bar", func(b *specification.ThesisBuilder) {})
+
+	scenario := builder.ErrlessBuild(specification.NewScenarioSlug("baz", "bad"))
+
+	expected := []specification.Thesis{
+		specification.NewThesisBuilder().ErrlessBuild(
+			specification.NewThesisSlug("baz", "bad", "foo"),
+		),
+		specification.NewThesisBuilder().ErrlessBuild(
+			specification.NewThesisSlug("baz", "bad", "bar"),
+		),
+	}
+
+	require.Equal(t, expected, scenario.Theses())
+}
+
 func TestScenarioErrors(t *testing.T) {
 	t.Parallel()
 
