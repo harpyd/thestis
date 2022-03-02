@@ -1,6 +1,7 @@
 package specification_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -10,27 +11,37 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-func TestAssertionBuilder_WithMethod(t *testing.T) {
+func TestBuildAssertionMethod(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		Name        string
-		Method      string
+		GivenMethod string
 		ShouldBeErr bool
 	}{
 		{
-			Name:        "build_with_allowed_empty_assertion_method",
-			Method:      "",
+			Name:        "allowed_empty",
+			GivenMethod: "",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_jsonpath_assertion_method",
-			Method:      "JSONPATH",
+			Name:        "allowed_JSONPATH",
+			GivenMethod: "JSONPATH",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "dont_build_with_not_allowed_assertion_method",
-			Method:      "JAYZ",
+			Name:        "allowed_jsonpath",
+			GivenMethod: "jsonpath",
+			ShouldBeErr: false,
+		},
+		{
+			Name:        "allowed_jsonPATH",
+			GivenMethod: "jsonPATH",
+			ShouldBeErr: false,
+		},
+		{
+			Name:        "not_allowed_JAYZ",
+			GivenMethod: "JAYZ",
 			ShouldBeErr: true,
 		},
 	}
@@ -42,7 +53,7 @@ func TestAssertionBuilder_WithMethod(t *testing.T) {
 			t.Parallel()
 
 			builder := specification.NewAssertionBuilder()
-			builder.WithMethod(c.Method)
+			builder.WithMethod(c.GivenMethod)
 
 			assertion, err := builder.Build()
 
@@ -53,54 +64,64 @@ func TestAssertionBuilder_WithMethod(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, strings.ToLower(c.Method), assertion.Method().String())
+
+			require.Equal(t, strings.ToLower(c.GivenMethod), assertion.Method().String())
 		})
 	}
 }
 
-func TestAssertionBuilder_WithAssert(t *testing.T) {
+func TestBuildAssertionAsserts(t *testing.T) {
 	t.Parallel()
 
-	builder := specification.NewAssertionBuilder()
-	builder.WithAssert("getSomeBody.response.body.type", "product")
-	builder.WithAssert("getSomeBody.response.body.items..price", []int{2100, 1100})
-	builder.WithAssert("getSomeBody.response.body.items..amount", []int{10, 33})
-
-	assertion, err := builder.Build()
-
-	require.NoError(t, err)
-
-	asserts := assertion.Asserts()
-
-	require.Equal(t, []string{
-		"getSomeBody.response.body.type",
-		"getSomeBody.response.body.items..price",
-		"getSomeBody.response.body.items..amount",
-	}, mapAssertsToActual(asserts))
-
-	require.Equal(t, []interface{}{
-		"product",
-		[]int{2100, 1100},
-		[]int{10, 33},
-	}, mapAssertsToExpected(asserts))
-}
-
-func mapAssertsToActual(asserts []specification.Assert) []string {
-	expected := make([]string, 0, len(asserts))
-	for _, a := range asserts {
-		expected = append(expected, a.Actual())
+	testCases := []struct {
+		Prepare         func(b *specification.AssertionBuilder)
+		ExpectedAsserts []specification.Assert
+	}{
+		{
+			Prepare:         func(b *specification.AssertionBuilder) {},
+			ExpectedAsserts: nil,
+		},
+		{
+			Prepare: func(b *specification.AssertionBuilder) {
+				b.WithAssert("foo.bar.baz", "somebody")
+			},
+			ExpectedAsserts: []specification.Assert{
+				specification.NewAssert("foo.bar.baz", "somebody"),
+			},
+		},
+		{
+			Prepare: func(b *specification.AssertionBuilder) {
+				b.
+					WithAssert("getSomeBody.response.body.type", "product").
+					WithAssert("getSomeBody.response.body.items..price", []int{2100, 1100}).
+					WithAssert("getSomeBody.response.body.items..amount", []int{10, 33})
+			},
+			ExpectedAsserts: []specification.Assert{
+				specification.NewAssert("getSomeBody.response.body.type", "product"),
+				specification.NewAssert("getSomeBody.response.body.items..price", []int{2100, 1100}),
+				specification.NewAssert("getSomeBody.response.body.items..amount", []int{10, 33}),
+			},
+		},
 	}
 
-	return expected
-}
+	for i := range testCases {
+		c := testCases[i]
 
-func mapAssertsToExpected(asserts []specification.Assert) []interface{} {
-	actual := make([]interface{}, 0, len(asserts))
-	for _, a := range asserts {
-		actual = append(actual, a.Expected())
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			builder := specification.NewAssertionBuilder()
+
+			c.Prepare(builder)
+
+			assertion, err := builder.Build()
+			require.NoError(t, err)
+
+			asserts := assertion.Asserts()
+
+			require.Equal(t, c.ExpectedAsserts, asserts)
+		})
 	}
-
-	return actual
 }
 
 func TestAssertionErrors(t *testing.T) {
