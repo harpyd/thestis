@@ -119,7 +119,7 @@ func TestBuildAssertionAsserts(t *testing.T) {
 
 			asserts := assertion.Asserts()
 
-			require.Equal(t, c.ExpectedAsserts, asserts)
+			require.ElementsMatch(t, c.ExpectedAsserts, asserts)
 		})
 	}
 }
