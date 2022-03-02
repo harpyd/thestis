@@ -159,8 +159,8 @@ func (p *Performance) MustBeStarted() error {
 }
 
 // Start asynchronously starts performing of Performance action graph.
-// Start returns chan of flow Step's. With Step's you can build Flow
-// using FlowReducer.
+// Start returns non buffered chan of flow Step's. With Step's you can
+// build Flow using FlowReducer.
 //
 // Only ONE performing can be start at a time. If one goroutine has captured
 // performing, then others calls of Start will be return error that can
