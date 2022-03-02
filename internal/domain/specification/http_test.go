@@ -1,6 +1,7 @@
 package specification_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -10,24 +11,45 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-func TestHTTPBuilder_WithRequest(t *testing.T) {
+func TestBuildHTTPRequest(t *testing.T) {
 	t.Parallel()
 
-	builder := specification.NewHTTPBuilder()
-	builder.WithRequest(func(b *specification.HTTPRequestBuilder) {
-		b.WithMethod("GET")
-		b.WithURL("https://api.warehouse/v1/horns")
-	})
+	testCases := []struct {
+		Prepare         func(b *specification.HTTPBuilder)
+		ExpectedRequest specification.HTTPRequest
+	}{
+		{
+			Prepare:         func(b *specification.HTTPBuilder) {},
+			ExpectedRequest: specification.HTTPRequest{},
+		},
+		{
+			Prepare: func(b *specification.HTTPBuilder) {
+				b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+					b.WithMethod("GET")
+				})
+			},
+			ExpectedRequest: specification.NewHTTPRequestBuilder().
+				WithMethod("GET").
+				ErrlessBuild(),
+		},
+	}
 
-	http, err := builder.Build()
+	for i := range testCases {
+		c := testCases[i]
 
-	require.NoError(t, err)
-	expectedRequest, err := specification.NewHTTPRequestBuilder().
-		WithMethod("GET").
-		WithURL("https://api.warehouse/v1/horns").
-		Build()
-	require.NoError(t, err)
-	require.Equal(t, expectedRequest, http.Request())
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			builder := specification.NewHTTPBuilder()
+
+			c.Prepare(builder)
+
+			http, err := builder.Build()
+			require.NoError(t, err)
+
+			require.Equal(t, c.ExpectedRequest, http.Request())
+		})
+	}
 }
 
 func TestHTTPBuilder_WithResponse(t *testing.T) {

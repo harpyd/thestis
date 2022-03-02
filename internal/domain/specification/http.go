@@ -212,8 +212,16 @@ func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
 		method:      method,
 		url:         b.url,
 		contentType: ctype,
-		body:        deepcopy.StringInterfaceMap(b.body),
+		body:        copyBody(b.body),
 	}, NewBuildHTTPRequestError(multierr.Combine(methodErr, ctypeErr))
+}
+
+func copyBody(body map[string]interface{}) map[string]interface{} {
+	if len(body) == 0 {
+		return nil
+	}
+
+	return deepcopy.StringInterfaceMap(body)
 }
 
 func (b *HTTPRequestBuilder) ErrlessBuild() HTTPRequest {
