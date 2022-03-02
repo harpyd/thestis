@@ -20,7 +20,7 @@ func TestNew(t *testing.T) {
 		IsErr       func(err error) bool
 	}{
 		{
-			Name: "new_without_error",
+			Name: "without_error",
 			Params: testcampaign.Params{
 				ID:        "tc-id",
 				ViewName:  "test campaign",
