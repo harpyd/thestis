@@ -202,45 +202,6 @@ func TestSlugErrors(t *testing.T) {
 			Reversed: true,
 		},
 		{
-			Name: "no_such_story_slug_error",
-			Err: specification.NewNoSuchSlugError(
-				specification.NewStorySlug("story"),
-			),
-			IsErr: specification.IsNoSuchStorySlugError,
-		},
-		{
-			Name:     "NON_no_such_story_slug_error",
-			Err:      errors.New("no such story"),
-			IsErr:    specification.IsNoSuchStorySlugError,
-			Reversed: true,
-		},
-		{
-			Name: "no_such_scenario_slug_error",
-			Err: specification.NewNoSuchSlugError(
-				specification.NewScenarioSlug("story", "scenario"),
-			),
-			IsErr: specification.IsNoSuchScenarioSlugError,
-		},
-		{
-			Name:     "NON_no_such_scenario_slug_error",
-			Err:      errors.New("no such scenario"),
-			IsErr:    specification.IsNoSuchScenarioSlugError,
-			Reversed: true,
-		},
-		{
-			Name: "no_such_thesis_slug_error",
-			Err: specification.NewNoSuchSlugError(
-				specification.NewThesisSlug("story", "scenario", "thesis"),
-			),
-			IsErr: specification.IsNoSuchThesisSlugError,
-		},
-		{
-			Name:     "NON_no_such_thesis_slug_error",
-			Err:      errors.New("no such thesis"),
-			IsErr:    specification.IsNoSuchThesisSlugError,
-			Reversed: true,
-		},
-		{
 			Name: "build_story_error",
 			Err: specification.NewBuildSluggedError(
 				errors.New("foo"),
