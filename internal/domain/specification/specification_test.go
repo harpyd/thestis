@@ -144,6 +144,37 @@ func TestBuilder_WithStory_when_already_exists(t *testing.T) {
 	require.True(t, specification.IsStorySlugAlreadyExistsError(err))
 }
 
+func TestSpecification_Stories(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewBuilder()
+	builder.WithStory("foo", func(b *specification.StoryBuilder) {})
+	builder.WithStory("bar", func(b *specification.StoryBuilder) {})
+
+	spec := builder.ErrlessBuild()
+
+	t.Run("match", func(t *testing.T) {
+		t.Parallel()
+
+		expected := []specification.Story{
+			specification.NewStoryBuilder().ErrlessBuild(
+				specification.NewStorySlug("foo"),
+			),
+			specification.NewStoryBuilder().ErrlessBuild(
+				specification.NewStorySlug("bar"),
+			),
+		}
+
+		assert.ElementsMatch(t, expected, spec.Stories())
+	})
+
+	t.Run("count", func(t *testing.T) {
+		t.Parallel()
+		
+		assert.Equal(t, 2, spec.StoriesCount())
+	})
+}
+
 func TestSpecification_Scenarios(t *testing.T) {
 	t.Parallel()
 
@@ -157,7 +188,7 @@ func TestSpecification_Scenarios(t *testing.T) {
 
 	spec := builder.ErrlessBuild()
 
-	t.Run("contains", func(t *testing.T) {
+	t.Run("match", func(t *testing.T) {
 		t.Parallel()
 
 		expected := []specification.Scenario{

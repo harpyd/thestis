@@ -93,15 +93,7 @@ func (s *Specification) Story(slug string) (story Story, ok bool) {
 	return
 }
 
-func (s *Specification) Stories(slugs ...string) ([]Story, error) {
-	if shouldGetAll(slugs) {
-		return s.allStories(), nil
-	}
-
-	return s.filteredStories(slugs)
-}
-
-func (s *Specification) allStories() []Story {
+func (s *Specification) Stories() []Story {
 	stories := make([]Story, 0, len(s.stories))
 
 	for _, story := range s.stories {
@@ -111,20 +103,8 @@ func (s *Specification) allStories() []Story {
 	return stories
 }
 
-func (s *Specification) filteredStories(slugs []string) ([]Story, error) {
-	stories := make([]Story, 0, len(slugs))
-
-	var err error
-
-	for _, slug := range slugs {
-		if story, ok := s.Story(slug); ok {
-			stories = append(stories, story)
-		} else {
-			err = multierr.Append(err, NewNoSuchSlugError(NewStorySlug(slug)))
-		}
-	}
-
-	return stories, err
+func (s *Specification) StoriesCount() int {
+	return len(s.stories)
 }
 
 func shouldGetAll(slugs []string) bool {
