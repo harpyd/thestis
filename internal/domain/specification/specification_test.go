@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/specification"
@@ -141,6 +142,41 @@ func TestBuilder_WithStory_when_already_exists(t *testing.T) {
 	_, err := builder.Build()
 
 	require.True(t, specification.IsStorySlugAlreadyExistsError(err))
+}
+
+func TestSpecification_Scenarios(t *testing.T) {
+	t.Parallel()
+
+	builder := specification.NewBuilder()
+	builder.WithStory("foo", func(b *specification.StoryBuilder) {
+		b.WithScenario("bar", func(b *specification.ScenarioBuilder) {})
+	})
+	builder.WithStory("baz", func(b *specification.StoryBuilder) {
+		b.WithScenario("qyz", func(b *specification.ScenarioBuilder) {})
+	})
+
+	spec := builder.ErrlessBuild()
+
+	t.Run("contains", func(t *testing.T) {
+		t.Parallel()
+
+		expected := []specification.Scenario{
+			specification.NewScenarioBuilder().ErrlessBuild(
+				specification.NewScenarioSlug("foo", "bar"),
+			),
+			specification.NewScenarioBuilder().ErrlessBuild(
+				specification.NewScenarioSlug("baz", "qyz"),
+			),
+		}
+
+		assert.ElementsMatch(t, expected, spec.Scenarios())
+	})
+
+	t.Run("count", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Equal(t, 2, spec.ScenariosCount())
+	})
 }
 
 func TestSpecificationErrors(t *testing.T) {
