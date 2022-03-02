@@ -53,6 +53,10 @@ func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
 		return Scenario{}, NewEmptySlugError()
 	}
 
+	if err := slug.MustBeScenarioKind(); err != nil {
+		return Scenario{}, err
+	}
+
 	scn := Scenario{
 		slug:        slug,
 		description: b.description,

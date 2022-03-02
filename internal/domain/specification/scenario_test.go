@@ -31,6 +31,12 @@ func TestBuildScenario(t *testing.T) {
 			ShouldBeErr: true,
 			IsErr:       specification.IsEmptySlugError,
 		},
+		{
+			Name:        "not_scenario_slug",
+			GivenSlug:   specification.NewStorySlug("foo"),
+			ShouldBeErr: true,
+			IsErr:       specification.IsNotScenarioSlugError,
+		},
 	}
 
 	for _, c := range testCases {
