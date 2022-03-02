@@ -170,7 +170,7 @@ func TestSpecification_Stories(t *testing.T) {
 
 	t.Run("count", func(t *testing.T) {
 		t.Parallel()
-		
+
 		assert.Equal(t, 2, spec.StoriesCount())
 	})
 }
