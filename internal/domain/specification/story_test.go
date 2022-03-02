@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/specification"
@@ -169,7 +168,7 @@ func TestStory_Scenarios(t *testing.T) {
 		),
 	}
 
-	assert.ElementsMatch(t, expected, story.Scenarios())
+	require.ElementsMatch(t, expected, story.Scenarios())
 }
 
 func TestStoryErrors(t *testing.T) {
