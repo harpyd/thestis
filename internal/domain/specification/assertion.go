@@ -38,7 +38,13 @@ func (a Assertion) Method() AssertionMethod {
 }
 
 func (a Assertion) Asserts() []Assert {
-	asserts := make([]Assert, len(a.asserts))
+	count := len(a.asserts)
+
+	if count == 0 {
+		return nil
+	}
+
+	asserts := make([]Assert, count)
 	copy(asserts, a.asserts)
 
 	return asserts
@@ -46,6 +52,13 @@ func (a Assertion) Asserts() []Assert {
 
 func (a Assertion) IsZero() bool {
 	return a.method == EmptyAssertionMethod && len(a.asserts) == 0
+}
+
+func NewAssert(actual string, expected interface{}) Assert {
+	return Assert{
+		actual:   actual,
+		expected: expected,
+	}
 }
 
 func (a Assert) Actual() string {
