@@ -96,6 +96,10 @@ func (r HTTPRequest) ContentType() ContentType {
 }
 
 func (r HTTPRequest) Body() map[string]interface{} {
+	if r.body == nil {
+		return nil
+	}
+
 	return deepcopy.StringInterfaceMap(r.body)
 }
 
@@ -105,6 +109,10 @@ func (r HTTPRequest) IsZero() bool {
 }
 
 func (r HTTPResponse) AllowedCodes() []int {
+	if len(r.allowedCodes) == 0 {
+		return nil
+	}
+
 	return deepcopy.IntSlice(r.allowedCodes)
 }
 
@@ -217,7 +225,7 @@ func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
 }
 
 func copyBody(body map[string]interface{}) map[string]interface{} {
-	if len(body) == 0 {
+	if len(body) == 0 || body == nil {
 		return nil
 	}
 
@@ -269,9 +277,17 @@ func (b *HTTPResponseBuilder) Build() (HTTPResponse, error) {
 	allowedContentType, err := newContentTypeFromString(b.allowedContentType)
 
 	return HTTPResponse{
-		allowedCodes:       deepcopy.IntSlice(b.allowedCodes),
+		allowedCodes:       copyAllowedCodes(b.allowedCodes),
 		allowedContentType: allowedContentType,
 	}, NewBuildHTTPResponseError(err)
+}
+
+func copyAllowedCodes(codes []int) []int {
+	if len(codes) == 0 {
+		return nil
+	}
+
+	return deepcopy.IntSlice(codes)
 }
 
 func (b *HTTPResponseBuilder) ErrlessBuild() HTTPResponse {

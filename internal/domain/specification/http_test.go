@@ -40,51 +40,78 @@ func TestBuildHTTPWithRequest(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewHTTPBuilder()
-
-			c.Prepare(builder)
-
-			http, err := builder.Build()
-			require.NoError(t, err)
-
-			require.Equal(t, c.ExpectedRequest, http.Request())
+			require.Equal(t, c.ExpectedRequest, buildHTTP(t, c.Prepare).Request())
 		})
 	}
 }
 
-func TestHTTPBuilder_WithResponse(t *testing.T) {
+func TestBuildHTTPWithResponse(t *testing.T) {
 	t.Parallel()
 
-	builder := specification.NewHTTPBuilder()
-	builder.WithResponse(func(b *specification.HTTPResponseBuilder) {
-		b.WithAllowedCodes([]int{200})
-		b.WithAllowedContentType("application/json")
-	})
+	testCases := []struct {
+		Prepare          func(b *specification.HTTPBuilder)
+		ExpectedResponse specification.HTTPResponse
+	}{
+		{
+			Prepare:          func(b *specification.HTTPBuilder) {},
+			ExpectedResponse: specification.HTTPResponse{},
+		},
+		{
+			Prepare: func(b *specification.HTTPBuilder) {
+				b.WithResponse(func(b *specification.HTTPResponseBuilder) {
+					b.WithAllowedCodes([]int{200})
+					b.WithAllowedContentType("application/json")
+				})
+			},
+			ExpectedResponse: specification.NewHTTPResponseBuilder().
+				WithAllowedCodes([]int{200}).
+				WithAllowedContentType("application/json").
+				ErrlessBuild(),
+		},
+	}
 
-	http, err := builder.Build()
+	for i := range testCases {
+		c := testCases[i]
 
-	require.NoError(t, err)
-	expectedResponse, err := specification.NewHTTPResponseBuilder().
-		WithAllowedCodes([]int{200}).
-		WithAllowedContentType("application/json").
-		Build()
-	require.NoError(t, err)
-	require.Equal(t, expectedResponse, http.Response())
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.ExpectedResponse, buildHTTP(t, c.Prepare).Response())
+		})
+	}
 }
 
-func TestHTTPRequestBuilder_WithURL(t *testing.T) {
+func TestBuildHTTPRequestWithURL(t *testing.T) {
 	t.Parallel()
 
-	builder := specification.NewHTTPRequestBuilder()
-	builder.WithURL("https://api.warehouse/v1/hooves")
+	testCases := []struct {
+		Prepare     func(b *specification.HTTPRequestBuilder)
+		ExpectedURL string
+	}{
+		{
+			Prepare:     func(b *specification.HTTPRequestBuilder) {},
+			ExpectedURL: "",
+		},
+		{
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithURL("https://api.warehouse/v1/hooves")
+			},
+			ExpectedURL: "https://api.warehouse/v1/hooves",
+		},
+	}
 
-	request, err := builder.Build()
+	for i := range testCases {
+		c := testCases[i]
 
-	require.NoError(t, err)
-	require.Equal(t, "https://api.warehouse/v1/hooves", request.URL())
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.ExpectedURL, buildHTTPRequest(t, c.Prepare).URL())
+		})
+	}
 }
 
-func TestHTTPRequestBuilder_WithMethod(t *testing.T) {
+func TestBuildHTTPRequestWithMethod(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -93,57 +120,57 @@ func TestHTTPRequestBuilder_WithMethod(t *testing.T) {
 		ShouldBeErr bool
 	}{
 		{
-			Name:        "build_with_allowed_empty_method",
+			Name:        "allowed_empty",
 			Method:      "",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_get_method",
+			Name:        "allowed_GET",
 			Method:      "GET",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_post_method",
+			Name:        "allowed_POST",
 			Method:      "POST",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_put_method",
+			Name:        "allowed_PUT",
 			Method:      "PUT",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_patch_method",
+			Name:        "allowed_PATCH",
 			Method:      "PATCH",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_delete_method",
+			Name:        "allowed_DELETE",
 			Method:      "DELETE",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_options_method",
+			Name:        "allowed_OPTIONS",
 			Method:      "OPTIONS",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_trace_method",
+			Name:        "allowed_TRACE",
 			Method:      "TRACE",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_connect_method",
+			Name:        "allowed_CONNECT",
 			Method:      "CONNECT",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_head_method",
+			Name:        "allowed_HEAD",
 			Method:      "HEAD",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "dont_build_with_not_allowed_past_method",
+			Name:        "not_allowed_PAST",
 			Method:      "PAST",
 			ShouldBeErr: true,
 		},
@@ -167,12 +194,13 @@ func TestHTTPRequestBuilder_WithMethod(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+
 			require.Equal(t, strings.ToUpper(c.Method), request.Method().String())
 		})
 	}
 }
 
-func TestHTTPRequestBuilder_WithContentType(t *testing.T) {
+func TestBuildHTTPRequestWithContentType(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -181,22 +209,22 @@ func TestHTTPRequestBuilder_WithContentType(t *testing.T) {
 		ShouldBeErr bool
 	}{
 		{
-			Name:        "build_with_allowed_empty_content_type",
+			Name:        "allowed_empty",
 			ContentType: "",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_content_type_application/json",
+			Name:        "allowed_application/json",
 			ContentType: "application/json",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_content_type_application/xml",
+			Name:        "allowed_application/xml",
 			ContentType: "application/xml",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "dont_build_with_not_allowed_content_type",
+			Name:        "not_allowed_content/type",
 			ContentType: "content/type",
 			ShouldBeErr: true,
 		},
@@ -220,54 +248,113 @@ func TestHTTPRequestBuilder_WithContentType(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+
 			require.Equal(t, strings.ToLower(c.ContentType), request.ContentType().String())
 		})
 	}
 }
 
-func TestHTTPRequestBuilder_WithBody(t *testing.T) {
+func TestBuildHTTPRequestWithBody(t *testing.T) {
 	t.Parallel()
 
-	builder := specification.NewHTTPRequestBuilder()
-	builder.WithBody(map[string]interface{}{
-		"a": 1,
-		"b": 2,
-		"c": map[string]interface{}{
-			"d": 1,
-			"e": map[string]interface{}{
-				"f": 3,
+	testCases := []struct {
+		Prepare      func(b *specification.HTTPRequestBuilder)
+		ExpectedBody map[string]interface{}
+	}{
+		{
+			Prepare:      func(b *specification.HTTPRequestBuilder) {},
+			ExpectedBody: nil,
+		},
+		{
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithBody(map[string]interface{}{})
+			},
+			ExpectedBody: nil,
+		},
+		{
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithBody(map[string]interface{}{
+					"foo": true,
+					"bar": false,
+				})
+			},
+			ExpectedBody: map[string]interface{}{
+				"foo": true,
+				"bar": false,
 			},
 		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.ExpectedBody, buildHTTPRequest(t, c.Prepare).Body())
+		})
+	}
+}
+
+func TestHTTPRequestBodyIsImmutable(t *testing.T) {
+	t.Parallel()
+
+	givenBody := map[string]interface{}{
+		"foo": 1,
+		"bar": 2,
+		"baz": 3,
+	}
+
+	actualBody := buildHTTPRequest(t, func(b *specification.HTTPRequestBuilder) {
+		b.WithBody(givenBody)
+	}).Body()
+
+	givenBody["foo"] = 100
+
+	require.Equal(t, actualBody, map[string]interface{}{
+		"foo": 1,
+		"bar": 2,
+		"baz": 3,
 	})
-
-	request, err := builder.Build()
-
-	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"a": 1,
-		"b": 2,
-		"c": map[string]interface{}{
-			"d": 1,
-			"e": map[string]interface{}{
-				"f": 3,
-			},
-		},
-	}, request.Body())
 }
 
-func TestHTTPResponseBuilder_WithAllowedCodes(t *testing.T) {
+func TestBuildHTTPResponseWithAllowedCodes(t *testing.T) {
 	t.Parallel()
 
-	builder := specification.NewHTTPResponseBuilder()
-	builder.WithAllowedCodes([]int{200, 404})
+	testCases := []struct {
+		Prepare              func(b *specification.HTTPResponseBuilder)
+		ExpectedAllowedCodes []int
+	}{
+		{
+			Prepare:              func(b *specification.HTTPResponseBuilder) {},
+			ExpectedAllowedCodes: nil,
+		},
+		{
+			Prepare: func(b *specification.HTTPResponseBuilder) {
+				b.WithAllowedCodes([]int{})
+			},
+			ExpectedAllowedCodes: nil,
+		},
+		{
+			Prepare: func(b *specification.HTTPResponseBuilder) {
+				b.WithAllowedCodes([]int{200, 204})
+			},
+			ExpectedAllowedCodes: []int{200, 204},
+		},
+	}
 
-	request, err := builder.Build()
+	for i := range testCases {
+		c := testCases[i]
 
-	require.NoError(t, err)
-	require.Equal(t, []int{200, 404}, request.AllowedCodes())
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.ElementsMatch(t, c.ExpectedAllowedCodes, buildHTTPResponse(t, c.Prepare).AllowedCodes())
+		})
+	}
 }
 
-func TestHTTPResponseBuilder_WithAllowedContentType(t *testing.T) {
+func TestBuildHTTPResponseWithAllowedContentType(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -276,22 +363,22 @@ func TestHTTPResponseBuilder_WithAllowedContentType(t *testing.T) {
 		ShouldBeErr bool
 	}{
 		{
-			Name:        "build_with_allowed_empty_content_type",
+			Name:        "allowed_empty",
 			ContentType: "",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_content_type_application/json",
+			Name:        "allowed_application/json",
 			ContentType: "application/json",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_content_type_application/xml",
+			Name:        "allowed_application/xml",
 			ContentType: "application/xml",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "dont_build_with_not_allowed_content_type",
+			Name:        "not_allowed_some/content",
 			ContentType: "some/content",
 			ShouldBeErr: true,
 		},
@@ -315,6 +402,7 @@ func TestHTTPResponseBuilder_WithAllowedContentType(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+
 			require.Equal(t, strings.ToLower(c.ContentType), request.AllowedContentType().String())
 		})
 	}
@@ -401,4 +489,43 @@ func TestHTTPErrors(t *testing.T) {
 			require.True(t, c.IsErr(c.Err))
 		})
 	}
+}
+
+func buildHTTP(t *testing.T, prepare func(b *specification.HTTPBuilder)) specification.HTTP {
+	t.Helper()
+
+	builder := specification.NewHTTPBuilder()
+
+	prepare(builder)
+
+	http, err := builder.Build()
+	require.NoError(t, err)
+
+	return http
+}
+
+func buildHTTPRequest(t *testing.T, prepare func(b *specification.HTTPRequestBuilder)) specification.HTTPRequest {
+	t.Helper()
+
+	builder := specification.NewHTTPRequestBuilder()
+
+	prepare(builder)
+
+	req, err := builder.Build()
+	require.NoError(t, err)
+
+	return req
+}
+
+func buildHTTPResponse(t *testing.T, prepare func(b *specification.HTTPResponseBuilder)) specification.HTTPResponse {
+	t.Helper()
+
+	builder := specification.NewHTTPResponseBuilder()
+
+	prepare(builder)
+
+	resp, err := builder.Build()
+	require.NoError(t, err)
+
+	return resp
 }
