@@ -225,10 +225,13 @@ func TestSlugMustBeOneOfKind(t *testing.T) {
 			switch c.GivenMustBeKind {
 			case specification.StorySlug:
 				err = c.GivenSlug.MustBeStoryKind()
+
 			case specification.ScenarioSlug:
 				err = c.GivenSlug.MustBeScenarioKind()
+
 			case specification.ThesisSlug:
 				err = c.GivenSlug.MustBeThesisKind()
+
 			case specification.NoSlug:
 			}
 
