@@ -62,6 +62,20 @@ func TestBuildScenario(t *testing.T) {
 	}
 }
 
+func errlessBuildScenario(
+	t *testing.T,
+	slug specification.Slug,
+	prepare func(b *specification.ScenarioBuilder),
+) specification.Scenario {
+	t.Helper()
+
+	builder := specification.NewScenarioBuilder()
+
+	prepare(builder)
+
+	return builder.ErrlessBuild(slug)
+}
+
 func TestBuildScenarioWithDescription(t *testing.T) {
 	t.Parallel()
 
@@ -238,18 +252,4 @@ func TestScenarioErrors(t *testing.T) {
 			require.True(t, c.IsErr(c.Err))
 		})
 	}
-}
-
-func errlessBuildScenario(
-	t *testing.T,
-	slug specification.Slug,
-	prepare func(b *specification.ScenarioBuilder),
-) specification.Scenario {
-	t.Helper()
-
-	builder := specification.NewScenarioBuilder()
-
-	prepare(builder)
-
-	return builder.ErrlessBuild(slug)
 }
