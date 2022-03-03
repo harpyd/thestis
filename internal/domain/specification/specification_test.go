@@ -487,6 +487,38 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 	}
 }
 
+func TestGetSpecificationStoryBySlug(t *testing.T) {
+	t.Parallel()
+
+	story := errlessBuildSpecification(t, func(b *specification.Builder) {
+		b.WithStory("foo", func(b *specification.StoryBuilder) {})
+		b.WithStory("bar", func(b *specification.StoryBuilder) {})
+	})
+
+	foo, ok := story.Story("foo")
+	require.True(t, ok)
+	require.Equal(
+		t,
+		specification.NewStoryBuilder().ErrlessBuild(
+			specification.NewStorySlug("foo"),
+		),
+		foo,
+	)
+
+	bar, ok := story.Story("bar")
+	require.True(t, ok)
+	require.Equal(
+		t,
+		specification.NewStoryBuilder().ErrlessBuild(
+			specification.NewStorySlug("bar"),
+		),
+		bar,
+	)
+
+	_, ok = story.Story("baz")
+	require.False(t, ok)
+}
+
 func TestSpecificationErrors(t *testing.T) {
 	t.Parallel()
 
