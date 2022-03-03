@@ -79,9 +79,7 @@ func (s *Specification) ScenariosCount() int {
 	count := 0
 
 	for _, story := range s.stories {
-		for range story.scenarios {
-			count++
-		}
+		count += len(story.scenarios)
 	}
 
 	return count
