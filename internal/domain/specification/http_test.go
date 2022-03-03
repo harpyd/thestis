@@ -126,6 +126,12 @@ func TestBuildHTTPRequestWithURL(t *testing.T) {
 		},
 		{
 			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithURL("")
+			},
+			ExpectedURL: "",
+		},
+		{
+			Prepare: func(b *specification.HTTPRequestBuilder) {
 				b.WithURL("https://api.warehouse/v1/hooves")
 			},
 			ExpectedURL: "https://api.warehouse/v1/hooves",
