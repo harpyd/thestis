@@ -63,6 +63,26 @@ func (s *Specification) Description() string {
 	return s.description
 }
 
+func (s *Specification) Story(slug string) (story Story, ok bool) {
+	story, ok = s.stories[slug]
+
+	return
+}
+
+func (s *Specification) Stories() []Story {
+	stories := make([]Story, 0, len(s.stories))
+
+	for _, story := range s.stories {
+		stories = append(stories, story)
+	}
+
+	return stories
+}
+
+func (s *Specification) StoriesCount() int {
+	return len(s.stories)
+}
+
 func (s *Specification) Scenarios() []Scenario {
 	scenarios := make([]Scenario, 0, s.ScenariosCount())
 
@@ -85,24 +105,30 @@ func (s *Specification) ScenariosCount() int {
 	return count
 }
 
-func (s *Specification) Story(slug string) (story Story, ok bool) {
-	story, ok = s.stories[slug]
-
-	return
-}
-
-func (s *Specification) Stories() []Story {
-	stories := make([]Story, 0, len(s.stories))
+func (s *Specification) Theses() []Thesis {
+	theses := make([]Thesis, 0, s.ThesesCount())
 
 	for _, story := range s.stories {
-		stories = append(stories, story)
+		for _, scenario := range story.scenarios {
+			for _, thesis := range scenario.theses {
+				theses = append(theses, thesis)
+			}
+		}
 	}
 
-	return stories
+	return theses
 }
 
-func (s *Specification) StoriesCount() int {
-	return len(s.stories)
+func (s *Specification) ThesesCount() int {
+	count := 0
+
+	for _, story := range s.stories {
+		for _, scenario := range story.scenarios {
+			count += len(scenario.theses)
+		}
+	}
+
+	return count
 }
 
 func NewBuilder() *Builder {
