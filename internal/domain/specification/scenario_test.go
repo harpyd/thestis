@@ -16,25 +16,25 @@ func TestBuildScenarioSlugging(t *testing.T) {
 	testCases := []struct {
 		Name        string
 		GivenSlug   specification.Slug
-		ShouldBeErr bool
+		WantThisErr bool
 		IsErr       func(err error) bool
 	}{
 		{
 			Name:        "foo.bar",
 			GivenSlug:   specification.NewScenarioSlug("foo", "bar"),
-			ShouldBeErr: false,
+			WantThisErr: false,
 			IsErr:       specification.IsEmptySlugError,
 		},
 		{
 			Name:        "empty_slug",
 			GivenSlug:   specification.Slug{},
-			ShouldBeErr: true,
+			WantThisErr: true,
 			IsErr:       specification.IsEmptySlugError,
 		},
 		{
 			Name:        "not_scenario_slug",
 			GivenSlug:   specification.NewStorySlug("foo"),
-			ShouldBeErr: true,
+			WantThisErr: true,
 			IsErr:       specification.IsNotScenarioSlugError,
 		},
 	}
@@ -49,7 +49,7 @@ func TestBuildScenarioSlugging(t *testing.T) {
 
 			scenario, err := builder.Build(c.GivenSlug)
 
-			if c.ShouldBeErr {
+			if c.WantThisErr {
 				require.True(t, c.IsErr(err))
 
 				return
@@ -119,13 +119,13 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 		Name           string
 		Prepare        func(b *specification.ScenarioBuilder)
 		ExpectedTheses []specification.Thesis
-		ShouldBeErr    bool
+		WantThisErr    bool
 		IsErr          func(err error) bool
 	}{
 		{
 			Name:        "no_theses",
 			Prepare:     func(b *specification.ScenarioBuilder) {},
-			ShouldBeErr: true,
+			WantThisErr: true,
 			IsErr:       specification.IsNoScenarioThesesError,
 		},
 		{
@@ -142,7 +142,7 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 					specification.NewThesisSlug(scenarioSlug.Story(), scenarioSlug.Scenario(), "bad"),
 				),
 			},
-			ShouldBeErr: false,
+			WantThisErr: false,
 			IsErr:       specification.IsNoScenarioThesesError,
 		},
 		{
@@ -151,7 +151,7 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 				b.WithThesis("baz", func(b *specification.ThesisBuilder) {})
 				b.WithThesis("baz", func(b *specification.ThesisBuilder) {})
 			},
-			ShouldBeErr: true,
+			WantThisErr: true,
 			IsErr:       specification.IsThesisSlugAlreadyExistsError,
 		},
 	}
@@ -168,7 +168,7 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 
 			scenario, err := builder.Build(scenarioSlug)
 
-			if c.ShouldBeErr {
+			if c.WantThisErr {
 				require.True(t, c.IsErr(err))
 
 				return
