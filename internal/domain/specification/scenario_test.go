@@ -67,7 +67,6 @@ func TestBuildScenarioSlugging(t *testing.T) {
 
 func errlessBuildScenario(
 	t *testing.T,
-	slug specification.Slug,
 	prepare func(b *specification.ScenarioBuilder),
 ) specification.Scenario {
 	t.Helper()
@@ -76,7 +75,9 @@ func errlessBuildScenario(
 
 	prepare(builder)
 
-	return builder.ErrlessBuild(slug)
+	return builder.ErrlessBuild(
+		specification.NewScenarioSlug("story", "scenario"),
+	)
 }
 
 func TestBuildScenarioWithDescription(t *testing.T) {
@@ -104,9 +105,7 @@ func TestBuildScenarioWithDescription(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			slug := specification.NewScenarioSlug("foo", "bar")
-
-			description := errlessBuildScenario(t, slug, c.Prepare).Description()
+			description := errlessBuildScenario(t, c.Prepare).Description()
 
 			require.Equal(t, c.ExpectedDescription, description)
 		})
@@ -187,9 +186,7 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 func TestGetScenarioThesisBySlug(t *testing.T) {
 	t.Parallel()
 
-	slug := specification.NewScenarioSlug("aaa", "bb")
-
-	scenario := errlessBuildScenario(t, slug, func(b *specification.ScenarioBuilder) {
+	scenario := errlessBuildScenario(t, func(b *specification.ScenarioBuilder) {
 		b.WithThesis("c", func(b *specification.ThesisBuilder) {})
 		b.WithThesis("d", func(b *specification.ThesisBuilder) {})
 	})
