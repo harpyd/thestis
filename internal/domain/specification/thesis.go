@@ -97,6 +97,10 @@ func (b *ThesisBuilder) Build(slug Slug) (Thesis, error) {
 		return Thesis{}, NewEmptySlugError()
 	}
 
+	if err := slug.MustBeThesisKind(); err != nil {
+		return Thesis{}, err
+	}
+
 	stage, stageErr := stageFromString(b.stage)
 	http, httpErr := b.httpBuilder.Build()
 	assertion, assertionErr := b.assertionBuilder.Build()
@@ -141,7 +145,7 @@ func (b *ThesisBuilder) Reset() {
 	b.httpBuilder.Reset()
 }
 
-func (b *ThesisBuilder) WithDependencies(dep string) *ThesisBuilder {
+func (b *ThesisBuilder) WithDependency(dep string) *ThesisBuilder {
 	b.dependencies = append(b.dependencies, dep)
 
 	return b
