@@ -114,7 +114,7 @@ func (d performanceThesisDocument) unmarshalToThesis() specification.Thesis {
 		WithHTTP(d.HTTP.unmarshalToHTTPBuildFn())
 
 	for _, dep := range d.After {
-		b.WithDependencies(dep)
+		b.WithDependency(dep)
 	}
 
 	return b.ErrlessBuild(

@@ -315,7 +315,7 @@ func invalidCyclicSpecification(t *testing.T) *specification.Specification {
 			b.WithScenario("scenario", func(b *specification.ScenarioBuilder) {
 				b.WithThesis("a", func(b *specification.ThesisBuilder) {
 					b.WithStatement("given", "a")
-					b.WithDependencies("b")
+					b.WithDependency("b")
 					b.WithHTTP(func(b *specification.HTTPBuilder) {
 						b.WithRequest(func(b *specification.HTTPRequestBuilder) {
 							b.WithMethod("GET")
@@ -332,7 +332,7 @@ func invalidCyclicSpecification(t *testing.T) *specification.Specification {
 						b.WithAssert("some", 1)
 					})
 					b.WithStatement("given", "b")
-					b.WithDependencies("a")
+					b.WithDependency("a")
 				})
 			})
 		}).

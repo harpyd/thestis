@@ -1,60 +1,46 @@
 package specification_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-func TestThesisBuilder_Build_no_http_or_assertion(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewThesisBuilder()
-
-	_, err := builder.Build(specification.NewThesisSlug("someStory", "foo", "bar"))
-
-	require.True(t, specification.IsNoThesisHTTPOrAssertionError(err))
-}
-
-func TestThesisBuilder_WithDependencies(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewThesisBuilder()
-	builder.WithStatement("when", "something")
-	builder.WithDependencies("anotherOneThesis")
-	builder.WithDependencies("anotherTwoThesis")
-
-	expectedDependencies := []specification.Slug{
-		specification.NewThesisSlug("story", "scenario", "anotherOneThesis"),
-		specification.NewThesisSlug("story", "scenario", "anotherTwoThesis"),
-	}
-
-	thesis := builder.ErrlessBuild(specification.NewThesisSlug("story", "scenario", "thesis"))
-
-	require.ElementsMatch(t, expectedDependencies, thesis.Dependencies())
-}
-
-func TestThesisBuilder_Build_slug(t *testing.T) {
+func TestBuildThesisSlugging(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		Name        string
-		Slug        specification.Slug
-		ShouldBeErr bool
+		GivenSlug   specification.Slug
+		WantThisErr bool
+		IsErr       func(err error) bool
 	}{
 		{
-			Name:        "build_with_slug",
-			Slug:        specification.NewThesisSlug("story", "scenario", "thesis"),
-			ShouldBeErr: false,
+			Name:        "foo.bar.baz",
+			GivenSlug:   specification.NewThesisSlug("foo", "bar", "baz"),
+			WantThisErr: false,
+			IsErr: func(err error) bool {
+				return specification.IsEmptySlugError(err) ||
+					specification.IsNotThesisSlugError(err)
+			},
 		},
 		{
-			Name:        "build_with_empty_slug",
-			Slug:        specification.Slug{},
-			ShouldBeErr: true,
+			Name:        "empty_slug",
+			GivenSlug:   specification.Slug{},
+			WantThisErr: true,
+			IsErr:       specification.IsEmptySlugError,
+		},
+		{
+			Name:        "not_thesis_slug",
+			GivenSlug:   specification.NewStorySlug("bao"),
+			WantThisErr: true,
+			IsErr:       specification.IsNotThesisSlugError,
 		},
 	}
 
@@ -64,23 +50,93 @@ func TestThesisBuilder_Build_slug(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewThesisBuilder()
-			builder.WithStatement("when", "do something")
+			thesis, err := specification.NewThesisBuilder().Build(c.GivenSlug)
 
-			if c.ShouldBeErr {
-				_, err := builder.Build(c.Slug)
-				require.True(t, specification.IsEmptySlugError(err))
+			if c.WantThisErr {
+				require.True(t, c.IsErr(err))
 
 				return
 			}
 
-			thesis := builder.ErrlessBuild(c.Slug)
-			require.Equal(t, c.Slug, thesis.Slug())
+			require.False(t, c.IsErr(err))
+
+			require.Equal(t, c.GivenSlug, thesis.Slug())
 		})
 	}
 }
 
-func TestThesisBuilder_WithStatement(t *testing.T) {
+func errlessBuildThesis(
+	t *testing.T,
+	slug specification.Slug,
+	prepare func(b *specification.ThesisBuilder),
+) specification.Thesis {
+	t.Helper()
+
+	builder := specification.NewThesisBuilder()
+
+	prepare(builder)
+
+	return builder.ErrlessBuild(slug)
+}
+
+func TestBuildThesisWithDependencies(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Prepare              func(b *specification.ThesisBuilder)
+		ExpectedDependencies []specification.Slug
+	}{
+		{
+			Prepare:              func(b *specification.ThesisBuilder) {},
+			ExpectedDependencies: nil,
+		},
+		{
+			Prepare: func(b *specification.ThesisBuilder) {
+				b.WithDependency("")
+			},
+			ExpectedDependencies: []specification.Slug{
+				specification.NewThesisSlug("foo", "bar", ""),
+			},
+		},
+		{
+			Prepare: func(b *specification.ThesisBuilder) {
+				b.WithDependency("copy")
+				b.WithDependency("copy")
+			},
+			ExpectedDependencies: []specification.Slug{
+				specification.NewThesisSlug("foo", "bar", "copy"),
+				specification.NewThesisSlug("foo", "bar", "copy"),
+			},
+		},
+		{
+			Prepare: func(b *specification.ThesisBuilder) {
+				b.WithDependency("pop")
+				b.WithDependency("coo")
+			},
+			ExpectedDependencies: []specification.Slug{
+				specification.NewThesisSlug("foo", "bar", "pop"),
+				specification.NewThesisSlug("foo", "bar", "coo"),
+			},
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var (
+				slug = specification.NewThesisSlug("foo", "bar", "qaz")
+				deps = errlessBuildThesis(t, slug, c.Prepare).Dependencies()
+			)
+
+			require.ElementsMatch(t, c.ExpectedDependencies, deps)
+		})
+	}
+}
+
+func TestBuildThesisWithStatement(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -90,25 +146,25 @@ func TestThesisBuilder_WithStatement(t *testing.T) {
 		ShouldBeErr bool
 	}{
 		{
-			Name:        "build_with_allowed_given_stage",
+			Name:        "allowed_given",
 			Keyword:     "given",
 			Behavior:    "hooves delivered to the warehouse",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_when_stage",
+			Name:        "allowed_when",
 			Keyword:     "when",
 			Behavior:    "selling hooves",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "build_with_allowed_then_stage",
+			Name:        "allowed_then",
 			Keyword:     "then",
 			Behavior:    "check that hooves are sold",
 			ShouldBeErr: false,
 		},
 		{
-			Name:        "dont_build_with_not_allowed_stage",
+			Name:        "not_allowed_zen",
 			Keyword:     "zen",
 			Behavior:    "zen du dust",
 			ShouldBeErr: true,
@@ -121,75 +177,153 @@ func TestThesisBuilder_WithStatement(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewThesisBuilder()
-			builder.WithStatement(c.Keyword, c.Behavior)
+			thesis, err := specification.NewThesisBuilder().
+				WithStatement(c.Keyword, c.Behavior).
+				Build(specification.NewThesisSlug("foo", "bar", "baz"))
 
 			if c.ShouldBeErr {
-				_, err := builder.Build(specification.NewThesisSlug("story", "scenario", "sellHooves"))
 				require.True(t, specification.IsNotAllowedStageError(err))
 
 				return
 			}
 
-			thesis := builder.ErrlessBuild(specification.NewThesisSlug("story", "scenario", "sellHooves"))
-			require.Equal(t, strings.ToLower(c.Keyword), thesis.Statement().Stage().String())
-			require.Equal(t, c.Behavior, thesis.Statement().Behavior())
+			require.False(t, specification.IsNotAllowedStageError(err))
+
+			t.Run("stage", func(t *testing.T) {
+				assert.Equal(t, strings.ToLower(c.Keyword), thesis.Statement().Stage().String())
+			})
+
+			t.Run("behavior", func(t *testing.T) {
+				assert.Equal(t, c.Behavior, thesis.Statement().Behavior())
+			})
 		})
 	}
 }
 
-func TestThesisBuilder_WithAssertion(t *testing.T) {
+func TestBuildThesisWithAssertion(t *testing.T) {
 	t.Parallel()
 
-	builder := specification.NewThesisBuilder()
-	builder.WithStatement("when", "something wrong")
-	builder.WithAssertion(func(b *specification.AssertionBuilder) {
-		b.WithMethod("JSONPATH")
-		b.WithAssert("getSomeBody.response.body.type", "product")
-	})
+	testCases := []struct {
+		Prepare           func(b *specification.ThesisBuilder)
+		ExpectedAssertion specification.Assertion
+		ShouldBeErr       bool
+	}{
+		{
+			Prepare:     func(b *specification.ThesisBuilder) {},
+			ShouldBeErr: true,
+		},
+		{
+			Prepare: func(b *specification.ThesisBuilder) {
+				b.WithAssertion(func(b *specification.AssertionBuilder) {})
+			},
+			ShouldBeErr: true,
+		},
+		{
+			Prepare: func(b *specification.ThesisBuilder) {
+				b.WithAssertion(func(b *specification.AssertionBuilder) {
+					b.WithMethod("JSONPATH")
+				})
+			},
+			ExpectedAssertion: specification.NewAssertionBuilder().
+				WithMethod("JSONPATH").
+				ErrlessBuild(),
+			ShouldBeErr: false,
+		},
+	}
 
-	thesis, err := builder.Build(specification.NewThesisSlug("story", "scenario", "someThesis"))
+	for i := range testCases {
+		c := testCases[i]
 
-	require.NoError(t, err)
-	expectedAssertion, err := specification.NewAssertionBuilder().
-		WithMethod("JSONPATH").
-		WithAssert("getSomeBody.response.body.type", "product").
-		Build()
-	require.NoError(t, err)
-	require.Equal(t, expectedAssertion, thesis.Assertion())
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			builder := specification.NewThesisBuilder()
+
+			c.Prepare(builder)
+
+			thesis, err := builder.Build(specification.NewThesisSlug("a", "b", "c"))
+
+			if c.ShouldBeErr {
+				require.True(t, specification.IsNoThesisHTTPOrAssertionError(err))
+
+				return
+			}
+
+			require.False(t, specification.IsNoThesisHTTPOrAssertionError(err))
+
+			require.Equal(t, c.ExpectedAssertion, thesis.Assertion())
+		})
+	}
 }
 
-func TestThesisBuilder_WithHTTP(t *testing.T) {
+func TestBuildThesisWithHTTP(t *testing.T) {
 	t.Parallel()
 
-	builder := specification.NewThesisBuilder()
-	builder.WithStatement("given", "some state")
-	builder.WithHTTP(func(b *specification.HTTPBuilder) {
-		b.WithRequest(func(b *specification.HTTPRequestBuilder) {
-			b.WithMethod("GET")
-			b.WithURL("https://some-api/v1/endpoint")
-		})
-		b.WithResponse(func(b *specification.HTTPResponseBuilder) {
-			b.WithAllowedCodes([]int{200})
-			b.WithAllowedContentType("application/json")
-		})
-	})
+	testCases := []struct {
+		Prepare      func(b *specification.ThesisBuilder)
+		ExpectedHTTP specification.HTTP
+		ShouldBeErr  bool
+	}{
+		{
+			Prepare:     func(b *specification.ThesisBuilder) {},
+			ShouldBeErr: true,
+		},
+		{
+			Prepare: func(b *specification.ThesisBuilder) {
+				b.WithHTTP(func(b *specification.HTTPBuilder) {})
+			},
+			ShouldBeErr: true,
+		},
+		{
+			Prepare: func(b *specification.ThesisBuilder) {
+				b.WithHTTP(func(b *specification.HTTPBuilder) {
+					b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+						b.WithMethod("GET")
+						b.WithURL("https://some-api/v1/endpoint")
+					})
+					b.WithResponse(func(b *specification.HTTPResponseBuilder) {
+						b.WithAllowedCodes([]int{200})
+						b.WithAllowedContentType("application/json")
+					})
+				})
+			},
+			ExpectedHTTP: specification.NewHTTPBuilder().
+				WithRequest(func(b *specification.HTTPRequestBuilder) {
+					b.WithMethod("GET")
+					b.WithURL("https://some-api/v1/endpoint")
+				}).
+				WithResponse(func(b *specification.HTTPResponseBuilder) {
+					b.WithAllowedCodes([]int{200})
+					b.WithAllowedContentType("application/json")
+				}).
+				ErrlessBuild(),
+			ShouldBeErr: false,
+		},
+	}
 
-	thesis, err := builder.Build(specification.NewThesisSlug("story", "scenario", "thesis"))
+	for i := range testCases {
+		c := testCases[i]
 
-	require.NoError(t, err)
-	expectedHTTP, err := specification.NewHTTPBuilder().
-		WithRequest(func(b *specification.HTTPRequestBuilder) {
-			b.WithMethod("GET")
-			b.WithURL("https://some-api/v1/endpoint")
-		}).
-		WithResponse(func(b *specification.HTTPResponseBuilder) {
-			b.WithAllowedCodes([]int{200})
-			b.WithAllowedContentType("application/json")
-		}).
-		Build()
-	require.NoError(t, err)
-	require.Equal(t, expectedHTTP, thesis.HTTP())
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			builder := specification.NewThesisBuilder()
+
+			c.Prepare(builder)
+
+			thesis, err := builder.Build(specification.NewThesisSlug("a", "b", "c"))
+
+			if c.ShouldBeErr {
+				require.True(t, specification.IsNoThesisHTTPOrAssertionError(err))
+
+				return
+			}
+
+			require.False(t, specification.IsNoThesisHTTPOrAssertionError(err))
+
+			require.Equal(t, c.ExpectedHTTP, thesis.HTTP())
+		})
+	}
 }
 
 func TestThesisErrors(t *testing.T) {

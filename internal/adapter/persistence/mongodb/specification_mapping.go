@@ -237,7 +237,7 @@ func (d thesisDocument) unmarshalToThesisBuildFn() func(builder *specification.T
 			WithAssertion(d.Assertion.unmarshalToAssertionBuildFn())
 
 		for _, after := range d.After {
-			builder.WithDependencies(after)
+			builder.WithDependency(after)
 		}
 	}
 }
