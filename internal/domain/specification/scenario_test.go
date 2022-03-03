@@ -23,7 +23,10 @@ func TestBuildScenarioSlugging(t *testing.T) {
 			Name:        "foo.bar",
 			GivenSlug:   specification.NewScenarioSlug("foo", "bar"),
 			WantThisErr: false,
-			IsErr:       specification.IsEmptySlugError,
+			IsErr: func(err error) bool {
+				return specification.IsEmptySlugError(err) ||
+					specification.IsNotScenarioSlugError(err)
+			},
 		},
 		{
 			Name:        "empty_slug",
