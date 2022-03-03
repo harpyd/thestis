@@ -1,6 +1,7 @@
 package specification_test
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -11,6 +12,287 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+func errlessBuildSpecification(
+	t *testing.T,
+	prepare func(b *specification.Builder),
+) *specification.Specification {
+	t.Helper()
+
+	builder := specification.NewBuilder()
+
+	prepare(builder)
+
+	return builder.ErrlessBuild()
+}
+
+func TestBuildSpecificationWithID(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Prepare    func(b *specification.Builder)
+		ExpectedID string
+	}{
+		{
+			Prepare:    func(b *specification.Builder) {},
+			ExpectedID: "",
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithID("")
+			},
+			ExpectedID: "",
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithID("some-id")
+			},
+			ExpectedID: "some-id",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			id := errlessBuildSpecification(t, c.Prepare).ID()
+
+			require.Equal(t, c.ExpectedID, id)
+		})
+	}
+}
+
+func TestBuildSpecificationWithOwnerID(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Prepare         func(b *specification.Builder)
+		ExpectedOwnerID string
+	}{
+		{
+			Prepare:         func(b *specification.Builder) {},
+			ExpectedOwnerID: "",
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithOwnerID("")
+			},
+			ExpectedOwnerID: "",
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithOwnerID("owner-id")
+			},
+			ExpectedOwnerID: "owner-id",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			ownerID := errlessBuildSpecification(t, c.Prepare).OwnerID()
+
+			require.Equal(t, c.ExpectedOwnerID, ownerID)
+		})
+	}
+}
+
+func TestBuildSpecificationWithTestCampaignID(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Prepare                func(b *specification.Builder)
+		ExpectedTestCampaignID string
+	}{
+		{
+			Prepare:                func(b *specification.Builder) {},
+			ExpectedTestCampaignID: "",
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithTestCampaignID("")
+			},
+			ExpectedTestCampaignID: "",
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithTestCampaignID("test-campaign-id")
+			},
+			ExpectedTestCampaignID: "test-campaign-id",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			testCampaignID := errlessBuildSpecification(t, c.Prepare).TestCampaignID()
+
+			require.Equal(t, c.ExpectedTestCampaignID, testCampaignID)
+		})
+	}
+}
+
+func TestBuildSpecificationWithLoadedAt(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now().UTC()
+
+	testCases := []struct {
+		Prepare          func(b *specification.Builder)
+		ExpectedLoadedAt time.Time
+	}{
+		{
+			Prepare:          func(b *specification.Builder) {},
+			ExpectedLoadedAt: time.Time{},
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithLoadedAt(time.Time{})
+			},
+			ExpectedLoadedAt: time.Time{},
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithLoadedAt(now)
+			},
+			ExpectedLoadedAt: now,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			loadedAt := errlessBuildSpecification(t, c.Prepare).LoadedAt()
+
+			require.Equal(t, c.ExpectedLoadedAt, loadedAt)
+		})
+	}
+}
+
+func TestBuildSpecificationWithAuthor(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Prepare        func(b *specification.Builder)
+		ExpectedAuthor string
+	}{
+		{
+			Prepare:        func(b *specification.Builder) {},
+			ExpectedAuthor: "",
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithAuthor("")
+			},
+			ExpectedAuthor: "",
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithAuthor("djerys")
+			},
+			ExpectedAuthor: "djerys",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			author := errlessBuildSpecification(t, c.Prepare).Author()
+
+			require.Equal(t, c.ExpectedAuthor, author)
+		})
+	}
+}
+
+func TestBuildSpecificationWithTitle(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Prepare       func(b *specification.Builder)
+		ExpectedTitle string
+	}{
+		{
+			Prepare:       func(b *specification.Builder) {},
+			ExpectedTitle: "",
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithTitle("")
+			},
+			ExpectedTitle: "",
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithTitle("foo")
+			},
+			ExpectedTitle: "foo",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			title := errlessBuildSpecification(t, c.Prepare).Title()
+
+			require.Equal(t, c.ExpectedTitle, title)
+		})
+	}
+}
+
+func TestBuildSpecificationWithDescription(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Prepare             func(b *specification.Builder)
+		ExpectedDescription string
+	}{
+		{
+			Prepare:             func(b *specification.Builder) {},
+			ExpectedDescription: "",
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithDescription("")
+			},
+			ExpectedDescription: "",
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithDescription("desc")
+			},
+			ExpectedDescription: "desc",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			description := errlessBuildSpecification(t, c.Prepare).Description()
+
+			require.Equal(t, c.ExpectedDescription, description)
+		})
+	}
+}
+
 func TestBuilder_Build_no_stories(t *testing.T) {
 	t.Parallel()
 
@@ -19,83 +301,6 @@ func TestBuilder_Build_no_stories(t *testing.T) {
 	_, err := builder.Build()
 
 	require.True(t, specification.IsNoSpecificationStoriesError(err))
-}
-
-func TestBuilder_WithID(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewBuilder()
-	builder.WithID("1972f067-48f1-41b0-87e3-704e60afe371")
-
-	spec := builder.ErrlessBuild()
-
-	require.Equal(t, "1972f067-48f1-41b0-87e3-704e60afe371", spec.ID())
-}
-
-func TestBuilder_WithOwnerID(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewBuilder()
-	builder.WithOwnerID("134dfe2b-850c-4fc9-8b4a-f76896ff157a")
-
-	spec := builder.ErrlessBuild()
-
-	require.Equal(t, "134dfe2b-850c-4fc9-8b4a-f76896ff157a", spec.OwnerID())
-}
-
-func TestBuilder_WithTestCampaignID(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewBuilder()
-	builder.WithTestCampaignID("d8672f47-0a61-4ebc-84d5-2ea197b67d25")
-
-	spec := builder.ErrlessBuild()
-
-	require.Equal(t, "d8672f47-0a61-4ebc-84d5-2ea197b67d25", spec.TestCampaignID())
-}
-
-func TestBuilder_WithLoadedAt(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewBuilder()
-	builder.WithLoadedAt(time.Date(2020, time.September, 9, 13, 0, 0, 0, time.UTC))
-
-	spec := builder.ErrlessBuild()
-
-	require.Equal(t, time.Date(2020, time.September, 9, 13, 0, 0, 0, time.UTC), spec.LoadedAt())
-}
-
-func TestBuilder_WithAuthor(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewBuilder()
-	builder.WithAuthor("author")
-
-	spec := builder.ErrlessBuild()
-
-	require.Equal(t, "author", spec.Author())
-}
-
-func TestBuilder_WithTitle(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewBuilder()
-	builder.WithTitle("specification")
-
-	spec := builder.ErrlessBuild()
-
-	require.Equal(t, "specification", spec.Title())
-}
-
-func TestBuilder_WithDescription(t *testing.T) {
-	t.Parallel()
-
-	builder := specification.NewBuilder()
-	builder.WithDescription("description")
-
-	spec := builder.ErrlessBuild()
-
-	require.Equal(t, "description", spec.Description())
 }
 
 func TestBuilder_WithStory(t *testing.T) {
