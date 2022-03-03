@@ -11,6 +11,22 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+func buildHTTP(
+	t *testing.T,
+	prepare func(b *specification.HTTPBuilder),
+) specification.HTTP {
+	t.Helper()
+
+	builder := specification.NewHTTPBuilder()
+
+	prepare(builder)
+
+	http, err := builder.Build()
+	require.NoError(t, err)
+
+	return http
+}
+
 func TestBuildHTTPWithRequest(t *testing.T) {
 	t.Parallel()
 
@@ -79,6 +95,22 @@ func TestBuildHTTPWithResponse(t *testing.T) {
 			require.Equal(t, c.ExpectedResponse, buildHTTP(t, c.Prepare).Response())
 		})
 	}
+}
+
+func buildHTTPRequest(
+	t *testing.T,
+	prepare func(b *specification.HTTPRequestBuilder),
+) specification.HTTPRequest {
+	t.Helper()
+
+	builder := specification.NewHTTPRequestBuilder()
+
+	prepare(builder)
+
+	req, err := builder.Build()
+	require.NoError(t, err)
+
+	return req
 }
 
 func TestBuildHTTPRequestWithURL(t *testing.T) {
@@ -318,6 +350,22 @@ func TestHTTPRequestBodyIsImmutable(t *testing.T) {
 	})
 }
 
+func buildHTTPResponse(
+	t *testing.T,
+	prepare func(b *specification.HTTPResponseBuilder),
+) specification.HTTPResponse {
+	t.Helper()
+
+	builder := specification.NewHTTPResponseBuilder()
+
+	prepare(builder)
+
+	resp, err := builder.Build()
+	require.NoError(t, err)
+
+	return resp
+}
+
 func TestBuildHTTPResponseWithAllowedCodes(t *testing.T) {
 	t.Parallel()
 
@@ -489,43 +537,4 @@ func TestHTTPErrors(t *testing.T) {
 			require.True(t, c.IsErr(c.Err))
 		})
 	}
-}
-
-func buildHTTP(t *testing.T, prepare func(b *specification.HTTPBuilder)) specification.HTTP {
-	t.Helper()
-
-	builder := specification.NewHTTPBuilder()
-
-	prepare(builder)
-
-	http, err := builder.Build()
-	require.NoError(t, err)
-
-	return http
-}
-
-func buildHTTPRequest(t *testing.T, prepare func(b *specification.HTTPRequestBuilder)) specification.HTTPRequest {
-	t.Helper()
-
-	builder := specification.NewHTTPRequestBuilder()
-
-	prepare(builder)
-
-	req, err := builder.Build()
-	require.NoError(t, err)
-
-	return req
-}
-
-func buildHTTPResponse(t *testing.T, prepare func(b *specification.HTTPResponseBuilder)) specification.HTTPResponse {
-	t.Helper()
-
-	builder := specification.NewHTTPResponseBuilder()
-
-	prepare(builder)
-
-	resp, err := builder.Build()
-	require.NoError(t, err)
-
-	return resp
 }
