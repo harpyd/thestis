@@ -10,7 +10,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-func TestBuildScenario(t *testing.T) {
+func TestBuildScenarioSlugging(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
