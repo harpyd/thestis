@@ -48,6 +48,18 @@ func (s Scenario) Thesis(slug string) (thesis Thesis, ok bool) {
 	return
 }
 
+func (s Scenario) ThesesByStage(stage Stage) []Thesis {
+	theses := make([]Thesis, 0, len(s.theses))
+
+	for _, thesis := range s.theses {
+		if thesis.statement.stage == stage {
+			theses = append(theses, thesis)
+		}
+	}
+
+	return theses
+}
+
 func NewScenarioBuilder() *ScenarioBuilder {
 	return &ScenarioBuilder{}
 }
@@ -61,32 +73,32 @@ func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
 		return Scenario{}, err
 	}
 
-	scn := Scenario{
+	scenario := Scenario{
 		slug:        slug,
 		description: b.description,
 		theses:      make(map[string]Thesis),
 	}
 
 	if len(b.thesisFactories) == 0 {
-		return scn, NewBuildSluggedError(NewNoScenarioThesesError(), slug)
+		return scenario, NewBuildSluggedError(NewNoScenarioThesesError(), slug)
 	}
 
 	var err error
 
-	for _, thsisFactory := range b.thesisFactories {
-		thsis, thsisErr := thsisFactory(slug)
-		if _, ok := scn.theses[thsis.Slug().Thesis()]; ok {
-			err = multierr.Append(err, NewSlugAlreadyExistsError(thsis.Slug()))
+	for _, thesisFry := range b.thesisFactories {
+		thesis, thesisErr := thesisFry(slug)
+		if _, ok := scenario.theses[thesis.Slug().Thesis()]; ok {
+			err = multierr.Append(err, NewSlugAlreadyExistsError(thesis.Slug()))
 
 			continue
 		}
 
-		err = multierr.Append(err, thsisErr)
+		err = multierr.Append(err, thesisErr)
 
-		scn.theses[thsis.Slug().Thesis()] = thsis
+		scenario.theses[thesis.Slug().Thesis()] = thesis
 	}
 
-	return scn, NewBuildSluggedError(err, slug)
+	return scenario, NewBuildSluggedError(err, slug)
 }
 
 func (b *ScenarioBuilder) ErrlessBuild(slug Slug) Scenario {

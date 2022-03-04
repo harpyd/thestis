@@ -2,7 +2,6 @@ package specification
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
@@ -24,7 +23,7 @@ type (
 
 	ThesisBuilder struct {
 		dependencies     []string
-		stage            string
+		stage            Stage
 		behavior         string
 		httpBuilder      *HTTPBuilder
 		assertionBuilder *AssertionBuilder
@@ -68,21 +67,23 @@ func (s Statement) Behavior() string {
 	return s.behavior
 }
 
-func stageFromString(keyword string) (Stage, error) {
-	switch strings.ToLower(keyword) {
-	case "given":
-		return Given, nil
-	case "when":
-		return When, nil
-	case "then":
-		return Then, nil
+func (s Stage) IsValid() bool {
+	switch s {
+	case Given:
+		return true
+	case When:
+		return true
+	case Then:
+		return true
+	case UnknownStage:
+		return false
 	}
 
-	return UnknownStage, NewNotAllowedStageError(keyword)
+	return false
 }
 
-func (k Stage) String() string {
-	return string(k)
+func (s Stage) String() string {
+	return string(s)
 }
 
 func NewThesisBuilder() *ThesisBuilder {
@@ -101,20 +102,30 @@ func (b *ThesisBuilder) Build(slug Slug) (Thesis, error) {
 		return Thesis{}, err
 	}
 
-	stage, stageErr := stageFromString(b.stage)
-	http, httpErr := b.httpBuilder.Build()
-	assertion, assertionErr := b.assertionBuilder.Build()
+	http, buildErr := b.httpBuilder.Build()
 
-	err := multierr.Combine(httpErr, assertionErr)
-	if err == nil && http.IsZero() && assertion.IsZero() {
-		err = NewNoThesisHTTPOrAssertionError()
+	assertion, err := b.assertionBuilder.Build()
+	buildErr = multierr.Append(buildErr, err)
+
+	if buildErr == nil && http.IsZero() && assertion.IsZero() {
+		buildErr = multierr.Append(
+			buildErr,
+			NewNoThesisHTTPOrAssertionError(),
+		)
 	}
 
-	thsis := Thesis{
+	if !b.stage.IsValid() {
+		buildErr = multierr.Append(
+			buildErr,
+			NewNotAllowedStageError(b.stage.String()),
+		)
+	}
+
+	thesis := Thesis{
 		slug:         slug,
 		dependencies: make([]Slug, 0, len(b.dependencies)),
 		statement: Statement{
-			stage:    stage,
+			stage:    b.stage,
 			behavior: b.behavior,
 		},
 		http:      http,
@@ -122,13 +133,13 @@ func (b *ThesisBuilder) Build(slug Slug) (Thesis, error) {
 	}
 
 	for _, dep := range b.dependencies {
-		thsis.dependencies = append(
-			thsis.dependencies,
+		thesis.dependencies = append(
+			thesis.dependencies,
 			NewThesisSlug(slug.Story(), slug.Scenario(), dep),
 		)
 	}
 
-	return thsis, NewBuildSluggedError(multierr.Combine(stageErr, err), slug)
+	return thesis, NewBuildSluggedError(buildErr, slug)
 }
 
 func (b *ThesisBuilder) ErrlessBuild(slug Slug) Thesis {
@@ -151,7 +162,7 @@ func (b *ThesisBuilder) WithDependency(dep string) *ThesisBuilder {
 	return b
 }
 
-func (b *ThesisBuilder) WithStatement(stage string, behavior string) *ThesisBuilder {
+func (b *ThesisBuilder) WithStatement(stage Stage, behavior string) *ThesisBuilder {
 	b.stage = stage
 	b.behavior = behavior
 
@@ -176,9 +187,9 @@ type notAllowedStageError struct {
 	keyword string
 }
 
-func NewNotAllowedStageError(keyword string) error {
+func NewNotAllowedStageError(stage string) error {
 	return errors.WithStack(notAllowedStageError{
-		keyword: keyword,
+		keyword: stage,
 	})
 }
 

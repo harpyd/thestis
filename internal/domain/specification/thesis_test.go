@@ -2,7 +2,6 @@ package specification_test
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -141,25 +140,25 @@ func TestBuildThesisWithStatement(t *testing.T) {
 
 	testCases := []struct {
 		Name        string
-		Keyword     string
+		Keyword     specification.Stage
 		Behavior    string
 		ShouldBeErr bool
 	}{
 		{
 			Name:        "allowed_given",
-			Keyword:     "given",
+			Keyword:     specification.Given,
 			Behavior:    "hooves delivered to the warehouse",
 			ShouldBeErr: false,
 		},
 		{
 			Name:        "allowed_when",
-			Keyword:     "when",
+			Keyword:     specification.When,
 			Behavior:    "selling hooves",
 			ShouldBeErr: false,
 		},
 		{
 			Name:        "allowed_then",
-			Keyword:     "then",
+			Keyword:     specification.Then,
 			Behavior:    "check that hooves are sold",
 			ShouldBeErr: false,
 		},
@@ -190,7 +189,7 @@ func TestBuildThesisWithStatement(t *testing.T) {
 			require.False(t, specification.IsNotAllowedStageError(err))
 
 			t.Run("stage", func(t *testing.T) {
-				assert.Equal(t, strings.ToLower(c.Keyword), thesis.Statement().Stage().String())
+				assert.Equal(t, c.Keyword, thesis.Statement().Stage())
 			})
 
 			t.Run("behavior", func(t *testing.T) {

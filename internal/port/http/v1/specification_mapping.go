@@ -121,7 +121,7 @@ func marshalToThesis(thesis app.Thesis) Thesis {
 
 func marshalToStatement(statement app.Statement) Statement {
 	return Statement{
-		Keyword:  statement.Keyword,
+		Keyword:  statement.Stage,
 		Behavior: statement.Behavior,
 	}
 }

@@ -71,11 +71,11 @@ func buildThesis(thesis thesisSchema) func(builder *specification.ThesisBuilder)
 	return func(builder *specification.ThesisBuilder) {
 		switch {
 		case len(thesis.Given) > 0:
-			builder.WithStatement("given", thesis.Given)
+			builder.WithStatement(specification.Given, thesis.Given)
 		case len(thesis.When) > 0:
-			builder.WithStatement("when", thesis.When)
+			builder.WithStatement(specification.When, thesis.When)
 		case len(thesis.Then) > 0:
-			builder.WithStatement("then", thesis.Then)
+			builder.WithStatement(specification.Then, thesis.Then)
 		default:
 			builder.WithStatement("", "")
 		}
