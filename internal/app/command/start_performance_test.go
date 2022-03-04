@@ -8,8 +8,8 @@ import (
 
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/command"
-	appMock "github.com/harpyd/thestis/internal/app/mock"
-	perfMock "github.com/harpyd/thestis/internal/domain/performance/mock"
+	"github.com/harpyd/thestis/internal/app/mock"
+	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/user"
 )
@@ -71,15 +71,15 @@ func TestHandleStartPerformance(t *testing.T) {
 			t.Parallel()
 
 			var (
-				specsRepo  = appMock.NewSpecificationsRepository(c.Specification)
-				perfsRepo  = appMock.NewPerformancesRepository()
-				maintainer = appMock.NewPerformanceMaintainer(false)
+				specsRepo  = mock.NewSpecificationsRepository(c.Specification)
+				perfsRepo  = mock.NewPerformancesRepository()
+				maintainer = mock.NewPerformanceMaintainer(false)
 				handler    = command.NewStartPerformanceHandler(
 					specsRepo,
 					perfsRepo,
 					maintainer,
-					app.WithHTTPPerformer(perfMock.NewPassingPerformer()),
-					app.WithAssertionPerformer(perfMock.NewFailingPerformer()),
+					app.WithHTTPPerformer(performance.PassingPerformer()),
+					app.WithAssertionPerformer(performance.FailingPerformer()),
 				)
 			)
 
