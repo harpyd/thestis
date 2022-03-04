@@ -75,7 +75,7 @@ func (b *StoryBuilder) Build(slug Slug) (Story, error) {
 		return Story{}, err
 	}
 
-	stry := Story{
+	story := Story{
 		slug:        slug,
 		description: b.description,
 		asA:         b.asA,
@@ -85,25 +85,25 @@ func (b *StoryBuilder) Build(slug Slug) (Story, error) {
 	}
 
 	if len(b.scenarioFactories) == 0 {
-		return stry, NewBuildSluggedError(NewNoStoryScenariosError(), slug)
+		return story, NewBuildSluggedError(NewNoStoryScenariosError(), slug)
 	}
 
 	var err error
 
-	for _, scnFactory := range b.scenarioFactories {
-		scn, scnErr := scnFactory(slug)
-		if _, ok := stry.scenarios[scn.Slug().Scenario()]; ok {
-			err = multierr.Append(err, NewSlugAlreadyExistsError(scn.Slug()))
+	for _, scenarioFry := range b.scenarioFactories {
+		scenario, scenarioErr := scenarioFry(slug)
+		if _, ok := story.scenarios[scenario.Slug().Scenario()]; ok {
+			err = multierr.Append(err, NewSlugAlreadyExistsError(scenario.Slug()))
 
 			continue
 		}
 
-		err = multierr.Append(err, scnErr)
+		err = multierr.Append(err, scenarioErr)
 
-		stry.scenarios[scn.Slug().Scenario()] = scn
+		story.scenarios[scenario.Slug().Scenario()] = scenario
 	}
 
-	return stry, NewBuildSluggedError(err, slug)
+	return story, NewBuildSluggedError(err, slug)
 }
 
 func (b *StoryBuilder) ErrlessBuild(slug Slug) Story {

@@ -192,6 +192,83 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 	}
 }
 
+func TestGetScenarioThesesByStage(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Prepare             func(b *specification.ScenarioBuilder)
+		ExpectedGivenTheses []specification.Thesis
+		ExpectedWhenTheses  []specification.Thesis
+		ExpectedThenTheses  []specification.Thesis
+	}{
+		{
+			Prepare:             func(b *specification.ScenarioBuilder) {},
+			ExpectedGivenTheses: nil,
+			ExpectedWhenTheses:  nil,
+			ExpectedThenTheses:  nil,
+		},
+		{
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("a", func(b *specification.ThesisBuilder) {})
+			},
+			ExpectedGivenTheses: nil,
+			ExpectedWhenTheses:  nil,
+			ExpectedThenTheses:  nil,
+		},
+		{
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("a", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.Given, "a")
+				})
+			},
+			ExpectedGivenTheses: []specification.Thesis{
+				specification.NewThesisBuilder().
+					WithStatement(specification.Given, "a").
+					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "a")),
+			},
+			ExpectedWhenTheses: nil,
+			ExpectedThenTheses: nil,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var (
+				slug     = specification.NewScenarioSlug("foo", "bar")
+				scenario = errlessBuildScenario(t, slug, c.Prepare)
+			)
+
+			t.Run("given", func(t *testing.T) {
+				assert.ElementsMatch(
+					t,
+					c.ExpectedGivenTheses,
+					scenario.ThesesByStage(specification.Given),
+				)
+			})
+
+			t.Run("when", func(t *testing.T) {
+				assert.ElementsMatch(
+					t,
+					c.ExpectedWhenTheses,
+					scenario.ThesesByStage(specification.When),
+				)
+			})
+
+			t.Run("then", func(t *testing.T) {
+				assert.ElementsMatch(
+					t,
+					c.ExpectedThenTheses,
+					scenario.ThesesByStage(specification.Then),
+				)
+			})
+		})
+	}
+}
+
 func TestGetScenarioThesisBySlug(t *testing.T) {
 	t.Parallel()
 

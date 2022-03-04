@@ -66,7 +66,7 @@ func marshalToPerformanceThesisDocument(thesis specification.Thesis) performance
 		Slug:  marshalToSlugDocument(thesis.Slug()),
 		After: marshalSlugsToStrings(thesis.Dependencies()),
 		Statement: statementDocument{
-			Keyword:  thesis.Statement().Stage().String(),
+			Stage:    thesis.Statement().Stage(),
 			Behavior: thesis.Statement().Behavior(),
 		},
 		HTTP:      marshalToHTTPDocument(thesis.HTTP()),
@@ -110,7 +110,7 @@ func (d actionDocument) unmarshalToAction() performance.Action {
 func (d performanceThesisDocument) unmarshalToThesis() specification.Thesis {
 	b := specification.NewThesisBuilder().
 		WithAssertion(d.Assertion.unmarshalToAssertionBuildFn()).
-		WithStatement(d.Statement.Keyword, d.Statement.Behavior).
+		WithStatement(d.Statement.Stage, d.Statement.Behavior).
 		WithHTTP(d.HTTP.unmarshalToHTTPBuildFn())
 
 	for _, dep := range d.After {

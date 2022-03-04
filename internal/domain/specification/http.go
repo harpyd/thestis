@@ -221,7 +221,7 @@ func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
 		url:         b.url,
 		contentType: ctype,
 		body:        copyBody(b.body),
-	}, NewBuildHTTPRequestError(multierr.Combine(methodErr, ctypeErr))
+	}, NewBuildHTTPRequestError(multierr.Append(methodErr, ctypeErr))
 }
 
 func copyBody(body map[string]interface{}) map[string]interface{} {

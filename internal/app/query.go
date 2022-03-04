@@ -60,7 +60,7 @@ type (
 	}
 
 	Statement struct {
-		Keyword  string
+		Stage    string
 		Behavior string
 	}
 

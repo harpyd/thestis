@@ -153,17 +153,17 @@ func (b *Builder) Build() (*Specification, error) {
 
 	var err error
 
-	for _, stryFactory := range b.storyFactories {
-		stry, stryErr := stryFactory()
-		if _, ok := spec.stories[stry.Slug().Story()]; ok {
-			err = multierr.Append(err, NewSlugAlreadyExistsError(stry.Slug()))
+	for _, storyFry := range b.storyFactories {
+		story, storyErr := storyFry()
+		if _, ok := spec.stories[story.Slug().Story()]; ok {
+			err = multierr.Append(err, NewSlugAlreadyExistsError(story.Slug()))
 
 			continue
 		}
 
-		err = multierr.Append(err, stryErr)
+		err = multierr.Append(err, storyErr)
 
-		spec.stories[stry.Slug().Story()] = stry
+		spec.stories[story.Slug().Story()] = story
 	}
 
 	return spec, NewBuildSpecificationError(err)
