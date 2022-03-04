@@ -9,9 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/app"
-	appMock "github.com/harpyd/thestis/internal/app/mock"
+	"github.com/harpyd/thestis/internal/app/mock"
 	"github.com/harpyd/thestis/internal/domain/performance"
-	perfMock "github.com/harpyd/thestis/internal/domain/performance/mock"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
@@ -26,7 +25,7 @@ func TestMaintainPerformance(t *testing.T) {
 	testCases := []struct {
 		Name               string
 		PerformanceFactory func(opts ...performance.Option) *performance.Performance
-		Guard              *appMock.PerformanceGuard
+		Guard              *mock.PerformanceGuard
 		StartPerformance   bool
 		ShouldBeErr        bool
 		IsErr              func(err error) bool
@@ -55,7 +54,7 @@ func TestMaintainPerformance(t *testing.T) {
 					},
 				}, opts...)
 			},
-			Guard:       appMock.NewPerformanceGuard(errPerformanceAcquire, nil),
+			Guard:       mock.NewPerformanceGuard(errPerformanceAcquire, nil),
 			ShouldBeErr: true,
 			IsErr:       func(err error) bool { return errors.Is(err, errPerformanceAcquire) },
 		},
@@ -68,7 +67,7 @@ func TestMaintainPerformance(t *testing.T) {
 					},
 				}, opts...)
 			},
-			Guard: appMock.NewPerformanceGuard(nil, errPerformanceRelease),
+			Guard: mock.NewPerformanceGuard(nil, errPerformanceRelease),
 			ExpectedMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewPerformingStep("a", "b", performance.HTTPPerformer),
@@ -123,14 +122,14 @@ func TestMaintainPerformance(t *testing.T) {
 			const flowTimeout = 5 * time.Second
 
 			var (
-				cancelPubsub = appMock.NewPerformanceCancelPubsub()
-				stepsPolicy  = appMock.NewStepsPolicy()
+				cancelPubsub = mock.NewPerformanceCancelPubsub()
+				stepsPolicy  = mock.NewStepsPolicy()
 				maintainer   = app.NewPerformanceMaintainer(c.Guard, cancelPubsub, stepsPolicy, flowTimeout)
 			)
 
 			perf := c.PerformanceFactory(
-				performance.WithHTTP(perfMock.NewPassingPerformer()),
-				performance.WithAssertion(perfMock.NewPassingPerformer()),
+				performance.WithHTTP(performance.PassingPerformer()),
+				performance.WithAssertion(performance.PassingPerformer()),
 			)
 
 			if c.StartPerformance {
@@ -215,15 +214,15 @@ func TestMaintainPerformanceCancelation(t *testing.T) {
 
 			var (
 				guard        = errlessPerformanceGuard(t)
-				cancelPubsub = appMock.NewPerformanceCancelPubsub()
-				stepsPolicy  = appMock.NewStepsPolicy()
+				cancelPubsub = mock.NewPerformanceCancelPubsub()
+				stepsPolicy  = mock.NewStepsPolicy()
 				maintainer   = app.NewPerformanceMaintainer(guard, cancelPubsub, stepsPolicy, c.FlowTimeout)
 			)
 
 			finish := make(chan struct{})
 			defer close(finish)
 
-			performer := perfMock.Performer(func(
+			performer := performance.PerformFunc(func(
 				ctx context.Context,
 				_ *performance.Environment,
 				_ specification.Thesis,
@@ -271,10 +270,10 @@ func TestMaintainPerformanceCancelation(t *testing.T) {
 	}
 }
 
-func errlessPerformanceGuard(t *testing.T) *appMock.PerformanceGuard {
+func errlessPerformanceGuard(t *testing.T) *mock.PerformanceGuard {
 	t.Helper()
 
-	return appMock.NewPerformanceGuard(nil, nil)
+	return mock.NewPerformanceGuard(nil, nil)
 }
 
 func requireMessagesEqual(t *testing.T, expected []app.Message, actual <-chan app.Message) {

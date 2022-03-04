@@ -72,6 +72,46 @@ func (r Result) Err() error {
 	return r.err
 }
 
+type PerformFunc func(ctx context.Context, env *Environment, thesis specification.Thesis) Result
+
+func (f PerformFunc) Perform(
+	ctx context.Context,
+	env *Environment,
+	thesis specification.Thesis,
+) Result {
+	return f(ctx, env, thesis)
+}
+
+func PassingPerformer() Performer {
+	return PerformFunc(func(
+		_ context.Context,
+		_ *Environment,
+		_ specification.Thesis,
+	) Result {
+		return Pass()
+	})
+}
+
+func FailingPerformer() Performer {
+	return PerformFunc(func(
+		_ context.Context,
+		_ *Environment,
+		_ specification.Thesis,
+	) Result {
+		return Fail(nil)
+	})
+}
+
+func CrashingPerformer() Performer {
+	return PerformFunc(func(
+		_ context.Context,
+		_ *Environment,
+		_ specification.Thesis,
+	) Result {
+		return Crash(nil)
+	})
+}
+
 type (
 	canceledError struct {
 		err error

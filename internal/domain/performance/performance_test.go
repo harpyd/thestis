@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/performance"
-	"github.com/harpyd/thestis/internal/domain/performance/mock"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
@@ -69,8 +68,8 @@ func TestStartPerformance(t *testing.T) {
 
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(mock.NewPassingPerformer()),
-		performance.WithAssertion(mock.NewPassingPerformer()),
+		performance.WithHTTP(performance.PassingPerformer()),
+		performance.WithAssertion(performance.PassingPerformer()),
 	)
 	require.NoError(t, err)
 
@@ -131,8 +130,8 @@ func TestCancelPerformanceCtxWhileStepsReading(t *testing.T) {
 
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(mock.NewPassingPerformer()),
-		performance.WithAssertion(mock.NewPassingPerformer()),
+		performance.WithHTTP(performance.PassingPerformer()),
+		performance.WithAssertion(performance.PassingPerformer()),
 	)
 	require.NoError(t, err)
 
@@ -158,8 +157,8 @@ func TestStartPerformanceWithFailingPerformer(t *testing.T) {
 
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(mock.NewPassingPerformer()),
-		performance.WithAssertion(mock.NewFailingPerformer()),
+		performance.WithHTTP(performance.PassingPerformer()),
+		performance.WithAssertion(performance.FailingPerformer()),
 	)
 	require.NoError(t, err)
 
@@ -176,8 +175,8 @@ func TestStartPerformanceWithCrashingPerformer(t *testing.T) {
 
 	perf, err := performance.FromSpecification(
 		spec,
-		performance.WithHTTP(mock.NewCrashingPerformer()),
-		performance.WithAssertion(mock.NewPassingPerformer()),
+		performance.WithHTTP(performance.CrashingPerformer()),
+		performance.WithAssertion(performance.PassingPerformer()),
 	)
 	require.NoError(t, err)
 
