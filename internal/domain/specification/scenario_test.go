@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/specification"
@@ -180,7 +181,13 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 
 			require.False(t, c.IsErr(err))
 
-			require.ElementsMatch(t, c.ExpectedTheses, scenario.Theses())
+			t.Run("theses", func(t *testing.T) {
+				assert.ElementsMatch(t, c.ExpectedTheses, scenario.Theses())
+			})
+
+			t.Run("theses_count", func(t *testing.T) {
+				assert.Equal(t, len(c.ExpectedTheses), scenario.ThesesCount())
+			})
 		})
 	}
 }
