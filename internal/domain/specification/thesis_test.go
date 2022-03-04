@@ -325,6 +325,50 @@ func TestBuildThesisWithHTTP(t *testing.T) {
 	}
 }
 
+func TestStageIsValid(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Stage         specification.Stage
+		ShouldBeValid bool
+	}{
+		{
+			Stage:         "",
+			ShouldBeValid: false,
+		},
+		{
+			Stage:         specification.UnknownStage,
+			ShouldBeValid: false,
+		},
+		{
+			Stage:         specification.Given,
+			ShouldBeValid: true,
+		},
+		{
+			Stage:         specification.When,
+			ShouldBeValid: true,
+		},
+		{
+			Stage:         specification.Then,
+			ShouldBeValid: true,
+		},
+		{
+			Stage:         "deploy",
+			ShouldBeValid: false,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.ShouldBeValid, c.Stage.IsValid())
+		})
+	}
+}
+
 func TestThesisErrors(t *testing.T) {
 	t.Parallel()
 
