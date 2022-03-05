@@ -1,5 +1,7 @@
 package yaml
 
+import "github.com/harpyd/thestis/internal/domain/specification"
+
 type (
 	specificationSchema struct {
 		Author      string                 `yaml:"author"`
@@ -48,8 +50,8 @@ type (
 	}
 
 	assertionSchema struct {
-		Method string         `yaml:"with"`
-		Assert []assertSchema `yaml:"assert"`
+		Method specification.AssertionMethod `yaml:"with"`
+		Assert []assertSchema                `yaml:"assert"`
 	}
 
 	assertSchema struct {

@@ -2,7 +2,6 @@ package specification_test
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -16,28 +15,28 @@ func TestBuildAssertionWithMethod(t *testing.T) {
 
 	testCases := []struct {
 		Name        string
-		GivenMethod string
+		GivenMethod specification.AssertionMethod
 		ShouldBeErr bool
 	}{
 		{
 			Name:        "allowed_empty",
-			GivenMethod: "",
+			GivenMethod: specification.EmptyAssertionMethod,
 			ShouldBeErr: false,
 		},
 		{
 			Name:        "allowed_JSONPATH",
 			GivenMethod: "JSONPATH",
-			ShouldBeErr: false,
+			ShouldBeErr: true,
 		},
 		{
 			Name:        "allowed_jsonpath",
-			GivenMethod: "jsonpath",
+			GivenMethod: specification.JSONPath,
 			ShouldBeErr: false,
 		},
 		{
 			Name:        "allowed_jsonPATH",
 			GivenMethod: "jsonPATH",
-			ShouldBeErr: false,
+			ShouldBeErr: true,
 		},
 		{
 			Name:        "not_allowed_JAYZ",
@@ -65,7 +64,7 @@ func TestBuildAssertionWithMethod(t *testing.T) {
 
 			require.NoError(t, err)
 
-			require.Equal(t, strings.ToLower(c.GivenMethod), assertion.Method().String())
+			require.Equal(t, c.GivenMethod, assertion.Method())
 		})
 	}
 }
@@ -170,6 +169,46 @@ func TestAssertionErrors(t *testing.T) {
 			}
 
 			require.True(t, c.IsErr(c.Err))
+		})
+	}
+}
+
+func TestAssertionMethodIsValid(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenMethod   specification.AssertionMethod
+		ShouldBeValid bool
+	}{
+		{
+			GivenMethod:   specification.EmptyAssertionMethod,
+			ShouldBeValid: true,
+		},
+		{
+			GivenMethod:   specification.UnknownAssertionMethod,
+			ShouldBeValid: false,
+		},
+		{
+			GivenMethod:   specification.JSONPath,
+			ShouldBeValid: true,
+		},
+		{
+			GivenMethod:   "JSONpath",
+			ShouldBeValid: false,
+		},
+		{
+			GivenMethod:   "somethingelse",
+			ShouldBeValid: false,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.ShouldBeValid, c.GivenMethod.IsValid())
 		})
 	}
 }

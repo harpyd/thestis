@@ -28,7 +28,7 @@ wrongStories:
             after:
               - test
             assertion:
-              with: JSONPATH
+              with: jsonpath
               assert:
                 - actual: test.response.body.test
                   expected: test

@@ -2,7 +2,6 @@ package specification
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
@@ -20,7 +19,7 @@ type (
 	}
 
 	AssertionBuilder struct {
-		method  string
+		method  AssertionMethod
 		asserts []Assert
 	}
 
@@ -69,15 +68,17 @@ func (a Assert) Expected() interface{} {
 	return a.expected
 }
 
-func newAssertionMethodFromString(method string) (AssertionMethod, error) {
-	switch strings.ToLower(method) {
-	case "":
-		return EmptyAssertionMethod, nil
-	case "jsonpath":
-		return JSONPath, nil
+func (am AssertionMethod) IsValid() bool {
+	switch am {
+	case EmptyAssertionMethod:
+		return true
+	case JSONPath:
+		return true
+	case UnknownAssertionMethod:
+		return false
 	}
 
-	return UnknownAssertionMethod, NewNotAllowedAssertionMethodError(method)
+	return false
 }
 
 func (am AssertionMethod) String() string {
@@ -89,10 +90,14 @@ func NewAssertionBuilder() *AssertionBuilder {
 }
 
 func (b *AssertionBuilder) Build() (Assertion, error) {
-	method, err := newAssertionMethodFromString(b.method)
+	var err error
+
+	if !b.method.IsValid() {
+		err = NewNotAllowedAssertionMethodError(b.method.String())
+	}
 
 	assertion := Assertion{
-		method:  method,
+		method:  b.method,
 		asserts: make([]Assert, len(b.asserts)),
 	}
 
@@ -112,7 +117,7 @@ func (b *AssertionBuilder) Reset() {
 	b.asserts = nil
 }
 
-func (b *AssertionBuilder) WithMethod(method string) *AssertionBuilder {
+func (b *AssertionBuilder) WithMethod(method AssertionMethod) *AssertionBuilder {
 	b.method = method
 
 	return b

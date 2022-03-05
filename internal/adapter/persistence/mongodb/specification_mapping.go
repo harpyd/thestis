@@ -66,8 +66,8 @@ type (
 	}
 
 	assertionDocument struct {
-		Method  string           `bson:"method"`
-		Asserts []assertDocument `bson:"asserts"`
+		Method  specification.AssertionMethod `bson:"method"`
+		Asserts []assertDocument              `bson:"asserts"`
 	}
 
 	assertDocument struct {
@@ -171,7 +171,7 @@ func marshalToHTTPDocument(http specification.HTTP) httpDocument {
 
 func marshalToAssertionDocument(assertion specification.Assertion) assertionDocument {
 	return assertionDocument{
-		Method:  assertion.Method().String(),
+		Method:  assertion.Method(),
 		Asserts: marshalToAssertDocuments(assertion.Asserts()),
 	}
 }
@@ -369,7 +369,7 @@ func (d httpResponseDocument) unmarshalToHTTPResponse() app.HTTPResponse {
 
 func (d assertionDocument) unmarshalToAssertion() app.Assertion {
 	assert := app.Assertion{
-		Method:  d.Method,
+		Method:  d.Method.String(),
 		Asserts: make([]app.Assert, 0, len(d.Asserts)),
 	}
 
