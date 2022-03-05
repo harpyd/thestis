@@ -9,7 +9,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-func TestSlugIsValid(t *testing.T) {
+func TestNewSlug(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
