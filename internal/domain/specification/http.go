@@ -2,7 +2,6 @@ package specification
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
@@ -34,15 +33,15 @@ type (
 	}
 
 	HTTPRequestBuilder struct {
-		method      string
+		method      HTTPMethod
 		url         string
-		contentType string
+		contentType ContentType
 		body        map[string]interface{}
 	}
 
 	HTTPResponseBuilder struct {
 		allowedCodes       []int
-		allowedContentType string
+		allowedContentType ContentType
 	}
 
 	ContentType string
@@ -124,42 +123,40 @@ func (r HTTPResponse) IsZero() bool {
 	return r.allowedContentType == EmptyContentType && len(r.allowedCodes) == 0
 }
 
-func newContentTypeFromString(contentType string) (ContentType, error) {
-	switch strings.ToLower(contentType) {
-	case "":
-		return EmptyContentType, nil
-	case "application/json":
-		return ApplicationJSON, nil
-	case "application/xml":
-		return ApplicationXML, nil
+func (ct ContentType) IsValid() bool {
+	switch ct {
+	case EmptyContentType:
+		return true
+	case ApplicationJSON:
+		return true
+	case ApplicationXML:
+		return true
+	case UnknownContentType:
+		return false
 	}
 
-	return UnknownContentType, NewNotAllowedContentTypeError(contentType)
+	return false
 }
 
 func (ct ContentType) String() string {
 	return string(ct)
 }
 
-func newHTTPMethodFromString(method string) (HTTPMethod, error) {
-	methods := map[string]HTTPMethod{
-		EmptyHTTPMethod.String(): EmptyHTTPMethod,
-		GET.String():             GET,
-		POST.String():            POST,
-		PUT.String():             PUT,
-		PATCH.String():           PATCH,
-		DELETE.String():          DELETE,
-		OPTIONS.String():         OPTIONS,
-		TRACE.String():           TRACE,
-		CONNECT.String():         CONNECT,
-		HEAD.String():            HEAD,
+func (m HTTPMethod) IsValid() bool {
+	valid := map[HTTPMethod]bool{
+		EmptyHTTPMethod: true,
+		GET:             true,
+		POST:            true,
+		PUT:             true,
+		PATCH:           true,
+		DELETE:          true,
+		OPTIONS:         true,
+		TRACE:           true,
+		CONNECT:         true,
+		HEAD:            true,
 	}
 
-	if m, ok := methods[strings.ToUpper(method)]; ok {
-		return m, nil
-	}
-
-	return UnknownHTTPMethod, NewNotAllowedHTTPMethodError(method)
+	return valid[m]
 }
 
 func (m HTTPMethod) String() string {
@@ -213,15 +210,25 @@ func NewHTTPRequestBuilder() *HTTPRequestBuilder {
 }
 
 func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
-	method, methodErr := newHTTPMethodFromString(b.method)
-	ctype, ctypeErr := newContentTypeFromString(b.contentType)
+	var err error
+
+	if !b.method.IsValid() {
+		err = NewNotAllowedHTTPMethodError(b.method.String())
+	}
+
+	if !b.contentType.IsValid() {
+		err = multierr.Append(
+			err,
+			NewNotAllowedContentTypeError(b.contentType.String()),
+		)
+	}
 
 	return HTTPRequest{
-		method:      method,
+		method:      b.method,
 		url:         b.url,
-		contentType: ctype,
+		contentType: b.contentType,
 		body:        copyBody(b.body),
-	}, NewBuildHTTPRequestError(multierr.Append(methodErr, ctypeErr))
+	}, NewBuildHTTPRequestError(err)
 }
 
 func copyBody(body map[string]interface{}) map[string]interface{} {
@@ -245,7 +252,7 @@ func (b *HTTPRequestBuilder) Reset() {
 	b.body = nil
 }
 
-func (b *HTTPRequestBuilder) WithMethod(method string) *HTTPRequestBuilder {
+func (b *HTTPRequestBuilder) WithMethod(method HTTPMethod) *HTTPRequestBuilder {
 	b.method = method
 
 	return b
@@ -257,7 +264,7 @@ func (b *HTTPRequestBuilder) WithURL(url string) *HTTPRequestBuilder {
 	return b
 }
 
-func (b *HTTPRequestBuilder) WithContentType(contentType string) *HTTPRequestBuilder {
+func (b *HTTPRequestBuilder) WithContentType(contentType ContentType) *HTTPRequestBuilder {
 	b.contentType = contentType
 
 	return b
@@ -274,11 +281,15 @@ func NewHTTPResponseBuilder() *HTTPResponseBuilder {
 }
 
 func (b *HTTPResponseBuilder) Build() (HTTPResponse, error) {
-	allowedContentType, err := newContentTypeFromString(b.allowedContentType)
+	var err error
+
+	if !b.allowedContentType.IsValid() {
+		err = NewNotAllowedContentTypeError(b.allowedContentType.String())
+	}
 
 	return HTTPResponse{
 		allowedCodes:       copyAllowedCodes(b.allowedCodes),
-		allowedContentType: allowedContentType,
+		allowedContentType: b.allowedContentType,
 	}, NewBuildHTTPResponseError(err)
 }
 
@@ -307,7 +318,9 @@ func (b *HTTPResponseBuilder) WithAllowedCodes(allowedCodes []int) *HTTPResponse
 	return b
 }
 
-func (b *HTTPResponseBuilder) WithAllowedContentType(allowedContentType string) *HTTPResponseBuilder {
+func (b *HTTPResponseBuilder) WithAllowedContentType(
+	allowedContentType ContentType,
+) *HTTPResponseBuilder {
 	b.allowedContentType = allowedContentType
 
 	return b

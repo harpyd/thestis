@@ -38,15 +38,15 @@ type (
 	}
 
 	httpRequestSchema struct {
-		Method      string                 `yaml:"method"`
-		URL         string                 `yaml:"url"`
-		ContentType string                 `yaml:"contentType"`
-		Body        map[string]interface{} `yaml:"body"`
+		Method      specification.HTTPMethod  `yaml:"method"`
+		URL         string                    `yaml:"url"`
+		ContentType specification.ContentType `yaml:"contentType"`
+		Body        map[string]interface{}    `yaml:"body"`
 	}
 
 	httpResponseSchema struct {
-		AllowedCodes       []int  `yaml:"allowedCodes"`
-		AllowedContentType string `yaml:"allowedContentType"`
+		AllowedCodes       []int                     `yaml:"allowedCodes"`
+		AllowedContentType specification.ContentType `yaml:"allowedContentType"`
 	}
 
 	assertionSchema struct {
