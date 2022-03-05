@@ -54,15 +54,15 @@ type (
 	}
 
 	httpRequestDocument struct {
-		Method      string                 `bson:"method"`
-		URL         string                 `bson:"url"`
-		ContentType string                 `bson:"contentType"`
-		Body        map[string]interface{} `bson:"body"`
+		Method      specification.HTTPMethod  `bson:"method"`
+		URL         string                    `bson:"url"`
+		ContentType specification.ContentType `bson:"contentType"`
+		Body        map[string]interface{}    `bson:"body"`
 	}
 
 	httpResponseDocument struct {
-		AllowedCodes       []int  `bson:"allowedCodes"`
-		AllowedContentType string `bson:"allowedContentType"`
+		AllowedCodes       []int                     `bson:"allowedCodes"`
+		AllowedContentType specification.ContentType `bson:"allowedContentType"`
 	}
 
 	assertionDocument struct {
@@ -157,14 +157,14 @@ func marshalSlugsToStrings(slugs []specification.Slug) []string {
 func marshalToHTTPDocument(http specification.HTTP) httpDocument {
 	return httpDocument{
 		Request: httpRequestDocument{
-			Method:      http.Request().Method().String(),
+			Method:      http.Request().Method(),
 			URL:         http.Request().URL(),
-			ContentType: http.Request().ContentType().String(),
+			ContentType: http.Request().ContentType(),
 			Body:        http.Request().Body(),
 		},
 		Response: httpResponseDocument{
 			AllowedCodes:       http.Response().AllowedCodes(),
-			AllowedContentType: http.Response().AllowedContentType().String(),
+			AllowedContentType: http.Response().AllowedContentType(),
 		},
 	}
 }
@@ -353,9 +353,9 @@ func (d httpDocument) unmarshalToHTTP() app.HTTP {
 
 func (d httpRequestDocument) unmarshalToHTTPRequest() app.HTTPRequest {
 	return app.HTTPRequest{
-		Method:      d.Method,
+		Method:      d.Method.String(),
 		URL:         d.URL,
-		ContentType: d.ContentType,
+		ContentType: d.ContentType.String(),
 		Body:        d.Body,
 	}
 }
@@ -363,7 +363,7 @@ func (d httpRequestDocument) unmarshalToHTTPRequest() app.HTTPRequest {
 func (d httpResponseDocument) unmarshalToHTTPResponse() app.HTTPResponse {
 	return app.HTTPResponse{
 		AllowedCodes:       d.AllowedCodes,
-		AllowedContentType: d.AllowedContentType,
+		AllowedContentType: d.AllowedContentType.String(),
 	}
 }
 

@@ -2,7 +2,6 @@ package specification_test
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -154,58 +153,103 @@ func TestBuildHTTPRequestWithMethod(t *testing.T) {
 
 	testCases := []struct {
 		Name        string
-		Method      string
+		Method      specification.HTTPMethod
 		ShouldBeErr bool
 	}{
 		{
 			Name:        "allowed_empty",
-			Method:      "",
+			Method:      specification.EmptyHTTPMethod,
 			ShouldBeErr: false,
 		},
 		{
 			Name:        "allowed_GET",
-			Method:      "GET",
+			Method:      specification.GET,
 			ShouldBeErr: false,
+		},
+		{
+			Name:        "not_allowed_get",
+			Method:      "get",
+			ShouldBeErr: true,
 		},
 		{
 			Name:        "allowed_POST",
-			Method:      "POST",
+			Method:      specification.POST,
 			ShouldBeErr: false,
+		},
+		{
+			Name:        "not_allowed_pOST",
+			Method:      "pOST",
+			ShouldBeErr: true,
 		},
 		{
 			Name:        "allowed_PUT",
-			Method:      "PUT",
+			Method:      specification.PUT,
 			ShouldBeErr: false,
+		},
+		{
+			Name:        "not_allowed_pUt",
+			Method:      "pUt",
+			ShouldBeErr: true,
 		},
 		{
 			Name:        "allowed_PATCH",
-			Method:      "PATCH",
+			Method:      specification.PATCH,
 			ShouldBeErr: false,
+		},
+		{
+			Name:        "not_allowed_pAtCH",
+			Method:      "pAtCH",
+			ShouldBeErr: true,
 		},
 		{
 			Name:        "allowed_DELETE",
-			Method:      "DELETE",
+			Method:      specification.DELETE,
 			ShouldBeErr: false,
+		},
+		{
+			Name:        "not_allowed_delete",
+			Method:      "delete",
+			ShouldBeErr: true,
 		},
 		{
 			Name:        "allowed_OPTIONS",
-			Method:      "OPTIONS",
+			Method:      specification.OPTIONS,
 			ShouldBeErr: false,
+		},
+		{
+			Name:        "not_allowed_OPtions",
+			Method:      "OPtions",
+			ShouldBeErr: true,
 		},
 		{
 			Name:        "allowed_TRACE",
-			Method:      "TRACE",
+			Method:      specification.TRACE,
 			ShouldBeErr: false,
+		},
+		{
+			Name:        "not_allowed_tRACE",
+			Method:      "tRACE",
+			ShouldBeErr: true,
 		},
 		{
 			Name:        "allowed_CONNECT",
-			Method:      "CONNECT",
+			Method:      specification.CONNECT,
 			ShouldBeErr: false,
 		},
 		{
+			Name:        "not_allowed_connECT",
+			Method:      "connECT",
+			ShouldBeErr: true,
+		},
+		{
 			Name:        "allowed_HEAD",
-			Method:      "HEAD",
+			Method:      specification.HEAD,
 			ShouldBeErr: false,
+		},
+		{
+			Name:        "not_allowed_head",
+			Method:      "head",
+			ShouldBeErr: true,
 		},
 		{
 			Name:        "not_allowed_PAST",
@@ -233,7 +277,7 @@ func TestBuildHTTPRequestWithMethod(t *testing.T) {
 
 			require.NoError(t, err)
 
-			require.Equal(t, strings.ToUpper(c.Method), request.Method().String())
+			require.Equal(t, c.Method, request.Method())
 		})
 	}
 }
@@ -243,22 +287,22 @@ func TestBuildHTTPRequestWithContentType(t *testing.T) {
 
 	testCases := []struct {
 		Name        string
-		ContentType string
+		ContentType specification.ContentType
 		ShouldBeErr bool
 	}{
 		{
 			Name:        "allowed_empty",
-			ContentType: "",
+			ContentType: specification.EmptyContentType,
 			ShouldBeErr: false,
 		},
 		{
 			Name:        "allowed_application/json",
-			ContentType: "application/json",
+			ContentType: specification.ApplicationJSON,
 			ShouldBeErr: false,
 		},
 		{
 			Name:        "allowed_application/xml",
-			ContentType: "application/xml",
+			ContentType: specification.ApplicationXML,
 			ShouldBeErr: false,
 		},
 		{
@@ -287,7 +331,7 @@ func TestBuildHTTPRequestWithContentType(t *testing.T) {
 
 			require.NoError(t, err)
 
-			require.Equal(t, strings.ToLower(c.ContentType), request.ContentType().String())
+			require.Equal(t, c.ContentType, request.ContentType())
 		})
 	}
 }
@@ -413,22 +457,22 @@ func TestBuildHTTPResponseWithAllowedContentType(t *testing.T) {
 
 	testCases := []struct {
 		Name        string
-		ContentType string
+		ContentType specification.ContentType
 		ShouldBeErr bool
 	}{
 		{
 			Name:        "allowed_empty",
-			ContentType: "",
+			ContentType: specification.EmptyContentType,
 			ShouldBeErr: false,
 		},
 		{
 			Name:        "allowed_application/json",
-			ContentType: "application/json",
+			ContentType: specification.ApplicationJSON,
 			ShouldBeErr: false,
 		},
 		{
 			Name:        "allowed_application/xml",
-			ContentType: "application/xml",
+			ContentType: specification.ApplicationXML,
 			ShouldBeErr: false,
 		},
 		{
@@ -457,7 +501,179 @@ func TestBuildHTTPResponseWithAllowedContentType(t *testing.T) {
 
 			require.NoError(t, err)
 
-			require.Equal(t, strings.ToLower(c.ContentType), request.AllowedContentType().String())
+			require.Equal(t, c.ContentType, request.AllowedContentType())
+		})
+	}
+}
+
+func TestHTTPMethodIsValid(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name          string
+		Method        specification.HTTPMethod
+		ShouldBeValid bool
+	}{
+		{
+			Name:          "allowed_empty",
+			Method:        specification.EmptyHTTPMethod,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "allowed_GET",
+			Method:        specification.GET,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "not_allowed_get",
+			Method:        "get",
+			ShouldBeValid: false,
+		},
+		{
+			Name:          "allowed_POST",
+			Method:        specification.POST,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "not_allowed_post",
+			Method:        "post",
+			ShouldBeValid: false,
+		},
+		{
+			Name:          "allowed_PUT",
+			Method:        specification.PUT,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "not_allowed_put",
+			Method:        "put",
+			ShouldBeValid: false,
+		},
+		{
+			Name:          "allowed_PATCH",
+			Method:        specification.PATCH,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "not_allowed_patch",
+			Method:        "patch",
+			ShouldBeValid: false,
+		},
+		{
+			Name:          "allowed_DELETE",
+			Method:        specification.DELETE,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "not_allowed_delete",
+			Method:        "delete",
+			ShouldBeValid: false,
+		},
+		{
+			Name:          "allowed_OPTIONS",
+			Method:        specification.OPTIONS,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "not_allowed_options",
+			Method:        "options",
+			ShouldBeValid: false,
+		},
+		{
+			Name:          "allowed_TRACE",
+			Method:        specification.TRACE,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "not_allowed_trace",
+			Method:        "trace",
+			ShouldBeValid: false,
+		},
+		{
+			Name:          "allowed_CONNECT",
+			Method:        specification.CONNECT,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "not_allowed_connect",
+			Method:        "connect",
+			ShouldBeValid: false,
+		},
+		{
+			Name:          "allowed_HEAD",
+			Method:        specification.HEAD,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "not_allowed_head",
+			Method:        "head",
+			ShouldBeValid: false,
+		},
+		{
+			Name:          "not_allowed_PAST",
+			Method:        "PAST",
+			ShouldBeValid: false,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.ShouldBeValid, c.Method.IsValid())
+		})
+	}
+}
+
+func TestContentTypeIsValid(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name          string
+		ContentType   specification.ContentType
+		ShouldBeValid bool
+	}{
+		{
+			Name:          "allowed_empty",
+			ContentType:   specification.EmptyContentType,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "allowed_application/json",
+			ContentType:   specification.ApplicationJSON,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "not_allowed_application/JSON",
+			ContentType:   "application/JSON",
+			ShouldBeValid: false,
+		},
+		{
+			Name:          "allowed_application/xml",
+			ContentType:   specification.ApplicationXML,
+			ShouldBeValid: true,
+		},
+		{
+			Name:          "not_allowed_application/XML",
+			ContentType:   "application/XML",
+			ShouldBeValid: false,
+		},
+		{
+			Name:          "not_allowed_some/content",
+			ContentType:   "some/content",
+			ShouldBeValid: false,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.ShouldBeValid, c.ContentType.IsValid())
 		})
 	}
 }
