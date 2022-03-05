@@ -51,14 +51,14 @@ type (
 
 const (
 	UnknownContentType ContentType = "!"
-	EmptyContentType   ContentType = ""
+	NoContentType      ContentType = ""
 	ApplicationJSON    ContentType = "application/json"
 	ApplicationXML     ContentType = "application/xml"
 )
 
 const (
 	UnknownHTTPMethod HTTPMethod = "!"
-	EmptyHTTPMethod   HTTPMethod = ""
+	NoHTTPMethod      HTTPMethod = ""
 	GET               HTTPMethod = "GET"
 	POST              HTTPMethod = "POST"
 	PUT               HTTPMethod = "PUT"
@@ -103,8 +103,8 @@ func (r HTTPRequest) Body() map[string]interface{} {
 }
 
 func (r HTTPRequest) IsZero() bool {
-	return r.method == EmptyHTTPMethod && r.url == "" &&
-		r.contentType == EmptyContentType && len(r.body) == 0
+	return r.method == NoHTTPMethod && r.url == "" &&
+		r.contentType == NoContentType && len(r.body) == 0
 }
 
 func (r HTTPResponse) AllowedCodes() []int {
@@ -120,12 +120,12 @@ func (r HTTPResponse) AllowedContentType() ContentType {
 }
 
 func (r HTTPResponse) IsZero() bool {
-	return r.allowedContentType == EmptyContentType && len(r.allowedCodes) == 0
+	return r.allowedContentType == NoContentType && len(r.allowedCodes) == 0
 }
 
 func (ct ContentType) IsValid() bool {
 	switch ct {
-	case EmptyContentType:
+	case NoContentType:
 		return true
 	case ApplicationJSON:
 		return true
@@ -144,16 +144,16 @@ func (ct ContentType) String() string {
 
 func (m HTTPMethod) IsValid() bool {
 	valid := map[HTTPMethod]bool{
-		EmptyHTTPMethod: true,
-		GET:             true,
-		POST:            true,
-		PUT:             true,
-		PATCH:           true,
-		DELETE:          true,
-		OPTIONS:         true,
-		TRACE:           true,
-		CONNECT:         true,
-		HEAD:            true,
+		NoHTTPMethod: true,
+		GET:          true,
+		POST:         true,
+		PUT:          true,
+		PATCH:        true,
+		DELETE:       true,
+		OPTIONS:      true,
+		TRACE:        true,
+		CONNECT:      true,
+		HEAD:         true,
 	}
 
 	return valid[m]

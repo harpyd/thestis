@@ -28,7 +28,7 @@ type (
 
 const (
 	UnknownAssertionMethod AssertionMethod = "!"
-	EmptyAssertionMethod   AssertionMethod = ""
+	NoAssertionMethod      AssertionMethod = ""
 	JSONPath               AssertionMethod = "jsonpath"
 )
 
@@ -50,7 +50,7 @@ func (a Assertion) Asserts() []Assert {
 }
 
 func (a Assertion) IsZero() bool {
-	return a.method == EmptyAssertionMethod && len(a.asserts) == 0
+	return a.method == NoAssertionMethod && len(a.asserts) == 0
 }
 
 func NewAssert(actual string, expected interface{}) Assert {
@@ -70,7 +70,7 @@ func (a Assert) Expected() interface{} {
 
 func (am AssertionMethod) IsValid() bool {
 	switch am {
-	case EmptyAssertionMethod:
+	case NoAssertionMethod:
 		return true
 	case JSONPath:
 		return true
