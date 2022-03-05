@@ -181,13 +181,7 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 
 			require.False(t, c.IsErr(err))
 
-			t.Run("theses", func(t *testing.T) {
-				assert.ElementsMatch(t, c.ExpectedTheses, scenario.Theses())
-			})
-
-			t.Run("theses_count", func(t *testing.T) {
-				assert.Equal(t, len(c.ExpectedTheses), scenario.ThesesCount())
-			})
+			require.ElementsMatch(t, c.ExpectedTheses, scenario.Theses())
 		})
 	}
 }

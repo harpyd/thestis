@@ -38,10 +38,6 @@ func (s Scenario) Theses() []Thesis {
 	return theses
 }
 
-func (s Scenario) ThesesCount() int {
-	return len(s.theses)
-}
-
 func (s Scenario) Thesis(slug string) (thesis Thesis, ok bool) {
 	thesis, ok = s.theses[slug]
 
