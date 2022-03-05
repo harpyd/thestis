@@ -369,6 +369,46 @@ func TestStageIsValid(t *testing.T) {
 	}
 }
 
+func TestBeforeStage(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenStage          specification.Stage
+		ExpectedBeforeStage specification.Stage
+	}{
+		{
+			GivenStage:          specification.UnknownStage,
+			ExpectedBeforeStage: specification.UnknownStage,
+		},
+		{
+			GivenStage:          "foo",
+			ExpectedBeforeStage: specification.UnknownStage,
+		},
+		{
+			GivenStage:          specification.Given,
+			ExpectedBeforeStage: specification.UnknownStage,
+		},
+		{
+			GivenStage:          specification.When,
+			ExpectedBeforeStage: specification.Given,
+		},
+		{
+			GivenStage:          specification.Then,
+			ExpectedBeforeStage: specification.When,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.ExpectedBeforeStage, c.GivenStage.Before())
+		})
+	}
+}
+
 func TestThesisErrors(t *testing.T) {
 	t.Parallel()
 
