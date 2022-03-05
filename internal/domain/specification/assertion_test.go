@@ -20,7 +20,7 @@ func TestBuildAssertionWithMethod(t *testing.T) {
 	}{
 		{
 			Name:        "allowed_empty",
-			GivenMethod: specification.EmptyAssertionMethod,
+			GivenMethod: specification.NoAssertionMethod,
 			ShouldBeErr: false,
 		},
 		{
@@ -181,7 +181,7 @@ func TestAssertionMethodIsValid(t *testing.T) {
 		ShouldBeValid bool
 	}{
 		{
-			GivenMethod:   specification.EmptyAssertionMethod,
+			GivenMethod:   specification.NoAssertionMethod,
 			ShouldBeValid: true,
 		},
 		{

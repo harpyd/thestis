@@ -158,7 +158,7 @@ func TestBuildHTTPRequestWithMethod(t *testing.T) {
 	}{
 		{
 			Name:        "allowed_empty",
-			Method:      specification.EmptyHTTPMethod,
+			Method:      specification.NoHTTPMethod,
 			ShouldBeErr: false,
 		},
 		{
@@ -292,7 +292,7 @@ func TestBuildHTTPRequestWithContentType(t *testing.T) {
 	}{
 		{
 			Name:        "allowed_empty",
-			ContentType: specification.EmptyContentType,
+			ContentType: specification.NoContentType,
 			ShouldBeErr: false,
 		},
 		{
@@ -462,7 +462,7 @@ func TestBuildHTTPResponseWithAllowedContentType(t *testing.T) {
 	}{
 		{
 			Name:        "allowed_empty",
-			ContentType: specification.EmptyContentType,
+			ContentType: specification.NoContentType,
 			ShouldBeErr: false,
 		},
 		{
@@ -516,7 +516,7 @@ func TestHTTPMethodIsValid(t *testing.T) {
 	}{
 		{
 			Name:          "allowed_empty",
-			Method:        specification.EmptyHTTPMethod,
+			Method:        specification.NoHTTPMethod,
 			ShouldBeValid: true,
 		},
 		{
@@ -637,7 +637,7 @@ func TestContentTypeIsValid(t *testing.T) {
 	}{
 		{
 			Name:          "allowed_empty",
-			ContentType:   specification.EmptyContentType,
+			ContentType:   specification.NoContentType,
 			ShouldBeValid: true,
 		},
 		{
