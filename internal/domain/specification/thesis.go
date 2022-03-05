@@ -67,6 +67,21 @@ func (s Statement) Behavior() string {
 	return s.behavior
 }
 
+func (s Stage) Before() Stage {
+	switch s {
+	case Given:
+		return UnknownStage
+	case When:
+		return Given
+	case Then:
+		return When
+	case UnknownStage:
+		return UnknownStage
+	}
+
+	return UnknownStage
+}
+
 func (s Stage) IsValid() bool {
 	switch s {
 	case Given:
