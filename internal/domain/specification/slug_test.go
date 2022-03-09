@@ -1,6 +1,7 @@
 package specification_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -138,6 +139,114 @@ func TestNewSlug(t *testing.T) {
 			t.Run("kind", func(t *testing.T) {
 				require.Equal(t, c.ExpectedKind, c.GivenSlug.Kind())
 			})
+		})
+	}
+}
+
+func TestSlugToStoryKind(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenSlug    specification.Slug
+		ExpectedSlug specification.Slug
+	}{
+		{
+			GivenSlug:    specification.Slug{},
+			ExpectedSlug: specification.Slug{},
+		},
+		{
+			GivenSlug:    specification.NewStorySlug("foo"),
+			ExpectedSlug: specification.NewStorySlug("foo"),
+		},
+		{
+			GivenSlug:    specification.NewScenarioSlug("foo", "bar"),
+			ExpectedSlug: specification.NewStorySlug("foo"),
+		},
+		{
+			GivenSlug:    specification.NewThesisSlug("foo", "bar", "baz"),
+			ExpectedSlug: specification.NewStorySlug("foo"),
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.ExpectedSlug, c.GivenSlug.ToStoryKind())
+		})
+	}
+}
+
+func TestSlugToThesisKind(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenSlug    specification.Slug
+		ExpectedSlug specification.Slug
+	}{
+		{
+			GivenSlug:    specification.Slug{},
+			ExpectedSlug: specification.Slug{},
+		},
+		{
+			GivenSlug:    specification.NewStorySlug("foo"),
+			ExpectedSlug: specification.NewThesisSlug("foo", "", ""),
+		},
+		{
+			GivenSlug:    specification.NewScenarioSlug("foo", "bar"),
+			ExpectedSlug: specification.NewThesisSlug("foo", "bar", ""),
+		},
+		{
+			GivenSlug:    specification.NewThesisSlug("foo", "bar", "baz"),
+			ExpectedSlug: specification.NewThesisSlug("foo", "bar", "baz"),
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.ExpectedSlug, c.GivenSlug.ToThesisKind())
+		})
+	}
+}
+
+func TestSlugToScenarioKind(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenSlug    specification.Slug
+		ExpectedSlug specification.Slug
+	}{
+		{
+			GivenSlug:    specification.Slug{},
+			ExpectedSlug: specification.Slug{},
+		},
+		{
+			GivenSlug:    specification.NewStorySlug("foo"),
+			ExpectedSlug: specification.NewScenarioSlug("foo", ""),
+		},
+		{
+			GivenSlug:    specification.NewScenarioSlug("foo", "bar"),
+			ExpectedSlug: specification.NewScenarioSlug("foo", "bar"),
+		},
+		{
+			GivenSlug:    specification.NewThesisSlug("foo", "bar", "baz"),
+			ExpectedSlug: specification.NewScenarioSlug("foo", "bar"),
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.ExpectedSlug, c.GivenSlug.ToScenarioKind())
 		})
 	}
 }

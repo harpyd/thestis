@@ -49,6 +49,30 @@ func NewThesisSlug(storySlug, scenarioSlug, thesisSlug string) Slug {
 	}
 }
 
+func (s Slug) ToStoryKind() Slug {
+	if s.IsZero() {
+		return s
+	}
+
+	return NewStorySlug(s.story)
+}
+
+func (s Slug) ToScenarioKind() Slug {
+	if s.IsZero() {
+		return s
+	}
+
+	return NewScenarioSlug(s.story, s.scenario)
+}
+
+func (s Slug) ToThesisKind() Slug {
+	if s.IsZero() {
+		return s
+	}
+
+	return NewThesisSlug(s.story, s.scenario, s.thesis)
+}
+
 func (s Slug) MustBeStoryKind() error {
 	if s.kind == StorySlug {
 		return nil
