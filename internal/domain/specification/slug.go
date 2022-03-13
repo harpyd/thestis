@@ -25,11 +25,19 @@ type Slug struct {
 	kind SlugKind
 }
 
+func AnyStorySlug() Slug {
+	return NewStorySlug("")
+}
+
 func NewStorySlug(slug string) Slug {
 	return Slug{
 		story: slug,
 		kind:  StorySlug,
 	}
+}
+
+func AnyScenarioSlug() Slug {
+	return NewScenarioSlug("", "")
 }
 
 func NewScenarioSlug(storySlug, scenarioSlug string) Slug {
@@ -38,6 +46,10 @@ func NewScenarioSlug(storySlug, scenarioSlug string) Slug {
 		scenario: scenarioSlug,
 		kind:     ScenarioSlug,
 	}
+}
+
+func AnyThesisSlug() Slug {
+	return NewThesisSlug("", "", "")
 }
 
 func NewThesisSlug(storySlug, scenarioSlug, thesisSlug string) Slug {
