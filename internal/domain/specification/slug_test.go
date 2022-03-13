@@ -33,6 +33,14 @@ func TestNewSlug(t *testing.T) {
 			ExpectedKind:     specification.NoSlug,
 		},
 		{
+			GivenSlug:        specification.AnyStorySlug(),
+			ExpectedStory:    "",
+			ExpectedScenario: "",
+			ExpectedThesis:   "",
+			ExpectedString:   "*",
+			ExpectedKind:     specification.StorySlug,
+		},
+		{
 			GivenSlug:        specification.NewStorySlug(""),
 			ExpectedStory:    "",
 			ExpectedScenario: "",
@@ -47,6 +55,14 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "story",
 			ExpectedKind:     specification.StorySlug,
+		},
+		{
+			GivenSlug:        specification.AnyScenarioSlug(),
+			ExpectedStory:    "",
+			ExpectedScenario: "",
+			ExpectedThesis:   "",
+			ExpectedString:   "*.*",
+			ExpectedKind:     specification.ScenarioSlug,
 		},
 		{
 			GivenSlug:        specification.NewScenarioSlug("", ""),
@@ -79,6 +95,14 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "story.scenario",
 			ExpectedKind:     specification.ScenarioSlug,
+		},
+		{
+			GivenSlug:        specification.AnyThesisSlug(),
+			ExpectedStory:    "",
+			ExpectedScenario: "",
+			ExpectedThesis:   "",
+			ExpectedString:   "*.*.*",
+			ExpectedKind:     specification.ThesisSlug,
 		},
 		{
 			GivenSlug:        specification.NewThesisSlug("", "", ""),
