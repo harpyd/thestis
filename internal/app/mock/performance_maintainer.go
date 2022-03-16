@@ -15,7 +15,10 @@ func NewPerformanceMaintainer(withErr bool) PerformanceMaintainer {
 	return PerformanceMaintainer{withErr: withErr}
 }
 
-func (m PerformanceMaintainer) MaintainPerformance(_ context.Context, _ *performance.Performance) (<-chan app.Message, error) {
+func (m PerformanceMaintainer) MaintainPerformance(
+	_ context.Context,
+	_ *performance.Performance,
+) (<-chan app.Message, error) {
 	if m.withErr {
 		return nil, performance.NewAlreadyStartedError()
 	}
