@@ -564,6 +564,56 @@ func TestCancelMaintainPerformance(t *testing.T) {
 	}
 }
 
+func TestPubsubErrors(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name     string
+		Err      error
+		IsErr    func(err error) bool
+		Reversed bool
+	}{
+		{
+			Name:  "publish_cancel_error",
+			Err:   app.NewPublishCancelError(errors.New("wrong")),
+			IsErr: app.IsPublishCancelError,
+		},
+		{
+			Name:     "NON_publish_cancel_error",
+			Err:      errors.Wrap(errors.New("wrong"), "publish cancel"),
+			IsErr:    app.IsPublishCancelError,
+			Reversed: true,
+		},
+		{
+			Name:  "subscribe_cancel_error",
+			Err:   app.NewSubscribeCancelError(errors.New("bar")),
+			IsErr: app.IsSubscribeCancelError,
+		},
+		{
+			Name:     "NON_subscribe_cancel_error",
+			Err:      errors.New("subscribe cancel: wrong"),
+			IsErr:    app.IsSubscribeCancelError,
+			Reversed: true,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			if c.Reversed {
+				require.False(t, c.IsErr(c.Err))
+
+				return
+			}
+
+			require.True(t, c.IsErr(c.Err))
+		})
+	}
+}
+
 func pendingPassPerformer(t *testing.T, pass <-chan struct{}) performance.Performer {
 	t.Helper()
 
