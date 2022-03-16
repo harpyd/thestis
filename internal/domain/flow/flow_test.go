@@ -17,20 +17,20 @@ func TestNewStatus(t *testing.T) {
 
 	testCases := []struct {
 		Slug         specification.Slug
-		State        performance.State
+		State        flow.State
 		OccurredErrs []string
 	}{
 		{
 			Slug:  specification.Slug{},
-			State: performance.NoState,
+			State: flow.NoState,
 		},
 		{
 			Slug:  specification.NewThesisSlug("foo", "bar", "zar"),
-			State: performance.Canceled,
+			State: flow.Canceled,
 		},
 		{
 			Slug:  specification.NewThesisSlug("foo", "pam", "par"),
-			State: performance.Failed,
+			State: flow.Failed,
 			OccurredErrs: []string{
 				"some error",
 				"other error",
@@ -114,11 +114,11 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedStatuses: []flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("foo", "koo"),
-					performance.NotPerformed,
+					flow.NotPerformed,
 				),
 				flow.NewStatus(
 					specification.NewThesisSlug("foo", "koo", "too"),
-					performance.NotPerformed,
+					flow.NotPerformed,
 				),
 			},
 		},
@@ -144,11 +144,11 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedStatuses: []flow.Status{
 				flow.NewStatus(
 					specification.NewThesisSlug("foo", "bar", "baz"),
-					performance.Passed,
+					flow.Passed,
 				),
 				flow.NewStatus(
 					specification.NewScenarioSlug("foo", "bar"),
-					performance.NotPerformed,
+					flow.NotPerformed,
 				),
 			},
 		},
@@ -174,11 +174,11 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedStatuses: []flow.Status{
 				flow.NewStatus(
 					specification.NewThesisSlug("doo", "zoo", "moo"),
-					performance.NotPerformed,
+					flow.NotPerformed,
 				),
 				flow.NewStatus(
 					specification.NewScenarioSlug("doo", "zoo"),
-					performance.Crashed,
+					flow.Crashed,
 					"something wrong",
 				),
 			},
@@ -190,7 +190,7 @@ func TestReduceFlow(t *testing.T) {
 					"oba",
 					flow.NewStatus(
 						specification.NewThesisSlug("foo", "bar", "baz"),
-						performance.NotPerformed,
+						flow.NotPerformed,
 					),
 				).WithStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "NOP"),
@@ -203,7 +203,7 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedStatuses: []flow.Status{
 				flow.NewStatus(
 					specification.NewThesisSlug("foo", "bar", "baz"),
-					performance.NotPerformed,
+					flow.NotPerformed,
 				),
 			},
 		},
@@ -256,7 +256,7 @@ func TestUnmarshalFlow(t *testing.T) {
 				Statuses: []flow.Status{
 					flow.NewStatus(
 						specification.NewScenarioSlug("foo", "bar"),
-						performance.NotPerformed,
+						flow.NotPerformed,
 					),
 				},
 			},
@@ -268,7 +268,7 @@ func TestUnmarshalFlow(t *testing.T) {
 				Statuses: []flow.Status{
 					flow.NewStatus(
 						specification.NewScenarioSlug("foo", "doo"),
-						performance.Performing,
+						flow.Performing,
 					),
 				},
 			},

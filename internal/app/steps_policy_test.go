@@ -75,11 +75,11 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 			GivenInitStatuses: []flow.Status{
 				flow.NewStatus(
 					specification.NewThesisSlug("foo", "bar", "dar"),
-					performance.NotPerformed,
+					flow.NotPerformed,
 				),
 				flow.NewStatus(
 					specification.NewScenarioSlug("foo", "bar"),
-					performance.NotPerformed,
+					flow.NotPerformed,
 				),
 			},
 			GivenSteps: []performance.Step{
@@ -111,11 +111,11 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 			ExpectedStatuses: []flow.Status{
 				flow.NewStatus(
 					specification.NewThesisSlug("foo", "bar", "dar"),
-					performance.Passed,
+					flow.Passed,
 				),
 				flow.NewStatus(
 					specification.NewScenarioSlug("foo", "bar"),
-					performance.Passed,
+					flow.Passed,
 				),
 			},
 		},
@@ -124,11 +124,11 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 			GivenInitStatuses: []flow.Status{
 				flow.NewStatus(
 					specification.NewThesisSlug("a", "b", "c"),
-					performance.NotPerformed,
+					flow.NotPerformed,
 				),
 				flow.NewStatus(
 					specification.NewScenarioSlug("a", "b"),
-					performance.NotPerformed,
+					flow.NotPerformed,
 				),
 			},
 			CancelContext: true,
@@ -152,11 +152,11 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 			ExpectedStatuses: []flow.Status{
 				flow.NewStatus(
 					specification.NewThesisSlug("a", "b", "c"),
-					performance.NotPerformed,
+					flow.NotPerformed,
 				),
 				flow.NewStatus(
 					specification.NewScenarioSlug("a", "b"),
-					performance.NotPerformed,
+					flow.NotPerformed,
 				),
 			},
 		},

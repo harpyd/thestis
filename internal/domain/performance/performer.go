@@ -8,6 +8,21 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+type Event string
+
+const (
+	NoEvent      Event = ""
+	FiredPerform Event = "perform"
+	FiredPass    Event = "pass"
+	FiredFail    Event = "fail"
+	FiredCrash   Event = "crash"
+	FiredCancel  Event = "cancel"
+)
+
+func (e Event) String() string {
+	return string(e)
+}
+
 type Performer interface {
 	Perform(
 		ctx context.Context,
