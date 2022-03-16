@@ -30,7 +30,7 @@ func (o PerformerOption) ToPerformanceOption() performance.Option {
 
 	perfOpts := map[performance.PerformerType]performance.Option{
 		performance.UnknownPerformer:   emptyPerformer,
-		performance.EmptyPerformer:     emptyPerformer,
+		performance.NoPerformer:        emptyPerformer,
 		performance.HTTPPerformer:      performance.WithHTTP(o.performer),
 		performance.AssertionPerformer: performance.WithAssertion(o.performer),
 	}

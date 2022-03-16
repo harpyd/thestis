@@ -25,7 +25,7 @@ func NewStartPerformanceHandler(
 	opts ...app.PerformerOption,
 ) StartPerformanceHandler {
 	if specsRepo == nil {
-		panic("specification repository is nil")
+		panic("specifications repository is nil")
 	}
 
 	if perfsRepo == nil {
@@ -63,12 +63,9 @@ func (h StartPerformanceHandler) Handle(
 
 	perfID = uuid.New().String()
 
-	opts := append(h.performerOpts.ToPerformanceOptions(), performance.WithID(perfID))
+	opts := h.performerOpts.ToPerformanceOptions()
 
-	perf, err := performance.FromSpecification(spec, opts...)
-	if err != nil {
-		return "", nil, err
-	}
+	perf := performance.FromSpecification(perfID, spec, opts...)
 
 	if err = h.perfsRepo.AddPerformance(ctx, perf); err != nil {
 		return "", nil, err

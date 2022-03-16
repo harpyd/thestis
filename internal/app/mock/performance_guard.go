@@ -1,11 +1,16 @@
 package mock
 
-import "context"
+import (
+	"context"
+
+	"github.com/harpyd/thestis/internal/app"
+)
 
 type PerformanceGuard struct {
 	acqErr error
 	rlsErr error
 
+	acqCalls int
 	rlsCalls int
 }
 
@@ -19,10 +24,10 @@ func NewPerformanceGuard(acquireErr error, releaseErr error) *PerformanceGuard {
 }
 
 func (g *PerformanceGuard) AcquirePerformance(ctx context.Context, _ string) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
+	g.acqCalls++
+
+	if ctx.Err() != nil {
+		return app.NewDatabaseError(ctx.Err())
 	}
 
 	return g.acqErr
@@ -31,13 +36,15 @@ func (g *PerformanceGuard) AcquirePerformance(ctx context.Context, _ string) err
 func (g *PerformanceGuard) ReleasePerformance(ctx context.Context, _ string) error {
 	g.rlsCalls++
 
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
+	if ctx.Err() != nil {
+		return app.NewDatabaseError(ctx.Err())
 	}
 
 	return g.rlsErr
+}
+
+func (g *PerformanceGuard) AcquireCalls() int {
+	return g.acqCalls
 }
 
 func (g *PerformanceGuard) ReleaseCalls() int {

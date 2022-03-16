@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/domain/performance"
+	"github.com/harpyd/thestis/internal/domain/flow"
 )
 
 type FlowsRepository struct {
@@ -24,10 +24,10 @@ func NewFlowsRepository(db *mongo.Database) *FlowsRepository {
 	}
 }
 
-func (r *FlowsRepository) GetFlow(ctx context.Context, flowID string) (performance.Flow, error) {
+func (r *FlowsRepository) GetFlow(ctx context.Context, flowID string) (flow.Flow, error) {
 	document, err := r.getFlowDocument(ctx, bson.M{"_id": flowID})
 	if err != nil {
-		return performance.Flow{}, err
+		return flow.Flow{}, err
 	}
 
 	return document.unmarshalToFlow(), err
@@ -46,7 +46,7 @@ func (r *FlowsRepository) getFlowDocument(ctx context.Context, filter bson.M) (f
 	return document, nil
 }
 
-func (r *FlowsRepository) UpsertFlow(ctx context.Context, flow performance.Flow) error {
+func (r *FlowsRepository) UpsertFlow(ctx context.Context, flow flow.Flow) error {
 	document := marshalToFlowDocument(flow)
 
 	opt := options.Replace().SetUpsert(true)

@@ -1,5 +1,20 @@
 package performance
 
+type Event string
+
+const (
+	NoEvent      Event = ""
+	FiredPerform Event = "perform"
+	FiredPass    Event = "pass"
+	FiredFail    Event = "fail"
+	FiredCrash   Event = "crash"
+	FiredCancel  Event = "cancel"
+)
+
+func (e Event) String() string {
+	return string(e)
+}
+
 type State string
 
 const (
@@ -12,133 +27,69 @@ const (
 	Canceled     State = "canceled"
 )
 
+type stateTransitionRules map[State]map[Event]State
+
+func rules() stateTransitionRules {
+	return stateTransitionRules{
+		NotPerformed: {
+			FiredPerform: Performing,
+			FiredPass:    Passed,
+			FiredFail:    Failed,
+			FiredCrash:   Crashed,
+			FiredCancel:  Canceled,
+		},
+		Performing: {
+			FiredPerform: Performing,
+			FiredPass:    Passed,
+			FiredFail:    Failed,
+			FiredCrash:   Crashed,
+			FiredCancel:  Canceled,
+		},
+		Passed: {
+			FiredPerform: Passed,
+			FiredPass:    Passed,
+			FiredFail:    Failed,
+			FiredCrash:   Crashed,
+			FiredCancel:  Passed,
+		},
+		Failed: {
+			FiredPerform: Failed,
+			FiredPass:    Failed,
+			FiredFail:    Failed,
+			FiredCrash:   Crashed,
+			FiredCancel:  Failed,
+		},
+		Crashed: {
+			FiredPerform: Crashed,
+			FiredPass:    Crashed,
+			FiredFail:    Crashed,
+			FiredCrash:   Crashed,
+			FiredCancel:  Crashed,
+		},
+		Canceled: {
+			FiredPerform: Canceled,
+			FiredPass:    Canceled,
+			FiredFail:    Canceled,
+			FiredCrash:   Canceled,
+			FiredCancel:  Canceled,
+		},
+	}
+}
+
+func (s State) Next(with Event) State {
+	ss, ok := rules()[s]
+	if !ok {
+		return NoState
+	}
+
+	res, ok := ss[with]
+	if !ok {
+		return NoState
+	}
+
+	return res
+}
+
 func (s State) String() string {
 	return string(s)
-}
-
-type stateTransitionRules map[State]map[State]State
-
-func (r stateTransitionRules) apply(from, to State) State {
-	fromStates, ok := r[from]
-	if !ok {
-		return NotPerformed
-	}
-
-	state, ok := fromStates[to]
-	if !ok {
-		return from
-	}
-
-	return state
-}
-
-func newCommonStateTransitionRules() stateTransitionRules {
-	return stateTransitionRules{
-		NotPerformed: fromNotPerformedTransitionRules(true),
-		Performing:   fromPerformingTransitionRules(true),
-		Failed:       fromFailedTransitionRules(true),
-		Crashed:      fromCrashedTransitionRules(true),
-		Canceled:     fromCanceledTransitionRules(),
-	}
-}
-
-func newSpecificStateTransitionRules() stateTransitionRules {
-	return stateTransitionRules{
-		NotPerformed: fromNotPerformedTransitionRules(false),
-		Performing:   fromPerformingTransitionRules(false),
-		Passed:       fromPassedTransitionRules(),
-		Failed:       fromFailedTransitionRules(false),
-		Crashed:      fromCrashedTransitionRules(false),
-	}
-}
-
-func fromNotPerformedTransitionRules(commonState bool) map[State]State {
-	rules := map[State]State{
-		NotPerformed: NotPerformed,
-		Performing:   Performing,
-		Passed:       Passed,
-		Failed:       Failed,
-		Crashed:      Crashed,
-	}
-
-	if commonState {
-		rules[NotPerformed] = Crashed
-		rules[Passed] = Performing
-		rules[Canceled] = Canceled
-	}
-
-	return rules
-}
-
-func fromPerformingTransitionRules(commonState bool) map[State]State {
-	rules := map[State]State{
-		NotPerformed: NotPerformed,
-		Performing:   Performing,
-		Passed:       Passed,
-		Failed:       Failed,
-		Crashed:      Crashed,
-	}
-
-	if commonState {
-		rules[NotPerformed] = Crashed
-		rules[Passed] = Performing
-		rules[Canceled] = Canceled
-	}
-
-	return rules
-}
-
-func fromPassedTransitionRules() map[State]State {
-	return map[State]State{
-		NotPerformed: Passed,
-		Performing:   Passed,
-		Passed:       Passed,
-		Failed:       Failed,
-		Crashed:      Crashed,
-		Canceled:     Passed,
-	}
-}
-
-func fromFailedTransitionRules(commonState bool) map[State]State {
-	rules := map[State]State{
-		NotPerformed: Failed,
-		Performing:   Failed,
-		Passed:       Failed,
-		Failed:       Failed,
-		Crashed:      Crashed,
-	}
-
-	if commonState {
-		rules[NotPerformed] = Crashed
-		rules[Canceled] = Canceled
-	}
-
-	return rules
-}
-
-func fromCrashedTransitionRules(commonState bool) map[State]State {
-	rules := map[State]State{
-		NotPerformed: Crashed,
-		Performing:   Crashed,
-		Passed:       Crashed,
-		Failed:       Crashed,
-		Crashed:      Crashed,
-	}
-
-	if commonState {
-		rules[Canceled] = Canceled
-	}
-
-	return rules
-}
-
-func fromCanceledTransitionRules() map[State]State {
-	return map[State]State{
-		NotPerformed: Canceled,
-		Performing:   Canceled,
-		Passed:       Canceled,
-		Failed:       Canceled,
-		Crashed:      Canceled,
-		Canceled:     Canceled,
-	}
 }

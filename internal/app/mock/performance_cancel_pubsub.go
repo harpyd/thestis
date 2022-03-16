@@ -11,6 +11,7 @@ type PerformanceCancelPubsub struct {
 	subscribers map[string][]chan app.CancelSignal
 
 	pubCalls int
+	subCalls int
 }
 
 func NewPerformanceCancelPubsub() *PerformanceCancelPubsub {
@@ -20,10 +21,10 @@ func NewPerformanceCancelPubsub() *PerformanceCancelPubsub {
 }
 
 func (ps *PerformanceCancelPubsub) PublishPerformanceCancel(perfID string) error {
-	ps.pubCalls++
-
 	ps.mu.RLock()
 	defer ps.mu.RUnlock()
+
+	ps.pubCalls++
 
 	channels := ps.subscribers[perfID]
 
@@ -42,6 +43,8 @@ func (ps *PerformanceCancelPubsub) SubscribePerformanceCancel(perfID string) (<-
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
+	ps.subCalls++
+
 	ch := make(chan app.CancelSignal, 1)
 	ps.subscribers[perfID] = append(ps.subscribers[perfID], ch)
 
@@ -49,5 +52,15 @@ func (ps *PerformanceCancelPubsub) SubscribePerformanceCancel(perfID string) (<-
 }
 
 func (ps *PerformanceCancelPubsub) PublishCalls() int {
+	ps.mu.RLock()
+	defer ps.mu.RUnlock()
+
 	return ps.pubCalls
+}
+
+func (ps *PerformanceCancelPubsub) SubscribeCalls() int {
+	ps.mu.RLock()
+	defer ps.mu.RUnlock()
+
+	return ps.subCalls
 }

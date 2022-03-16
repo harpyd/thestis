@@ -14,10 +14,7 @@ func TestNewSlug(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name string
-
-		GivenSlug specification.Slug
-
+		GivenSlug        specification.Slug
 		ExpectedStory    string
 		ExpectedScenario string
 		ExpectedThesis   string
@@ -138,10 +135,10 @@ func TestNewSlug(t *testing.T) {
 		},
 	}
 
-	for _, c := range testCases {
-		c := c
+	for i := range testCases {
+		c := testCases[i]
 
-		t.Run(c.ExpectedString, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
 			t.Run("story", func(t *testing.T) {

@@ -14,6 +14,75 @@ import (
 	"github.com/harpyd/thestis/internal/domain/user"
 )
 
+func TestPanickingNewStartPerformanceHandler(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name            string
+		GivenSpecsRepo  app.SpecificationsRepository
+		GivenPerfsRepo  app.PerformancesRepository
+		GivenMaintainer app.PerformanceMaintainer
+		ShouldPanic     bool
+		PanicMessage    string
+	}{
+		{
+			Name:            "all_dependencies_are_not_nil",
+			GivenSpecsRepo:  mock.NewSpecificationsRepository(),
+			GivenPerfsRepo:  mock.NewPerformancesRepository(),
+			GivenMaintainer: mock.NewPerformanceMaintainer(false),
+			ShouldPanic:     false,
+		},
+		{
+			Name:            "specifications_repository_is_nil",
+			GivenSpecsRepo:  nil,
+			GivenPerfsRepo:  mock.NewPerformancesRepository(),
+			GivenMaintainer: mock.NewPerformanceMaintainer(false),
+			ShouldPanic:     true,
+			PanicMessage:    "specifications repository is nil",
+		},
+		{
+			Name:            "performances_repository_is_nil",
+			GivenSpecsRepo:  mock.NewSpecificationsRepository(),
+			GivenPerfsRepo:  nil,
+			GivenMaintainer: mock.NewPerformanceMaintainer(false),
+			ShouldPanic:     true,
+			PanicMessage:    "performances repository is nil",
+		},
+		{
+			Name:            "performance_maintainer_is_nil",
+			GivenSpecsRepo:  mock.NewSpecificationsRepository(),
+			GivenPerfsRepo:  mock.NewPerformancesRepository(),
+			GivenMaintainer: nil,
+			ShouldPanic:     true,
+			PanicMessage:    "performance maintainer is nil",
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			init := func() {
+				_ = command.NewStartPerformanceHandler(
+					c.GivenSpecsRepo,
+					c.GivenPerfsRepo,
+					c.GivenMaintainer,
+				)
+			}
+
+			if !c.ShouldPanic {
+				require.NotPanics(t, init)
+
+				return
+			}
+
+			require.PanicsWithValue(t, c.PanicMessage, init)
+		})
+	}
+}
+
 func TestHandleStartPerformance(t *testing.T) {
 	t.Parallel()
 

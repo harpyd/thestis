@@ -44,11 +44,16 @@ func (s Scenario) Thesis(slug string) (thesis Thesis, ok bool) {
 	return
 }
 
-func (s Scenario) ThesesByStage(stage Stage) []Thesis {
+func (s Scenario) ThesesByStages(stages ...Stage) []Thesis {
 	theses := make([]Thesis, 0, len(s.theses))
 
+	staged := make(map[Stage]bool, len(stages))
+	for _, stage := range stages {
+		staged[stage] = true
+	}
+
 	for _, thesis := range s.theses {
-		if thesis.statement.stage == stage {
+		if staged[thesis.statement.stage] {
 			theses = append(theses, thesis)
 		}
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/harpyd/thestis/internal/domain/flow"
 	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
@@ -45,16 +46,41 @@ type (
 
 type (
 	PerformancesRepository interface {
-		GetPerformance(ctx context.Context, perfID string, opts ...PerformerOption) (*performance.Performance, error)
+		GetPerformance(
+			ctx context.Context,
+			perfID string,
+			specGetter SpecificationGetter,
+			opts ...PerformerOption,
+		) (*performance.Performance, error)
 		AddPerformance(ctx context.Context, perf *performance.Performance) error
 	}
 
-	PerformanceAction func(context.Context, *performance.Performance)
+	SpecificationGetter interface {
+		GetSpecification(ctx context.Context, specID string) (*specification.Specification, error)
+	}
 )
 
+func AvailableSpecification(spec *specification.Specification) SpecificationGetter {
+	return getSpecificationFunc(func() *specification.Specification {
+		return spec
+	})
+}
+
+func DontGetSpecification() SpecificationGetter {
+	return getSpecificationFunc(func() *specification.Specification {
+		return nil
+	})
+}
+
+type getSpecificationFunc func() *specification.Specification
+
+func (f getSpecificationFunc) GetSpecification(_ context.Context, _ string) (*specification.Specification, error) {
+	return f(), nil
+}
+
 type FlowsRepository interface {
-	GetFlow(ctx context.Context, flowID string) (performance.Flow, error)
-	UpsertFlow(ctx context.Context, flow performance.Flow) error
+	GetFlow(ctx context.Context, flowID string) (flow.Flow, error)
+	UpsertFlow(ctx context.Context, flow flow.Flow) error
 }
 
 type (

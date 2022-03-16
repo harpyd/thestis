@@ -11,17 +11,23 @@ import (
 
 type RestartPerformanceHandler struct {
 	perfsRepo     app.PerformancesRepository
+	specGetter    app.SpecificationGetter
 	maintainer    app.PerformanceMaintainer
 	performerOpts app.PerformerOptions
 }
 
 func NewRestartPerformanceHandler(
 	perfsRepo app.PerformancesRepository,
+	specGetter app.SpecificationGetter,
 	maintainer app.PerformanceMaintainer,
 	opts ...app.PerformerOption,
 ) RestartPerformanceHandler {
 	if perfsRepo == nil {
 		panic("performances repository is nil")
+	}
+
+	if specGetter == nil {
+		panic("specification getter is nil")
 	}
 
 	if maintainer == nil {
@@ -43,7 +49,7 @@ func (h RestartPerformanceHandler) Handle(
 		err = errors.Wrap(err, "performance restarting")
 	}()
 
-	perf, err := h.perfsRepo.GetPerformance(ctx, cmd.PerformanceID, h.performerOpts...)
+	perf, err := h.perfsRepo.GetPerformance(ctx, cmd.PerformanceID, h.specGetter, h.performerOpts...)
 	if err != nil {
 		return nil, err
 	}

@@ -23,7 +23,7 @@ func NewCancelPerformanceHandler(
 	}
 
 	if cancelPub == nil {
-		panic("performances cancel publisher is nil")
+		panic("performance cancel publisher is nil")
 	}
 
 	return CancelPerformanceHandler{
@@ -37,7 +37,7 @@ func (h CancelPerformanceHandler) Handle(ctx context.Context, cmd app.CancelPerf
 		err = errors.Wrap(err, "performance cancelation")
 	}()
 
-	perf, err := h.perfsRepo.GetPerformance(ctx, cmd.PerformanceID)
+	perf, err := h.perfsRepo.GetPerformance(ctx, cmd.PerformanceID, app.DontGetSpecification())
 	if err != nil {
 		return err
 	}

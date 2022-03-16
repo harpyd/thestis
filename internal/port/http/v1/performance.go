@@ -130,7 +130,7 @@ func (h handler) logMessages(r *http.Request, messages <-chan app.Message, extra
 	extraFields = append(extraFields, app.StringLogField("requestId", middleware.GetReqID(r.Context())))
 
 	for msg := range messages {
-		if msg.Err() == nil || msg.State() == performance.Failed {
+		if msg.Err() == nil || msg.Event() == performance.FiredFail {
 			h.logger.Info(msg.String(), extraFields...)
 
 			continue

@@ -41,9 +41,9 @@ func Start(configsPath string) {
 }
 
 type runnerContext struct {
-	mongoSingletone
-	natsSingletone
-	firebaseSingletone
+	mongoSingleton
+	natsSingleton
+	firebaseSingleton
 
 	logger       app.LoggingService
 	config       *config.Config
@@ -59,17 +59,17 @@ type runnerContext struct {
 	cancel func()
 }
 
-type mongoSingletone struct {
+type mongoSingleton struct {
 	once sync.Once
 	db   *mongo.Database
 }
 
-type natsSingletone struct {
+type natsSingleton struct {
 	once sync.Once
 	conn *nats.Conn
 }
 
-type firebaseSingletone struct {
+type firebaseSingleton struct {
 	once   sync.Once
 	client *fireauth.Client
 }
@@ -112,7 +112,7 @@ func newRunner(configsPath string) *runnerContext {
 }
 
 func (c *runnerContext) mongoDatabase() *mongo.Database {
-	c.mongoSingletone.once.Do(func() {
+	c.mongoSingleton.once.Do(func() {
 		client, err := mongodb.NewClient(
 			c.config.Mongo.URI,
 			c.config.Mongo.Username,
@@ -122,42 +122,42 @@ func (c *runnerContext) mongoDatabase() *mongo.Database {
 			c.logger.Fatal("Failed to connect to MongoDB", err)
 		}
 
-		c.mongoSingletone.db = client.Database(c.config.Mongo.DatabaseName)
+		c.mongoSingleton.db = client.Database(c.config.Mongo.DatabaseName)
 
 		c.logger.Info("Connected to MongoDB")
 	})
 
-	return c.mongoSingletone.db
+	return c.mongoSingleton.db
 }
 
 func (c *runnerContext) natsConnection() *nats.Conn {
-	c.natsSingletone.once.Do(func() {
+	c.natsSingleton.once.Do(func() {
 		conn, err := nats.Connect(c.config.Nats.URL)
 		if err != nil {
 			c.logger.Fatal("Failed to connect to NATS server", err)
 		}
 
-		c.natsSingletone.conn = conn
+		c.natsSingleton.conn = conn
 
 		c.logger.Info("Connected to NATS server")
 	})
 
-	return c.natsSingletone.conn
+	return c.natsSingleton.conn
 }
 
 func (c *runnerContext) firebaseClient() *fireauth.Client {
-	c.firebaseSingletone.once.Do(func() {
+	c.firebaseSingleton.once.Do(func() {
 		client, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
 		if err != nil {
 			c.logger.Fatal("Failed to create Firebase Auth client", err)
 		}
 
-		c.firebaseSingletone.client = client
+		c.firebaseSingleton.client = client
 
 		c.logger.Info("Firebase Auth client created")
 	})
 
-	return c.firebaseSingletone.client
+	return c.firebaseSingleton.client
 }
 
 func (c *runnerContext) start() {
@@ -175,13 +175,13 @@ func (c *runnerContext) start() {
 
 func (c *runnerContext) initLogger() func() {
 	logger, _ := zap.NewProduction()
-	sync := func() {
+	syncFunc := func() {
 		_ = logger.Sync()
 	}
 
 	c.logger = zapAdapter.NewLoggingService(logger)
 
-	return sync
+	return syncFunc
 }
 
 func (c *runnerContext) initConfig(configsPath string) {
@@ -244,8 +244,12 @@ func (c *runnerContext) initApplication() {
 				c.persistent.perfsRepo,
 				c.performance.maintainer,
 			),
-			RestartPerformance: command.NewRestartPerformanceHandler(c.persistent.perfsRepo, c.performance.maintainer),
-			CancelPerformance:  command.NewCancelPerformanceHandler(c.persistent.perfsRepo, c.signalBus.publisher),
+			RestartPerformance: command.NewRestartPerformanceHandler(
+				c.persistent.perfsRepo,
+				c.persistent.specsRepo,
+				c.performance.maintainer,
+			),
+			CancelPerformance: command.NewCancelPerformanceHandler(c.persistent.perfsRepo, c.signalBus.publisher),
 		},
 		Queries: app.Queries{
 			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(c.persistent.specificTestCampaignRM),
