@@ -27,7 +27,7 @@ In general, there were enough problems. That's how the idea of a pipeline for e2
 
 In fact, a `TestCampaign` is the name of your test, information about it, and the history of all uploaded `Specifications` and completed `Performances`.
 
-`Specification` is a declarative description of the test in BDD style, each test consists of `stories`, each `story` of `scenarios`, each `scenario` of `theses`. The `thesis` contains a description of the work of part of the test.
+`Specification` is a declarative description of the test in BDD style, each test consists of _stories_, each `Story` of _scenarios_, each `Scenario` of _theses_. The `Thesis` contains a description of the work of part of the test.
 
 ```
 "Returns go to stock" — example of story
@@ -95,7 +95,7 @@ sequenceDiagram
 
 ### Test campaign
 
-`TestCampaign` is your test, its whole history. You can compare it with a test campaign of some brand like Coca-Cola, a series of successful and not very successful tests. In a word, a test campaign.
+`TestCampaign` is your test, its whole history. You can compare it with a test campaign of some brand like Coca-Cola, a series of successful and not very successful tests.
 
 Contains general information about the test and user information. Each `Specification` update and `Performance` launch is associated with this entity. A `TestCampaign` can have only one active `Specification`, the rest are archived. You can also get a list of all `Performances` launched within the campaign.
 
@@ -103,7 +103,11 @@ Contains general information about the test and user information. Each `Specific
 
 `Specification` is your code for the test. This entity can be collected from various sources, now, for example, in the API we get a specification in yaml format, but this is all changeable. `Specification` is format tolerant, any format will be converted to the internal format.
 
-`Specification` is described in BDD style, each working step of the test is described in the `thesis`. Each `thesis` can either make __HTTP__ requests or __assert__ the collected data.
+Stories, scenarios, and theses (_slugged_ objects) have unique identifiers called _slugs_. `Slug` can consist of 1 to 3 parts. The slug of the story consists of one part. Script slug of 2 parts: story part and scenario part. The thesis slug consists of 3 parts: story part, scenario part ant thesis part.
+
+Formally, each `Specification` consists of _stories_, each `Story` consists of _scenarios_, and each `Scenario` consists of _theses_.
+
+`Specification` is described in BDD style, each working step of the test is described in `Thesis`. Each thesis can either make __HTTP__ requests or __assertion__ of the collected data.
 
 BDD tests consist of `given`, `when` and `then` stages. The stages are performed sequentially:
 
@@ -113,51 +117,54 @@ flowchart LR
     when --> then
 ```
 
-But `theses` within one stage will be executed in parallel by default. To specify a dependency, specify the name of the `thesis` in the `after` field. Then this thesis will be fulfilled after the specified one.
+But theses within one stage will be executed in parallel by default. To specify a dependency, specify the name of the thesis in the `after` field. Then this thesis will be fulfilled after the specified one.
 
 ### Performance
 
-`Performance` is the binary code of your test compiled from `Specification`. It starts automatically when it is created. It can also be restarted. For example, you can see that the test fell through no fault of your own, for example, there was some kind of network failure, you can restart the previously created `Performance`.
+`Performance` is the pipeline of your tests built from `Specification`. It starts automatically when it is created. It can also be restarted. For example, you can see that the test fell through no fault of your own, for example, there was some kind of network failure, you can restart the previously created `Performance`.
 
 `Performance` cannot be run more than once at any given time. That is, `Performance` will never have more than one active `Flow`.
 
-During assembly, an `actionGraph` is built from `Specification`, which is transformed into a `lockGraph` every time `Performance` is started.
+During `Performance`, each `Scenario` is executed in parallel with `Environment` isolated from other scenarios, and for each scenario its own `ScenarioSyncGroup` is created to manage the dependencies of each thesis.
 
-View of `Performance`'s [example](https://github.com/harpyd/thestis/blob/main/examples/specification/horns-and-hooves-test.yml) `actionGraph`:
+View of `Performance`'s [example](https://github.com/harpyd/thestis/blob/main/examples/specification/horns-and-hooves-test.yml) flow:
 
 ```mermaid
 flowchart TD
-    given --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHorns
-    given --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHooves
-    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHorns --> when
-    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHooves --> when
-    when --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.sellHornsAndHooves
-    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.sellHornsAndHooves --> then
-    then --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.getSoldProducts
+    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHorns --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.sellHornsAndHooves
+    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.deliverHooves --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.sellHornsAndHooves
+
+    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.sellHornsAndHooves --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.getSoldProducts
     sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.getSoldProducts --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.checkSoldProducts
-    then --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.checkSoldProducts
+    sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.sellHornsAndHooves --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.checkSoldProducts
 ```
 
-At each launch, `Performance` gives information about the execution `Step` by `Step`. Then, from the `Steps` received from `Performance`, a `Flow` is collected, showing the current state of the active `Performance`'s `Flow`.
+At each launch, `Performance` gives information about the execution step by step. Then, from the __steps__ received from the performance, a flow is collected, showing the current state of the active performance's flow.
 
 ### Flow
 
-`Flow` is unit of `Performance` work. Every working `Performance` parallel task accumulates `Performance` progress information and context in this entity. Each run of `Performance` corresponds to one `Flow`.
+`Flow` is unit of `Performance` work. Every working performance's parallel task accumulates information about the progress of the performance and the context in this entity. Each run of `Performance` corresponds to one `Flow`.
 
-`Flow` reduced from `Steps` received during the execution of `Performance`.
+`Flow` reduced from _steps_ received during the execution of `Performance`.
 
-`Flow` consists of theses transitions (each with `Thesis` state and occurred errors) and common state. Every transition has state that represents `Thesis` performance progress. But common state is general status of `Performance`. `Flow` common state graph are shown in the diagram:
+`Flow` consists of _statuses_ (each with `Slug`, `State` and occurred errors). Every `Status` has state that represents __slugged__ `Specification` objects performance progress. 
+
+`State` changes under the action of an `Event` and _events_ are generated during the operation of `Performance`. For example, if the thesis is passed, then the performance creates a step for this thesis with an event, and if all the theses of the scenario are passed, then the performance creates a step for the scenario with the same event.
+
+From each state, you can go to a certain set of states:
 
 ```mermaid
 stateDiagram-v2
     Canceled --> Canceled
 
     Crashed --> Crashed
-    Crashed --> Canceled
 
     Failed --> Failed
     Failed --> Crashed
-    Failed --> Canceled
+
+    Passed --> Passed
+    Passed --> Failed
+    Passed --> Crashed
 
     Performing --> Performing
     Performing --> Passed
@@ -227,7 +234,8 @@ The __port__ layer contains the code that controls the application. A good examp
         * `query` — read operation use cases
     * `config` — **Thestis** application config parser
     * `domain` — domain logic of **Thestis** bounded by context
-        * `performance` — pipeline that can run tests flow from specification using multithreading
+        * `flow` - flow, state and reducer from performance's steps
+        * `performance` — pipeline that can run tests flow from specification using concurrent running goroutines
         * `specification` — tests description in declarative BDD style
         * `testcampaign` — data about testing project, loaded specifications history and active specification
         * `user` — access rights differentiation
