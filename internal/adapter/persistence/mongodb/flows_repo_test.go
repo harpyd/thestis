@@ -7,7 +7,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
+	"github.com/harpyd/thestis/internal/domain/flow"
 	"github.com/harpyd/thestis/internal/domain/performance"
+	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
 type FlowsRepositoryTestSuite struct {
@@ -40,7 +42,7 @@ func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
 	testCases := []struct {
 		Name        string
 		Before      func()
-		Flow        performance.Flow
+		Flow        flow.Flow
 		ShouldBeErr bool
 		IsErr       func(err error) bool
 	}{
@@ -49,31 +51,51 @@ func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
 			Before: func() {
 				// do not insert before
 			},
-			Flow: performance.UnmarshalFlow(performance.FlowParams{
+			Flow: flow.Unmarshal(flow.Params{
 				ID:            "60b7b0eb-eb62-49bc-bf76-d4fca3ad48b8",
 				PerformanceID: "b1728f29-c897-4258-bad8-dd824b8f84cf",
-				State:         performance.Performing,
-				Transitions:   s.transitions(),
+				Statuses: []flow.Status{
+					flow.NewStatus(
+						specification.NewThesisSlug("foo", "bar", "baz"),
+						performance.Canceled,
+					),
+				},
 			}),
 			ShouldBeErr: false,
 		},
 		{
 			Name: "success_updating_flow",
 			Before: func() {
-				flow := performance.UnmarshalFlow(performance.FlowParams{
+				f := flow.Unmarshal(flow.Params{
 					ID:            "07e3468b-a195-4b30-81df-8e3e8d389da9",
 					PerformanceID: "37a5f844-25db-4aad-a3e2-628674e7e1e5",
-					State:         performance.Performing,
-					Transitions:   s.transitions(),
+					Statuses: []flow.Status{
+						flow.NewStatus(
+							specification.NewThesisSlug("foo", "bar", "baz"),
+							performance.Performing,
+						),
+						flow.NewStatus(
+							specification.NewThesisSlug("foo", "bar", "bad"),
+							performance.Failed,
+						),
+					},
 				})
 
-				s.addFlows(flow)
+				s.addFlows(f)
 			},
-			Flow: performance.UnmarshalFlow(performance.FlowParams{
+			Flow: flow.Unmarshal(flow.Params{
 				ID:            "07e3468b-a195-4b30-81df-8e3e8d389da9",
 				PerformanceID: "407b3e37-a4b2-4fa1-aa47-4d75e658e455",
-				State:         performance.Passed,
-				Transitions:   s.transitions(),
+				Statuses: []flow.Status{
+					flow.NewStatus(
+						specification.NewThesisSlug("foo", "bar", "baz"),
+						performance.Passed,
+					),
+					flow.NewStatus(
+						specification.NewThesisSlug("foo", "bar", "bad"),
+						performance.Failed,
+					),
+				},
 			}),
 			ShouldBeErr: false,
 		},
@@ -99,29 +121,16 @@ func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
 	}
 }
 
-func (s *FlowsRepositoryTestSuite) transitions() []performance.Transition {
+func (s *FlowsRepositoryTestSuite) getFlow(flowID string) flow.Flow {
 	s.T().Helper()
 
-	return []performance.Transition{
-		performance.NewTransition(
-			performance.Passed,
-			"stage.give",
-			"story.scenario.to",
-			"some err occurred",
-		),
-	}
-}
-
-func (s *FlowsRepositoryTestSuite) getFlow(flowID string) performance.Flow {
-	s.T().Helper()
-
-	flow, err := s.repo.GetFlow(context.Background(), flowID)
+	f, err := s.repo.GetFlow(context.Background(), flowID)
 	s.Require().NoError(err)
 
-	return flow
+	return f
 }
 
-func (s *FlowsRepositoryTestSuite) addFlows(flows ...performance.Flow) {
+func (s *FlowsRepositoryTestSuite) addFlows(flows ...flow.Flow) {
 	s.T().Helper()
 
 	ctx := context.Background()

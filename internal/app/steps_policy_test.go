@@ -9,74 +9,155 @@ import (
 
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/app/mock"
+	"github.com/harpyd/thestis/internal/domain/flow"
 	"github.com/harpyd/thestis/internal/domain/performance"
+	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-type states struct {
-	CommonState     performance.State
-	TransitionState performance.State
+func TestPanickingNewEveryStepSavingPolicy(t *testing.T) {
+	t.Parallel()
+
+	const saveTimeout = 1 * time.Second
+
+	testCases := []struct {
+		Name           string
+		GivenFlowsRepo app.FlowsRepository
+		ShouldPanic    bool
+		PanicMessage   string
+	}{
+		{
+			Name:           "all_dependencies_are_not_nil",
+			GivenFlowsRepo: mock.NewFlowsRepository(),
+			ShouldPanic:    false,
+		},
+		{
+			Name:           "all_dependencies_are_nil",
+			GivenFlowsRepo: nil,
+			ShouldPanic:    true,
+			PanicMessage:   "flows repository is nil",
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			init := func() {
+				_ = app.NewEveryStepSavingPolicy(c.GivenFlowsRepo, saveTimeout)
+			}
+
+			if !c.ShouldPanic {
+				require.NotPanics(t, init)
+
+				return
+			}
+
+			require.PanicsWithValue(t, c.PanicMessage, init)
+		})
+	}
 }
 
 func TestHandleEveryStepSavingPolicy(t *testing.T) {
 	t.Parallel()
 
-	const (
-		from = "a"
-		to   = "b"
-	)
-
 	testCases := []struct {
-		Name             string
-		CancelContext    bool
-		GivenSteps       []performance.Step
-		GivenStates      states
-		ExpectedMessages []app.Message
-		ExpectedStates   states
+		Name              string
+		CancelContext     bool
+		GivenInitStatuses []flow.Status
+		GivenSteps        []performance.Step
+		ExpectedMessages  []app.Message
+		ExpectedStatuses  []flow.Status
 	}{
 		{
 			Name: "successful_handling_not_performed_to_passed",
-			GivenSteps: []performance.Step{
-				performance.NewTestStep(from, to, performance.Performing),
-				performance.NewTestStep(from, to, performance.Passed),
+			GivenInitStatuses: []flow.Status{
+				flow.NewStatus(
+					specification.NewThesisSlug("foo", "bar", "dar"),
+					performance.NotPerformed,
+				),
+				flow.NewStatus(
+					specification.NewScenarioSlug("foo", "bar"),
+					performance.NotPerformed,
+				),
 			},
-			GivenStates: states{
-				CommonState:     performance.NotPerformed,
-				TransitionState: performance.NotPerformed,
+			GivenSteps: []performance.Step{
+				performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "dar"),
+					performance.HTTPPerformer,
+					performance.FiredPass,
+				),
+				performance.NewScenarioStep(
+					specification.NewScenarioSlug("foo", "bar"),
+					performance.FiredPass,
+				),
 			},
 			ExpectedMessages: []app.Message{
 				app.NewMessageFromStep(
-					performance.NewTestStep(from, to, performance.Performing),
+					performance.NewThesisStep(
+						specification.NewThesisSlug("foo", "bar", "dar"),
+						performance.HTTPPerformer,
+						performance.FiredPass,
+					),
 				),
 				app.NewMessageFromStep(
-					performance.NewTestStep(from, to, performance.Passed),
+					performance.NewScenarioStep(
+						specification.NewScenarioSlug("foo", "bar"),
+						performance.FiredPass,
+					),
 				),
 			},
-			ExpectedStates: states{
-				CommonState:     performance.Passed,
-				TransitionState: performance.Passed,
+			ExpectedStatuses: []flow.Status{
+				flow.NewStatus(
+					specification.NewThesisSlug("foo", "bar", "dar"),
+					performance.Passed,
+				),
+				flow.NewStatus(
+					specification.NewScenarioSlug("foo", "bar"),
+					performance.Passed,
+				),
 			},
 		},
 		{
-			Name:          "context_canceled",
+			Name: "context_canceled",
+			GivenInitStatuses: []flow.Status{
+				flow.NewStatus(
+					specification.NewThesisSlug("a", "b", "c"),
+					performance.NotPerformed,
+				),
+				flow.NewStatus(
+					specification.NewScenarioSlug("a", "b"),
+					performance.NotPerformed,
+				),
+			},
 			CancelContext: true,
 			GivenSteps: []performance.Step{
-				performance.NewTestStep(from, to, performance.Canceled),
-			},
-			GivenStates: states{
-				CommonState:     performance.Performing,
-				TransitionState: performance.Performing,
+				performance.NewScenarioStep(
+					specification.AnyScenarioSlug(),
+					performance.FiredCancel,
+				),
 			},
 			ExpectedMessages: []app.Message{
 				app.NewMessageFromStep(
-					performance.NewTestStep(from, to, performance.Canceled),
+					performance.NewScenarioStep(
+						specification.AnyScenarioSlug(),
+						performance.FiredCancel,
+					),
 				),
 				app.NewMessageFromError(
 					app.NewDatabaseError(context.Canceled),
 				),
 			},
-			ExpectedStates: states{
-				CommonState:     performance.Canceled,
-				TransitionState: performance.Performing,
+			ExpectedStatuses: []flow.Status{
+				flow.NewStatus(
+					specification.NewThesisSlug("a", "b", "c"),
+					performance.NotPerformed,
+				),
+				flow.NewStatus(
+					specification.NewScenarioSlug("a", "b"),
+					performance.NotPerformed,
+				),
 			},
 		},
 	}
@@ -95,12 +176,7 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 			)
 
 			var (
-				fr = performance.TestFlowFromState(
-					c.GivenStates.CommonState,
-					c.GivenStates.TransitionState,
-					from,
-					to,
-				)
+				fr       = flow.FromStatuses("flow-id", "perf-id", c.GivenInitStatuses...)
 				steps    = make(chan performance.Step)
 				messages = make(chan app.Message)
 			)
@@ -128,10 +204,9 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 
 			requireMessagesEqual(t, c.ExpectedMessages, messages)
 
-			flow := fr.Reduce()
+			f := fr.Reduce()
 
-			require.Equal(t, c.ExpectedStates.CommonState, flow.State())
-			require.Equal(t, c.ExpectedStates.TransitionState, flow.Transitions()[0].State())
+			require.ElementsMatch(t, c.ExpectedStatuses, f.Statuses())
 		})
 	}
 }

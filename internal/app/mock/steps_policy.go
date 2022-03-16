@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/harpyd/thestis/internal/app"
+	"github.com/harpyd/thestis/internal/domain/flow"
 	"github.com/harpyd/thestis/internal/domain/performance"
 )
 
@@ -15,7 +16,7 @@ func NewStepsPolicy() StepsPolicy {
 
 func (p StepsPolicy) HandleSteps(
 	_ context.Context,
-	_ *performance.FlowReducer,
+	_ *flow.Reducer,
 	steps <-chan performance.Step,
 	messages chan<- app.Message,
 ) {

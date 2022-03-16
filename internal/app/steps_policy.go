@@ -4,13 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/harpyd/thestis/internal/domain/flow"
 	"github.com/harpyd/thestis/internal/domain/performance"
 )
 
 type StepsPolicy interface {
 	HandleSteps(
 		ctx context.Context,
-		fr *performance.FlowReducer,
+		fr *flow.Reducer,
 		steps <-chan performance.Step,
 		messages chan<- Message,
 	)
@@ -34,7 +35,7 @@ func NewEveryStepSavingPolicy(flowsRepo FlowsRepository, saveTimeout time.Durati
 
 func (p *everyStepSavingPolicy) HandleSteps(
 	ctx context.Context,
-	fr *performance.FlowReducer,
+	fr *flow.Reducer,
 	steps <-chan performance.Step,
 	messages chan<- Message,
 ) {
@@ -58,7 +59,7 @@ func (p *everyStepSavingPolicy) HandleSteps(
 	}
 }
 
-func (p *everyStepSavingPolicy) upsertFlowWithTimeout(ctx context.Context, flow performance.Flow) error {
+func (p *everyStepSavingPolicy) upsertFlowWithTimeout(ctx context.Context, flow flow.Flow) error {
 	ctx, cancel := context.WithTimeout(ctx, p.timeout)
 	defer cancel()
 

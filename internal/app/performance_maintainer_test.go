@@ -2,10 +2,10 @@ package app_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/app"
@@ -19,40 +19,126 @@ var (
 	errPerformanceRelease = errors.New("performance release")
 )
 
+func TestPanickingNewPerformanceMaintainer(t *testing.T) {
+	t.Parallel()
+
+	const flowTimeout = 1 * time.Second
+
+	testCases := []struct {
+		Name             string
+		GivenGuard       app.PerformanceGuard
+		GivenSubscriber  app.PerformanceCancelSubscriber
+		GivenStepsPolicy app.StepsPolicy
+		ShouldPanic      bool
+		PanicMessage     string
+	}{
+		{
+			Name:             "all_dependencies_are_not_nil",
+			GivenGuard:       mock.NewPerformanceGuard(nil, nil),
+			GivenSubscriber:  mock.NewPerformanceCancelPubsub(),
+			GivenStepsPolicy: mock.NewStepsPolicy(),
+			ShouldPanic:      false,
+		},
+		{
+			Name:             "performance_guard_is_nil",
+			GivenGuard:       nil,
+			GivenSubscriber:  mock.NewPerformanceCancelPubsub(),
+			GivenStepsPolicy: mock.NewStepsPolicy(),
+			ShouldPanic:      true,
+			PanicMessage:     "performance guard is nil",
+		},
+		{
+			Name:             "performance_cancel_subscriber_is_nil",
+			GivenGuard:       mock.NewPerformanceGuard(nil, nil),
+			GivenSubscriber:  nil,
+			GivenStepsPolicy: mock.NewStepsPolicy(),
+			ShouldPanic:      true,
+			PanicMessage:     "performance cancel subscriber is nil",
+		},
+		{
+			Name:             "steps_policy_is_nil",
+			GivenGuard:       mock.NewPerformanceGuard(nil, nil),
+			GivenSubscriber:  mock.NewPerformanceCancelPubsub(),
+			GivenStepsPolicy: nil,
+			ShouldPanic:      true,
+			PanicMessage:     "steps policy is nil",
+		},
+		{
+			Name:             "all_dependencies_are_nil",
+			GivenGuard:       nil,
+			GivenSubscriber:  mock.NewPerformanceCancelPubsub(),
+			GivenStepsPolicy: mock.NewStepsPolicy(),
+			ShouldPanic:      true,
+			PanicMessage:     "performance guard is nil",
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			init := func() {
+				_ = app.NewPerformanceMaintainer(
+					c.GivenGuard,
+					c.GivenSubscriber,
+					c.GivenStepsPolicy,
+					flowTimeout,
+				)
+			}
+
+			if !c.ShouldPanic {
+				require.NotPanics(t, init)
+
+				return
+			}
+
+			require.PanicsWithValue(t, c.PanicMessage, init)
+		})
+	}
+}
+
 func TestMaintainPerformance(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		Name               string
-		PerformanceFactory func(opts ...performance.Option) *performance.Performance
+		PerformanceFactory func() *performance.Performance
 		Guard              *mock.PerformanceGuard
-		StartPerformance   bool
 		ShouldBeErr        bool
 		IsErr              func(err error) bool
 		ExpectedMessages   []app.Message
 	}{
 		{
 			Name: "already_started_performance",
-			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
+			PerformanceFactory: func() *performance.Performance {
 				return performance.Unmarshal(performance.Params{
-					Actions: []performance.Action{
-						performance.NewActionWithoutThesis("from", "to", performance.HTTPPerformer),
-					},
-				}, opts...)
+					ID: "foo",
+					Specification: specification.NewBuilder().
+						WithID("bar").
+						WithStory("a", func(b *specification.StoryBuilder) {
+							b.WithScenario("b", func(b *specification.ScenarioBuilder) {
+								b.WithThesis("c", func(b *specification.ThesisBuilder) {})
+							})
+						}).
+						ErrlessBuild(),
+					Started: true,
+				})
 			},
-			Guard:            errlessPerformanceGuard(t),
-			StartPerformance: true,
-			ShouldBeErr:      true,
-			IsErr:            performance.IsAlreadyStartedError,
+			Guard:       errlessPerformanceGuard(t),
+			ShouldBeErr: true,
+			IsErr:       performance.IsAlreadyStartedError,
 		},
 		{
 			Name: "performance_acquire_error",
-			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
-				return performance.Unmarshal(performance.Params{
-					Actions: []performance.Action{
-						performance.NewActionWithoutThesis("b", "c", performance.AssertionPerformer),
-					},
-				}, opts...)
+			PerformanceFactory: func() *performance.Performance {
+				return performance.FromSpecification(
+					"que",
+					specification.NewBuilder().
+						WithID("due").
+						ErrlessBuild(),
+				)
 			},
 			Guard:       mock.NewPerformanceGuard(errPerformanceAcquire, nil),
 			ShouldBeErr: true,
@@ -60,55 +146,147 @@ func TestMaintainPerformance(t *testing.T) {
 		},
 		{
 			Name: "performance_release_error",
-			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
-				return performance.Unmarshal(performance.Params{
-					Actions: []performance.Action{
-						performance.NewActionWithoutThesis("a", "b", performance.HTTPPerformer),
-					},
-				}, opts...)
+			PerformanceFactory: func() *performance.Performance {
+				return performance.FromSpecification(
+					"suu",
+					specification.NewBuilder().
+						WithID("quu").
+						WithStory("foo", func(b *specification.StoryBuilder) {
+							b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
+								b.WithThesis("baz", func(b *specification.ThesisBuilder) {
+									b.WithStatement(specification.Given, "baz")
+									b.WithAssertion(func(b *specification.AssertionBuilder) {
+										b.WithMethod(specification.JSONPath)
+									})
+								})
+							})
+						}).
+						ErrlessBuild(),
+					performance.WithAssertion(performance.PassingPerformer()),
+				)
 			},
 			Guard: mock.NewPerformanceGuard(nil, errPerformanceRelease),
 			ExpectedMessages: []app.Message{
-				app.NewMessageFromStep(
-					performance.NewPerformingStep("a", "b", performance.HTTPPerformer),
-				),
-				app.NewMessageFromStep(
-					performance.NewStepFromResult("a", "b", performance.HTTPPerformer, performance.Pass()),
-				),
+				app.NewMessageFromStep(performance.NewScenarioStep(
+					specification.NewScenarioSlug("foo", "bar"),
+					performance.FiredPerform,
+				)),
+				app.NewMessageFromStep(performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "baz"),
+					performance.AssertionPerformer,
+					performance.FiredPerform,
+				)),
+				app.NewMessageFromStep(performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "baz"),
+					performance.AssertionPerformer,
+					performance.FiredPass,
+				)),
+				app.NewMessageFromStep(performance.NewScenarioStep(
+					specification.NewScenarioSlug("foo", "bar"),
+					performance.FiredPass,
+				)),
 				app.NewMessageFromError(errPerformanceRelease),
 			},
 		},
 		{
 			Name: "successfully_maintain_performance",
-			PerformanceFactory: func(opts ...performance.Option) *performance.Performance {
-				return performance.Unmarshal(performance.Params{
-					Actions: []performance.Action{
-						performance.NewActionWithoutThesis("a", "c", performance.HTTPPerformer),
-						performance.NewActionWithoutThesis("b", "c", performance.HTTPPerformer),
-						performance.NewActionWithoutThesis("c", "d", performance.AssertionPerformer),
-					},
-				}, opts...)
+			PerformanceFactory: func() *performance.Performance {
+				return performance.FromSpecification(
+					"perf",
+					specification.NewBuilder().
+						WithID("spec").
+						WithStory("foo", func(b *specification.StoryBuilder) {
+							b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
+								b.WithThesis("gaz", func(b *specification.ThesisBuilder) {
+									b.WithStatement(specification.Given, "gaz")
+									b.WithHTTP(func(b *specification.HTTPBuilder) {
+										b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+											b.WithURL("https://prepare.com")
+											b.WithMethod(specification.POST)
+										})
+									})
+								})
+								b.WithThesis("gad", func(b *specification.ThesisBuilder) {
+									b.WithStatement(specification.Given, "gad")
+									b.WithHTTP(func(b *specification.HTTPBuilder) {
+										b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+											b.WithURL("https://prepareee.com")
+											b.WithMethod(specification.POST)
+										})
+									})
+								})
+								b.WithThesis("waz", func(b *specification.ThesisBuilder) {
+									b.WithStatement(specification.When, "was")
+									b.WithHTTP(func(b *specification.HTTPBuilder) {
+										b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+											b.WithURL("https://localhost:8000/endpooint")
+											b.WithMethod(specification.GET)
+										})
+									})
+								})
+								b.WithThesis("taz", func(b *specification.ThesisBuilder) {
+									b.WithStatement(specification.Then, "taz")
+									b.WithAssertion(func(b *specification.AssertionBuilder) {
+										b.WithMethod(specification.JSONPath)
+									})
+								})
+							})
+						}).
+						ErrlessBuild(),
+					performance.WithHTTP(performance.PassingPerformer()),
+					performance.WithAssertion(performance.PassingPerformer()),
+				)
 			},
 			Guard: errlessPerformanceGuard(t),
 			ExpectedMessages: []app.Message{
-				app.NewMessageFromStep(
-					performance.NewPerformingStep("a", "c", performance.HTTPPerformer),
-				),
-				app.NewMessageFromStep(
-					performance.NewStepFromResult("a", "c", performance.HTTPPerformer, performance.Pass()),
-				),
-				app.NewMessageFromStep(
-					performance.NewPerformingStep("b", "c", performance.HTTPPerformer),
-				),
-				app.NewMessageFromStep(
-					performance.NewStepFromResult("b", "c", performance.HTTPPerformer, performance.Pass()),
-				),
-				app.NewMessageFromStep(
-					performance.NewPerformingStep("c", "d", performance.AssertionPerformer),
-				),
-				app.NewMessageFromStep(
-					performance.NewStepFromResult("c", "d", performance.AssertionPerformer, performance.Pass()),
-				),
+				app.NewMessageFromStep(performance.NewScenarioStep(
+					specification.NewScenarioSlug("foo", "bar"),
+					performance.FiredPerform,
+				)),
+				app.NewMessageFromStep(performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "gaz"),
+					performance.HTTPPerformer,
+					performance.FiredPerform,
+				)),
+				app.NewMessageFromStep(performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "gaz"),
+					performance.HTTPPerformer,
+					performance.FiredPass,
+				)),
+				app.NewMessageFromStep(performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "gad"),
+					performance.HTTPPerformer,
+					performance.FiredPerform,
+				)),
+				app.NewMessageFromStep(performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "gad"),
+					performance.HTTPPerformer,
+					performance.FiredPass,
+				)),
+				app.NewMessageFromStep(performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "waz"),
+					performance.HTTPPerformer,
+					performance.FiredPerform,
+				)),
+				app.NewMessageFromStep(performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "waz"),
+					performance.HTTPPerformer,
+					performance.FiredPass,
+				)),
+				app.NewMessageFromStep(performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "taz"),
+					performance.AssertionPerformer,
+					performance.FiredPerform,
+				)),
+				app.NewMessageFromStep(performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "taz"),
+					performance.AssertionPerformer,
+					performance.FiredPass,
+				)),
+				app.NewMessageFromStep(performance.NewScenarioStep(
+					specification.NewScenarioSlug("foo", "bar"),
+					performance.FiredPass,
+				)),
 			},
 		},
 	}
@@ -124,71 +302,116 @@ func TestMaintainPerformance(t *testing.T) {
 			var (
 				cancelPubsub = mock.NewPerformanceCancelPubsub()
 				stepsPolicy  = mock.NewStepsPolicy()
-				maintainer   = app.NewPerformanceMaintainer(c.Guard, cancelPubsub, stepsPolicy, flowTimeout)
 			)
 
-			perf := c.PerformanceFactory(
-				performance.WithHTTP(performance.PassingPerformer()),
-				performance.WithAssertion(performance.PassingPerformer()),
+			maintainer := app.NewPerformanceMaintainer(
+				c.Guard,
+				cancelPubsub,
+				stepsPolicy,
+				flowTimeout,
 			)
 
-			if c.StartPerformance {
-				_, err := perf.Start(context.Background())
-
-				require.NoError(t, err)
-			}
+			perf := c.PerformanceFactory()
 
 			messages, err := maintainer.MaintainPerformance(context.Background(), perf)
 
+			t.Run("acquire_performance", func(t *testing.T) {
+				require.Equal(t, 1, c.Guard.AcquireCalls())
+			})
+
 			if c.ShouldBeErr {
-				require.True(t, c.IsErr(err))
+				t.Run("err", func(t *testing.T) {
+					require.True(t, c.IsErr(err))
+				})
 
 				return
 			}
 
-			require.NoError(t, err)
+			t.Run("subscribe_performance_canceled", func(t *testing.T) {
+				require.Equal(t, 1, cancelPubsub.SubscribeCalls())
+			})
 
-			requireMessagesEqual(t, c.ExpectedMessages, messages)
+			t.Run("messages", func(t *testing.T) {
+				require.NoError(t, err)
 
-			require.Equal(t, 1, c.Guard.ReleaseCalls())
+				requireMessagesEqual(t, c.ExpectedMessages, messages)
+			})
+
+			t.Run("release_performance", func(t *testing.T) {
+				require.Equal(t, 1, c.Guard.ReleaseCalls())
+			})
 		})
 	}
 }
 
-func TestMaintainPerformanceCancelation(t *testing.T) {
+func TestCancelMaintainPerformance(t *testing.T) {
 	t.Parallel()
 
+	spec := specification.NewBuilder().
+		WithID("perf").
+		WithStory("foo", func(b *specification.StoryBuilder) {
+			b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
+				b.WithThesis("baz", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.Given, "baz")
+					b.WithHTTP(func(b *specification.HTTPBuilder) {
+						b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+							b.WithMethod(specification.POST)
+						})
+					})
+				})
+				b.WithThesis("bad", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.When, "bad")
+					b.WithHTTP(func(b *specification.HTTPBuilder) {
+						b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+							b.WithMethod(specification.GET)
+						})
+					})
+				})
+			})
+		}).
+		ErrlessBuild()
+
 	testCases := []struct {
-		Name             string
-		CancelContext    bool
-		FlowTimeout      time.Duration
-		PublishCancel    bool
-		ExpectedMessages []app.Message
-		Contains         bool
+		Name                  string
+		CancelContext         bool
+		FlowTimeout           time.Duration
+		PublishCancel         bool
+		ExpectedOneOfMessages []app.Message
 	}{
 		{
-			Name:          "context_cancelation",
+			Name:          "context_canceled",
 			CancelContext: true,
 			FlowTimeout:   1 * time.Second,
 			PublishCancel: false,
-			ExpectedMessages: []app.Message{
+			ExpectedOneOfMessages: []app.Message{
 				app.NewMessageFromStep(
-					performance.NewCanceledStep(context.Canceled),
+					performance.NewScenarioStepWithErr(
+						performance.NewCanceledError(context.Canceled),
+						specification.AnyScenarioSlug(),
+						performance.FiredCancel,
+					),
+				),
+				app.NewMessageFromStep(
+					performance.NewScenarioStepWithErr(
+						performance.NewCanceledError(context.Canceled),
+						specification.NewScenarioSlug("foo", "bar"),
+						performance.FiredCancel,
+					),
 				),
 			},
-			Contains: true,
 		},
 		{
 			Name:          "flow_timeout_exceeded",
 			CancelContext: false,
-			FlowTimeout:   10 * time.Millisecond,
+			FlowTimeout:   5 * time.Millisecond,
 			PublishCancel: false,
-			ExpectedMessages: []app.Message{
+			ExpectedOneOfMessages: []app.Message{
 				app.NewMessageFromStep(
-					performance.NewPerformingStep("a", "b", performance.HTTPPerformer),
-				),
-				app.NewMessageFromStep(
-					performance.NewCanceledStep(context.DeadlineExceeded),
+					performance.NewScenarioStepWithErr(
+						performance.NewCanceledError(context.DeadlineExceeded),
+						specification.NewScenarioSlug("foo", "bar"),
+						performance.FiredCancel,
+					),
 				),
 			},
 		},
@@ -197,12 +420,22 @@ func TestMaintainPerformanceCancelation(t *testing.T) {
 			CancelContext: false,
 			FlowTimeout:   1 * time.Second,
 			PublishCancel: true,
-			ExpectedMessages: []app.Message{
+			ExpectedOneOfMessages: []app.Message{
 				app.NewMessageFromStep(
-					performance.NewCanceledStep(context.Canceled),
+					performance.NewScenarioStepWithErr(
+						performance.NewCanceledError(context.Canceled),
+						specification.AnyScenarioSlug(),
+						performance.FiredCancel,
+					),
+				),
+				app.NewMessageFromStep(
+					performance.NewScenarioStepWithErr(
+						performance.NewCanceledError(context.Canceled),
+						specification.NewScenarioSlug("foo", "bar"),
+						performance.FiredCancel,
+					),
 				),
 			},
-			Contains: true,
 		},
 	}
 
@@ -216,31 +449,23 @@ func TestMaintainPerformanceCancelation(t *testing.T) {
 				guard        = errlessPerformanceGuard(t)
 				cancelPubsub = mock.NewPerformanceCancelPubsub()
 				stepsPolicy  = mock.NewStepsPolicy()
-				maintainer   = app.NewPerformanceMaintainer(guard, cancelPubsub, stepsPolicy, c.FlowTimeout)
 			)
 
-			finish := make(chan struct{})
-			defer close(finish)
+			maintainer := app.NewPerformanceMaintainer(
+				guard,
+				cancelPubsub,
+				stepsPolicy,
+				c.FlowTimeout,
+			)
 
-			performer := performance.PerformFunc(func(
-				ctx context.Context,
-				_ *performance.Environment,
-				_ specification.Thesis,
-			) performance.Result {
-				select {
-				case <-finish:
-				case <-ctx.Done():
-					return performance.Cancel(ctx.Err())
-				}
+			pass := make(chan struct{})
+			defer close(pass)
 
-				return performance.Pass()
-			})
-
-			perf := performance.Unmarshal(performance.Params{
-				Actions: []performance.Action{
-					performance.NewActionWithoutThesis("a", "b", performance.HTTPPerformer),
-				},
-			}, performance.WithID("id"), performance.WithHTTP(performer))
+			perf := performance.FromSpecification(
+				"foo",
+				spec,
+				performance.WithHTTP(pendingPassPerformer(t, pass)),
+			)
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
@@ -253,21 +478,37 @@ func TestMaintainPerformanceCancelation(t *testing.T) {
 			}
 
 			if c.PublishCancel {
-				err := cancelPubsub.PublishPerformanceCancel("id")
+				err := cancelPubsub.PublishPerformanceCancel("foo")
 				require.NoError(t, err)
 			}
 
-			if c.Contains {
-				requireMessagesContains(t, messages, c.ExpectedMessages...)
+			t.Run("cancel_messages", func(t *testing.T) {
+				requireMessagesContainOneOf(t, messages, c.ExpectedOneOfMessages...)
+			})
 
-				return
-			}
-
-			requireMessagesEqual(t, c.ExpectedMessages, messages)
-
-			require.Equal(t, 1, guard.ReleaseCalls())
+			t.Run("release_performance", func(t *testing.T) {
+				require.Equal(t, 1, guard.ReleaseCalls())
+			})
 		})
 	}
+}
+
+func pendingPassPerformer(t *testing.T, pass <-chan struct{}) performance.Performer {
+	t.Helper()
+
+	return performance.PerformFunc(func(
+		ctx context.Context,
+		_ *performance.Environment,
+		_ specification.Thesis,
+	) performance.Result {
+		select {
+		case <-pass:
+		case <-ctx.Done():
+			return performance.Cancel(ctx.Err())
+		}
+
+		return performance.Pass()
+	})
 }
 
 func errlessPerformanceGuard(t *testing.T) *mock.PerformanceGuard {
@@ -284,28 +525,45 @@ func requireMessagesEqual(t *testing.T, expected []app.Message, actual <-chan ap
 		expectedMessages = append(expectedMessages, msg.String())
 	}
 
-	actualMessages := readMessages(t, actual)
+	actualMessages := readMessages(actual)
 
 	require.ElementsMatch(t, expectedMessages, actualMessages)
 }
 
-func requireMessagesContains(t *testing.T, messages <-chan app.Message, contains ...app.Message) {
+func requireMessagesContainOneOf(t *testing.T, messages <-chan app.Message, target ...app.Message) {
 	t.Helper()
 
-	readMsgs := readMessages(t, messages)
+	read := readMessages(messages)
 
-	for _, msg := range contains {
-		require.Contains(t, readMsgs, msg.String())
+	for _, msg := range target {
+		if contains(read, msg.String()) {
+			return
+		}
 	}
+
+	require.Failf(
+		t,
+		"Messages do not contain any target message",
+		"read messages: %s\ntarget messages: %s",
+		read, target,
+	)
 }
 
-func readMessages(t *testing.T, messages <-chan app.Message) []string {
-	t.Helper()
-
-	readMsgs := make([]string, 0, len(messages))
-	for msg := range messages {
-		readMsgs = append(readMsgs, msg.String())
+func contains(s []string, elem string) bool {
+	for _, x := range s {
+		if x == elem {
+			return true
+		}
 	}
 
-	return readMsgs
+	return false
+}
+
+func readMessages(messages <-chan app.Message) []string {
+	read := make([]string, 0, len(messages))
+	for msg := range messages {
+		read = append(read, msg.String())
+	}
+
+	return read
 }

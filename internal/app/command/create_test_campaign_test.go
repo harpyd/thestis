@@ -11,6 +11,49 @@ import (
 	"github.com/harpyd/thestis/internal/app/mock"
 )
 
+func TestPanickingNewCreateTestCampaignHandler(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name                   string
+		GivenTestCampaignsRepo app.TestCampaignsRepository
+		ShouldPanic            bool
+		PanicMessage           string
+	}{
+		{
+			Name:                   "all_dependencies_are_not_nil",
+			GivenTestCampaignsRepo: mock.NewTestCampaignsRepository(),
+			ShouldPanic:            false,
+		},
+		{
+			Name:                   "all_dependencies_are_nil",
+			GivenTestCampaignsRepo: nil,
+			ShouldPanic:            true,
+			PanicMessage:           "test campaigns repository is nil",
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			init := func() {
+				_ = command.NewCreateTestCampaignHandler(c.GivenTestCampaignsRepo)
+			}
+
+			if !c.ShouldPanic {
+				require.NotPanics(t, init)
+
+				return
+			}
+
+			require.PanicsWithValue(t, c.PanicMessage, init)
+		})
+	}
+}
+
 func TestHandleCreateTestCampaign(t *testing.T) {
 	t.Parallel()
 

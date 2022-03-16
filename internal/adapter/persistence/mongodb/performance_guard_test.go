@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
+	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/performance"
 )
 
@@ -29,9 +30,9 @@ func (s *PerformanceGuardTestSuite) SetupTest() {
 	s.perfID = "2db44433-7142-4080-bada-844afccfedbf"
 
 	err := s.repo.AddPerformance(context.Background(), performance.Unmarshal(performance.Params{
-		OwnerID:         "b4a232b3-d853-4022-9b4d-f2aefb24d82c",
-		SpecificationID: "e1cdd1fb-8e2d-4b46-9e21-10375794af61",
-	}, performance.WithID(s.perfID)))
+		ID:      s.perfID,
+		OwnerID: "b4a232b3-d853-4022-9b4d-f2aefb24d82c",
+	}))
 	s.Require().NoError(err)
 }
 
@@ -57,7 +58,11 @@ func (s *PerformanceGuardTestSuite) TestAcquirePerformance() {
 	err = s.guard.AcquirePerformance(context.Background(), s.perfID)
 	s.Require().True(performance.IsAlreadyStartedError(err))
 
-	persistedPerf, err := s.repo.GetPerformance(context.Background(), s.perfID)
+	persistedPerf, err := s.repo.GetPerformance(
+		context.Background(),
+		s.perfID,
+		app.DontGetSpecification(),
+	)
 	s.Require().NoError(err)
 
 	s.Require().True(persistedPerf.Started())
@@ -76,7 +81,10 @@ func (s *PerformanceGuardTestSuite) TestAcquirePerformanceConcurrently() {
 		go func() {
 			defer wg.Done()
 
-			if err := s.guard.AcquirePerformance(context.Background(), s.perfID); err == nil {
+			if err := s.guard.AcquirePerformance(
+				context.Background(),
+				s.perfID,
+			); err == nil {
 				atomic.AddInt32(&acquiredCount, 1)
 			}
 		}()
@@ -91,7 +99,11 @@ func (s *PerformanceGuardTestSuite) TestReleasePerformance() {
 	err := s.guard.AcquirePerformance(context.Background(), s.perfID)
 	s.Require().NoError(err)
 
-	persistedPerf, err := s.repo.GetPerformance(context.Background(), s.perfID)
+	persistedPerf, err := s.repo.GetPerformance(
+		context.Background(),
+		s.perfID,
+		app.DontGetSpecification(),
+	)
 	s.Require().NoError(err)
 
 	s.Require().True(persistedPerf.Started())
@@ -99,7 +111,11 @@ func (s *PerformanceGuardTestSuite) TestReleasePerformance() {
 	err = s.guard.ReleasePerformance(context.Background(), s.perfID)
 	s.Require().NoError(err)
 
-	persistedPerf, err = s.repo.GetPerformance(context.Background(), s.perfID)
+	persistedPerf, err = s.repo.GetPerformance(
+		context.Background(),
+		s.perfID,
+		app.DontGetSpecification(),
+	)
 	s.Require().NoError(err)
 
 	s.Require().False(persistedPerf.Started())

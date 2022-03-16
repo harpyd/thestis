@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/specification"
@@ -186,28 +185,31 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 	}
 }
 
-func TestGetScenarioThesesByStage(t *testing.T) {
+func TestGetScenarioThesesByStages(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Prepare             func(b *specification.ScenarioBuilder)
-		ExpectedGivenTheses []specification.Thesis
-		ExpectedWhenTheses  []specification.Thesis
-		ExpectedThenTheses  []specification.Thesis
+		Prepare        func(b *specification.ScenarioBuilder)
+		GivenStages    []specification.Stage
+		ExpectedTheses []specification.Thesis
 	}{
 		{
-			Prepare:             func(b *specification.ScenarioBuilder) {},
-			ExpectedGivenTheses: nil,
-			ExpectedWhenTheses:  nil,
-			ExpectedThenTheses:  nil,
+			Prepare: func(b *specification.ScenarioBuilder) {},
+			GivenStages: []specification.Stage{
+				specification.Given,
+			},
+			ExpectedTheses: nil,
 		},
 		{
 			Prepare: func(b *specification.ScenarioBuilder) {
 				b.WithThesis("a", func(b *specification.ThesisBuilder) {})
 			},
-			ExpectedGivenTheses: nil,
-			ExpectedWhenTheses:  nil,
-			ExpectedThenTheses:  nil,
+			GivenStages: []specification.Stage{
+				specification.Given,
+				specification.When,
+				specification.Then,
+			},
+			ExpectedTheses: nil,
 		},
 		{
 			Prepare: func(b *specification.ScenarioBuilder) {
@@ -215,13 +217,123 @@ func TestGetScenarioThesesByStage(t *testing.T) {
 					b.WithStatement(specification.Given, "a")
 				})
 			},
-			ExpectedGivenTheses: []specification.Thesis{
+			GivenStages: []specification.Stage{
+				specification.Given,
+			},
+			ExpectedTheses: []specification.Thesis{
 				specification.NewThesisBuilder().
 					WithStatement(specification.Given, "a").
 					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "a")),
 			},
-			ExpectedWhenTheses: nil,
-			ExpectedThenTheses: nil,
+		},
+		{
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("a", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.Given, "a")
+				})
+			},
+			GivenStages: []specification.Stage{
+				specification.Given,
+				specification.When,
+				specification.Then,
+			},
+			ExpectedTheses: []specification.Thesis{
+				specification.NewThesisBuilder().
+					WithStatement(specification.Given, "a").
+					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "a")),
+			},
+		},
+		{
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("a", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.Given, "a")
+				})
+				b.WithThesis("b", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.When, "b")
+				})
+				b.WithThesis("c", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.Then, "c")
+				})
+			},
+			GivenStages: []specification.Stage{
+				specification.Given,
+			},
+			ExpectedTheses: []specification.Thesis{
+				specification.NewThesisBuilder().
+					WithStatement(specification.Given, "a").
+					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "a")),
+			},
+		},
+		{
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("a", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.Given, "a")
+				})
+				b.WithThesis("b", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.When, "b")
+				})
+				b.WithThesis("c", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.Then, "c")
+				})
+			},
+			GivenStages: []specification.Stage{
+				specification.When,
+			},
+			ExpectedTheses: []specification.Thesis{
+				specification.NewThesisBuilder().
+					WithStatement(specification.When, "b").
+					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "b")),
+			},
+		},
+		{
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("a", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.Given, "a")
+				})
+				b.WithThesis("b", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.When, "b")
+				})
+				b.WithThesis("c", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.Then, "c")
+				})
+			},
+			GivenStages: []specification.Stage{
+				specification.Then,
+			},
+			ExpectedTheses: []specification.Thesis{
+				specification.NewThesisBuilder().
+					WithStatement(specification.Then, "c").
+					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "c")),
+			},
+		},
+		{
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("a", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.Given, "a")
+				})
+				b.WithThesis("b", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.When, "b")
+				})
+				b.WithThesis("c", func(b *specification.ThesisBuilder) {
+					b.WithStatement(specification.Then, "c")
+				})
+			},
+			GivenStages: []specification.Stage{
+				specification.Given,
+				specification.When,
+				specification.Then,
+			},
+			ExpectedTheses: []specification.Thesis{
+				specification.NewThesisBuilder().
+					WithStatement(specification.Given, "a").
+					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "a")),
+				specification.NewThesisBuilder().
+					WithStatement(specification.When, "b").
+					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "b")),
+				specification.NewThesisBuilder().
+					WithStatement(specification.Then, "c").
+					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "c")),
+			},
 		},
 	}
 
@@ -236,29 +348,7 @@ func TestGetScenarioThesesByStage(t *testing.T) {
 				scenario = errlessBuildScenario(t, slug, c.Prepare)
 			)
 
-			t.Run("given", func(t *testing.T) {
-				assert.ElementsMatch(
-					t,
-					c.ExpectedGivenTheses,
-					scenario.ThesesByStage(specification.Given),
-				)
-			})
-
-			t.Run("when", func(t *testing.T) {
-				assert.ElementsMatch(
-					t,
-					c.ExpectedWhenTheses,
-					scenario.ThesesByStage(specification.When),
-				)
-			})
-
-			t.Run("then", func(t *testing.T) {
-				assert.ElementsMatch(
-					t,
-					c.ExpectedThenTheses,
-					scenario.ThesesByStage(specification.Then),
-				)
-			})
+			require.ElementsMatch(t, c.ExpectedTheses, scenario.ThesesByStages(c.GivenStages...))
 		})
 	}
 }

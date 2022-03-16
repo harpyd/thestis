@@ -14,6 +14,83 @@ import (
 	"github.com/harpyd/thestis/internal/domain/user"
 )
 
+func TestPanickingNewLoadSpecificationHandler(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Name                   string
+		GivenSpecsRepo         app.SpecificationsRepository
+		GivenTestCampaignsRepo app.TestCampaignsRepository
+		GivenSpecParserService app.SpecificationParserService
+		ShouldPanic            bool
+		PanicMessage           string
+	}{
+		{
+			Name:                   "all_dependencies_are_not_nil",
+			GivenSpecsRepo:         mock.NewSpecificationsRepository(),
+			GivenTestCampaignsRepo: mock.NewTestCampaignsRepository(),
+			GivenSpecParserService: mock.NewSpecificationParserService(false),
+			ShouldPanic:            false,
+		},
+		{
+			Name:                   "specifications_repository_is_nil",
+			GivenSpecsRepo:         nil,
+			GivenTestCampaignsRepo: mock.NewTestCampaignsRepository(),
+			GivenSpecParserService: mock.NewSpecificationParserService(false),
+			ShouldPanic:            true,
+			PanicMessage:           "specifications repository is nil",
+		},
+		{
+			Name:                   "test_campaigns_repository_is_nil",
+			GivenSpecsRepo:         mock.NewSpecificationsRepository(),
+			GivenTestCampaignsRepo: nil,
+			GivenSpecParserService: mock.NewSpecificationParserService(false),
+			ShouldPanic:            true,
+			PanicMessage:           "test campaigns repository is nil",
+		},
+		{
+			Name:                   "specification_parser_service_is_nil",
+			GivenSpecsRepo:         mock.NewSpecificationsRepository(),
+			GivenTestCampaignsRepo: mock.NewTestCampaignsRepository(),
+			GivenSpecParserService: nil,
+			ShouldPanic:            true,
+			PanicMessage:           "specification parser service is nil",
+		},
+		{
+			Name:                   "all_dependencies_are_nil",
+			GivenSpecsRepo:         nil,
+			GivenTestCampaignsRepo: nil,
+			GivenSpecParserService: nil,
+			ShouldPanic:            true,
+			PanicMessage:           "specifications repository is nil",
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			init := func() {
+				_ = command.NewLoadSpecificationHandler(
+					c.GivenSpecsRepo,
+					c.GivenTestCampaignsRepo,
+					c.GivenSpecParserService,
+				)
+			}
+
+			if !c.ShouldPanic {
+				require.NotPanics(t, init)
+
+				return
+			}
+
+			require.PanicsWithValue(t, c.PanicMessage, init)
+		})
+	}
+}
+
 const spec = `
 ---
 author: Djerys

@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/app"
+	"github.com/harpyd/thestis/internal/domain/flow"
 	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
@@ -36,10 +37,8 @@ func NewTestCampaignsRepository(tcs ...*testcampaign.TestCampaign) *TestCampaign
 }
 
 func (m *TestCampaignsRepository) GetTestCampaign(ctx context.Context, tcID string) (*testcampaign.TestCampaign, error) {
-	select {
-	case <-ctx.Done():
+	if ctx.Err() != nil {
 		return nil, app.NewDatabaseError(ctx.Err())
-	default:
 	}
 
 	m.mu.RLock()
@@ -54,10 +53,8 @@ func (m *TestCampaignsRepository) GetTestCampaign(ctx context.Context, tcID stri
 }
 
 func (m *TestCampaignsRepository) AddTestCampaign(ctx context.Context, tc *testcampaign.TestCampaign) error {
-	select {
-	case <-ctx.Done():
+	if ctx.Err() != nil {
 		return app.NewDatabaseError(ctx.Err())
-	default:
 	}
 
 	m.mu.Lock()
@@ -77,10 +74,8 @@ func (m *TestCampaignsRepository) UpdateTestCampaign(
 	tcID string,
 	updateFn app.TestCampaignUpdater,
 ) error {
-	select {
-	case <-ctx.Done():
+	if ctx.Err() != nil {
 		return app.NewDatabaseError(ctx.Err())
-	default:
 	}
 
 	m.mu.Lock()
@@ -129,10 +124,8 @@ func (m *SpecificationsRepository) GetSpecification(
 	ctx context.Context,
 	specID string,
 ) (*specification.Specification, error) {
-	select {
-	case <-ctx.Done():
+	if ctx.Err() != nil {
 		return nil, app.NewDatabaseError(ctx.Err())
-	default:
 	}
 
 	m.mu.RLock()
@@ -150,10 +143,8 @@ func (m *SpecificationsRepository) GetActiveSpecificationByTestCampaignID(
 	ctx context.Context,
 	tcID string,
 ) (*specification.Specification, error) {
-	select {
-	case <-ctx.Done():
+	if ctx.Err() != nil {
 		return nil, app.NewDatabaseError(ctx.Err())
-	default:
 	}
 
 	m.mu.RLock()
@@ -172,10 +163,8 @@ func (m *SpecificationsRepository) AddSpecification(
 	ctx context.Context,
 	spec *specification.Specification,
 ) error {
-	select {
-	case <-ctx.Done():
+	if ctx.Err() != nil {
 		return app.NewDatabaseError(ctx.Err())
-	default:
 	}
 
 	m.mu.Lock()
@@ -219,12 +208,11 @@ func NewPerformancesRepository(perfs ...*performance.Performance) *PerformancesR
 func (m *PerformancesRepository) GetPerformance(
 	ctx context.Context,
 	perfID string,
-	opts ...app.PerformerOption,
+	_ app.SpecificationGetter,
+	_ ...app.PerformerOption,
 ) (*performance.Performance, error) {
-	select {
-	case <-ctx.Done():
+	if ctx.Err() != nil {
 		return nil, app.NewDatabaseError(ctx.Err())
-	default:
 	}
 
 	m.mu.RLock()
@@ -239,10 +227,8 @@ func (m *PerformancesRepository) GetPerformance(
 }
 
 func (m *PerformancesRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
-	select {
-	case <-ctx.Done():
+	if ctx.Err() != nil {
 		return app.NewDatabaseError(ctx.Err())
-	default:
 	}
 
 	m.mu.Lock()
@@ -266,12 +252,12 @@ func (m *PerformancesRepository) PerformancesNumber() int {
 
 type FlowsRepository struct {
 	mu    sync.RWMutex
-	flows map[string]performance.Flow
+	flows map[string]flow.Flow
 }
 
-func NewFlowsRepository(flows ...performance.Flow) *FlowsRepository {
+func NewFlowsRepository(flows ...flow.Flow) *FlowsRepository {
 	m := &FlowsRepository{
-		flows: make(map[string]performance.Flow, len(flows)),
+		flows: make(map[string]flow.Flow, len(flows)),
 	}
 
 	for _, f := range flows {
@@ -281,29 +267,25 @@ func NewFlowsRepository(flows ...performance.Flow) *FlowsRepository {
 	return m
 }
 
-func (m *FlowsRepository) GetFlow(ctx context.Context, flowID string) (performance.Flow, error) {
-	select {
-	case <-ctx.Done():
-		return performance.Flow{}, app.NewDatabaseError(ctx.Err())
-	default:
+func (m *FlowsRepository) GetFlow(ctx context.Context, flowID string) (flow.Flow, error) {
+	if ctx.Err() != nil {
+		return flow.Flow{}, app.NewDatabaseError(ctx.Err())
 	}
 
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	flow, ok := m.flows[flowID]
+	f, ok := m.flows[flowID]
 	if !ok {
-		return performance.Flow{}, app.NewFlowNotFoundError(errNoSuchID)
+		return flow.Flow{}, app.NewFlowNotFoundError(errNoSuchID)
 	}
 
-	return flow, nil
+	return f, nil
 }
 
-func (m *FlowsRepository) UpsertFlow(ctx context.Context, flow performance.Flow) error {
-	select {
-	case <-ctx.Done():
+func (m *FlowsRepository) UpsertFlow(ctx context.Context, flow flow.Flow) error {
+	if ctx.Err() != nil {
 		return app.NewDatabaseError(ctx.Err())
-	default:
 	}
 
 	m.mu.Lock()

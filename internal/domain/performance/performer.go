@@ -2,77 +2,75 @@ package performance
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-type (
-	// Performer carries performing of thesis.
-	// Performance creators should provide own implementation.
-	Performer interface {
-		Perform(
-			ctx context.Context,
-			env *Environment,
-			thesis specification.Thesis,
-		) Result
-	}
+type Performer interface {
+	Perform(
+		ctx context.Context,
+		env *Environment,
+		thesis specification.Thesis,
+	) Result
+}
 
-	// Result presents a result of Performer work.
-	//
-	// It can be in five states:
-	// NotPerformed, Passed, Failed,
-	// Crashed, Canceled.
-	Result struct {
-		state State
-		err   error
-	}
-)
-
-func NotPerform() Result {
-	return Result{
-		state: NotPerformed,
-	}
+type Result struct {
+	event Event
+	err   error
 }
 
 func Pass() Result {
-	return Result{
-		state: Passed,
-	}
+	return Result{event: FiredPass}
 }
 
 func Fail(err error) Result {
+	if !IsFailedError(err) {
+		err = NewFailedError(err)
+	}
+
 	return Result{
-		state: Failed,
-		err:   newFailedError(err),
+		event: FiredFail,
+		err:   err,
 	}
 }
 
 func Crash(err error) Result {
+	if !IsCrashedError(err) {
+		err = NewCrashedError(err)
+	}
+
 	return Result{
-		state: Crashed,
-		err:   newCrashedError(err),
+		event: FiredCrash,
+		err:   err,
 	}
 }
 
 func Cancel(err error) Result {
+	if !IsCanceledError(err) {
+		err = NewCanceledError(err)
+	}
+
 	return Result{
-		state: Canceled,
-		err:   newCanceledError(err),
+		event: FiredCancel,
+		err:   err,
 	}
 }
 
-func (r Result) State() State {
-	return r.state
+func (r Result) Event() Event {
+	return r.event
 }
 
 func (r Result) Err() error {
 	return r.err
 }
 
-type PerformFunc func(ctx context.Context, env *Environment, thesis specification.Thesis) Result
+type PerformFunc func(
+	ctx context.Context,
+	env *Environment,
+	thesis specification.Thesis,
+) Result
 
 func (f PerformFunc) Perform(
 	ctx context.Context,
@@ -84,122 +82,56 @@ func (f PerformFunc) Perform(
 
 func PassingPerformer() Performer {
 	return PerformFunc(func(
-		_ context.Context,
+		ctx context.Context,
 		_ *Environment,
 		_ specification.Thesis,
 	) Result {
+		if ctx.Err() != nil {
+			return Cancel(ctx.Err())
+		}
+
 		return Pass()
 	})
 }
 
 func FailingPerformer() Performer {
 	return PerformFunc(func(
-		_ context.Context,
+		ctx context.Context,
 		_ *Environment,
 		_ specification.Thesis,
 	) Result {
-		return Fail(nil)
+		if ctx.Err() != nil {
+			return Cancel(ctx.Err())
+		}
+
+		return Fail(errors.New("expected failing"))
 	})
 }
 
 func CrashingPerformer() Performer {
 	return PerformFunc(func(
-		_ context.Context,
+		ctx context.Context,
 		_ *Environment,
 		_ specification.Thesis,
 	) Result {
-		return Crash(nil)
+		if ctx.Err() != nil {
+			return Cancel(ctx.Err())
+		}
+
+		return Crash(errors.New("expected crashing"))
 	})
 }
 
-type (
-	canceledError struct {
-		err error
-	}
+func CancelingPerformer() Performer {
+	return PerformFunc(func(
+		ctx context.Context,
+		_ *Environment,
+		_ specification.Thesis,
+	) Result {
+		if ctx.Err() != nil {
+			return Cancel(ctx.Err())
+		}
 
-	failedError struct {
-		err error
-	}
-
-	crashedError struct {
-		err error
-	}
-)
-
-func newCanceledError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(canceledError{err: err})
-}
-
-func IsCanceledError(err error) bool {
-	var target canceledError
-
-	return errors.As(err, &target)
-}
-
-func (e canceledError) Error() string {
-	return fmt.Sprintf("performance canceled: %s", e.err)
-}
-
-func (e canceledError) Cause() error {
-	return e.err
-}
-
-func (e canceledError) Unwrap() error {
-	return e.err
-}
-
-func newFailedError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(failedError{err: err})
-}
-
-func IsFailedError(err error) bool {
-	var target failedError
-
-	return errors.As(err, &target)
-}
-
-func (e failedError) Error() string {
-	return fmt.Sprintf("performance failed: %s", e.err)
-}
-
-func (e failedError) Cause() error {
-	return e.err
-}
-
-func (e failedError) Unwrap() error {
-	return e.err
-}
-
-func newCrashedError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(crashedError{err: err})
-}
-
-func IsCrashedError(err error) bool {
-	var target crashedError
-
-	return errors.As(err, &target)
-}
-
-func (e crashedError) Error() string {
-	return fmt.Sprintf("performance crashed: %s", e.err)
-}
-
-func (e crashedError) Cause() error {
-	return e.err
-}
-
-func (e crashedError) Unwrap() error {
-	return e.err
+		return Cancel(errors.New("expected canceling"))
+	})
 }

@@ -373,28 +373,33 @@ func TestBeforeStage(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		GivenStage          specification.Stage
-		ExpectedBeforeStage specification.Stage
+		GivenStage           specification.Stage
+		ExpectedBeforeStages []specification.Stage
 	}{
 		{
-			GivenStage:          specification.UnknownStage,
-			ExpectedBeforeStage: specification.UnknownStage,
+			GivenStage:           specification.UnknownStage,
+			ExpectedBeforeStages: nil,
 		},
 		{
-			GivenStage:          "foo",
-			ExpectedBeforeStage: specification.UnknownStage,
+			GivenStage:           "foo",
+			ExpectedBeforeStages: nil,
 		},
 		{
-			GivenStage:          specification.Given,
-			ExpectedBeforeStage: specification.UnknownStage,
+			GivenStage:           specification.Given,
+			ExpectedBeforeStages: nil,
 		},
 		{
-			GivenStage:          specification.When,
-			ExpectedBeforeStage: specification.Given,
+			GivenStage: specification.When,
+			ExpectedBeforeStages: []specification.Stage{
+				specification.Given,
+			},
 		},
 		{
-			GivenStage:          specification.Then,
-			ExpectedBeforeStage: specification.When,
+			GivenStage: specification.Then,
+			ExpectedBeforeStages: []specification.Stage{
+				specification.Given,
+				specification.When,
+			},
 		},
 	}
 
@@ -404,7 +409,7 @@ func TestBeforeStage(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.ExpectedBeforeStage, c.GivenStage.Before())
+			require.Equal(t, c.ExpectedBeforeStages, c.GivenStage.Before())
 		})
 	}
 }

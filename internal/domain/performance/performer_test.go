@@ -1,56 +1,123 @@
 package performance_test
 
 import (
-	"context"
+	"fmt"
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/harpyd/thestis/internal/domain/performance"
 )
 
-func TestNotPerform(t *testing.T) {
+func TestResult(t *testing.T) {
 	t.Parallel()
 
-	res := performance.NotPerform()
+	testCases := []struct {
+		GivenResult   performance.Result
+		ExpectedEvent performance.Event
+		ExpectedErr   error
+	}{
+		{
+			GivenResult:   performance.Pass(),
+			ExpectedEvent: performance.FiredPass,
+		},
+		{
+			GivenResult:   performance.Fail(nil),
+			ExpectedEvent: performance.FiredFail,
+			ExpectedErr:   nil,
+		},
+		{
+			GivenResult: performance.Fail(
+				errors.New("foo"),
+			),
+			ExpectedEvent: performance.FiredFail,
+			ExpectedErr: performance.NewFailedError(
+				errors.New("foo"),
+			),
+		},
+		{
+			GivenResult: performance.Fail(
+				performance.NewFailedError(
+					errors.New("foo"),
+				),
+			),
+			ExpectedEvent: performance.FiredFail,
+			ExpectedErr: performance.NewFailedError(
+				errors.New("foo"),
+			),
+		},
+		{
+			GivenResult:   performance.Crash(nil),
+			ExpectedEvent: performance.FiredCrash,
+			ExpectedErr:   nil,
+		},
+		{
+			GivenResult: performance.Crash(
+				errors.New("boo"),
+			),
+			ExpectedEvent: performance.FiredCrash,
+			ExpectedErr: performance.NewCrashedError(
+				errors.New("foo"),
+			),
+		},
+		{
+			GivenResult: performance.Crash(
+				performance.NewCrashedError(
+					errors.New("boo"),
+				),
+			),
+			ExpectedEvent: performance.FiredCrash,
+			ExpectedErr: performance.NewCrashedError(
+				errors.New("boo"),
+			),
+		},
+		{
+			GivenResult:   performance.Cancel(nil),
+			ExpectedEvent: performance.FiredCancel,
+			ExpectedErr:   nil,
+		},
+		{
+			GivenResult: performance.Cancel(
+				errors.New("bar"),
+			),
+			ExpectedEvent: performance.FiredCancel,
+			ExpectedErr: performance.NewCanceledError(
+				errors.New("bar"),
+			),
+		},
+		{
+			GivenResult: performance.Cancel(
+				performance.NewCanceledError(
+					errors.New("bar"),
+				),
+			),
+			ExpectedEvent: performance.FiredCancel,
+			ExpectedErr: performance.NewCanceledError(
+				errors.New("bar"),
+			),
+		},
+	}
 
-	require.Equal(t, performance.NotPerformed, res.State())
-	require.NoError(t, res.Err())
-}
+	for i := range testCases {
+		c := testCases[i]
 
-func TestPass(t *testing.T) {
-	t.Parallel()
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
 
-	res := performance.Pass()
+			t.Run("event", func(t *testing.T) {
+				assert.Equal(t, c.ExpectedEvent, c.GivenResult.Event())
+			})
 
-	require.Equal(t, performance.Passed, res.State())
-	require.NoError(t, res.Err())
-}
-
-func TestFail(t *testing.T) {
-	t.Parallel()
-
-	res := performance.Fail(errors.New("fail"))
-
-	require.Equal(t, performance.Failed, res.State())
-	require.True(t, performance.IsFailedError(res.Err()))
-}
-
-func TestCrash(t *testing.T) {
-	t.Parallel()
-
-	res := performance.Crash(errors.New("crash"))
-
-	require.Equal(t, performance.Crashed, res.State())
-	require.True(t, performance.IsCrashedError(res.Err()))
-}
-
-func TestCancel(t *testing.T) {
-	t.Parallel()
-
-	res := performance.Cancel(context.Canceled)
-
-	require.Equal(t, performance.Canceled, res.State())
-	require.True(t, performance.IsCanceledError(res.Err()))
+			if c.ExpectedErr != nil {
+				t.Run("err", func(t *testing.T) {
+					assert.Error(t, c.GivenResult.Err(), c.ExpectedErr.Error())
+				})
+			} else {
+				t.Run("no_err", func(t *testing.T) {
+					assert.NoError(t, c.GivenResult.Err())
+				})
+			}
+		})
+	}
 }

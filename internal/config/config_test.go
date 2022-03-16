@@ -13,8 +13,6 @@ import (
 const fixturesPath = "./fixtures"
 
 func TestFromPath(t *testing.T) {
-	t.Parallel()
-
 	if testing.Short() {
 		t.Skip("Integration tests are skipped")
 	}
@@ -90,8 +88,6 @@ func TestFromPath(t *testing.T) {
 		c := c
 
 		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
 			setEnv(c.Env)
 
 			cfg, err := config.FromPath(c.ConfigsPath)

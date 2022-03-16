@@ -28,6 +28,7 @@ func NewPerformancesRepository(db *mongo.Database) *PerformancesRepository {
 func (r *PerformancesRepository) GetPerformance(
 	ctx context.Context,
 	perfID string,
+	specGetter app.SpecificationGetter,
 	opts ...app.PerformerOption,
 ) (*performance.Performance, error) {
 	document, err := r.getPerformanceDocument(ctx, bson.M{"_id": perfID})
@@ -35,7 +36,12 @@ func (r *PerformancesRepository) GetPerformance(
 		return nil, err
 	}
 
-	return document.unmarshalToPerformance(opts), nil
+	spec, err := specGetter.GetSpecification(ctx, document.SpecificationID)
+	if err != nil {
+		return nil, err
+	}
+
+	return document.unmarshalToPerformance(spec, opts), nil
 }
 
 func (r *PerformancesRepository) getPerformanceDocument(

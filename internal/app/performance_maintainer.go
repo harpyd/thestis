@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/harpyd/thestis/internal/domain/flow"
 	"github.com/harpyd/thestis/internal/domain/performance"
 )
 
@@ -50,7 +51,7 @@ func NewPerformanceMaintainer(
 	}
 
 	if cancelSub == nil {
-		panic("performance cancel receiver is nil")
+		panic("performance cancel subscriber is nil")
 	}
 
 	if stepsPolicy == nil {
@@ -101,7 +102,7 @@ func (m *performanceMaintainer) MaintainPerformance(
 			}
 		}()
 
-		fr := performance.FlowFromPerformance(uuid.New().String(), perf)
+		fr := flow.FromPerformance(uuid.New().String(), perf)
 
 		go func() {
 			select {
@@ -119,14 +120,14 @@ func (m *performanceMaintainer) MaintainPerformance(
 
 type Message struct {
 	s     string
-	state performance.State
+	event performance.Event
 	err   error
 }
 
 func NewMessageFromStep(s performance.Step) Message {
 	return Message{
 		s:     s.String(),
-		state: s.State(),
+		event: s.Event(),
 		err:   s.Err(),
 	}
 }
@@ -134,7 +135,7 @@ func NewMessageFromStep(s performance.Step) Message {
 func NewMessageFromError(err error) Message {
 	return Message{
 		s:     err.Error(),
-		state: performance.NoState,
+		event: performance.NoEvent,
 		err:   err,
 	}
 }
@@ -147,8 +148,8 @@ func (m Message) Err() error {
 	return m.err
 }
 
-func (m Message) State() performance.State {
-	return m.state
+func (m Message) Event() performance.Event {
+	return m.event
 }
 
 type (
