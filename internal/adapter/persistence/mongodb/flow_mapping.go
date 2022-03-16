@@ -2,7 +2,6 @@ package mongodb
 
 import (
 	"github.com/harpyd/thestis/internal/domain/flow"
-	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
@@ -16,9 +15,9 @@ type (
 	statusDocuments []statusDocument
 
 	statusDocument struct {
-		Slug         slugDocument      `bson:"slug"`
-		State        performance.State `bson:"state"`
-		OccurredErrs []string          `bson:"occurredErrs"`
+		Slug         slugDocument `bson:"slug"`
+		State        flow.State   `bson:"state"`
+		OccurredErrs []string     `bson:"occurredErrs"`
 	}
 
 	slugDocument struct {

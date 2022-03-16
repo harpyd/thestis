@@ -8,7 +8,6 @@ import (
 
 	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/domain/flow"
-	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
@@ -57,7 +56,7 @@ func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
 				Statuses: []flow.Status{
 					flow.NewStatus(
 						specification.NewThesisSlug("foo", "bar", "baz"),
-						performance.Canceled,
+						flow.Canceled,
 					),
 				},
 			}),
@@ -72,11 +71,11 @@ func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
 					Statuses: []flow.Status{
 						flow.NewStatus(
 							specification.NewThesisSlug("foo", "bar", "baz"),
-							performance.Performing,
+							flow.Performing,
 						),
 						flow.NewStatus(
 							specification.NewThesisSlug("foo", "bar", "bad"),
-							performance.Failed,
+							flow.Failed,
 						),
 					},
 				})
@@ -89,11 +88,11 @@ func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
 				Statuses: []flow.Status{
 					flow.NewStatus(
 						specification.NewThesisSlug("foo", "bar", "baz"),
-						performance.Passed,
+						flow.Passed,
 					),
 					flow.NewStatus(
 						specification.NewThesisSlug("foo", "bar", "bad"),
-						performance.Failed,
+						flow.Failed,
 					),
 				},
 			}),

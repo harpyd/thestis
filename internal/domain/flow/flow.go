@@ -18,7 +18,7 @@ type (
 
 	Status struct {
 		slug         specification.Slug
-		state        performance.State
+		state        State
 		occurredErrs []string
 	}
 
@@ -47,7 +47,7 @@ func (f Flow) Statuses() []Status {
 	return statuses
 }
 
-func NewStatus(slug specification.Slug, state performance.State, errMessages ...string) Status {
+func NewStatus(slug specification.Slug, state State, errMessages ...string) Status {
 	return Status{
 		slug:         slug,
 		state:        state,
@@ -67,7 +67,7 @@ func (f Status) Slug() specification.Slug {
 	return f.slug
 }
 
-func (f Status) State() performance.State {
+func (f Status) State() State {
 	return f.state
 }
 
@@ -104,13 +104,13 @@ func FromPerformance(id string, perf *performance.Performance) *Reducer {
 	for _, scenario := range scenarios {
 		statuses[scenario.Slug()] = &Status{
 			slug:  scenario.Slug(),
-			state: performance.NotPerformed,
+			state: NotPerformed,
 		}
 
 		for _, thesis := range scenario.Theses() {
 			statuses[thesis.Slug()] = &Status{
 				slug:  thesis.Slug(),
-				state: performance.NotPerformed,
+				state: NotPerformed,
 			}
 		}
 	}
