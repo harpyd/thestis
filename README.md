@@ -7,6 +7,34 @@ ___
 
 __Thestis__ is a service for auto tests with declarative description of tests
 
+## Sequence diagram
+
+```mermaid
+sequenceDiagram
+    User->>+Thestis: Create test campaign POST /v1/test-campaigns
+    Thestis-->>-User: Return test campaign id in Location HTTP header
+    User->>+Thestis: Get test campaign by id GET /v1/test-campaigns/{id}
+    Thestis-->>-User: Return test campaign data
+    User->>+Thestis: Load active specification in test campaign POST /v1/test-campaigns/{id}/specification
+    Thestis-->>-User: Return specification id in Location HTTP header
+    User->>+Thestis: Get specification by id GET /v1/specifications/{id}
+    Thestis-->>-User: Return specification data
+    User->>+Thestis: Start performance by test campaign id POST /v1/test-campaigns/{id}/performances
+    Thestis-->>-User: Return performance id in Location HTTP header
+    Thestis->>+Thestis: Acquire performance and start it as parallel task
+    loop Restart tries
+        User->>+Thestis: Restart performance by id PUT /v1/performances/{id}
+        Thestis-->>-User: Already started performance 409 Conflict
+    end
+    Thestis-->>-Thestis: Release performance and complete parallel task
+    User->>+Thestis: Restart performance by id PUT /v1/performances/{id}
+    Thestis-->>-User: Performance restarted
+    Thestis->>+Thestis: Acquire performance and start it as parallel task
+    User-->>+Thestis: Cancel performance by id PUT /v1/performances/{id}/canceled
+    Thestis-->>-User: Performance canceled
+    Thestis-->>-Thestis: Release performance and cancel parallel task
+```
+
 ## Description
 
 Imagine any CI/CD pipeline. For example you can pay attention to Github Actions. You must write workflow with declarative pipeline description and push it to remote. If you have specified `on.push` parameter, action with satisfying workflow will be started if you push. Or you can manually start Action pipeline. Pipeline may include linter, notifications, unit tests, integration tests, building, deploying, etc...
@@ -51,7 +79,7 @@ When you trigger the pipeline launch in some way, a `Performance` is created. We
 
 `Flow` is an analog of an attempt at Github Action. Stores information about the launch of `Performance`. `Performance` will always have at least one `Flow`. `Performance` can be restarted (for example, if a test fails), each time the `Performance` is restarted, the number of `Flows` will increase.
 
-During the test run, `Flow` and each individual `thesis` execution status may end up in one of the states:
+During the test run, each individual thesis execution status may end up in one of the states:
 * __`NotPerformed`__
 * __`Performing`__
 * __`Passed`__
@@ -62,34 +90,6 @@ During the test run, `Flow` and each individual `thesis` execution status may en
 If the test is __`NotPerformed`__, the test has not started yet for some reason. If the test is in __`Performing`__, then you should expect it to end. If you are in __`Passed`__, you can relax, because the test is passed! If the test is in __`Failed`__ state, it is worth looking at either the test or the system under the tests. If something went wrong in __`Crashed`__, perhaps from the network, or maybe from our side. If it is __`Canceled`__, then the test was canceled, it is possible that you canceled it, and it is possible that we did too because of too long execution.
 
 It is worth noting that the tests achieve the most effective parallelization of the independent parts of the test. How? See below.
-
-## Sequence diagram
-
-```mermaid
-sequenceDiagram
-    User->>+Thestis: Create test campaign POST /v1/test-campaigns
-    Thestis-->>-User: Return test campaign id in Location HTTP header
-    User->>+Thestis: Get test campaign by id GET /v1/test-campaigns/{id}
-    Thestis-->>-User: Return test campaign data
-    User->>+Thestis: Load active specification in test campaign POST /v1/test-campaigns/{id}/specification
-    Thestis-->>-User: Return specification id in Location HTTP header
-    User->>+Thestis: Get specification by id GET /v1/specifications/{id}
-    Thestis-->>-User: Return specification data
-    User->>+Thestis: Start performance by test campaign id POST /v1/test-campaigns/{id}/performances
-    Thestis-->>-User: Return performance id in Location HTTP header
-    Thestis->>+Thestis: Acquire performance and start it as parallel task
-    loop Restart tries
-        User->>+Thestis: Restart performance by id PUT /v1/performances/{id}
-        Thestis-->>-User: Already started performance 409 Conflict
-    end
-    Thestis-->>-Thestis: Release performance and complete parallel task
-    User->>+Thestis: Restart performance by id PUT /v1/performances/{id}
-    Thestis-->>-User: Performance restarted
-    Thestis->>+Thestis: Acquire performance and start it as parallel task
-    User-->>+Thestis: Cancel performance by id PUT /v1/performances/{id}/canceled
-    Thestis-->>-User: Performance canceled
-    Thestis-->>-Thestis: Release performance and cancel parallel task
-```
 
 ## Entities
 
@@ -122,6 +122,15 @@ But theses within one stage will be executed in parallel by default. To specify 
 ### Performance
 
 `Performance` is the pipeline of your tests built from `Specification`. It starts automatically when it is created. It can also be restarted. For example, you can see that the test fell through no fault of your own, for example, there was some kind of network failure, you can restart the previously created `Performance`.
+
+When creating a performance for specification, _performers_ for each type of thesis are registered. `Performer` receives the thesis, performs an action with it and returns `Result` with `Event` generated inside it for this thesis.
+
+There may be several events:
+* __`FiredPerform`__
+* __`FiredPass`__
+* __`FiredFail`__
+* __`FiredCrash`__
+* __`FiredCancel`__
 
 `Performance` cannot be run more than once at any given time. That is, `Performance` will never have more than one active `Flow`.
 
