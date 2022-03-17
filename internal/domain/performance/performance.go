@@ -13,6 +13,10 @@ import (
 )
 
 type (
+	// Performance is a ready-to-run pipeline created
+	// according to the specification, it can be restarted
+	// many times, but if the performance is running, it
+	// cannot be started until performing is over.
 	Performance struct {
 		id      string
 		ownerID string
@@ -67,6 +71,13 @@ type (
 
 const defaultPerformersSize = 2
 
+// Unmarshal transforms Params to Performance.
+//
+// This function is great for converting
+// from a database or using in tests.
+//
+// You must not use this method in
+// business code of domain and app layers.
 func Unmarshal(params Params, opts ...Option) *Performance {
 	p := &Performance{
 		id:         params.ID,
@@ -153,7 +164,7 @@ func (p *Performance) MustBeStarted() error {
 	return NewNotStartedError()
 }
 
-// Start asynchronously starts performing of Performance action graph.
+// Start asynchronously starts performing of the Performance pipeline.
 // Start returns non buffered chan of flow Step's. With Step's you can
 // build Flow using flow.Reducer.
 //
