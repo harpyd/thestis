@@ -66,6 +66,9 @@ func rules() stateTransitionRules {
 // Next returns the next state depending on the
 // received performance.Event.
 //
+// if Next is called for an unknown state or with
+// an unknown event, it will return NoState.
+//
 // State transition rules are defined for a finite
 // automaton, then this function is a transition
 // function for this automaton.
