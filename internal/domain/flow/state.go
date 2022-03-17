@@ -63,6 +63,11 @@ func rules() stateTransitionRules {
 	}
 }
 
+// Next returns the next state depending on the
+// received performance.Event.
+//
+// State transition rules are defined for a finite automaton,
+// then this function is a transition function for this automaton.
 func (s State) Next(with performance.Event) State {
 	ss, ok := rules()[s]
 	if !ok {
