@@ -116,14 +116,12 @@ func Unmarshal(params Params) Flow {
 
 // FromPerformance starts a new flow from performance.Performance.
 // The result of the function is a Reducer, with which you can
-// collect the steps coming from performance.Performance
-// during its execution.
+// collect the steps coming from the performance during its execution.
 //
 // Each step contains information about the progress of the
-// performance.Performance, including performance.Event.
-// The states of statuses change under the action of events.
-// The transition rules for the event are described in the
-// State.Next method.
+// performance, including performance.Event. The states of
+// statuses change under the action of events. The transition
+// rules for the event are described in the State.Next method.
 func FromPerformance(id string, perf *performance.Performance) *Reducer {
 	scenarios := perf.WorkingScenarios()
 
@@ -173,8 +171,8 @@ func FromStatuses(id, performanceID string, statuses ...Status) *Reducer {
 }
 
 // Reduce creates current version of Flow from Reducer.
-// This is useful for accumulating performance.Performance steps and
-// storing the state of performance.Performance's Flow.
+// This is useful for accumulating performance.Performance
+// steps and storing the state of performance's Flow.
 //
 // For example:
 //  fr := performance.FlowFromPerformance("id", perf)
