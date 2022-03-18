@@ -72,6 +72,7 @@ type (
 const defaultPerformersSize = 2
 
 // Unmarshal transforms Params to Performance.
+// Unmarshal also receives options like FromSpecification.
 //
 // This function is great for converting
 // from a database or using in tests.
@@ -100,6 +101,15 @@ func newLockState(started bool) lockState {
 	return unlocked
 }
 
+// FromSpecification creates new Performance
+// from specification.Specification.
+//
+// FromSpecification receives options that you're
+// free to pass or not. You can pass:
+//
+// - WithHTTP to register the Performer as HTTPPerformer;
+//
+// - WithAssertion to register the Performer as AssertionPerformer.
 func FromSpecification(
 	id string,
 	spec *specification.Specification,
@@ -128,14 +138,18 @@ func (p *Performance) applyOpts(opts []Option) {
 	}
 }
 
+// ID returns the identifier of the Performance.
 func (p *Performance) ID() string {
 	return p.id
 }
 
+// OwnerID return the identifier of the Performance owner.
 func (p *Performance) OwnerID() string {
 	return p.ownerID
 }
 
+// SpecificationID returns the identifier of the Specification,
+// if it isn't nil, else returns empty string.
 func (p *Performance) SpecificationID() string {
 	if p.spec == nil {
 		return ""
@@ -144,10 +158,13 @@ func (p *Performance) SpecificationID() string {
 	return p.spec.ID()
 }
 
+// Started indicates whether the Performance is running.
 func (p *Performance) Started() bool {
 	return atomic.LoadUint32(&p.state) == locked
 }
 
+// WorkingScenarios returns the specification scenarios
+// that the Performance will run.
 func (p *Performance) WorkingScenarios() []specification.Scenario {
 	if p.spec == nil {
 		return nil
@@ -156,6 +173,9 @@ func (p *Performance) WorkingScenarios() []specification.Scenario {
 	return p.spec.Scenarios()
 }
 
+// ShouldBeStarted returns error if the Performance
+// is not started. The error can be determined using
+// IsNotStartedError function.
 func (p *Performance) ShouldBeStarted() error {
 	if p.Started() {
 		return nil
