@@ -69,7 +69,7 @@ func Pass() Result {
 //
 // Fail should be used when the performing of the thesis
 // has fallen due to natural reasons, for example, the
-// assert specified in the thesis failed. With this
+// assertion specified in the thesis failed. With this
 // result the scenario will be failed.
 func Fail(err error) Result {
 	if !IsFailedError(err) {
@@ -130,13 +130,16 @@ func (r Result) Err() error {
 	return r.err
 }
 
-type PerformFunc func(
+// PerformerFunc is an adapter
+// to allow the use of ordinary
+// functions as Performer.
+type PerformerFunc func(
 	ctx context.Context,
 	env *Environment,
 	thesis specification.Thesis,
 ) Result
 
-func (f PerformFunc) Perform(
+func (f PerformerFunc) Perform(
 	ctx context.Context,
 	env *Environment,
 	thesis specification.Thesis,
@@ -144,8 +147,16 @@ func (f PerformFunc) Perform(
 	return f(ctx, env, thesis)
 }
 
+// PassingPerformer is a shortcut for create
+// naive implementation of the Performer that
+// constantly returns the passed Result. If
+// the context is done returns the canceled
+// Result with a context error.
+// Does nothing else.
+//
+// It's good to use for testing and mocking.
 func PassingPerformer() Performer {
-	return PerformFunc(func(
+	return PerformerFunc(func(
 		ctx context.Context,
 		_ *Environment,
 		_ specification.Thesis,
@@ -158,8 +169,17 @@ func PassingPerformer() Performer {
 	})
 }
 
+// FailingPerformer is a shortcut for create
+// naive implementation of the Performer that
+// constantly returns the failed Result with
+// "expected failing" error. If the context is
+// done returns the canceled Result with a
+// context error.
+// Does nothing else.
+//
+// It's good to use for testing and mocking.
 func FailingPerformer() Performer {
-	return PerformFunc(func(
+	return PerformerFunc(func(
 		ctx context.Context,
 		_ *Environment,
 		_ specification.Thesis,
@@ -172,8 +192,17 @@ func FailingPerformer() Performer {
 	})
 }
 
+// CrashingPerformer is a shortcut for create
+// naive implementation of the Performer that
+// constantly returns the crashed Result with
+// "expected crashing" error. If the context is
+// done returns the canceled Result with a
+// context error.
+// Does nothing else.
+//
+// It's good to use for testing and mocking.
 func CrashingPerformer() Performer {
-	return PerformFunc(func(
+	return PerformerFunc(func(
 		ctx context.Context,
 		_ *Environment,
 		_ specification.Thesis,
@@ -186,8 +215,17 @@ func CrashingPerformer() Performer {
 	})
 }
 
+// CancelingPerformer is a shortcut for create
+// naive implementation of the Performer that
+// constantly returns the canceled Result with
+// "expected canceling" error. If the context is
+// done returns the canceled Result with a
+// context error.
+// Does nothing else.
+//
+// It's good to use for testing and mocking.
 func CancelingPerformer() Performer {
-	return PerformFunc(func(
+	return PerformerFunc(func(
 		ctx context.Context,
 		_ *Environment,
 		_ specification.Thesis,
