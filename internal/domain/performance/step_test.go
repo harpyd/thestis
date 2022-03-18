@@ -15,7 +15,8 @@ func TestStepCreation(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Step                  performance.Step
+		StepFactory           func() performance.Step
+		ShouldPanic           bool
 		ExpectedSlug          specification.Slug
 		ExpectedPerformerType performance.PerformerType
 		ExpectedEvent         performance.Event
@@ -24,7 +25,9 @@ func TestStepCreation(t *testing.T) {
 		ExpectedString        string
 	}{
 		{
-			Step:                  performance.Step{},
+			StepFactory: func() performance.Step {
+				return performance.Step{}
+			},
 			ExpectedSlug:          specification.Slug{},
 			ExpectedPerformerType: performance.NoPerformer,
 			ExpectedEvent:         performance.NoEvent,
@@ -33,22 +36,30 @@ func TestStepCreation(t *testing.T) {
 			ExpectedString:        "",
 		},
 		{
-			Step: performance.NewScenarioStep(
-				specification.Slug{},
-				performance.FiredFail,
-			),
-			ExpectedSlug:          specification.Slug{},
-			ExpectedPerformerType: performance.NoPerformer,
-			ExpectedEvent:         performance.FiredFail,
-			ExpectedErr:           nil,
-			ExpectedIsZero:        false,
-			ExpectedString:        ": event = fail",
+			StepFactory: func() performance.Step {
+				return performance.NewScenarioStep(
+					specification.Slug{},
+					performance.FiredFail,
+				)
+			},
+			ShouldPanic: true,
 		},
 		{
-			Step: performance.NewScenarioStep(
-				specification.NewScenarioSlug("foo", "bar"),
-				performance.FiredCrash,
-			),
+			StepFactory: func() performance.Step {
+				return performance.NewScenarioStep(
+					specification.NewThesisSlug("foo", "bar", "baz"),
+					performance.FiredPerform,
+				)
+			},
+			ShouldPanic: true,
+		},
+		{
+			StepFactory: func() performance.Step {
+				return performance.NewScenarioStep(
+					specification.NewScenarioSlug("foo", "bar"),
+					performance.FiredCrash,
+				)
+			},
 			ExpectedSlug:          specification.NewScenarioSlug("foo", "bar"),
 			ExpectedPerformerType: performance.NoPerformer,
 			ExpectedEvent:         performance.FiredCrash,
@@ -57,11 +68,13 @@ func TestStepCreation(t *testing.T) {
 			ExpectedString:        "foo.bar: event = crash",
 		},
 		{
-			Step: performance.NewScenarioStepWithErr(
-				errors.New("something wrong"),
-				specification.AnyScenarioSlug(),
-				performance.FiredCancel,
-			),
+			StepFactory: func() performance.Step {
+				return performance.NewScenarioStepWithErr(
+					errors.New("something wrong"),
+					specification.AnyScenarioSlug(),
+					performance.FiredCancel,
+				)
+			},
 			ExpectedSlug:          specification.AnyScenarioSlug(),
 			ExpectedPerformerType: performance.NoPerformer,
 			ExpectedEvent:         performance.FiredCancel,
@@ -70,11 +83,33 @@ func TestStepCreation(t *testing.T) {
 			ExpectedString:        "*.*: event = cancel, err = something wrong",
 		},
 		{
-			Step: performance.NewThesisStep(
-				specification.NewThesisSlug("foo", "bar", "baz"),
-				performance.HTTPPerformer,
-				performance.FiredFail,
-			),
+			StepFactory: func() performance.Step {
+				return performance.NewThesisStep(
+					specification.Slug{},
+					performance.HTTPPerformer,
+					performance.FiredPerform,
+				)
+			},
+			ShouldPanic: true,
+		},
+		{
+			StepFactory: func() performance.Step {
+				return performance.NewThesisStep(
+					specification.NewScenarioSlug("foo", "bar"),
+					performance.HTTPPerformer,
+					performance.FiredPerform,
+				)
+			},
+			ShouldPanic: true,
+		},
+		{
+			StepFactory: func() performance.Step {
+				return performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "baz"),
+					performance.HTTPPerformer,
+					performance.FiredFail,
+				)
+			},
 			ExpectedSlug:          specification.NewThesisSlug("foo", "bar", "baz"),
 			ExpectedPerformerType: performance.HTTPPerformer,
 			ExpectedEvent:         performance.FiredFail,
@@ -83,12 +118,14 @@ func TestStepCreation(t *testing.T) {
 			ExpectedString:        "foo.bar.baz: event = fail, type = HTTP",
 		},
 		{
-			Step: performance.NewThesisStepWithErr(
-				errors.New("wrong"),
-				specification.NewThesisSlug("foo", "bar", "baz"),
-				performance.AssertionPerformer,
-				performance.FiredCrash,
-			),
+			StepFactory: func() performance.Step {
+				return performance.NewThesisStepWithErr(
+					errors.New("wrong"),
+					specification.NewThesisSlug("foo", "bar", "baz"),
+					performance.AssertionPerformer,
+					performance.FiredCrash,
+				)
+			},
 			ExpectedSlug:          specification.NewThesisSlug("foo", "bar", "baz"),
 			ExpectedPerformerType: performance.AssertionPerformer,
 			ExpectedEvent:         performance.FiredCrash,
@@ -104,34 +141,52 @@ func TestStepCreation(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
+			if c.ShouldPanic {
+				t.Run("panics", func(t *testing.T) {
+					require.Panics(t, func() {
+						_ = c.StepFactory()
+					})
+				})
+
+				return
+			}
+
+			var step performance.Step
+
+			t.Run("not_panics", func(t *testing.T) {
+				require.NotPanics(t, func() {
+					step = c.StepFactory()
+				})
+			})
+
 			t.Run("slug", func(t *testing.T) {
-				require.Equal(t, c.ExpectedSlug, c.Step.Slug())
+				require.Equal(t, c.ExpectedSlug, step.Slug())
 			})
 
 			t.Run("performer_type", func(t *testing.T) {
-				require.Equal(t, c.ExpectedPerformerType, c.Step.PerformerType())
+				require.Equal(t, c.ExpectedPerformerType, step.PerformerType())
 			})
 
 			t.Run("event", func(t *testing.T) {
-				require.Equal(t, c.ExpectedEvent, c.Step.Event())
+				require.Equal(t, c.ExpectedEvent, step.Event())
 			})
 
 			if c.ExpectedErr != nil {
 				t.Run("err", func(t *testing.T) {
-					require.EqualError(t, c.Step.Err(), c.ExpectedErr.Error())
+					require.EqualError(t, step.Err(), c.ExpectedErr.Error())
 				})
 			} else {
 				t.Run("no_err", func(t *testing.T) {
-					require.NoError(t, c.Step.Err())
+					require.NoError(t, step.Err())
 				})
 			}
 
 			t.Run("is_zero", func(t *testing.T) {
-				require.Equal(t, c.ExpectedIsZero, c.Step.IsZero())
+				require.Equal(t, c.ExpectedIsZero, step.IsZero())
 			})
 
 			t.Run("string", func(t *testing.T) {
-				require.Equal(t, c.ExpectedString, c.Step.String())
+				require.Equal(t, c.ExpectedString, step.String())
 			})
 		})
 	}

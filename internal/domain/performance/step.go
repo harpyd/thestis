@@ -32,6 +32,10 @@ func NewScenarioStep(slug specification.Slug, event Event) Step {
 // Intended only for use with slugs with
 // the specification.ScenarioSlug kind.
 func NewScenarioStepWithErr(err error, slug specification.Slug, event Event) Step {
+	if err := slug.ShouldBeScenarioKind(); err != nil {
+		panic(err)
+	}
+
 	return Step{
 		slug:          slug,
 		performerType: NoPerformer,
@@ -59,6 +63,10 @@ func NewThesisStepWithErr(
 	pt PerformerType,
 	event Event,
 ) Step {
+	if err := slug.ShouldBeThesisKind(); err != nil {
+		panic(err)
+	}
+
 	return Step{
 		slug:          slug,
 		performerType: pt,
