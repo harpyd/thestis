@@ -34,7 +34,7 @@ func NewCancelPerformanceHandler(
 
 func (h CancelPerformanceHandler) Handle(ctx context.Context, cmd app.CancelPerformanceCommand) (err error) {
 	defer func() {
-		err = errors.Wrap(err, "performance cancelation")
+		err = errors.Wrap(err, "performance cancellation")
 	}()
 
 	perf, err := h.perfsRepo.GetPerformance(ctx, cmd.PerformanceID, app.DontGetSpecification())
@@ -46,7 +46,7 @@ func (h CancelPerformanceHandler) Handle(ctx context.Context, cmd app.CancelPerf
 		return err
 	}
 
-	if err := perf.MustBeStarted(); err != nil {
+	if err := perf.ShouldBeStarted(); err != nil {
 		return err
 	}
 

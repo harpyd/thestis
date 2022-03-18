@@ -133,12 +133,12 @@ func TestPerformanceCreation(t *testing.T) {
 			})
 
 			if c.ExpectedStarted {
-				t.Run("must_be_started", func(t *testing.T) {
-					require.NoError(t, c.Performance.MustBeStarted())
+				t.Run("should_be_started", func(t *testing.T) {
+					require.NoError(t, c.Performance.ShouldBeStarted())
 				})
 			} else {
 				t.Run("not_started_error", func(t *testing.T) {
-					require.True(t, performance.IsNotStartedError(c.Performance.MustBeStarted()))
+					require.True(t, performance.IsNotStartedError(c.Performance.ShouldBeStarted()))
 				})
 			}
 
