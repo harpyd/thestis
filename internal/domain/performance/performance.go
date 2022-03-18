@@ -106,10 +106,7 @@ func newLockState(started bool) lockState {
 //
 // FromSpecification receives options that you're
 // free to pass or not. You can pass:
-//
-// - WithHTTP to register the Performer as HTTPPerformer;
-//
-// - WithAssertion to register the Performer as AssertionPerformer.
+// WithHTTP, WithAssertion.
 func FromSpecification(
 	id string,
 	spec *specification.Specification,
