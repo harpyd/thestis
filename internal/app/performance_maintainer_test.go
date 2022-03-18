@@ -617,7 +617,7 @@ func TestPubsubErrors(t *testing.T) {
 func pendingPassPerformer(t *testing.T, pass <-chan struct{}) performance.Performer {
 	t.Helper()
 
-	return performance.PerformFunc(func(
+	return performance.PerformerFunc(func(
 		ctx context.Context,
 		_ *performance.Environment,
 		_ specification.Thesis,
