@@ -6,6 +6,10 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+// Step stores information about the performing
+// of slugged objects, such as specification.Scenario
+// and specification.Thesis. It's used to observe
+// the Performance execution.
 type Step struct {
 	slug          specification.Slug
 	performerType PerformerType
@@ -13,14 +17,20 @@ type Step struct {
 	err           error
 }
 
+// NewScenarioStep returns a Step for the scenario,
+// that is, without the PerformerType.
+//
+// Intended only for use with slugs with
+// the specification.ScenarioSlug kind.
 func NewScenarioStep(slug specification.Slug, event Event) Step {
-	return Step{
-		slug:          slug,
-		performerType: NoPerformer,
-		event:         event,
-	}
+	return NewScenarioStepWithErr(nil, slug, event)
 }
 
+// NewScenarioStepWithErr is similar to NewScenarioStep,
+// only it gets the error that occurred.
+//
+// Intended only for use with slugs with
+// the specification.ScenarioSlug kind.
 func NewScenarioStepWithErr(err error, slug specification.Slug, event Event) Step {
 	return Step{
 		slug:          slug,
@@ -30,14 +40,19 @@ func NewScenarioStepWithErr(err error, slug specification.Slug, event Event) Ste
 	}
 }
 
+// NewThesisStep returns a Step for the thesis.
+//
+// Intended only for use with slugs with
+// the specification.ThesisSlug kind.
 func NewThesisStep(slug specification.Slug, pt PerformerType, event Event) Step {
-	return Step{
-		slug:          slug,
-		performerType: pt,
-		event:         event,
-	}
+	return NewThesisStepWithErr(nil, slug, pt, event)
 }
 
+// NewThesisStepWithErr is similar to NewThesisStep,
+// only it gets the error that occurred.
+//
+// Intended only for use with slugs with
+// the specification.ThesisSlug kind.
 func NewThesisStepWithErr(
 	err error,
 	slug specification.Slug,
@@ -52,18 +67,25 @@ func NewThesisStepWithErr(
 	}
 }
 
+// Slug returns the slug of the object for
+// which the Step was created.
 func (s Step) Slug() specification.Slug {
 	return s.slug
 }
 
+// PerformerType returns the PerformerType if
+// the slug is specification.ThesisSlug,
+// else NoPerformer.
 func (s Step) PerformerType() PerformerType {
 	return s.performerType
 }
 
+// Event returns the event fired at the Step.
 func (s Step) Event() Event {
 	return s.event
 }
 
+// Err returns the error occurred at the Step.
 func (s Step) Err() error {
 	return s.err
 }
@@ -91,6 +113,8 @@ func (s Step) String() string {
 	return b.String()
 }
 
+// IsZero returns true if the Step
+// is empty, else false.
 func (s Step) IsZero() bool {
 	return s == Step{}
 }
