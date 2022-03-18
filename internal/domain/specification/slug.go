@@ -85,7 +85,7 @@ func (s Slug) ToThesisKind() Slug {
 	return NewThesisSlug(s.story, s.scenario, s.thesis)
 }
 
-func (s Slug) MustBeStoryKind() error {
+func (s Slug) ShouldBeStoryKind() error {
 	if s.kind == StorySlug {
 		return nil
 	}
@@ -93,7 +93,7 @@ func (s Slug) MustBeStoryKind() error {
 	return NewNotStorySlugError()
 }
 
-func (s Slug) MustBeScenarioKind() error {
+func (s Slug) ShouldBeScenarioKind() error {
 	if s.kind == ScenarioSlug {
 		return nil
 	}
@@ -101,7 +101,7 @@ func (s Slug) MustBeScenarioKind() error {
 	return NewNotScenarioSlugError()
 }
 
-func (s Slug) MustBeThesisKind() error {
+func (s Slug) ShouldBeThesisKind() error {
 	if s.kind == ThesisSlug {
 		return nil
 	}

@@ -272,75 +272,75 @@ func TestSlugToScenarioKind(t *testing.T) {
 	}
 }
 
-func TestSlugMustBeOneOfKind(t *testing.T) {
+func TestSlugShouldBeOneOfKind(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name            string
-		GivenSlug       specification.Slug
-		GivenMustBeKind specification.SlugKind
-		ShouldBeErr     bool
-		IsErr           func(err error) bool
+		Name        string
+		GivenSlug   specification.Slug
+		GivenKind   specification.SlugKind
+		ShouldBeErr bool
+		IsErr       func(err error) bool
 	}{
 		{
-			Name:            "story_slug_is_story_slug",
-			GivenSlug:       specification.NewStorySlug("foo"),
-			GivenMustBeKind: specification.StorySlug,
-			ShouldBeErr:     false,
+			Name:        "story_slug_is_story_slug",
+			GivenSlug:   specification.NewStorySlug("foo"),
+			GivenKind:   specification.StorySlug,
+			ShouldBeErr: false,
 		},
 		{
-			Name:            "story_slug_is_NOT_scenario_slug",
-			GivenSlug:       specification.NewStorySlug("foo"),
-			GivenMustBeKind: specification.ScenarioSlug,
-			ShouldBeErr:     true,
-			IsErr:           specification.IsNotScenarioSlugError,
+			Name:        "story_slug_is_NOT_scenario_slug",
+			GivenSlug:   specification.NewStorySlug("foo"),
+			GivenKind:   specification.ScenarioSlug,
+			ShouldBeErr: true,
+			IsErr:       specification.IsNotScenarioSlugError,
 		},
 		{
-			Name:            "story_slug_is_NOT_thesis_slug",
-			GivenSlug:       specification.NewStorySlug("foo"),
-			GivenMustBeKind: specification.ThesisSlug,
-			ShouldBeErr:     true,
-			IsErr:           specification.IsNotThesisSlugError,
+			Name:        "story_slug_is_NOT_thesis_slug",
+			GivenSlug:   specification.NewStorySlug("foo"),
+			GivenKind:   specification.ThesisSlug,
+			ShouldBeErr: true,
+			IsErr:       specification.IsNotThesisSlugError,
 		},
 		{
-			Name:            "scenario_slug_is_NOT_story_slug",
-			GivenSlug:       specification.NewScenarioSlug("foo", "bar"),
-			GivenMustBeKind: specification.StorySlug,
-			ShouldBeErr:     true,
-			IsErr:           specification.IsNotStorySlugError,
+			Name:        "scenario_slug_is_NOT_story_slug",
+			GivenSlug:   specification.NewScenarioSlug("foo", "bar"),
+			GivenKind:   specification.StorySlug,
+			ShouldBeErr: true,
+			IsErr:       specification.IsNotStorySlugError,
 		},
 		{
-			Name:            "scenario_slug_is_scenario_slug",
-			GivenSlug:       specification.NewScenarioSlug("foo", "bar"),
-			GivenMustBeKind: specification.ScenarioSlug,
-			ShouldBeErr:     false,
+			Name:        "scenario_slug_is_scenario_slug",
+			GivenSlug:   specification.NewScenarioSlug("foo", "bar"),
+			GivenKind:   specification.ScenarioSlug,
+			ShouldBeErr: false,
 		},
 		{
-			Name:            "scenario_slug_is_NOT_thesis_slug",
-			GivenSlug:       specification.NewScenarioSlug("foo", "bar"),
-			GivenMustBeKind: specification.ThesisSlug,
-			ShouldBeErr:     true,
-			IsErr:           specification.IsNotThesisSlugError,
+			Name:        "scenario_slug_is_NOT_thesis_slug",
+			GivenSlug:   specification.NewScenarioSlug("foo", "bar"),
+			GivenKind:   specification.ThesisSlug,
+			ShouldBeErr: true,
+			IsErr:       specification.IsNotThesisSlugError,
 		},
 		{
-			Name:            "thesis_slug_is_NOT_story_slug",
-			GivenSlug:       specification.NewThesisSlug("foo", "bar", "baz"),
-			GivenMustBeKind: specification.StorySlug,
-			ShouldBeErr:     true,
-			IsErr:           specification.IsNotStorySlugError,
+			Name:        "thesis_slug_is_NOT_story_slug",
+			GivenSlug:   specification.NewThesisSlug("foo", "bar", "baz"),
+			GivenKind:   specification.StorySlug,
+			ShouldBeErr: true,
+			IsErr:       specification.IsNotStorySlugError,
 		},
 		{
-			Name:            "thesis_slug_is_NOT_scenario_slug",
-			GivenSlug:       specification.NewThesisSlug("foo", "bar", "baz"),
-			GivenMustBeKind: specification.ScenarioSlug,
-			ShouldBeErr:     true,
-			IsErr:           specification.IsNotScenarioSlugError,
+			Name:        "thesis_slug_is_NOT_scenario_slug",
+			GivenSlug:   specification.NewThesisSlug("foo", "bar", "baz"),
+			GivenKind:   specification.ScenarioSlug,
+			ShouldBeErr: true,
+			IsErr:       specification.IsNotScenarioSlugError,
 		},
 		{
-			Name:            "thesis_slug_is_thesis_slug",
-			GivenSlug:       specification.NewThesisSlug("foo", "bar", "bad"),
-			GivenMustBeKind: specification.ThesisSlug,
-			ShouldBeErr:     false,
+			Name:        "thesis_slug_is_thesis_slug",
+			GivenSlug:   specification.NewThesisSlug("foo", "bar", "bad"),
+			GivenKind:   specification.ThesisSlug,
+			ShouldBeErr: false,
 		},
 	}
 
@@ -352,15 +352,15 @@ func TestSlugMustBeOneOfKind(t *testing.T) {
 
 			var err error
 
-			switch c.GivenMustBeKind {
+			switch c.GivenKind {
 			case specification.StorySlug:
-				err = c.GivenSlug.MustBeStoryKind()
+				err = c.GivenSlug.ShouldBeStoryKind()
 
 			case specification.ScenarioSlug:
-				err = c.GivenSlug.MustBeScenarioKind()
+				err = c.GivenSlug.ShouldBeScenarioKind()
 
 			case specification.ThesisSlug:
-				err = c.GivenSlug.MustBeThesisKind()
+				err = c.GivenSlug.ShouldBeThesisKind()
 
 			case specification.NoSlug:
 			}

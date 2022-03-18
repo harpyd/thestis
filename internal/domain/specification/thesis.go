@@ -113,7 +113,7 @@ func (b *ThesisBuilder) Build(slug Slug) (Thesis, error) {
 		return Thesis{}, NewEmptySlugError()
 	}
 
-	if err := slug.MustBeThesisKind(); err != nil {
+	if err := slug.ShouldBeThesisKind(); err != nil {
 		return Thesis{}, err
 	}
 

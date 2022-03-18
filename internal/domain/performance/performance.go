@@ -156,7 +156,7 @@ func (p *Performance) WorkingScenarios() []specification.Scenario {
 	return p.spec.Scenarios()
 }
 
-func (p *Performance) MustBeStarted() error {
+func (p *Performance) ShouldBeStarted() error {
 	if p.Started() {
 		return nil
 	}

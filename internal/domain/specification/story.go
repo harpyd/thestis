@@ -71,7 +71,7 @@ func (b *StoryBuilder) Build(slug Slug) (Story, error) {
 		return Story{}, NewEmptySlugError()
 	}
 
-	if err := slug.MustBeStoryKind(); err != nil {
+	if err := slug.ShouldBeStoryKind(); err != nil {
 		return Story{}, err
 	}
 

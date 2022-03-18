@@ -70,7 +70,7 @@ func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
 		return Scenario{}, NewEmptySlugError()
 	}
 
-	if err := slug.MustBeScenarioKind(); err != nil {
+	if err := slug.ShouldBeScenarioKind(); err != nil {
 		return Scenario{}, err
 	}
 
