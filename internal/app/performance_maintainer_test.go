@@ -199,7 +199,9 @@ func TestMaintainPerformance(t *testing.T) {
 			},
 			Guard:       errlessPerformanceGuard(t),
 			ShouldBeErr: true,
-			IsErr:       performance.IsAlreadyStartedError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, performance.ErrAlreadyStarted)
+			},
 		},
 		{
 			Name: "performance_acquire_error",
@@ -258,6 +260,7 @@ func TestMaintainPerformance(t *testing.T) {
 				)),
 				app.NewMessageFromError(errPerformanceRelease),
 			},
+			ShouldBeErr: false,
 		},
 		{
 			Name: "successfully_maintain_performance",
@@ -359,6 +362,7 @@ func TestMaintainPerformance(t *testing.T) {
 					performance.FiredPass,
 				)),
 			},
+			ShouldBeErr: false,
 		},
 	}
 
@@ -457,14 +461,20 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			ExpectedOneOfMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						performance.NewCanceledError(context.Canceled),
+						&performance.TerminatedError{
+							Err:   context.Canceled,
+							Event: performance.FiredCancel,
+						},
 						specification.AnyScenarioSlug(),
 						performance.FiredCancel,
 					),
 				),
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						performance.NewCanceledError(context.Canceled),
+						&performance.TerminatedError{
+							Err:   context.Canceled,
+							Event: performance.FiredCancel,
+						},
 						specification.NewScenarioSlug("foo", "bar"),
 						performance.FiredCancel,
 					),
@@ -479,7 +489,10 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			ExpectedOneOfMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						performance.NewCanceledError(context.DeadlineExceeded),
+						&performance.TerminatedError{
+							Err:   context.DeadlineExceeded,
+							Event: performance.FiredCancel,
+						},
 						specification.NewScenarioSlug("foo", "bar"),
 						performance.FiredCancel,
 					),
@@ -494,14 +507,20 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			ExpectedOneOfMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						performance.NewCanceledError(context.Canceled),
+						&performance.TerminatedError{
+							Err:   context.Canceled,
+							Event: performance.FiredCancel,
+						},
 						specification.AnyScenarioSlug(),
 						performance.FiredCancel,
 					),
 				),
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						performance.NewCanceledError(context.Canceled),
+						&performance.TerminatedError{
+							Err:   context.Canceled,
+							Event: performance.FiredCancel,
+						},
 						specification.NewScenarioSlug("foo", "bar"),
 						performance.FiredCancel,
 					),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/app"
@@ -128,8 +129,10 @@ func TestHandleCancelPerformance(t *testing.T) {
 				OwnerID: "93a6224c-3788-49db-a673-ca8683a469ce",
 				Started: false,
 			}),
-			ShouldBeErr:          true,
-			IsErr:                performance.IsNotStartedError,
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				return errors.Is(err, performance.ErrNotStarted)
+			},
 			ExpectedPublishCalls: 0,
 		},
 		{

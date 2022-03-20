@@ -138,7 +138,7 @@ func TestPerformanceCreation(t *testing.T) {
 				})
 			} else {
 				t.Run("not_started_error", func(t *testing.T) {
-					require.True(t, performance.IsNotStartedError(c.Performance.ShouldBeStarted()))
+					require.ErrorIs(t, c.Performance.ShouldBeStarted(), performance.ErrNotStarted)
 				})
 			}
 
@@ -156,7 +156,7 @@ func TestStartPerformance(t *testing.T) {
 		GivenPerformance *performance.Performance
 		ExpectedSteps    []performance.Step
 		ShouldBeErr      bool
-		IsErr            func(err error) bool
+		ExpectedErr      error
 	}{
 		{
 			GivenPerformance: performance.FromSpecification(
@@ -171,7 +171,7 @@ func TestStartPerformance(t *testing.T) {
 				Started: true,
 			}),
 			ShouldBeErr: true,
-			IsErr:       performance.IsAlreadyStartedError,
+			ExpectedErr: performance.ErrAlreadyStarted,
 		},
 		{
 			GivenPerformance: performance.FromSpecification(
@@ -241,17 +241,19 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredPerform,
 				),
 				performance.NewThesisStepWithErr(
-					performance.NewFailedError(
-						errors.New("expected failing"),
-					),
+					&performance.TerminatedError{
+						Err:   errors.New("expected failing"),
+						Event: performance.FiredFail,
+					},
 					specification.NewThesisSlug("que", "pue", "due"),
 					performance.AssertionPerformer,
 					performance.FiredFail,
 				),
 				performance.NewScenarioStepWithErr(
-					performance.NewFailedError(
-						errors.New("expected failing"),
-					),
+					&performance.TerminatedError{
+						Err:   errors.New("expected failing"),
+						Event: performance.FiredFail,
+					},
 					specification.NewScenarioSlug("que", "pue"),
 					performance.FiredFail,
 				),
@@ -287,17 +289,19 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredPerform,
 				),
 				performance.NewThesisStepWithErr(
-					performance.NewCanceledError(
-						errors.New("expected canceling"),
-					),
+					&performance.TerminatedError{
+						Err:   errors.New("expected canceling"),
+						Event: performance.FiredCancel,
+					},
 					specification.NewThesisSlug("foo", "bar", "baz"),
 					performance.HTTPPerformer,
 					performance.FiredCancel,
 				),
 				performance.NewScenarioStepWithErr(
-					performance.NewCanceledError(
-						errors.New("expected canceling"),
-					),
+					&performance.TerminatedError{
+						Err:   errors.New("expected canceling"),
+						Event: performance.FiredCancel,
+					},
 					specification.NewScenarioSlug("foo", "bar"),
 					performance.FiredCancel,
 				),
@@ -325,21 +329,23 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredPerform,
 				),
 				performance.NewThesisStepWithErr(
-					performance.NewCrashedError(
-						performance.NewNoSatisfyingPerformerError(
-							performance.UnknownPerformer,
-						),
-					),
+					&performance.TerminatedError{
+						Err: &performance.RejectedError{
+							PerformerType: performance.UnknownPerformer,
+						},
+						Event: performance.FiredCrash,
+					},
 					specification.NewThesisSlug("foo", "bar", "baz"),
 					performance.UnknownPerformer,
 					performance.FiredCrash,
 				),
 				performance.NewScenarioStepWithErr(
-					performance.NewCrashedError(
-						performance.NewNoSatisfyingPerformerError(
-							performance.UnknownPerformer,
-						),
-					),
+					&performance.TerminatedError{
+						Err: &performance.RejectedError{
+							PerformerType: performance.UnknownPerformer,
+						},
+						Event: performance.FiredCrash,
+					},
 					specification.NewScenarioSlug("foo", "bar"),
 					performance.FiredCrash,
 				),
@@ -422,17 +428,19 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredPerform,
 				),
 				performance.NewThesisStepWithErr(
-					performance.NewCrashedError(
-						errors.New("expected crashing"),
-					),
+					&performance.TerminatedError{
+						Err:   errors.New("expected crashing"),
+						Event: performance.FiredCrash,
+					},
 					specification.NewThesisSlug("rod", "dod", "zod"),
 					performance.AssertionPerformer,
 					performance.FiredCrash,
 				),
 				performance.NewScenarioStepWithErr(
-					performance.NewCrashedError(
-						errors.New("expected crashing"),
-					),
+					&performance.TerminatedError{
+						Err:   errors.New("expected crashing"),
+						Event: performance.FiredCrash,
+					},
 					specification.NewScenarioSlug("rod", "dod"),
 					performance.FiredCrash,
 				),
@@ -451,7 +459,7 @@ func TestStartPerformance(t *testing.T) {
 
 			if c.ShouldBeErr {
 				t.Run("err", func(t *testing.T) {
-					require.True(t, c.IsErr(err))
+					require.ErrorIs(t, err, c.ExpectedErr)
 				})
 			} else {
 				t.Run("steps", func(t *testing.T) {
@@ -474,7 +482,12 @@ func TestOnePerformingAtATime(t *testing.T) {
 
 	_, err = perf.Start(context.Background())
 
-	require.True(t, performance.IsAlreadyStartedError(err), "Err is not already started error")
+	require.ErrorIs(
+		t,
+		err,
+		performance.ErrAlreadyStarted,
+		"Err is not already started error",
+	)
 }
 
 func TestPerformanceStartByStart(t *testing.T) {
@@ -554,7 +567,10 @@ func TestCancelPerformanceContext(t *testing.T) {
 			CancelBeforeStart: true,
 			ExpectedIncludedSteps: []performance.Step{
 				performance.NewScenarioStepWithErr(
-					performance.NewCanceledError(context.Canceled),
+					&performance.TerminatedError{
+						Err:   context.Canceled,
+						Event: performance.FiredCancel,
+					},
 					specification.AnyScenarioSlug(),
 					performance.FiredCancel,
 				),
@@ -564,7 +580,10 @@ func TestCancelPerformanceContext(t *testing.T) {
 			CancelAfterReadFirstStep: true,
 			ExpectedIncludedSteps: []performance.Step{
 				performance.NewScenarioStepWithErr(
-					performance.NewCanceledError(context.Canceled),
+					&performance.TerminatedError{
+						Err:   context.Canceled,
+						Event: performance.FiredCancel,
+					},
 					specification.NewScenarioSlug("foo", "bar"),
 					performance.FiredCancel,
 				),
@@ -610,63 +629,130 @@ func TestCancelPerformanceContext(t *testing.T) {
 	}
 }
 
-func TestPerformanceErrors(t *testing.T) {
+func TestUnwrapTerminatedError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name     string
-		Err      error
-		IsErr    func(err error) bool
-		Reversed bool
+		GivenError        *performance.TerminatedError
+		ExpectedUnwrapped error
 	}{
 		{
-			Name:  "performance_already_started_error",
-			Err:   performance.NewAlreadyStartedError(),
-			IsErr: performance.IsAlreadyStartedError,
+			GivenError:        nil,
+			ExpectedUnwrapped: nil,
 		},
 		{
-			Name:     "NON_performance_already_started_error",
-			Err:      errors.New("performance already started"),
-			IsErr:    performance.IsAlreadyStartedError,
-			Reversed: true,
+			GivenError:        &performance.TerminatedError{},
+			ExpectedUnwrapped: nil,
 		},
 		{
-			Name:  "performance_not_started_error",
-			Err:   performance.NewNotStartedError(),
-			IsErr: performance.IsNotStartedError,
-		},
-		{
-			Name:     "NON_performance_not_started_error",
-			Err:      errors.New("performance not started"),
-			IsErr:    performance.IsNotStartedError,
-			Reversed: true,
-		},
-		{
-			Name:  "no_satisfying_performer_error",
-			Err:   performance.NewNoSatisfyingPerformerError(performance.HTTPPerformer),
-			IsErr: performance.IsNoSatisfyingPerformerError,
-		},
-		{
-			Name:     "NON_no_satisfying_performer_error",
-			Err:      errors.New("no satisfying performer for HTTP"),
-			IsErr:    performance.IsNoSatisfyingPerformerError,
-			Reversed: true,
+			GivenError: &performance.TerminatedError{
+				Err:   errors.New("foo"),
+				Event: performance.FiredFail,
+			},
+			ExpectedUnwrapped: errors.New("foo"),
 		},
 	}
 
-	for _, c := range testCases {
-		c := c
+	for i := range testCases {
+		c := testCases[i]
 
-		t.Run(c.Name, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			if c.Reversed {
-				require.False(t, c.IsErr(c.Err))
+			if c.ExpectedUnwrapped == nil {
+				t.Run("nil", func(t *testing.T) {
+					require.NoError(t, c.GivenError.Unwrap())
+				})
 
 				return
 			}
 
-			require.True(t, c.IsErr(c.Err))
+			t.Run("unwrap", func(t *testing.T) {
+				require.EqualError(t, c.GivenError.Unwrap(), c.ExpectedUnwrapped.Error())
+			})
+
+			t.Run("errors_unwrap", func(t *testing.T) {
+				require.EqualError(t, errors.Unwrap(c.GivenError), c.ExpectedUnwrapped.Error())
+			})
+		})
+	}
+}
+
+func TestFormatTerminatedError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          *performance.TerminatedError
+		ExpectedErrorString string
+	}{
+		{
+			GivenError:          nil,
+			ExpectedErrorString: "",
+		},
+		{
+			GivenError:          &performance.TerminatedError{},
+			ExpectedErrorString: "performance has terminated",
+		},
+		{
+			GivenError: &performance.TerminatedError{
+				Err: errors.New("foo"),
+			},
+			ExpectedErrorString: "performance has terminated: foo",
+		},
+		{
+			GivenError: &performance.TerminatedError{
+				Event: performance.FiredFail,
+			},
+			ExpectedErrorString: "performance has terminated due to `fail` event",
+		},
+		{
+			GivenError: &performance.TerminatedError{
+				Err:   errors.New("bar"),
+				Event: performance.FiredCrash,
+			},
+			ExpectedErrorString: "performance has terminated due to `crash` event: bar",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
+		})
+	}
+}
+
+func TestFormatRejectedError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          *performance.RejectedError
+		ExpectedErrorString string
+	}{
+		{
+			GivenError: &performance.RejectedError{
+				PerformerType: performance.UnknownPerformer,
+			},
+			ExpectedErrorString: "rejected performer with `!` type",
+		},
+		{
+			GivenError: &performance.RejectedError{
+				PerformerType: "foo",
+			},
+			ExpectedErrorString: "rejected performer with `foo` type",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
 		})
 	}
 }
