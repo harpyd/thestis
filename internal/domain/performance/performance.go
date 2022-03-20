@@ -405,5 +405,5 @@ func reject(pt PerformerType) error {
 }
 
 func (e *RejectedError) Error() string {
-	return fmt.Sprintf("rejected performer with `%v` type", e.PerformerType)
+	return fmt.Sprintf("rejected performer with `%s` type", e.PerformerType)
 }
