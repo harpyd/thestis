@@ -40,7 +40,7 @@ func (g *PerformanceGuard) AcquirePerformance(ctx context.Context, perfID string
 	}
 
 	if document.Started {
-		return performance.NewAlreadyStartedError()
+		return performance.ErrAlreadyStarted
 	}
 
 	return nil

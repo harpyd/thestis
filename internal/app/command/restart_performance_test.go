@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/app"
@@ -139,7 +140,9 @@ func TestHandleRestartPerformance(t *testing.T) {
 			}),
 			PerformanceAlreadyStarted: true,
 			ShouldBeErr:               true,
-			IsErr:                     performance.IsAlreadyStartedError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, performance.ErrAlreadyStarted)
+			},
 		},
 		{
 			Name: "success_performance_restarting",

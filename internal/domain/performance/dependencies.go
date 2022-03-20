@@ -163,7 +163,7 @@ func (g ScenarioSyncGroup) WaitThesisDependencies(
 		select {
 		case <-thesis.done:
 		case <-ctx.Done():
-			return NewCanceledError(ctx.Err())
+			return terminate(ctx.Err(), FiredCancel)
 		}
 	}
 

@@ -64,16 +64,19 @@ func Pass() Result {
 }
 
 // Fail returns the failed Result with occurred error.
-// If the passed error does not satisfy IsFailedError,
-// it will be wrapped with NewFailedError.
+// If the passed error is not equal to TerminatedError
+// with FiredFail event, it will be wrapped with failed
+// TerminatedError.
 //
 // Fail should be used when the performing of the thesis
 // has fallen due to natural reasons, for example, the
 // assertion specified in the thesis failed. With this
 // result the scenario will be failed.
 func Fail(err error) Result {
-	if !IsFailedError(err) {
-		err = NewFailedError(err)
+	var terr *TerminatedError
+
+	if !errors.As(err, &terr) || terr.Event != FiredFail {
+		err = terminate(err, FiredFail)
 	}
 
 	return Result{
@@ -83,8 +86,9 @@ func Fail(err error) Result {
 }
 
 // Crash returns the crashed Result with occurred error.
-// If the passed error does not satisfy IsCrashedError,
-// it will be wrapped with NewCrashedError.
+// If the passed error is not equal to TerminatedError
+// with FiredCrash event, it will be wrapped with crashed
+// TerminatedError.
 //
 // Crash should be used when the performing of the thesis
 // has fallen due to unforeseen circumstances, for example,
@@ -92,8 +96,10 @@ func Fail(err error) Result {
 // HTTP part of the thesis. With this result the scenario
 // will be crashed.
 func Crash(err error) Result {
-	if !IsCrashedError(err) {
-		err = NewCrashedError(err)
+	var terr *TerminatedError
+
+	if !errors.As(err, &terr) || terr.Event != FiredCrash {
+		err = terminate(err, FiredCrash)
 	}
 
 	return Result{
@@ -103,15 +109,18 @@ func Crash(err error) Result {
 }
 
 // Cancel returns the canceled Result with occurred error.
-// If the passed error does not satisfy IsCanceledError,
-// it will be wrapped with NewCanceledError.
+// If the passed error is not equal to TerminatedError
+// with FiredCancel event, it will be wrapped with canceled
+// TerminatedError.
 //
 // Cancel should be used when you need to mark a thesis
 // as canceled, for example, when context.Context is done.
 // With this result the scenario will be canceled.
 func Cancel(err error) Result {
-	if !IsCanceledError(err) {
-		err = NewCanceledError(err)
+	var terr *TerminatedError
+
+	if !errors.As(err, &terr) || terr.Event != FiredCancel {
+		err = terminate(err, FiredCancel)
 	}
 
 	return Result{

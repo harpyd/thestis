@@ -400,7 +400,10 @@ func TestWaitThesisDependencies(t *testing.T) {
 
 			if !c.ShouldWait {
 				t.Run("cancel_err", func(t *testing.T) {
-					require.True(t, performance.IsCanceledError(err))
+					var terr *performance.TerminatedError
+
+					require.ErrorAs(t, err, &terr)
+					require.Equal(t, performance.FiredCancel, terr.Event)
 				})
 
 				return

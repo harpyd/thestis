@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/performance"
@@ -75,7 +76,7 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 		return
 	}
 
-	if performance.IsAlreadyStartedError(err) {
+	if errors.Is(err, performance.ErrAlreadyStarted) {
 		httperr.Conflict(string(ErrorSlugPerformanceAlreadyStarted), err, w, r)
 
 		return
@@ -109,7 +110,7 @@ func (h handler) CancelPerformance(w http.ResponseWriter, r *http.Request, perfo
 		return
 	}
 
-	if performance.IsNotStartedError(err) {
+	if errors.Is(err, performance.ErrNotStarted) {
 		httperr.Conflict(string(ErrorSlugPerformanceNotStarted), err, w, r)
 
 		return

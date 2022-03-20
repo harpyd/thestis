@@ -56,7 +56,7 @@ func (s *PerformanceGuardTestSuite) TestAcquirePerformance() {
 	s.Require().NoError(err)
 
 	err = s.guard.AcquirePerformance(context.Background(), s.perfID)
-	s.Require().True(performance.IsAlreadyStartedError(err))
+	s.Require().ErrorIs(err, performance.ErrAlreadyStarted)
 
 	persistedPerf, err := s.repo.GetPerformance(
 		context.Background(),

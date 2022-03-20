@@ -3,6 +3,7 @@ package performance
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -170,15 +171,14 @@ func (p *Performance) WorkingScenarios() []specification.Scenario {
 	return p.spec.Scenarios()
 }
 
-// ShouldBeStarted returns error if the Performance
-// is not started. The error can be determined using
-// IsNotStartedError function.
+// ShouldBeStarted returns ErrNotStarted if
+// the Performance is not started.
 func (p *Performance) ShouldBeStarted() error {
 	if p.Started() {
 		return nil
 	}
 
-	return NewNotStartedError()
+	return ErrNotStarted
 }
 
 // Start asynchronously starts performing of the Performance pipeline.
@@ -186,8 +186,7 @@ func (p *Performance) ShouldBeStarted() error {
 // build Flow using flow.Reducer.
 //
 // Only ONE performing can be start at a time. If one goroutine has captured
-// performing, then others calls of Start will be return error that can
-// be detected with method IsAlreadyStartedError.
+// performing, then others calls of Start will be return ErrAlreadyStarted.
 func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 	if err := p.lock(); err != nil {
 		return nil, err
@@ -202,7 +201,7 @@ func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 
 func (p *Performance) lock() error {
 	if !atomic.CompareAndSwapUint32(&p.state, unlocked, locked) {
-		return NewAlreadyStartedError()
+		return ErrAlreadyStarted
 	}
 
 	return nil
@@ -222,7 +221,7 @@ func (p *Performance) run(ctx context.Context, steps chan<- Step) {
 func (p *Performance) runScenarios(ctx context.Context, steps chan<- Step) {
 	if ctx.Err() != nil {
 		steps <- NewScenarioStepWithErr(
-			NewCanceledError(ctx.Err()),
+			terminate(ctx.Err(), FiredCancel),
 			specification.AnyScenarioSlug(),
 			FiredCancel,
 		)
@@ -265,20 +264,21 @@ func (p *Performance) runScenario(
 		g.Go(p.runThesisFn(ctx, steps, env, sg, thesis))
 	}
 
-	err := g.Wait()
+	if err := g.Wait(); err != nil {
+		var terr *TerminatedError
 
-	switch {
-	case IsCanceledError(err):
-		steps <- NewScenarioStepWithErr(err, scenario.Slug(), FiredCancel)
-	case IsFailedError(err):
-		steps <- NewScenarioStepWithErr(err, scenario.Slug(), FiredFail)
-	case IsCrashedError(err):
-		steps <- NewScenarioStepWithErr(err, scenario.Slug(), FiredCrash)
-	case err != nil:
+		if errors.As(err, &terr) {
+			steps <- NewScenarioStepWithErr(err, scenario.Slug(), terr.Event)
+
+			return
+		}
+
 		steps <- NewScenarioStepWithErr(err, scenario.Slug(), NoEvent)
-	default:
-		steps <- NewScenarioStep(scenario.Slug(), FiredPass)
+
+		return
 	}
+
+	steps <- NewScenarioStep(scenario.Slug(), FiredPass)
 }
 
 func (p *Performance) runThesisFn(
@@ -325,7 +325,7 @@ func (p *Performance) performThesis(
 
 	performer, ok := p.performers[pt]
 	if !ok {
-		return Crash(NewNoSatisfyingPerformerError(pt))
+		return Crash(reject(pt))
 	}
 
 	return performer.Perform(ctx, env, thesis)
@@ -343,134 +343,67 @@ func performerType(thesis specification.Thesis) PerformerType {
 }
 
 var (
-	errAlreadyStarted = errors.New("performance already started")
-	errNotStarted     = errors.New("performance not started")
+	ErrAlreadyStarted = errors.New("performance already started")
+	ErrNotStarted     = errors.New("performance not started")
 )
 
-func NewAlreadyStartedError() error {
-	return errAlreadyStarted
+type TerminatedError struct {
+	Err   error
+	Event Event
 }
 
-func IsAlreadyStartedError(err error) bool {
-	return errors.Is(err, errAlreadyStarted)
-}
-
-func NewNotStartedError() error {
-	return errNotStarted
-}
-
-func IsNotStartedError(err error) bool {
-	return errors.Is(err, errNotStarted)
-}
-
-type (
-	canceledError struct {
-		err error
-	}
-
-	failedError struct {
-		err error
-	}
-
-	crashedError struct {
-		err error
-	}
-)
-
-func NewCanceledError(err error) error {
+func terminate(err error, event Event) error {
 	if err == nil {
 		return nil
 	}
 
-	return errors.WithStack(canceledError{err: err})
-}
-
-func IsCanceledError(err error) bool {
-	var target canceledError
-
-	return errors.As(err, &target)
-}
-
-func (e canceledError) Error() string {
-	return fmt.Sprintf("performance canceled: %s", e.err)
-}
-
-func (e canceledError) Cause() error {
-	return e.err
-}
-
-func (e canceledError) Unwrap() error {
-	return e.err
-}
-
-func NewFailedError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(failedError{err: err})
-}
-
-func IsFailedError(err error) bool {
-	var target failedError
-
-	return errors.As(err, &target)
-}
-
-func (e failedError) Error() string {
-	return fmt.Sprintf("performance failed: %s", e.err)
-}
-
-func (e failedError) Cause() error {
-	return e.err
-}
-
-func (e failedError) Unwrap() error {
-	return e.err
-}
-
-func NewCrashedError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(crashedError{err: err})
-}
-
-func IsCrashedError(err error) bool {
-	var target crashedError
-
-	return errors.As(err, &target)
-}
-
-func (e crashedError) Error() string {
-	return fmt.Sprintf("performance crashed: %s", e.err)
-}
-
-func (e crashedError) Cause() error {
-	return e.err
-}
-
-func (e crashedError) Unwrap() error {
-	return e.err
-}
-
-type noSatisfyingPerformerError struct {
-	pt PerformerType
-}
-
-func NewNoSatisfyingPerformerError(pt PerformerType) error {
-	return errors.WithStack(noSatisfyingPerformerError{
-		pt: pt,
+	return errors.WithStack(&TerminatedError{
+		Err:   err,
+		Event: event,
 	})
 }
 
-func IsNoSatisfyingPerformerError(err error) bool {
-	var target noSatisfyingPerformerError
+func (e *TerminatedError) Error() string {
+	if e == nil {
+		return ""
+	}
 
-	return errors.As(err, &target)
+	var b strings.Builder
+
+	b.WriteString("performance has terminated")
+
+	if e.Event != NoEvent {
+		b.WriteString(" due to `")
+		b.WriteString(e.Event.String())
+		b.WriteString("` event")
+	}
+
+	if e.Err != nil {
+		b.WriteString(": ")
+		b.WriteString(e.Err.Error())
+	}
+
+	return b.String()
 }
 
-func (e noSatisfyingPerformerError) Error() string {
-	return fmt.Sprintf("no satisfying performer for %s", e.pt)
+func (e *TerminatedError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+
+	return e.Err
+}
+
+type RejectedError struct {
+	PerformerType PerformerType
+}
+
+func reject(pt PerformerType) error {
+	return errors.WithStack(&RejectedError{
+		PerformerType: pt,
+	})
+}
+
+func (e *RejectedError) Error() string {
+	return fmt.Sprintf("rejected performer with `%v` type", e.PerformerType)
 }
