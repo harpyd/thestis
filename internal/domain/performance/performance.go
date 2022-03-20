@@ -221,7 +221,7 @@ func (p *Performance) run(ctx context.Context, steps chan<- Step) {
 func (p *Performance) runScenarios(ctx context.Context, steps chan<- Step) {
 	if ctx.Err() != nil {
 		steps <- NewScenarioStepWithErr(
-			terminate(ctx.Err(), FiredCancel),
+			terminated(ctx.Err(), FiredCancel),
 			specification.AnyScenarioSlug(),
 			FiredCancel,
 		)
@@ -325,7 +325,7 @@ func (p *Performance) performThesis(
 
 	performer, ok := p.performers[pt]
 	if !ok {
-		return Crash(reject(pt))
+		return Crash(rejected(pt))
 	}
 
 	return performer.Perform(ctx, env, thesis)
@@ -352,7 +352,7 @@ type TerminatedError struct {
 	Event Event
 }
 
-func terminate(err error, event Event) error {
+func terminated(err error, event Event) error {
 	if err == nil {
 		return nil
 	}
@@ -398,7 +398,7 @@ type RejectedError struct {
 	PerformerType PerformerType
 }
 
-func reject(pt PerformerType) error {
+func rejected(pt PerformerType) error {
 	return errors.WithStack(&RejectedError{
 		PerformerType: pt,
 	})
