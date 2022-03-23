@@ -461,20 +461,20 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			ExpectedOneOfMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						&performance.TerminatedError{
-							Err:   context.Canceled,
-							Event: performance.FiredCancel,
-						},
+						performance.WrapErrorWithTerminated(
+							context.Canceled,
+							performance.FiredCancel,
+						),
 						specification.AnyScenarioSlug(),
 						performance.FiredCancel,
 					),
 				),
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						&performance.TerminatedError{
-							Err:   context.Canceled,
-							Event: performance.FiredCancel,
-						},
+						performance.WrapErrorWithTerminated(
+							context.Canceled,
+							performance.FiredCancel,
+						),
 						specification.NewScenarioSlug("foo", "bar"),
 						performance.FiredCancel,
 					),
@@ -489,10 +489,10 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			ExpectedOneOfMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						&performance.TerminatedError{
-							Err:   context.DeadlineExceeded,
-							Event: performance.FiredCancel,
-						},
+						performance.WrapErrorWithTerminated(
+							context.DeadlineExceeded,
+							performance.FiredCancel,
+						),
 						specification.NewScenarioSlug("foo", "bar"),
 						performance.FiredCancel,
 					),
@@ -507,20 +507,20 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			ExpectedOneOfMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						&performance.TerminatedError{
-							Err:   context.Canceled,
-							Event: performance.FiredCancel,
-						},
+						performance.WrapErrorWithTerminated(
+							context.Canceled,
+							performance.FiredCancel,
+						),
 						specification.AnyScenarioSlug(),
 						performance.FiredCancel,
 					),
 				),
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						&performance.TerminatedError{
-							Err:   context.Canceled,
-							Event: performance.FiredCancel,
-						},
+						performance.WrapErrorWithTerminated(
+							context.Canceled,
+							performance.FiredCancel,
+						),
 						specification.NewScenarioSlug("foo", "bar"),
 						performance.FiredCancel,
 					),

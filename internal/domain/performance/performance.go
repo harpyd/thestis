@@ -221,7 +221,7 @@ func (p *Performance) run(ctx context.Context, steps chan<- Step) {
 func (p *Performance) runScenarios(ctx context.Context, steps chan<- Step) {
 	if ctx.Err() != nil {
 		steps <- NewScenarioStepWithErr(
-			terminated(ctx.Err(), FiredCancel),
+			WrapErrorWithTerminated(ctx.Err(), FiredCancel),
 			specification.AnyScenarioSlug(),
 			FiredCancel,
 		)
@@ -268,7 +268,7 @@ func (p *Performance) runScenario(
 		var terr *TerminatedError
 
 		if errors.As(err, &terr) {
-			steps <- NewScenarioStepWithErr(err, scenario.Slug(), terr.Event)
+			steps <- NewScenarioStepWithErr(err, scenario.Slug(), terr.event)
 
 			return
 		}
@@ -325,7 +325,7 @@ func (p *Performance) performThesis(
 
 	performer, ok := p.performers[pt]
 	if !ok {
-		return Crash(rejected(pt))
+		return Crash(NewRejectedError(pt))
 	}
 
 	return performer.Perform(ctx, env, thesis)
@@ -348,18 +348,18 @@ var (
 )
 
 type TerminatedError struct {
-	Err   error
-	Event Event
+	err   error
+	event Event
 }
 
-func terminated(err error, event Event) error {
+func WrapErrorWithTerminated(err error, event Event) error {
 	if err == nil {
 		return nil
 	}
 
 	return errors.WithStack(&TerminatedError{
-		Err:   err,
-		Event: event,
+		err:   err,
+		event: event,
 	})
 }
 
@@ -372,18 +372,22 @@ func (e *TerminatedError) Error() string {
 
 	b.WriteString("performance has terminated")
 
-	if e.Event != NoEvent {
+	if e.event != NoEvent {
 		b.WriteString(" due to `")
-		b.WriteString(e.Event.String())
+		b.WriteString(e.event.String())
 		b.WriteString("` event")
 	}
 
-	if e.Err != nil {
+	if e.err != nil {
 		b.WriteString(": ")
-		b.WriteString(e.Err.Error())
+		b.WriteString(e.err.Error())
 	}
 
 	return b.String()
+}
+
+func (e *TerminatedError) Event() Event {
+	return e.event
 }
 
 func (e *TerminatedError) Unwrap() error {
@@ -391,19 +395,19 @@ func (e *TerminatedError) Unwrap() error {
 		return nil
 	}
 
-	return e.Err
+	return e.err
 }
 
 type RejectedError struct {
-	PerformerType PerformerType
+	pt PerformerType
 }
 
-func rejected(pt PerformerType) error {
+func NewRejectedError(performerType PerformerType) error {
 	return errors.WithStack(&RejectedError{
-		PerformerType: pt,
+		pt: performerType,
 	})
 }
 
 func (e *RejectedError) Error() string {
-	return fmt.Sprintf("rejected performer with `%s` type", e.PerformerType)
+	return fmt.Sprintf("rejected performer with `%s` type", e.pt)
 }

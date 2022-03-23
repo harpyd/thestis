@@ -241,19 +241,19 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredPerform,
 				),
 				performance.NewThesisStepWithErr(
-					&performance.TerminatedError{
-						Err:   errors.New("expected failing"),
-						Event: performance.FiredFail,
-					},
+					performance.WrapErrorWithTerminated(
+						errors.New("expected failing"),
+						performance.FiredFail,
+					),
 					specification.NewThesisSlug("que", "pue", "due"),
 					performance.AssertionPerformer,
 					performance.FiredFail,
 				),
 				performance.NewScenarioStepWithErr(
-					&performance.TerminatedError{
-						Err:   errors.New("expected failing"),
-						Event: performance.FiredFail,
-					},
+					performance.WrapErrorWithTerminated(
+						errors.New("expected failing"),
+						performance.FiredFail,
+					),
 					specification.NewScenarioSlug("que", "pue"),
 					performance.FiredFail,
 				),
@@ -289,19 +289,19 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredPerform,
 				),
 				performance.NewThesisStepWithErr(
-					&performance.TerminatedError{
-						Err:   errors.New("expected canceling"),
-						Event: performance.FiredCancel,
-					},
+					performance.WrapErrorWithTerminated(
+						errors.New("expected canceling"),
+						performance.FiredCancel,
+					),
 					specification.NewThesisSlug("foo", "bar", "baz"),
 					performance.HTTPPerformer,
 					performance.FiredCancel,
 				),
 				performance.NewScenarioStepWithErr(
-					&performance.TerminatedError{
-						Err:   errors.New("expected canceling"),
-						Event: performance.FiredCancel,
-					},
+					performance.WrapErrorWithTerminated(
+						errors.New("expected canceling"),
+						performance.FiredCancel,
+					),
 					specification.NewScenarioSlug("foo", "bar"),
 					performance.FiredCancel,
 				),
@@ -329,23 +329,23 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredPerform,
 				),
 				performance.NewThesisStepWithErr(
-					&performance.TerminatedError{
-						Err: &performance.RejectedError{
-							PerformerType: performance.UnknownPerformer,
-						},
-						Event: performance.FiredCrash,
-					},
+					performance.WrapErrorWithTerminated(
+						performance.NewRejectedError(
+							performance.UnknownPerformer,
+						),
+						performance.FiredCrash,
+					),
 					specification.NewThesisSlug("foo", "bar", "baz"),
 					performance.UnknownPerformer,
 					performance.FiredCrash,
 				),
 				performance.NewScenarioStepWithErr(
-					&performance.TerminatedError{
-						Err: &performance.RejectedError{
-							PerformerType: performance.UnknownPerformer,
-						},
-						Event: performance.FiredCrash,
-					},
+					performance.WrapErrorWithTerminated(
+						performance.NewRejectedError(
+							performance.UnknownPerformer,
+						),
+						performance.FiredCrash,
+					),
 					specification.NewScenarioSlug("foo", "bar"),
 					performance.FiredCrash,
 				),
@@ -428,19 +428,19 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredPerform,
 				),
 				performance.NewThesisStepWithErr(
-					&performance.TerminatedError{
-						Err:   errors.New("expected crashing"),
-						Event: performance.FiredCrash,
-					},
+					performance.WrapErrorWithTerminated(
+						errors.New("expected crashing"),
+						performance.FiredCrash,
+					),
 					specification.NewThesisSlug("rod", "dod", "zod"),
 					performance.AssertionPerformer,
 					performance.FiredCrash,
 				),
 				performance.NewScenarioStepWithErr(
-					&performance.TerminatedError{
-						Err:   errors.New("expected crashing"),
-						Event: performance.FiredCrash,
-					},
+					performance.WrapErrorWithTerminated(
+						errors.New("expected crashing"),
+						performance.FiredCrash,
+					),
 					specification.NewScenarioSlug("rod", "dod"),
 					performance.FiredCrash,
 				),
@@ -567,10 +567,10 @@ func TestCancelPerformanceContext(t *testing.T) {
 			CancelBeforeStart: true,
 			ExpectedIncludedSteps: []performance.Step{
 				performance.NewScenarioStepWithErr(
-					&performance.TerminatedError{
-						Err:   context.Canceled,
-						Event: performance.FiredCancel,
-					},
+					performance.WrapErrorWithTerminated(
+						context.Canceled,
+						performance.FiredCancel,
+					),
 					specification.AnyScenarioSlug(),
 					performance.FiredCancel,
 				),
@@ -580,10 +580,10 @@ func TestCancelPerformanceContext(t *testing.T) {
 			CancelAfterReadFirstStep: true,
 			ExpectedIncludedSteps: []performance.Step{
 				performance.NewScenarioStepWithErr(
-					&performance.TerminatedError{
-						Err:   context.Canceled,
-						Event: performance.FiredCancel,
-					},
+					performance.WrapErrorWithTerminated(
+						context.Canceled,
+						performance.FiredCancel,
+					),
 					specification.NewScenarioSlug("foo", "bar"),
 					performance.FiredCancel,
 				),
@@ -633,7 +633,7 @@ func TestUnwrapTerminatedError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		GivenError        *performance.TerminatedError
+		GivenError        error
 		ExpectedUnwrapped error
 	}{
 		{
@@ -645,10 +645,10 @@ func TestUnwrapTerminatedError(t *testing.T) {
 			ExpectedUnwrapped: nil,
 		},
 		{
-			GivenError: &performance.TerminatedError{
-				Err:   errors.New("foo"),
-				Event: performance.FiredFail,
-			},
+			GivenError: performance.WrapErrorWithTerminated(
+				errors.New("foo"),
+				performance.FiredCrash,
+			),
 			ExpectedUnwrapped: errors.New("foo"),
 		},
 	}
@@ -660,20 +660,15 @@ func TestUnwrapTerminatedError(t *testing.T) {
 			t.Parallel()
 
 			if c.ExpectedUnwrapped == nil {
-				t.Run("nil", func(t *testing.T) {
-					require.NoError(t, c.GivenError.Unwrap())
-				})
+				require.NoError(t, errors.Unwrap(c.GivenError))
 
 				return
 			}
 
-			t.Run("unwrap", func(t *testing.T) {
-				require.EqualError(t, c.GivenError.Unwrap(), c.ExpectedUnwrapped.Error())
-			})
+			var terr *performance.TerminatedError
 
-			t.Run("errors_unwrap", func(t *testing.T) {
-				require.EqualError(t, errors.Unwrap(c.GivenError), c.ExpectedUnwrapped.Error())
-			})
+			require.ErrorAs(t, c.GivenError, &terr)
+			require.EqualError(t, terr.Unwrap(), c.ExpectedUnwrapped.Error())
 		})
 	}
 }
@@ -682,34 +677,25 @@ func TestFormatTerminatedError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		GivenError          *performance.TerminatedError
+		GivenError          error
 		ExpectedErrorString string
 	}{
-		{
-			GivenError:          nil,
-			ExpectedErrorString: "",
-		},
 		{
 			GivenError:          &performance.TerminatedError{},
 			ExpectedErrorString: "performance has terminated",
 		},
 		{
-			GivenError: &performance.TerminatedError{
-				Err: errors.New("foo"),
-			},
+			GivenError: performance.WrapErrorWithTerminated(
+				errors.New("foo"),
+				performance.NoEvent,
+			),
 			ExpectedErrorString: "performance has terminated: foo",
 		},
 		{
-			GivenError: &performance.TerminatedError{
-				Event: performance.FiredFail,
-			},
-			ExpectedErrorString: "performance has terminated due to `fail` event",
-		},
-		{
-			GivenError: &performance.TerminatedError{
-				Err:   errors.New("bar"),
-				Event: performance.FiredCrash,
-			},
+			GivenError: performance.WrapErrorWithTerminated(
+				errors.New("bar"),
+				performance.FiredCrash,
+			),
 			ExpectedErrorString: "performance has terminated due to `crash` event: bar",
 		},
 	}
@@ -729,19 +715,17 @@ func TestFormatRejectedError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		GivenError          *performance.RejectedError
+		GivenError          error
 		ExpectedErrorString string
 	}{
 		{
-			GivenError: &performance.RejectedError{
-				PerformerType: performance.UnknownPerformer,
-			},
+			GivenError: performance.NewRejectedError(
+				performance.UnknownPerformer,
+			),
 			ExpectedErrorString: "rejected performer with `!` type",
 		},
 		{
-			GivenError: &performance.RejectedError{
-				PerformerType: "foo",
-			},
+			GivenError:          performance.NewRejectedError("foo"),
 			ExpectedErrorString: "rejected performer with `foo` type",
 		},
 	}

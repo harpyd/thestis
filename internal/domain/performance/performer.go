@@ -75,8 +75,8 @@ func Pass() Result {
 func Fail(err error) Result {
 	var terr *TerminatedError
 
-	if !errors.As(err, &terr) || terr.Event != FiredFail {
-		err = terminated(err, FiredFail)
+	if !errors.As(err, &terr) || terr.Event() != FiredFail {
+		err = WrapErrorWithTerminated(err, FiredFail)
 	}
 
 	return Result{
@@ -98,8 +98,8 @@ func Fail(err error) Result {
 func Crash(err error) Result {
 	var terr *TerminatedError
 
-	if !errors.As(err, &terr) || terr.Event != FiredCrash {
-		err = terminated(err, FiredCrash)
+	if !errors.As(err, &terr) || terr.Event() != FiredCrash {
+		err = WrapErrorWithTerminated(err, FiredCrash)
 	}
 
 	return Result{
@@ -119,8 +119,8 @@ func Crash(err error) Result {
 func Cancel(err error) Result {
 	var terr *TerminatedError
 
-	if !errors.As(err, &terr) || terr.Event != FiredCancel {
-		err = terminated(err, FiredCancel)
+	if !errors.As(err, &terr) || terr.Event() != FiredCancel {
+		err = WrapErrorWithTerminated(err, FiredCancel)
 	}
 
 	return Result{

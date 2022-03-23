@@ -403,7 +403,7 @@ func TestWaitThesisDependencies(t *testing.T) {
 					var terr *performance.TerminatedError
 
 					require.ErrorAs(t, err, &terr)
-					require.Equal(t, performance.FiredCancel, terr.Event)
+					require.Equal(t, performance.FiredCancel, terr.Event())
 				})
 
 				return
