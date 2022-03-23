@@ -32,23 +32,23 @@ func TestResult(t *testing.T) {
 				errors.New("foo"),
 			),
 			ExpectedEvent: performance.FiredFail,
-			ExpectedErr: &performance.TerminatedError{
-				Event: performance.FiredFail,
-				Err:   errors.New("foo"),
-			},
+			ExpectedErr: performance.WrapErrorWithTerminated(
+				errors.New("foo"),
+				performance.FiredFail,
+			),
 		},
 		{
 			GivenResult: performance.Fail(
-				&performance.TerminatedError{
-					Event: performance.FiredFail,
-					Err:   errors.New("bar"),
-				},
+				performance.WrapErrorWithTerminated(
+					errors.New("foo"),
+					performance.FiredFail,
+				),
 			),
 			ExpectedEvent: performance.FiredFail,
-			ExpectedErr: &performance.TerminatedError{
-				Event: performance.FiredFail,
-				Err:   errors.New("bar"),
-			},
+			ExpectedErr: performance.WrapErrorWithTerminated(
+				errors.New("bar"),
+				performance.FiredFail,
+			),
 		},
 		{
 			GivenResult:   performance.Crash(nil),
@@ -60,23 +60,23 @@ func TestResult(t *testing.T) {
 				errors.New("boo"),
 			),
 			ExpectedEvent: performance.FiredCrash,
-			ExpectedErr: &performance.TerminatedError{
-				Event: performance.FiredCrash,
-				Err:   errors.New("boo"),
-			},
+			ExpectedErr: performance.WrapErrorWithTerminated(
+				errors.New("boo"),
+				performance.FiredCrash,
+			),
 		},
 		{
 			GivenResult: performance.Crash(
-				&performance.TerminatedError{
-					Event: performance.FiredCrash,
-					Err:   errors.New("qwe"),
-				},
+				performance.WrapErrorWithTerminated(
+					errors.New("qwe"),
+					performance.FiredCrash,
+				),
 			),
 			ExpectedEvent: performance.FiredCrash,
-			ExpectedErr: &performance.TerminatedError{
-				Event: performance.FiredCrash,
-				Err:   errors.New("qwe"),
-			},
+			ExpectedErr: performance.WrapErrorWithTerminated(
+				errors.New("qwe"),
+				performance.FiredCrash,
+			),
 		},
 		{
 			GivenResult:   performance.Cancel(nil),
@@ -88,23 +88,23 @@ func TestResult(t *testing.T) {
 				errors.New("bar"),
 			),
 			ExpectedEvent: performance.FiredCancel,
-			ExpectedErr: &performance.TerminatedError{
-				Event: performance.FiredCancel,
-				Err:   errors.New("bar"),
-			},
+			ExpectedErr: performance.WrapErrorWithTerminated(
+				errors.New("bar"),
+				performance.FiredCancel,
+			),
 		},
 		{
 			GivenResult: performance.Cancel(
-				&performance.TerminatedError{
-					Event: performance.FiredCancel,
-					Err:   errors.New("baz"),
-				},
+				performance.WrapErrorWithTerminated(
+					errors.New("baz"),
+					performance.FiredCancel,
+				),
 			),
 			ExpectedEvent: performance.FiredCancel,
-			ExpectedErr: &performance.TerminatedError{
-				Event: performance.FiredCancel,
-				Err:   errors.New("baz"),
-			},
+			ExpectedErr: performance.WrapErrorWithTerminated(
+				errors.New("baz"),
+				performance.FiredCancel,
+			),
 		},
 	}
 
