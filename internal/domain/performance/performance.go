@@ -409,5 +409,9 @@ func NewRejectedError(performerType PerformerType) error {
 }
 
 func (e *RejectedError) Error() string {
+	if e == nil {
+		return ""
+	}
+
 	return fmt.Sprintf("rejected performer with `%s` type", e.pt)
 }

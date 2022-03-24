@@ -629,6 +629,100 @@ func TestCancelPerformanceContext(t *testing.T) {
 	}
 }
 
+var errTest = errors.New("test")
+
+func TestIsNestedTerminatedError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError error
+		ExpectedIs bool
+	}{
+		{
+			GivenError: nil,
+			ExpectedIs: false,
+		},
+		{
+			GivenError: performance.WrapErrorWithTerminated(
+				nil,
+				performance.FiredCrash,
+			),
+			ExpectedIs: false,
+		},
+		{
+			GivenError: performance.WrapErrorWithTerminated(
+				errors.New("foo"),
+				performance.FiredFail,
+			),
+			ExpectedIs: false,
+		},
+		{
+			GivenError: performance.WrapErrorWithTerminated(
+				errTest,
+				performance.FiredCrash,
+			),
+			ExpectedIs: true,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, c.ExpectedIs, errors.Is(c.GivenError, errTest))
+		})
+	}
+}
+
+func TestAsNestedTerminatedError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError error
+		ExpectedAs bool
+	}{
+		{
+			GivenError: nil,
+			ExpectedAs: false,
+		},
+		{
+			GivenError: performance.WrapErrorWithTerminated(
+				nil,
+				performance.FiredFail,
+			),
+			ExpectedAs: false,
+		},
+		{
+			GivenError: performance.WrapErrorWithTerminated(
+				errors.New("foo"),
+				performance.FiredFail,
+			),
+			ExpectedAs: false,
+		},
+		{
+			GivenError: performance.WrapErrorWithTerminated(
+				testError{},
+				performance.FiredCrash,
+			),
+			ExpectedAs: true,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var target testError
+
+			require.Equal(t, c.ExpectedAs, errors.As(c.GivenError, &target))
+		})
+	}
+}
+
 func TestUnwrapTerminatedError(t *testing.T) {
 	t.Parallel()
 
@@ -830,4 +924,10 @@ func mapStepsChanToStrings(steps <-chan performance.Step, capacity int) []string
 	}
 
 	return strs
+}
+
+type testError struct{}
+
+func (e testError) Error() string {
+	return "test"
 }
