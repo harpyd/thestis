@@ -2,11 +2,11 @@ package app_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/app"
@@ -599,7 +599,7 @@ func TestPubsubErrors(t *testing.T) {
 		},
 		{
 			Name:     "NON_publish_cancel_error",
-			Err:      errors.Wrap(errors.New("wrong"), "publish cancel"),
+			Err:      fmt.Errorf("publish cancel: %w", errors.New("foo")),
 			IsErr:    app.IsPublishCancelError,
 			Reversed: true,
 		},
