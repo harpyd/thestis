@@ -867,7 +867,6 @@ func TestAsRejectedError(t *testing.T) {
 			if !c.ShouldBeWrapped {
 				t.Run("not", func(t *testing.T) {
 					require.False(t, errors.As(c.GivenError, &rerr))
-
 				})
 
 				return
