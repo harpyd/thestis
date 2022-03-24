@@ -1,11 +1,11 @@
 package performance_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/performance"
 )
@@ -115,16 +115,16 @@ func TestResult(t *testing.T) {
 			t.Parallel()
 
 			t.Run("event", func(t *testing.T) {
-				assert.Equal(t, c.ExpectedEvent, c.GivenResult.Event())
+				require.Equal(t, c.ExpectedEvent, c.GivenResult.Event())
 			})
 
 			if c.ExpectedErr != nil {
 				t.Run("err", func(t *testing.T) {
-					assert.Error(t, c.GivenResult.Err(), c.ExpectedErr.Error())
+					require.Error(t, c.GivenResult.Err(), c.ExpectedErr.Error())
 				})
 			} else {
 				t.Run("no_err", func(t *testing.T) {
-					assert.NoError(t, c.GivenResult.Err())
+					require.NoError(t, c.GivenResult.Err())
 				})
 			}
 		})

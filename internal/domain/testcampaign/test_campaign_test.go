@@ -1,10 +1,10 @@
 package testcampaign_test
 
 import (
+	"errors"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/testcampaign"

@@ -1,10 +1,10 @@
 package flow_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/harpyd/thestis/internal/domain/flow"

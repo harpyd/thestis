@@ -1,12 +1,11 @@
 package specification_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/specification"
@@ -461,27 +460,27 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 			require.False(t, c.IsErr(err))
 
 			t.Run("stories", func(t *testing.T) {
-				assert.ElementsMatch(t, c.ExpectedStories, spec.Stories())
+				require.ElementsMatch(t, c.ExpectedStories, spec.Stories())
 			})
 
 			t.Run("stories_count", func(t *testing.T) {
-				assert.Equal(t, len(c.ExpectedStories), spec.StoriesCount())
+				require.Equal(t, len(c.ExpectedStories), spec.StoriesCount())
 			})
 
 			t.Run("scenarios", func(t *testing.T) {
-				assert.ElementsMatch(t, c.ExpectedScenarios, spec.Scenarios())
+				require.ElementsMatch(t, c.ExpectedScenarios, spec.Scenarios())
 			})
 
 			t.Run("scenarios_count", func(t *testing.T) {
-				assert.Equal(t, len(c.ExpectedScenarios), spec.ScenariosCount())
+				require.Equal(t, len(c.ExpectedScenarios), spec.ScenariosCount())
 			})
 
 			t.Run("theses", func(t *testing.T) {
-				assert.ElementsMatch(t, c.ExpectedTheses, spec.Theses())
+				require.ElementsMatch(t, c.ExpectedTheses, spec.Theses())
 			})
 
 			t.Run("theses_count", func(t *testing.T) {
-				assert.Equal(t, len(c.ExpectedTheses), spec.ThesesCount())
+				require.Equal(t, len(c.ExpectedTheses), spec.ThesesCount())
 			})
 		})
 	}
