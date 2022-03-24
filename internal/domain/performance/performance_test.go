@@ -631,7 +631,7 @@ func TestCancelPerformanceContext(t *testing.T) {
 
 var errTest = errors.New("test")
 
-func TestIsNestedTerminatedError(t *testing.T) {
+func TestIsWrappedInTerminatedError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -676,7 +676,7 @@ func TestIsNestedTerminatedError(t *testing.T) {
 	}
 }
 
-func TestAsNestedTerminatedError(t *testing.T) {
+func TestAsWrappedInTerminatedError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -723,19 +723,23 @@ func TestAsNestedTerminatedError(t *testing.T) {
 	}
 }
 
-func TestUnwrapTerminatedError(t *testing.T) {
+func TestAsTerminatedError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		GivenError        error
+		ShouldBeWrapped   bool
+		ExpectedEvent     performance.Event
 		ExpectedUnwrapped error
 	}{
 		{
-			GivenError:        nil,
-			ExpectedUnwrapped: nil,
+			GivenError:      nil,
+			ShouldBeWrapped: false,
 		},
 		{
 			GivenError:        &performance.TerminatedError{},
+			ShouldBeWrapped:   true,
+			ExpectedEvent:     performance.NoEvent,
 			ExpectedUnwrapped: nil,
 		},
 		{
@@ -743,6 +747,8 @@ func TestUnwrapTerminatedError(t *testing.T) {
 				errors.New("foo"),
 				performance.FiredCrash,
 			),
+			ShouldBeWrapped:   true,
+			ExpectedEvent:     performance.FiredCrash,
 			ExpectedUnwrapped: errors.New("foo"),
 		},
 	}
@@ -753,16 +759,37 @@ func TestUnwrapTerminatedError(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			if c.ExpectedUnwrapped == nil {
-				require.NoError(t, errors.Unwrap(c.GivenError))
+			var terr *performance.TerminatedError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &terr))
+
+					t.Run("nil_unwrapped", func(t *testing.T) {
+						require.NoError(t, errors.Unwrap(c.GivenError))
+					})
+				})
 
 				return
 			}
 
-			var terr *performance.TerminatedError
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &terr)
 
-			require.ErrorAs(t, c.GivenError, &terr)
-			require.EqualError(t, terr.Unwrap(), c.ExpectedUnwrapped.Error())
+				t.Run("unwrap", func(t *testing.T) {
+					if c.ExpectedUnwrapped != nil {
+						require.EqualError(t, terr.Unwrap(), c.ExpectedUnwrapped.Error())
+
+						return
+					}
+
+					require.NoError(t, terr.Unwrap())
+				})
+
+				t.Run("event", func(t *testing.T) {
+					require.Equal(t, c.ExpectedEvent, terr.Event())
+				})
+			})
 		})
 	}
 }
@@ -801,6 +828,58 @@ func TestFormatTerminatedError(t *testing.T) {
 			t.Parallel()
 
 			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
+		})
+	}
+}
+
+func TestAsRejectedError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError            error
+		ShouldBeWrapped       bool
+		ExpectedPerformerType performance.PerformerType
+	}{
+		{
+			GivenError:      nil,
+			ShouldBeWrapped: false,
+		},
+		{
+			GivenError:            &performance.RejectedError{},
+			ShouldBeWrapped:       true,
+			ExpectedPerformerType: performance.NoPerformer,
+		},
+		{
+			GivenError:            performance.NewRejectedError(performance.HTTPPerformer),
+			ShouldBeWrapped:       true,
+			ExpectedPerformerType: performance.HTTPPerformer,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var rerr *performance.RejectedError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &rerr))
+
+				})
+
+				return
+			}
+
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &rerr)
+
+				t.Run("performer_type", func(t *testing.T) {
+					require.Equal(t, c.ExpectedPerformerType, rerr.PerformerType())
+				})
+			})
 		})
 	}
 }
