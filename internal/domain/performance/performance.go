@@ -408,6 +408,10 @@ func NewRejectedError(performerType PerformerType) error {
 	})
 }
 
+func (e *RejectedError) PerformerType() PerformerType {
+	return e.pt
+}
+
 func (e *RejectedError) Error() string {
 	if e == nil {
 		return ""
