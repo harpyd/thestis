@@ -73,3 +73,4 @@ issues:
       linters:
         - dupl
         - funlen
+        - goerr113
