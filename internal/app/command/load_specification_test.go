@@ -2,6 +2,7 @@ package command_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -142,7 +143,11 @@ func TestHandleLoadSpecification(t *testing.T) {
 			}),
 			ParseWithErr: true,
 			ShouldBeErr:  true,
-			IsErr:        specification.IsBuildSpecificationError,
+			IsErr: func(err error) bool {
+				var target *specification.BuildError
+
+				return errors.As(err, &target)
+			},
 		},
 		{
 			Name: "user_cant_see_test_campaign",

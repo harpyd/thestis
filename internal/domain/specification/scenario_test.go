@@ -14,31 +14,27 @@ func TestBuildScenarioSlugging(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name        string
-		GivenSlug   specification.Slug
-		WantThisErr bool
-		IsErr       func(err error) bool
+		Name            string
+		GivenSlug       specification.Slug
+		ShouldPanic     bool
+		WithExpectedErr error
 	}{
 		{
 			Name:        "foo.bar",
 			GivenSlug:   specification.NewScenarioSlug("foo", "bar"),
-			WantThisErr: false,
-			IsErr: func(err error) bool {
-				return specification.IsEmptySlugError(err) ||
-					specification.IsNotScenarioSlugError(err)
-			},
+			ShouldPanic: false,
 		},
 		{
-			Name:        "empty_slug",
-			GivenSlug:   specification.Slug{},
-			WantThisErr: true,
-			IsErr:       specification.IsEmptySlugError,
+			Name:            "zero_slug",
+			GivenSlug:       specification.Slug{},
+			ShouldPanic:     true,
+			WithExpectedErr: specification.ErrZeroSlug,
 		},
 		{
-			Name:        "not_scenario_slug",
-			GivenSlug:   specification.NewStorySlug("foo"),
-			WantThisErr: true,
-			IsErr:       specification.IsNotScenarioSlugError,
+			Name:            "not_scenario_slug",
+			GivenSlug:       specification.NewStorySlug("foo"),
+			ShouldPanic:     true,
+			WithExpectedErr: specification.ErrNotScenarioSlug,
 		},
 	}
 
@@ -50,15 +46,19 @@ func TestBuildScenarioSlugging(t *testing.T) {
 
 			builder := specification.NewScenarioBuilder()
 
-			scenario, err := builder.Build(c.GivenSlug)
+			var scenario specification.Scenario
 
-			if c.WantThisErr {
-				require.True(t, c.IsErr(err))
+			buildFn := func() {
+				scenario = builder.ErrlessBuild(c.GivenSlug)
+			}
+
+			if c.ShouldPanic {
+				require.PanicsWithValue(t, c.WithExpectedErr, buildFn)
 
 				return
 			}
 
-			require.False(t, c.IsErr(err))
+			require.NotPanics(t, buildFn)
 
 			require.Equal(t, c.GivenSlug, scenario.Slug())
 		})
@@ -130,7 +130,9 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 			Name:        "no_theses",
 			Prepare:     func(b *specification.ScenarioBuilder) {},
 			WantThisErr: true,
-			IsErr:       specification.IsNoScenarioThesesError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoScenarioTheses)
+			},
 		},
 		{
 			Name: "two_theses",
@@ -147,7 +149,9 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 				),
 			},
 			WantThisErr: false,
-			IsErr:       specification.IsNoScenarioThesesError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoScenarioTheses)
+			},
 		},
 		{
 			Name: "thesis_already_exists",
@@ -156,7 +160,11 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 				b.WithThesis("baz", func(b *specification.ThesisBuilder) {})
 			},
 			WantThisErr: true,
-			IsErr:       specification.IsThesisSlugAlreadyExistsError,
+			IsErr: func(err error) bool {
+				var target *specification.DuplicatedError
+
+				return errors.As(err, &target)
+			},
 		},
 	}
 
@@ -386,43 +394,4 @@ func TestGetScenarioThesisBySlug(t *testing.T) {
 
 	_, ok = scenario.Thesis("f")
 	require.False(t, ok)
-}
-
-func TestScenarioErrors(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name     string
-		Err      error
-		IsErr    func(err error) bool
-		Reversed bool
-	}{
-		{
-			Name:  "no_scenario_theses_error",
-			Err:   specification.NewNoScenarioThesesError(),
-			IsErr: specification.IsNoScenarioThesesError,
-		},
-		{
-			Name:     "NON_no_scenario_theses_error",
-			Err:      errors.New("no scenario theses"),
-			IsErr:    specification.IsNoScenarioThesesError,
-			Reversed: true,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			if c.Reversed {
-				require.False(t, c.IsErr(c.Err))
-
-				return
-			}
-
-			require.True(t, c.IsErr(c.Err))
-		})
-	}
 }

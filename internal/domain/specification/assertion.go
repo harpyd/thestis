@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"go.uber.org/multierr"
 )
 
 type (
@@ -90,10 +89,10 @@ func NewAssertionBuilder() *AssertionBuilder {
 }
 
 func (b *AssertionBuilder) Build() (Assertion, error) {
-	var err error
+	var w BuildErrorWrapper
 
 	if !b.method.IsValid() {
-		err = NewNotAllowedAssertionMethodError(b.method.String())
+		w.WithError(NewNotAllowedAssertionMethodError(b.method))
 	}
 
 	assertion := Assertion{
@@ -103,7 +102,7 @@ func (b *AssertionBuilder) Build() (Assertion, error) {
 
 	copy(assertion.asserts, b.asserts)
 
-	return assertion, NewBuildAssertionError(err)
+	return assertion, w.Wrap("assertion")
 }
 
 func (b *AssertionBuilder) ErrlessBuild() Assertion {
@@ -132,64 +131,24 @@ func (b *AssertionBuilder) WithAssert(actual string, expected interface{}) *Asse
 	return b
 }
 
-type (
-	buildAssertionError struct {
-		err error
-	}
-
-	notAllowedAssertionMethodError struct {
-		method string
-	}
-)
-
-func NewBuildAssertionError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(buildAssertionError{
-		err: err,
-	})
+type NotAllowedAssertionMethodError struct {
+	method AssertionMethod
 }
 
-func IsBuildAssertionError(err error) bool {
-	var target buildAssertionError
-
-	return errors.As(err, &target)
-}
-
-func (e buildAssertionError) Cause() error {
-	return e.err
-}
-
-func (e buildAssertionError) Unwrap() error {
-	return e.err
-}
-
-func (e buildAssertionError) NestedErrors() []error {
-	return multierr.Errors(e.err)
-}
-
-func (e buildAssertionError) CommonError() string {
-	return "assertion"
-}
-
-func (e buildAssertionError) Error() string {
-	return fmt.Sprintf("assertion: %s", e.err)
-}
-
-func NewNotAllowedAssertionMethodError(method string) error {
-	return errors.WithStack(notAllowedAssertionMethodError{
+func NewNotAllowedAssertionMethodError(method AssertionMethod) error {
+	return errors.WithStack(&NotAllowedAssertionMethodError{
 		method: method,
 	})
 }
 
-func IsNotAllowedAssertionMethodError(err error) bool {
-	var target notAllowedAssertionMethodError
-
-	return errors.As(err, &target)
+func (e *NotAllowedAssertionMethodError) Method() AssertionMethod {
+	return e.method
 }
 
-func (e notAllowedAssertionMethodError) Error() string {
+func (e *NotAllowedAssertionMethodError) Error() string {
+	if e == nil {
+		return ""
+	}
+
 	return fmt.Sprintf("assertion method `%s` not allowed", e.method)
 }

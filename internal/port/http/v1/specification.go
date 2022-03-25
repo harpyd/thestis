@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/pkg/errors"
+
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/user"
@@ -30,7 +32,9 @@ func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testC
 		return
 	}
 
-	if specification.IsBuildSpecificationError(err) {
+	var berr *specification.BuildError
+
+	if errors.As(err, &berr) {
 		httperr.UnprocessableEntity(string(ErrorSlugInvalidSpecificationSource), err, w, r)
 
 		return

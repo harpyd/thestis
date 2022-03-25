@@ -1,6 +1,7 @@
 package yaml_test
 
 import (
+	"errors"
 	"os"
 	"testing"
 
@@ -81,7 +82,7 @@ func TestParseSpecification(t *testing.T) {
 			Name:        "invalid_no_http_or_assertion_specification",
 			SpecPath:    invalidNoHTTPOrAssertionSpecPath,
 			ShouldBeErr: true,
-			IsErr:       isComplexNoThesisHTTPOrAssertionError,
+			IsErr:       isComplexUselessThesisError,
 		},
 		{
 			Name:        "invalid_no_stories_specification",
@@ -128,64 +129,65 @@ func TestParseSpecification(t *testing.T) {
 }
 
 func isComplexAssertionMethodError(err error) bool {
-	return specification.IsBuildSpecificationError(err) &&
-		specification.IsBuildStoryError(err) &&
-		specification.IsBuildScenarioError(err) &&
-		specification.IsBuildThesisError(err) &&
-		specification.IsBuildAssertionError(err) &&
-		specification.IsNotAllowedAssertionMethodError(err)
+	var (
+		berr *specification.BuildError
+		nerr *specification.NotAllowedAssertionMethodError
+	)
+
+	return errors.As(err, &berr) && errors.As(err, &nerr)
 }
 
 func isComplexHTTPRequestMethodError(err error) bool {
-	return specification.IsBuildSpecificationError(err) &&
-		specification.IsBuildStoryError(err) &&
-		specification.IsBuildScenarioError(err) &&
-		specification.IsBuildThesisError(err) &&
-		specification.IsBuildHTTPError(err) &&
-		specification.IsBuildHTTPRequestError(err) &&
-		specification.IsNotAllowedHTTPMethodError(err)
+	var (
+		berr *specification.BuildError
+		nerr *specification.NotAllowedHTTPMethodError
+	)
+
+	return errors.As(err, &berr) && errors.As(err, &nerr)
 }
 
 func isComplexKeywordError(err error) bool {
-	return specification.IsBuildSpecificationError(err) &&
-		specification.IsBuildStoryError(err) &&
-		specification.IsBuildScenarioError(err) &&
-		specification.IsBuildThesisError(err) &&
-		specification.IsNotAllowedStageError(err)
+	var (
+		berr *specification.BuildError
+		nerr *specification.NotAllowedStageError
+	)
+
+	return errors.As(err, &berr) && errors.As(err, &nerr)
 }
 
 func isComplexHTTPResponseContentTypeError(err error) bool {
-	return specification.IsBuildSpecificationError(err) &&
-		specification.IsBuildStoryError(err) &&
-		specification.IsBuildScenarioError(err) &&
-		specification.IsBuildThesisError(err) &&
-		specification.IsBuildHTTPError(err) &&
-		specification.IsBuildHTTPResponseError(err) &&
-		specification.IsNotAllowedContentTypeError(err)
+	var (
+		berr *specification.BuildError
+		nerr *specification.NotAllowedContentTypeError
+	)
+
+	return errors.As(err, &berr) && errors.As(err, &nerr)
 }
 
-func isComplexNoThesisHTTPOrAssertionError(err error) bool {
-	return specification.IsBuildSpecificationError(err) &&
-		specification.IsBuildStoryError(err) &&
-		specification.IsBuildScenarioError(err) &&
-		specification.IsBuildThesisError(err) &&
-		specification.IsNoThesisHTTPOrAssertionError(err)
+func isComplexUselessThesisError(err error) bool {
+	var berr *specification.BuildError
+
+	return errors.As(err, &berr) &&
+		errors.Is(err, specification.ErrUselessThesis)
 }
 
 func isComplexNoStoriesError(err error) bool {
-	return specification.IsBuildSpecificationError(err) &&
-		specification.IsNoSpecificationStoriesError(err)
+	var berr *specification.BuildError
+
+	return errors.As(err, &berr) &&
+		errors.Is(err, specification.ErrNoSpecificationStories)
 }
 
 func isComplexNoScenariosError(err error) bool {
-	return specification.IsBuildSpecificationError(err) &&
-		specification.IsBuildStoryError(err) &&
-		specification.IsNoStoryScenariosError(err)
+	var berr *specification.BuildError
+
+	return errors.As(err, &berr) &&
+		errors.Is(err, specification.ErrNoStoryScenarios)
 }
 
 func isComplexNoThesesError(err error) bool {
-	return specification.IsBuildSpecificationError(err) &&
-		specification.IsBuildStoryError(err) &&
-		specification.IsBuildScenarioError(err) &&
-		specification.IsNoScenarioThesesError(err)
+	var berr *specification.BuildError
+
+	return errors.As(err, &berr) &&
+		errors.Is(err, specification.ErrNoScenarioTheses)
 }

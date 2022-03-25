@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/specification"
@@ -15,31 +14,27 @@ func TestBuildThesisSlugging(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name        string
-		GivenSlug   specification.Slug
-		WantThisErr bool
-		IsErr       func(err error) bool
+		Name            string
+		GivenSlug       specification.Slug
+		ShouldPanic     bool
+		WithExpectedErr error
 	}{
 		{
 			Name:        "foo.bar.baz",
 			GivenSlug:   specification.NewThesisSlug("foo", "bar", "baz"),
-			WantThisErr: false,
-			IsErr: func(err error) bool {
-				return specification.IsEmptySlugError(err) ||
-					specification.IsNotThesisSlugError(err)
-			},
+			ShouldPanic: false,
 		},
 		{
-			Name:        "empty_slug",
-			GivenSlug:   specification.Slug{},
-			WantThisErr: true,
-			IsErr:       specification.IsEmptySlugError,
+			Name:            "zero_slug",
+			GivenSlug:       specification.Slug{},
+			ShouldPanic:     true,
+			WithExpectedErr: specification.ErrZeroSlug,
 		},
 		{
-			Name:        "not_thesis_slug",
-			GivenSlug:   specification.NewStorySlug("bao"),
-			WantThisErr: true,
-			IsErr:       specification.IsNotThesisSlugError,
+			Name:            "not_thesis_slug",
+			GivenSlug:       specification.NewStorySlug("bao"),
+			ShouldPanic:     true,
+			WithExpectedErr: specification.ErrNotThesisSlug,
 		},
 	}
 
@@ -49,15 +44,21 @@ func TestBuildThesisSlugging(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			thesis, err := specification.NewThesisBuilder().Build(c.GivenSlug)
+			builder := specification.NewThesisBuilder()
 
-			if c.WantThisErr {
-				require.True(t, c.IsErr(err))
+			var thesis specification.Thesis
+
+			buildFn := func() {
+				thesis = builder.ErrlessBuild(c.GivenSlug)
+			}
+
+			if c.ShouldPanic {
+				require.PanicsWithValue(t, c.WithExpectedErr, buildFn)
 
 				return
 			}
 
-			require.False(t, c.IsErr(err))
+			require.NotPanics(t, buildFn)
 
 			require.Equal(t, c.GivenSlug, thesis.Slug())
 		})
@@ -180,20 +181,22 @@ func TestBuildThesisWithStatement(t *testing.T) {
 				WithStatement(c.Keyword, c.Behavior).
 				Build(specification.NewThesisSlug("foo", "bar", "baz"))
 
+			var target *specification.NotAllowedStageError
+
 			if c.ShouldBeErr {
-				require.True(t, specification.IsNotAllowedStageError(err))
+				require.ErrorAs(t, err, &target)
 
 				return
 			}
 
-			require.False(t, specification.IsNotAllowedStageError(err))
+			require.False(t, errors.As(err, &target))
 
 			t.Run("stage", func(t *testing.T) {
-				assert.Equal(t, c.Keyword, thesis.Statement().Stage())
+				require.Equal(t, c.Keyword, thesis.Statement().Stage())
 			})
 
 			t.Run("behavior", func(t *testing.T) {
-				assert.Equal(t, c.Behavior, thesis.Statement().Behavior())
+				require.Equal(t, c.Behavior, thesis.Statement().Behavior())
 			})
 		})
 	}
@@ -243,12 +246,12 @@ func TestBuildThesisWithAssertion(t *testing.T) {
 			thesis, err := builder.Build(specification.NewThesisSlug("a", "b", "c"))
 
 			if c.ShouldBeErr {
-				require.True(t, specification.IsNoThesisHTTPOrAssertionError(err))
+				require.ErrorIs(t, err, specification.ErrUselessThesis)
 
 				return
 			}
 
-			require.False(t, specification.IsNoThesisHTTPOrAssertionError(err))
+			require.NotErrorIs(t, err, specification.ErrUselessThesis)
 
 			require.Equal(t, c.ExpectedAssertion, thesis.Assertion())
 		})
@@ -313,12 +316,12 @@ func TestBuildThesisWithHTTP(t *testing.T) {
 			thesis, err := builder.Build(specification.NewThesisSlug("a", "b", "c"))
 
 			if c.ShouldBeErr {
-				require.True(t, specification.IsNoThesisHTTPOrAssertionError(err))
+				require.ErrorIs(t, err, specification.ErrUselessThesis)
 
 				return
 			}
 
-			require.False(t, specification.IsNoThesisHTTPOrAssertionError(err))
+			require.NotErrorIs(t, err, specification.ErrUselessThesis)
 
 			require.Equal(t, c.ExpectedHTTP, thesis.HTTP())
 		})
@@ -410,56 +413,6 @@ func TestBeforeStage(t *testing.T) {
 			t.Parallel()
 
 			require.Equal(t, c.ExpectedBeforeStages, c.GivenStage.Before())
-		})
-	}
-}
-
-func TestThesisErrors(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name     string
-		Err      error
-		IsErr    func(err error) bool
-		Reversed bool
-	}{
-		{
-			Name:  "not_allowed_stage_error",
-			Err:   specification.NewNotAllowedStageError("zen"),
-			IsErr: specification.IsNotAllowedStageError,
-		},
-		{
-			Name:     "NON_not_allowed_stage_error",
-			Err:      errors.New("zen"),
-			IsErr:    specification.IsNotAllowedStageError,
-			Reversed: true,
-		},
-		{
-			Name:  "no_thesis_http_or_assertion_error",
-			Err:   specification.NewNoThesisHTTPOrAssertionError(),
-			IsErr: specification.IsNoThesisHTTPOrAssertionError,
-		},
-		{
-			Name:     "NON_no_thesis_http_or_assertion_error",
-			Err:      errors.New("no thesis HTTP or assertion"),
-			IsErr:    specification.IsNoThesisHTTPOrAssertionError,
-			Reversed: true,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			if c.Reversed {
-				require.False(t, c.IsErr(c.Err))
-
-				return
-			}
-
-			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }

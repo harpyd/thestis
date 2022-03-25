@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"go.uber.org/multierr"
 
 	"github.com/harpyd/thestis/pkg/deepcopy"
 )
@@ -144,16 +143,17 @@ func (ct ContentType) String() string {
 
 func (m HTTPMethod) IsValid() bool {
 	valid := map[HTTPMethod]bool{
-		NoHTTPMethod: true,
-		GET:          true,
-		POST:         true,
-		PUT:          true,
-		PATCH:        true,
-		DELETE:       true,
-		OPTIONS:      true,
-		TRACE:        true,
-		CONNECT:      true,
-		HEAD:         true,
+		UnknownHTTPMethod: false,
+		NoHTTPMethod:      true,
+		GET:               true,
+		POST:              true,
+		PUT:               true,
+		PATCH:             true,
+		DELETE:            true,
+		OPTIONS:           true,
+		TRACE:             true,
+		CONNECT:           true,
+		HEAD:              true,
 	}
 
 	return valid[m]
@@ -171,13 +171,18 @@ func NewHTTPBuilder() *HTTPBuilder {
 }
 
 func (b *HTTPBuilder) Build() (HTTP, error) {
-	request, requestErr := b.requestBuilder.Build()
-	response, responseErr := b.responseBuilder.Build()
+	var w BuildErrorWrapper
+
+	request, err := b.requestBuilder.Build()
+	w.WithError(err)
+
+	response, err := b.responseBuilder.Build()
+	w.WithError(err)
 
 	return HTTP{
 		request:  request,
 		response: response,
-	}, NewBuildHTTPError(multierr.Combine(requestErr, responseErr))
+	}, w.Wrap("HTTP")
 }
 
 func (b *HTTPBuilder) ErrlessBuild() HTTP {
@@ -210,17 +215,14 @@ func NewHTTPRequestBuilder() *HTTPRequestBuilder {
 }
 
 func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
-	var err error
+	var w BuildErrorWrapper
 
 	if !b.method.IsValid() {
-		err = NewNotAllowedHTTPMethodError(b.method.String())
+		w.WithError(NewNotAllowedHTTPMethodError(b.method))
 	}
 
 	if !b.contentType.IsValid() {
-		err = multierr.Append(
-			err,
-			NewNotAllowedContentTypeError(b.contentType.String()),
-		)
+		w.WithError(NewNotAllowedContentTypeError(b.contentType))
 	}
 
 	return HTTPRequest{
@@ -228,11 +230,11 @@ func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
 		url:         b.url,
 		contentType: b.contentType,
 		body:        copyBody(b.body),
-	}, NewBuildHTTPRequestError(err)
+	}, w.Wrap("request")
 }
 
 func copyBody(body map[string]interface{}) map[string]interface{} {
-	if len(body) == 0 || body == nil {
+	if len(body) == 0 {
 		return nil
 	}
 
@@ -281,16 +283,16 @@ func NewHTTPResponseBuilder() *HTTPResponseBuilder {
 }
 
 func (b *HTTPResponseBuilder) Build() (HTTPResponse, error) {
-	var err error
+	var w BuildErrorWrapper
 
 	if !b.allowedContentType.IsValid() {
-		err = NewNotAllowedContentTypeError(b.allowedContentType.String())
+		w.WithError(NewNotAllowedContentTypeError(b.allowedContentType))
 	}
 
 	return HTTPResponse{
 		allowedCodes:       copyAllowedCodes(b.allowedCodes),
 		allowedContentType: b.allowedContentType,
-	}, NewBuildHTTPResponseError(err)
+	}, w.Wrap("response")
 }
 
 func copyAllowedCodes(codes []int) []int {
@@ -326,164 +328,46 @@ func (b *HTTPResponseBuilder) WithAllowedContentType(
 	return b
 }
 
-type (
-	buildHTTPError struct {
-		err error
-	}
-
-	buildHTTPRequestError struct {
-		err error
-	}
-
-	buildHTTPResponseError struct {
-		err error
-	}
-
-	notAllowedContentTypeError struct {
-		contentType string
-	}
-
-	notAllowedHTTPMethodError struct {
-		method string
-	}
-)
-
-func NewBuildHTTPError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(buildHTTPError{
-		err: err,
-	})
+type NotAllowedContentTypeError struct {
+	contentType ContentType
 }
 
-func IsBuildHTTPError(err error) bool {
-	var target buildHTTPError
-
-	return errors.As(err, &target)
-}
-
-func (e buildHTTPError) Cause() error {
-	return e.err
-}
-
-func (e buildHTTPError) Unwrap() error {
-	return e.err
-}
-
-func (e buildHTTPError) NestedErrors() []error {
-	return multierr.Errors(e.err)
-}
-
-func (e buildHTTPError) CommonError() string {
-	return "HTTP"
-}
-
-func (e buildHTTPError) Error() string {
-	return fmt.Sprintf("HTTP: %s", e.err)
-}
-
-func NewBuildHTTPRequestError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(buildHTTPRequestError{
-		err: err,
-	})
-}
-
-func IsBuildHTTPRequestError(err error) bool {
-	var target buildHTTPRequestError
-
-	return errors.As(err, &target)
-}
-
-func (e buildHTTPRequestError) Cause() error {
-	return e.err
-}
-
-func (e buildHTTPRequestError) Unwrap() error {
-	return e.err
-}
-
-func (e buildHTTPRequestError) NestedErrors() []error {
-	return multierr.Errors(e.err)
-}
-
-func (e buildHTTPRequestError) CommonError() string {
-	return "request"
-}
-
-func (e buildHTTPRequestError) Error() string {
-	return fmt.Sprintf("request: %s", e.err)
-}
-
-func NewBuildHTTPResponseError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(buildHTTPResponseError{
-		err: err,
-	})
-}
-
-func IsBuildHTTPResponseError(err error) bool {
-	var target buildHTTPResponseError
-
-	return errors.As(err, &target)
-}
-
-func (e buildHTTPResponseError) Cause() error {
-	return e.err
-}
-
-func (e buildHTTPResponseError) Unwrap() error {
-	return e.err
-}
-
-func (e buildHTTPResponseError) NestedErrors() []error {
-	return multierr.Errors(e.err)
-}
-
-func (e buildHTTPResponseError) CommonError() string {
-	return "response"
-}
-
-func (e buildHTTPResponseError) Error() string {
-	return fmt.Sprintf("response: %s", e.err)
-}
-
-func NewNotAllowedContentTypeError(contentType string) error {
-	return errors.WithStack(notAllowedContentTypeError{
+func NewNotAllowedContentTypeError(contentType ContentType) error {
+	return errors.WithStack(&NotAllowedContentTypeError{
 		contentType: contentType,
 	})
 }
 
-func IsNotAllowedContentTypeError(err error) bool {
-	var target notAllowedContentTypeError
-
-	return errors.As(err, &target)
+func (e *NotAllowedContentTypeError) ContentType() ContentType {
+	return e.contentType
 }
 
-func (e notAllowedContentTypeError) Error() string {
+func (e *NotAllowedContentTypeError) Error() string {
+	if e == nil {
+		return ""
+	}
+
 	return fmt.Sprintf("content type `%s` not allowed", e.contentType)
 }
 
-func NewNotAllowedHTTPMethodError(method string) error {
-	return errors.WithStack(notAllowedHTTPMethodError{
+type NotAllowedHTTPMethodError struct {
+	method HTTPMethod
+}
+
+func NewNotAllowedHTTPMethodError(method HTTPMethod) error {
+	return errors.WithStack(&NotAllowedHTTPMethodError{
 		method: method,
 	})
 }
 
-func IsNotAllowedHTTPMethodError(err error) bool {
-	var target notAllowedHTTPMethodError
-
-	return errors.As(err, &target)
+func (e *NotAllowedHTTPMethodError) Method() HTTPMethod {
+	return e.method
 }
 
-func (e notAllowedHTTPMethodError) Error() string {
+func (e *NotAllowedHTTPMethodError) Error() string {
+	if e == nil {
+		return ""
+	}
+
 	return fmt.Sprintf("HTTP method `%s` not allowed", e.method)
 }

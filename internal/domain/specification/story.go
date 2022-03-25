@@ -1,9 +1,6 @@
 package specification
 
-import (
-	"github.com/pkg/errors"
-	"go.uber.org/multierr"
-)
+import "github.com/pkg/errors"
 
 type (
 	Story struct {
@@ -66,13 +63,15 @@ func NewStoryBuilder() *StoryBuilder {
 	return &StoryBuilder{}
 }
 
+var ErrNoStoryScenarios = errors.New("no scenarios")
+
 func (b *StoryBuilder) Build(slug Slug) (Story, error) {
-	if slug.IsZero() {
-		return Story{}, NewEmptySlugError()
+	if err := slug.ShouldBeNotZero(); err != nil {
+		panic(err)
 	}
 
 	if err := slug.ShouldBeStoryKind(); err != nil {
-		return Story{}, err
+		panic(err)
 	}
 
 	story := Story{
@@ -84,26 +83,26 @@ func (b *StoryBuilder) Build(slug Slug) (Story, error) {
 		scenarios:   make(map[string]Scenario),
 	}
 
+	var w BuildErrorWrapper
+
 	if len(b.scenarioFactories) == 0 {
-		return story, NewBuildSluggedError(NewNoStoryScenariosError(), slug)
+		w.WithError(ErrNoStoryScenarios)
 	}
 
-	var err error
-
 	for _, scenarioFry := range b.scenarioFactories {
-		scenario, scenarioErr := scenarioFry(slug)
+		scenario, err := scenarioFry(slug)
+		w.WithError(err)
+
 		if _, ok := story.scenarios[scenario.Slug().Scenario()]; ok {
-			err = multierr.Append(err, NewSlugAlreadyExistsError(scenario.Slug()))
+			w.WithError(NewDuplicatedError(scenario.Slug()))
 
 			continue
 		}
 
-		err = multierr.Append(err, scenarioErr)
-
 		story.scenarios[scenario.Slug().Scenario()] = scenario
 	}
 
-	return story, NewBuildSluggedError(err, slug)
+	return story, w.SluggedWrap(slug)
 }
 
 func (b *StoryBuilder) ErrlessBuild(slug Slug) Story {
@@ -153,14 +152,4 @@ func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder
 	})
 
 	return b
-}
-
-var errNoStoryScenarios = errors.New("no scenarios")
-
-func NewNoStoryScenariosError() error {
-	return errNoStoryScenarios
-}
-
-func IsNoStoryScenariosError(err error) bool {
-	return errors.Is(err, errNoStoryScenarios)
 }
