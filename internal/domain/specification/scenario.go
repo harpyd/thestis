@@ -1,9 +1,6 @@
 package specification
 
-import (
-	"github.com/pkg/errors"
-	"go.uber.org/multierr"
-)
+import "github.com/pkg/errors"
 
 type (
 	Scenario struct {
@@ -65,13 +62,15 @@ func NewScenarioBuilder() *ScenarioBuilder {
 	return &ScenarioBuilder{}
 }
 
+var ErrNoScenarioTheses = errors.New("no theses")
+
 func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
-	if slug.IsZero() {
-		return Scenario{}, NewEmptySlugError()
+	if err := slug.ShouldBeNotZero(); err != nil {
+		panic(err)
 	}
 
 	if err := slug.ShouldBeScenarioKind(); err != nil {
-		return Scenario{}, err
+		panic(err)
 	}
 
 	scenario := Scenario{
@@ -80,26 +79,26 @@ func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
 		theses:      make(map[string]Thesis),
 	}
 
+	var w BuildErrorWrapper
+
 	if len(b.thesisFactories) == 0 {
-		return scenario, NewBuildSluggedError(NewNoScenarioThesesError(), slug)
+		w.WithError(ErrNoScenarioTheses)
 	}
 
-	var err error
-
 	for _, thesisFry := range b.thesisFactories {
-		thesis, thesisErr := thesisFry(slug)
+		thesis, err := thesisFry(slug)
+		w.WithError(err)
+
 		if _, ok := scenario.theses[thesis.Slug().Thesis()]; ok {
-			err = multierr.Append(err, NewSlugAlreadyExistsError(thesis.Slug()))
+			w.WithError(NewDuplicatedError(thesis.Slug()))
 
 			continue
 		}
 
-		err = multierr.Append(err, thesisErr)
-
 		scenario.theses[thesis.Slug().Thesis()] = thesis
 	}
 
-	return scenario, NewBuildSluggedError(err, slug)
+	return scenario, w.SluggedWrap(slug)
 }
 
 func (b *ScenarioBuilder) ErrlessBuild(slug Slug) Scenario {
@@ -128,14 +127,4 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 	})
 
 	return b
-}
-
-var errNoScenarioTheses = errors.New("no theses")
-
-func NewNoScenarioThesesError() error {
-	return errNoScenarioTheses
-}
-
-func IsNoScenarioThesesError(err error) bool {
-	return errors.Is(err, errNoScenarioTheses)
 }

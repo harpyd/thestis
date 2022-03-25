@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
-	"go.uber.org/multierr"
 )
 
 type (
@@ -108,32 +107,31 @@ func NewThesisBuilder() *ThesisBuilder {
 	}
 }
 
+var ErrUselessThesis = errors.New("useless thesis")
+
 func (b *ThesisBuilder) Build(slug Slug) (Thesis, error) {
-	if slug.IsZero() {
-		return Thesis{}, NewEmptySlugError()
+	if err := slug.ShouldBeNotZero(); err != nil {
+		panic(err)
 	}
 
 	if err := slug.ShouldBeThesisKind(); err != nil {
-		return Thesis{}, err
+		panic(err)
 	}
 
-	http, buildErr := b.httpBuilder.Build()
+	var w BuildErrorWrapper
+
+	http, err := b.httpBuilder.Build()
+	w.WithError(err)
 
 	assertion, err := b.assertionBuilder.Build()
-	buildErr = multierr.Append(buildErr, err)
+	w.WithError(err)
 
-	if buildErr == nil && http.IsZero() && assertion.IsZero() {
-		buildErr = multierr.Append(
-			buildErr,
-			NewNoThesisHTTPOrAssertionError(),
-		)
+	if http.IsZero() && assertion.IsZero() {
+		w.WithError(ErrUselessThesis)
 	}
 
 	if !b.stage.IsValid() {
-		buildErr = multierr.Append(
-			buildErr,
-			NewNotAllowedStageError(b.stage.String()),
-		)
+		w.WithError(NewNotAllowedStageError(b.stage))
 	}
 
 	thesis := Thesis{
@@ -154,7 +152,7 @@ func (b *ThesisBuilder) Build(slug Slug) (Thesis, error) {
 		)
 	}
 
-	return thesis, NewBuildSluggedError(buildErr, slug)
+	return thesis, w.SluggedWrap(slug)
 }
 
 func (b *ThesisBuilder) ErrlessBuild(slug Slug) Thesis {
@@ -198,36 +196,24 @@ func (b *ThesisBuilder) WithHTTP(buildFn func(b *HTTPBuilder)) *ThesisBuilder {
 	return b
 }
 
-type notAllowedStageError struct {
-	keyword string
+type NotAllowedStageError struct {
+	stage Stage
 }
 
-func NewNotAllowedStageError(stage string) error {
-	return errors.WithStack(notAllowedStageError{
-		keyword: stage,
+func NewNotAllowedStageError(stage Stage) error {
+	return errors.WithStack(&NotAllowedStageError{
+		stage: stage,
 	})
 }
 
-func IsNotAllowedStageError(err error) bool {
-	var target notAllowedStageError
-
-	return errors.As(err, &target)
+func (e *NotAllowedStageError) Stage() Stage {
+	return e.stage
 }
 
-func (e notAllowedStageError) Error() string {
-	if e.keyword == "" {
-		return "no stage"
+func (e *NotAllowedStageError) Error() string {
+	if e == nil {
+		return ""
 	}
 
-	return fmt.Sprintf("stage `%s` not allowed", e.keyword)
-}
-
-var errNoThesisHTTPOrAssertion = errors.New("no HTTP or assertion")
-
-func NewNoThesisHTTPOrAssertionError() error {
-	return errNoThesisHTTPOrAssertion
-}
-
-func IsNoThesisHTTPOrAssertionError(err error) bool {
-	return errors.Is(err, errNoThesisHTTPOrAssertion)
+	return fmt.Sprintf("stage `%s` not allowed", e.stage)
 }

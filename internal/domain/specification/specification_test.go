@@ -308,7 +308,9 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 			Name:        "no_stories",
 			Prepare:     func(b *specification.Builder) {},
 			WantThisErr: true,
-			IsErr:       specification.IsNoSpecificationStoriesError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoSpecificationStories)
+			},
 		},
 		{
 			Name: "three_stories",
@@ -326,7 +328,9 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 					ErrlessBuild(specification.NewStorySlug("baz")),
 			},
 			WantThisErr: false,
-			IsErr:       specification.IsNoSpecificationStoriesError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoSpecificationStories)
+			},
 		},
 		{
 			Name: "story_already_exists",
@@ -335,7 +339,11 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 				b.WithStory("oops", func(b *specification.StoryBuilder) {})
 			},
 			WantThisErr: true,
-			IsErr:       specification.IsStorySlugAlreadyExistsError,
+			IsErr: func(err error) bool {
+				var target *specification.DuplicatedError
+
+				return errors.As(err, &target)
+			},
 		},
 		{
 			Name: "no_story_scenarios",
@@ -343,7 +351,9 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 				b.WithStory("foo", func(b *specification.StoryBuilder) {})
 			},
 			WantThisErr: true,
-			IsErr:       specification.IsNoStoryScenariosError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoStoryScenarios)
+			},
 		},
 		{
 			Name: "stories_having_scenarios",
@@ -370,7 +380,9 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 					ErrlessBuild(specification.NewScenarioSlug("baz", "bad")),
 			},
 			WantThisErr: false,
-			IsErr:       specification.IsNoStoryScenariosError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoStoryScenarios)
+			},
 		},
 		{
 			Name: "not_scenario_theses",
@@ -380,7 +392,9 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 				})
 			},
 			WantThisErr: true,
-			IsErr:       specification.IsNoScenarioThesesError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoScenarioTheses)
+			},
 		},
 		{
 			Name: "stories_having_scenarios_having_theses",
@@ -435,7 +449,9 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 					ErrlessBuild(specification.NewThesisSlug("qyz", "qyp", "dyq")),
 			},
 			WantThisErr: false,
-			IsErr:       specification.IsNoScenarioThesesError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoScenarioTheses)
+			},
 		},
 	}
 
@@ -520,7 +536,7 @@ func TestGetSpecificationStoryBySlug(t *testing.T) {
 
 var errTest = errors.New("foo")
 
-func TestIsWrappedInFailedBuildError(t *testing.T) {
+func TestIsWrappedInBuildError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -532,11 +548,15 @@ func TestIsWrappedInFailedBuildError(t *testing.T) {
 			ExpectedIs: false,
 		},
 		{
-			GivenError: specification.WrapErrors("foo", errors.New("bar")),
+			GivenError: (&specification.BuildErrorWrapper{}).
+				WithError(errors.New("bar")).
+				Wrap("foo"),
 			ExpectedIs: false,
 		},
 		{
-			GivenError: specification.WrapErrors("foo", errTest),
+			GivenError: (&specification.BuildErrorWrapper{}).
+				WithError(errTest).
+				Wrap("foo"),
 			ExpectedIs: true,
 		},
 	}
@@ -552,7 +572,7 @@ func TestIsWrappedInFailedBuildError(t *testing.T) {
 	}
 }
 
-func TestAsWrappedInFailedBuildError(t *testing.T) {
+func TestAsWrappedInBuildError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -564,11 +584,15 @@ func TestAsWrappedInFailedBuildError(t *testing.T) {
 			ExpectedAs: false,
 		},
 		{
-			GivenError: specification.WrapErrors("bar", errors.New("baz")),
+			GivenError: (&specification.BuildErrorWrapper{}).
+				WithError(errors.New("baz")).
+				Wrap("bar"),
 			ExpectedAs: false,
 		},
 		{
-			GivenError: specification.WrapErrors("bad", testError{}),
+			GivenError: (&specification.BuildErrorWrapper{}).
+				WithError(testError{}).
+				Wrap("bar"),
 			ExpectedAs: true,
 		},
 	}
@@ -586,45 +610,36 @@ func TestAsWrappedInFailedBuildError(t *testing.T) {
 	}
 }
 
-func TestAsFailedBuildError(t *testing.T) {
+func TestAsBuildError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		GivenError      error
-		ShouldBeWrapped bool
+		ShouldBeNil     bool
 		ExpectedMessage string
 		ExpectedErrors  []error
 	}{
 		{
-			GivenError:      nil,
-			ShouldBeWrapped: false,
+			GivenError: (&specification.BuildErrorWrapper{}).
+				WithError(nil).
+				WithError(nil).
+				Wrap("bob"),
+			ShouldBeNil: true,
 		},
 		{
-			GivenError: specification.WrapErrors(
-				"bob",
-				nil,
-				nil,
-			),
-			ShouldBeWrapped: false,
-		},
-		{
-			GivenError: specification.WrapErrors(
-				"foo",
-				errors.New("bar"),
-			),
-			ShouldBeWrapped: true,
+			GivenError: (&specification.BuildErrorWrapper{}).
+				WithError(errors.New("bar")).
+				Wrap("foo"),
 			ExpectedMessage: "foo",
 			ExpectedErrors: []error{
 				errors.New("bar"),
 			},
 		},
 		{
-			GivenError: specification.WrapErrorsWithSlug(
-				specification.NewScenarioSlug("a", "b"),
-				errors.New("foo"),
-				errors.New("bar"),
-			),
-			ShouldBeWrapped: true,
+			GivenError: (&specification.BuildErrorWrapper{}).
+				WithError(errors.New("foo")).
+				WithError(errors.New("bar")).
+				SluggedWrap(specification.NewScenarioSlug("a", "b")),
 			ExpectedMessage: "a.b",
 			ExpectedErrors: []error{
 				errors.New("foo"),
@@ -632,13 +647,11 @@ func TestAsFailedBuildError(t *testing.T) {
 			},
 		},
 		{
-			GivenError: specification.WrapErrorsWithSlug(
-				specification.AnyThesisSlug(),
-				errors.New("foo"),
-				nil,
-				errors.New("bar"),
-			),
-			ShouldBeWrapped: true,
+			GivenError: (&specification.BuildErrorWrapper{}).
+				WithError(errors.New("foo")).
+				WithError(nil).
+				WithError(errors.New("bar")).
+				SluggedWrap(specification.AnyThesisSlug()),
 			ExpectedMessage: "*.*.*",
 			ExpectedErrors: []error{
 				errors.New("foo"),
@@ -653,11 +666,11 @@ func TestAsFailedBuildError(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var target *specification.FailedBuildError
+			var target *specification.BuildError
 
-			if !c.ShouldBeWrapped {
-				t.Run("not", func(t *testing.T) {
-					require.False(t, errors.As(c.GivenError, &target))
+			if c.ShouldBeNil {
+				t.Run("nil", func(t *testing.T) {
+					require.Nil(t, c.GivenError)
 				})
 
 				return
@@ -678,7 +691,7 @@ func TestAsFailedBuildError(t *testing.T) {
 	}
 }
 
-func TestFormatFailedBuildError(t *testing.T) {
+func TestFormatBuildError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -686,48 +699,49 @@ func TestFormatFailedBuildError(t *testing.T) {
 		ExpectedErrorString string
 	}{
 		{
-			GivenError: specification.WrapErrors(
-				"foo",
-				errors.New("bar"),
-				errors.New("baz"),
-			),
+			GivenError: (&specification.BuildErrorWrapper{}).
+				WithError(errors.New("bar")).
+				WithError(errors.New("baz")).
+				Wrap("foo"),
 			ExpectedErrorString: "foo: [bar; baz]",
 		},
 		{
-			GivenError: specification.WrapErrorsWithSlug(
-				specification.NewThesisSlug("a", "b", "c"),
-				errors.New("ba\nbaba"),
-				errors.New("foo"),
-			),
+			GivenError: (&specification.BuildErrorWrapper{}).
+				WithError(errors.New("ba\nbaba")).
+				WithError(errors.New("foo")).
+				SluggedWrap(specification.NewThesisSlug("a", "b", "c")),
 			ExpectedErrorString: "a.b.c: [ba\nbaba; foo]",
 		},
 		{
-			GivenError: specification.WrapErrors("foo",
-				specification.WrapErrors(
-					"bar",
-					errors.New("doo"),
-					errors.New("qoo"),
-				),
-			),
+			GivenError: (&specification.BuildErrorWrapper{}).
+				WithError(
+					(&specification.BuildErrorWrapper{}).
+						WithError(errors.New("doo")).
+						WithError(errors.New("qoo")).
+						Wrap("bar"),
+				).
+				Wrap("foo"),
 			ExpectedErrorString: "foo: [bar: [doo; qoo]]",
 		},
 		{
-			GivenError: specification.WrapErrors(
-				"a",
-				specification.WrapErrors(
-					"b",
-					errors.New("c"),
-					errors.New("d"),
-				),
-				specification.WrapErrors(
-					"e",
-					errors.New("f"),
-					specification.WrapErrors(
-						"g",
-						errors.New("h"),
-					),
-				),
-			),
+			GivenError: (&specification.BuildErrorWrapper{}).
+				WithError(
+					(&specification.BuildErrorWrapper{}).
+						WithError(errors.New("c")).
+						WithError(errors.New("d")).
+						Wrap("b"),
+				).
+				WithError(
+					(&specification.BuildErrorWrapper{}).
+						WithError(errors.New("f")).
+						WithError(
+							(&specification.BuildErrorWrapper{}).
+								WithError(errors.New("h")).
+								Wrap("g"),
+						).
+						Wrap("e"),
+				).
+				Wrap("a"),
 			ExpectedErrorString: "a: [b: [c; d]; e: [f; g: [h]]]",
 		},
 	}
@@ -739,56 +753,6 @@ func TestFormatFailedBuildError(t *testing.T) {
 			t.Parallel()
 
 			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
-		})
-	}
-}
-
-func TestSpecificationErrors(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name     string
-		Err      error
-		IsErr    func(err error) bool
-		Reversed bool
-	}{
-		{
-			Name:  "build_specification_error",
-			Err:   specification.NewBuildSpecificationError(errors.New("badaboom")),
-			IsErr: specification.IsBuildSpecificationError,
-		},
-		{
-			Name:     "NON_build_specification_error",
-			Err:      errors.New("badaboom"),
-			IsErr:    specification.IsBuildSpecificationError,
-			Reversed: true,
-		},
-		{
-			Name:  "no_specification_stories_error",
-			Err:   specification.NewNoSpecificationStoriesError(),
-			IsErr: specification.IsNoSpecificationStoriesError,
-		},
-		{
-			Name:     "NON_no_specification_stories_error",
-			Err:      errors.New("another"),
-			IsErr:    specification.IsNoSpecificationStoriesError,
-			Reversed: true,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			if c.Reversed {
-				require.False(t, c.IsErr(c.Err))
-
-				return
-			}
-
-			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }

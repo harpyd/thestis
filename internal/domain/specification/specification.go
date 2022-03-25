@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"go.uber.org/multierr"
 )
 
 type (
@@ -136,6 +135,8 @@ func NewBuilder() *Builder {
 	return &Builder{}
 }
 
+var ErrNoSpecificationStories = errors.New("no stories")
+
 func (b *Builder) Build() (*Specification, error) {
 	spec := &Specification{
 		id:             b.id,
@@ -148,26 +149,26 @@ func (b *Builder) Build() (*Specification, error) {
 		stories:        make(map[string]Story, len(b.storyFactories)),
 	}
 
+	var w BuildErrorWrapper
+
 	if len(b.storyFactories) == 0 {
-		return spec, NewBuildSpecificationError(NewNoSpecificationStoriesError())
+		w.WithError(ErrNoSpecificationStories)
 	}
 
-	var err error
-
 	for _, storyFry := range b.storyFactories {
-		story, storyErr := storyFry()
+		story, err := storyFry()
+		w.WithError(err)
+
 		if _, ok := spec.stories[story.Slug().Story()]; ok {
-			err = multierr.Append(err, NewSlugAlreadyExistsError(story.Slug()))
+			w.WithError(NewDuplicatedError(story.Slug()))
 
 			continue
 		}
 
-		err = multierr.Append(err, storyErr)
-
 		spec.stories[story.Slug().Story()] = story
 	}
 
-	return spec, NewBuildSpecificationError(err)
+	return spec, w.Wrap("specification")
 }
 
 func (b *Builder) ErrlessBuild() *Specification {
@@ -236,39 +237,45 @@ func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder
 	return b
 }
 
-type FailedBuildError struct {
+type BuildErrorWrapper struct {
+	errs []error
+}
+
+func (w *BuildErrorWrapper) WithError(err error) *BuildErrorWrapper {
+	if err == nil {
+		return w
+	}
+
+	w.errs = append(w.errs, err)
+
+	return w
+}
+
+func (w *BuildErrorWrapper) Wrap(msg string) error {
+	if len(w.errs) == 0 {
+		return nil
+	}
+
+	return errors.WithStack(&BuildError{
+		msg:  msg,
+		errs: w.errs,
+	})
+}
+
+func (w *BuildErrorWrapper) SluggedWrap(slug Slug) error {
+	return w.Wrap(slug.String())
+}
+
+type BuildError struct {
 	msg  string
 	errs []error
 }
 
-func WrapErrors(msg string, errs ...error) error {
-	nonNilErrs := make([]error, 0, len(errs))
-
-	for _, err := range errs {
-		if err != nil {
-			nonNilErrs = append(nonNilErrs, err)
-		}
-	}
-
-	if len(nonNilErrs) == 0 {
-		return nil
-	}
-
-	return errors.WithStack(&FailedBuildError{
-		msg:  msg,
-		errs: nonNilErrs,
-	})
-}
-
-func WrapErrorsWithSlug(slug Slug, errs ...error) error {
-	return WrapErrors(slug.String(), errs...)
-}
-
-func (e *FailedBuildError) Message() string {
+func (e *BuildError) Message() string {
 	return e.msg
 }
 
-func (e *FailedBuildError) Errors() []error {
+func (e *BuildError) Errors() []error {
 	errs := make([]error, len(e.errs))
 	copy(errs, e.errs)
 
@@ -282,7 +289,7 @@ const (
 	nestedErrorsSeparator   = "; "
 )
 
-func (e *FailedBuildError) Error() string {
+func (e *BuildError) Error() string {
 	if e == nil {
 		return ""
 	}
@@ -305,7 +312,7 @@ func (e *FailedBuildError) Error() string {
 	return b.String()
 }
 
-func (e *FailedBuildError) Is(target error) bool {
+func (e *BuildError) Is(target error) bool {
 	for _, err := range e.errs {
 		if errors.Is(err, target) {
 			return true
@@ -315,7 +322,7 @@ func (e *FailedBuildError) Is(target error) bool {
 	return false
 }
 
-func (e *FailedBuildError) As(target interface{}) bool {
+func (e *BuildError) As(target interface{}) bool {
 	for _, err := range e.errs {
 		if errors.As(err, target) {
 			return true
@@ -323,54 +330,4 @@ func (e *FailedBuildError) As(target interface{}) bool {
 	}
 
 	return false
-}
-
-type buildSpecificationError struct {
-	err error
-}
-
-func NewBuildSpecificationError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	return errors.WithStack(buildSpecificationError{
-		err: err,
-	})
-}
-
-func IsBuildSpecificationError(err error) bool {
-	var target buildSpecificationError
-
-	return errors.As(err, &target)
-}
-
-func (e buildSpecificationError) Cause() error {
-	return e.err
-}
-
-func (e buildSpecificationError) Unwrap() error {
-	return e.err
-}
-
-func (e buildSpecificationError) NestedErrors() []error {
-	return multierr.Errors(e.err)
-}
-
-func (e buildSpecificationError) CommonError() string {
-	return "specification"
-}
-
-func (e buildSpecificationError) Error() string {
-	return fmt.Sprintf("specification: %s", e.err)
-}
-
-var errNoSpecificationStories = errors.New("no stories")
-
-func NewNoSpecificationStoriesError() error {
-	return errNoSpecificationStories
-}
-
-func IsNoSpecificationStoriesError(err error) bool {
-	return errors.Is(err, errNoSpecificationStories)
 }

@@ -1,7 +1,6 @@
 package specification_test
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
@@ -57,7 +56,9 @@ func TestBuildAssertionWithMethod(t *testing.T) {
 			assertion, err := builder.Build()
 
 			if c.ShouldBeErr {
-				require.True(t, specification.IsNotAllowedAssertionMethodError(err))
+				var target *specification.NotAllowedAssertionMethodError
+
+				require.ErrorAs(t, err, &target)
 
 				return
 			}
@@ -119,56 +120,6 @@ func TestBuildAssertionWithAsserts(t *testing.T) {
 			asserts := assertion.Asserts()
 
 			require.ElementsMatch(t, c.ExpectedAsserts, asserts)
-		})
-	}
-}
-
-func TestAssertionErrors(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name     string
-		Err      error
-		IsErr    func(err error) bool
-		Reversed bool
-	}{
-		{
-			Name:  "build_assertion_error",
-			Err:   specification.NewBuildAssertionError(errors.New("foo")),
-			IsErr: specification.IsBuildAssertionError,
-		},
-		{
-			Name:     "NON_build_assertion_error",
-			Err:      errors.New("foo"),
-			IsErr:    specification.IsBuildAssertionError,
-			Reversed: true,
-		},
-		{
-			Name:  "not_allowed_assertion_method_error",
-			Err:   specification.NewNotAllowedAssertionMethodError("SSD"),
-			IsErr: specification.IsNotAllowedAssertionMethodError,
-		},
-		{
-			Name:     "NON_not_allowed_assertion_method_error",
-			Err:      errors.New("SSD"),
-			IsErr:    specification.IsNotAllowedAssertionMethodError,
-			Reversed: true,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			if c.Reversed {
-				require.False(t, c.IsErr(c.Err))
-
-				return
-			}
-
-			require.True(t, c.IsErr(c.Err))
 		})
 	}
 }

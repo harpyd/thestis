@@ -14,31 +14,27 @@ func TestBuildStorySlugging(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name        string
-		GivenSlug   specification.Slug
-		WantThisErr bool
-		IsErr       func(err error) bool
+		Name            string
+		GivenSlug       specification.Slug
+		ShouldPanic     bool
+		WithExpectedErr error
 	}{
 		{
 			Name:        "foo",
 			GivenSlug:   specification.NewStorySlug("foo"),
-			WantThisErr: false,
-			IsErr: func(err error) bool {
-				return specification.IsEmptySlugError(err) ||
-					specification.IsNotStorySlugError(err)
-			},
+			ShouldPanic: false,
 		},
 		{
-			Name:        "empty_slug",
-			GivenSlug:   specification.Slug{},
-			WantThisErr: true,
-			IsErr:       specification.IsEmptySlugError,
+			Name:            "zero_slug",
+			GivenSlug:       specification.Slug{},
+			ShouldPanic:     true,
+			WithExpectedErr: specification.ErrZeroSlug,
 		},
 		{
-			Name:        "not_story_slug",
-			GivenSlug:   specification.NewScenarioSlug("foo", "bar"),
-			WantThisErr: true,
-			IsErr:       specification.IsNotStorySlugError,
+			Name:            "not_story_slug",
+			GivenSlug:       specification.NewScenarioSlug("foo", "bar"),
+			ShouldPanic:     true,
+			WithExpectedErr: specification.ErrNotStorySlug,
 		},
 	}
 
@@ -50,15 +46,19 @@ func TestBuildStorySlugging(t *testing.T) {
 
 			builder := specification.NewStoryBuilder()
 
-			story, err := builder.Build(c.GivenSlug)
+			var story specification.Story
 
-			if c.WantThisErr {
-				require.True(t, c.IsErr(err))
+			buildFn := func() {
+				story = builder.ErrlessBuild(c.GivenSlug)
+			}
+
+			if c.ShouldPanic {
+				require.PanicsWithValue(t, c.WithExpectedErr, buildFn)
 
 				return
 			}
 
-			require.False(t, c.IsErr(err))
+			require.NotPanics(t, buildFn)
 
 			require.Equal(t, c.GivenSlug, story.Slug())
 		})
@@ -259,7 +259,9 @@ func TestBuildStoryWithScenarios(t *testing.T) {
 			Name:        "no_scenarios",
 			Prepare:     func(b *specification.StoryBuilder) {},
 			WantThisErr: true,
-			IsErr:       specification.IsNoStoryScenariosError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoStoryScenarios)
+			},
 		},
 		{
 			Name: "two_scenarios",
@@ -274,7 +276,9 @@ func TestBuildStoryWithScenarios(t *testing.T) {
 					ErrlessBuild(specification.NewScenarioSlug("foo", "baz")),
 			},
 			WantThisErr: false,
-			IsErr:       specification.IsNoStoryScenariosError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoStoryScenarios)
+			},
 		},
 		{
 			Name: "scenario_already_exists",
@@ -283,7 +287,11 @@ func TestBuildStoryWithScenarios(t *testing.T) {
 				b.WithScenario("wow", func(b *specification.ScenarioBuilder) {})
 			},
 			WantThisErr: true,
-			IsErr:       specification.IsScenarioSlugAlreadyExistsError,
+			IsErr: func(err error) bool {
+				var target *specification.DuplicatedError
+
+				return errors.As(err, &target)
+			},
 		},
 		{
 			Name: "no_scenario_theses",
@@ -291,7 +299,9 @@ func TestBuildStoryWithScenarios(t *testing.T) {
 				b.WithScenario("no", func(b *specification.ScenarioBuilder) {})
 			},
 			WantThisErr: true,
-			IsErr:       specification.IsNoScenarioThesesError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoScenarioTheses)
+			},
 		},
 	}
 
@@ -353,43 +363,4 @@ func TestGetStoryScenarioBySlug(t *testing.T) {
 
 	_, ok = story.Scenario("bak")
 	require.False(t, ok)
-}
-
-func TestStoryErrors(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Name     string
-		Err      error
-		IsErr    func(err error) bool
-		Reversed bool
-	}{
-		{
-			Name:  "no_story_scenarios_error",
-			Err:   specification.NewNoStoryScenariosError(),
-			IsErr: specification.IsNoStoryScenariosError,
-		},
-		{
-			Name:     "NON_no_story_scenarios_error",
-			Err:      errors.New("no story scenarios"),
-			IsErr:    specification.IsNoStoryScenariosError,
-			Reversed: true,
-		},
-	}
-
-	for _, c := range testCases {
-		c := c
-
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
-
-			if c.Reversed {
-				require.False(t, c.IsErr(c.Err))
-
-				return
-			}
-
-			require.True(t, c.IsErr(c.Err))
-		})
-	}
 }
