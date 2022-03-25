@@ -44,12 +44,12 @@ func TestBuildThesisSlugging(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewThesisBuilder()
+			var b specification.ThesisBuilder
 
 			var thesis specification.Thesis
 
 			buildFn := func() {
-				thesis = builder.ErrlessBuild(c.GivenSlug)
+				thesis = b.ErrlessBuild(c.GivenSlug)
 			}
 
 			if c.ShouldPanic {
@@ -72,11 +72,11 @@ func errlessBuildThesis(
 ) specification.Thesis {
 	t.Helper()
 
-	builder := specification.NewThesisBuilder()
+	var b specification.ThesisBuilder
 
-	prepare(builder)
+	prepare(&b)
 
-	return builder.ErrlessBuild(slug)
+	return b.ErrlessBuild(slug)
 }
 
 func TestBuildThesisWithDependencies(t *testing.T) {
@@ -177,7 +177,9 @@ func TestBuildThesisWithStatement(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			thesis, err := specification.NewThesisBuilder().
+			var b specification.ThesisBuilder
+
+			thesis, err := b.
 				WithStatement(c.Keyword, c.Behavior).
 				Build(specification.NewThesisSlug("foo", "bar", "baz"))
 
@@ -226,7 +228,7 @@ func TestBuildThesisWithAssertion(t *testing.T) {
 					b.WithMethod("JSONPATH")
 				})
 			},
-			ExpectedAssertion: specification.NewAssertionBuilder().
+			ExpectedAssertion: (&specification.AssertionBuilder{}).
 				WithMethod("JSONPATH").
 				ErrlessBuild(),
 			ShouldBeErr: false,
@@ -239,11 +241,11 @@ func TestBuildThesisWithAssertion(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewThesisBuilder()
+			var b specification.ThesisBuilder
 
-			c.Prepare(builder)
+			c.Prepare(&b)
 
-			thesis, err := builder.Build(specification.NewThesisSlug("a", "b", "c"))
+			thesis, err := b.Build(specification.NewThesisSlug("a", "b", "c"))
 
 			if c.ShouldBeErr {
 				require.ErrorIs(t, err, specification.ErrUselessThesis)
@@ -289,7 +291,7 @@ func TestBuildThesisWithHTTP(t *testing.T) {
 					})
 				})
 			},
-			ExpectedHTTP: specification.NewHTTPBuilder().
+			ExpectedHTTP: (&specification.HTTPBuilder{}).
 				WithRequest(func(b *specification.HTTPRequestBuilder) {
 					b.WithMethod("GET")
 					b.WithURL("https://some-api/v1/endpoint")
@@ -309,11 +311,11 @@ func TestBuildThesisWithHTTP(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewThesisBuilder()
+			var b specification.ThesisBuilder
 
-			c.Prepare(builder)
+			c.Prepare(&b)
 
-			thesis, err := builder.Build(specification.NewThesisSlug("a", "b", "c"))
+			thesis, err := b.Build(specification.NewThesisSlug("a", "b", "c"))
 
 			if c.ShouldBeErr {
 				require.ErrorIs(t, err, specification.ErrUselessThesis)

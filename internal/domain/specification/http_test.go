@@ -15,11 +15,11 @@ func buildHTTP(
 ) specification.HTTP {
 	t.Helper()
 
-	builder := specification.NewHTTPBuilder()
+	var b specification.HTTPBuilder
 
-	prepare(builder)
+	prepare(&b)
 
-	http, err := builder.Build()
+	http, err := b.Build()
 	require.NoError(t, err)
 
 	return http
@@ -42,7 +42,7 @@ func TestBuildHTTPWithRequest(t *testing.T) {
 					b.WithMethod("GET")
 				})
 			},
-			ExpectedRequest: specification.NewHTTPRequestBuilder().
+			ExpectedRequest: (&specification.HTTPRequestBuilder{}).
 				WithMethod("GET").
 				ErrlessBuild(),
 		},
@@ -77,7 +77,7 @@ func TestBuildHTTPWithResponse(t *testing.T) {
 					b.WithAllowedContentType("application/json")
 				})
 			},
-			ExpectedResponse: specification.NewHTTPResponseBuilder().
+			ExpectedResponse: (&specification.HTTPResponseBuilder{}).
 				WithAllowedCodes([]int{200}).
 				WithAllowedContentType("application/json").
 				ErrlessBuild(),
@@ -101,11 +101,11 @@ func buildHTTPRequest(
 ) specification.HTTPRequest {
 	t.Helper()
 
-	builder := specification.NewHTTPRequestBuilder()
+	var b specification.HTTPRequestBuilder
 
-	prepare(builder)
+	prepare(&b)
 
-	req, err := builder.Build()
+	req, err := b.Build()
 	require.NoError(t, err)
 
 	return req
@@ -263,10 +263,11 @@ func TestBuildHTTPRequestWithMethod(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewHTTPRequestBuilder()
-			builder.WithMethod(c.Method)
+			var b specification.HTTPRequestBuilder
 
-			request, err := builder.Build()
+			b.WithMethod(c.Method)
+
+			request, err := b.Build()
 
 			if c.ShouldBeErr {
 				var target *specification.NotAllowedHTTPMethodError
@@ -319,10 +320,11 @@ func TestBuildHTTPRequestWithContentType(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewHTTPRequestBuilder()
-			builder.WithContentType(c.ContentType)
+			var b specification.HTTPRequestBuilder
 
-			request, err := builder.Build()
+			b.WithContentType(c.ContentType)
+
+			request, err := b.Build()
 
 			if c.ShouldBeErr {
 				var target *specification.NotAllowedContentTypeError
@@ -409,11 +411,11 @@ func buildHTTPResponse(
 ) specification.HTTPResponse {
 	t.Helper()
 
-	builder := specification.NewHTTPResponseBuilder()
+	var b specification.HTTPResponseBuilder
 
-	prepare(builder)
+	prepare(&b)
 
-	resp, err := builder.Build()
+	resp, err := b.Build()
 	require.NoError(t, err)
 
 	return resp
@@ -491,10 +493,11 @@ func TestBuildHTTPResponseWithAllowedContentType(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewHTTPResponseBuilder()
-			builder.WithAllowedContentType(c.ContentType)
+			var b specification.HTTPResponseBuilder
 
-			request, err := builder.Build()
+			b.WithAllowedContentType(c.ContentType)
+
+			request, err := b.Build()
 
 			if c.ShouldBeErr {
 				var target *specification.NotAllowedContentTypeError

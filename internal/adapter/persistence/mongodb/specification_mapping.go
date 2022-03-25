@@ -189,7 +189,9 @@ func marshalToAssertDocuments(asserts []specification.Assert) []assertDocument {
 }
 
 func (d specificationDocument) unmarshalToSpecification() *specification.Specification {
-	builder := specification.NewBuilder().
+	var b specification.Builder
+
+	b.
 		WithID(d.ID).
 		WithOwnerID(d.OwnerID).
 		WithTestCampaignID(d.TestCampaignID).
@@ -199,10 +201,10 @@ func (d specificationDocument) unmarshalToSpecification() *specification.Specifi
 		WithDescription(d.Description)
 
 	for _, story := range d.Stories {
-		builder.WithStory(story.Slug, story.unmarshalToStoryBuildFn())
+		b.WithStory(story.Slug, story.unmarshalToStoryBuildFn())
 	}
 
-	return builder.ErrlessBuild()
+	return b.ErrlessBuild()
 }
 
 func (d storyDocument) unmarshalToStoryBuildFn() func(builder *specification.StoryBuilder) {

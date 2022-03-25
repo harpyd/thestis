@@ -59,7 +59,7 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 			GivenPerformanceParams: performance.Params{
 				ID:      "a4a2906d-4df5-42f1-8832-77a33cba4d7f",
 				OwnerID: "05bf69e9-d7b5-4e7a-8fab-24227dca033a",
-				Specification: specification.NewBuilder().
+				Specification: (&specification.Builder{}).
 					WithID("1a63b6ea-df5f-4a68-bf04-c2e30044f2ef").
 					ErrlessBuild(),
 			},
@@ -73,7 +73,7 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 			GivenPerformanceParams: performance.Params{
 				ID:      "3ce098e1-81ae-4610-8372-2f635b1b6a0c",
 				OwnerID: "3614a95c-c278-4687-84e2-97b95b11d399",
-				Specification: specification.NewBuilder().
+				Specification: (&specification.Builder{}).
 					WithID("spec").
 					ErrlessBuild(),
 				Started: true,

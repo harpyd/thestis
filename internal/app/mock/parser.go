@@ -19,15 +19,15 @@ func (m SpecificationParserService) ParseSpecification(
 	_ io.Reader,
 	opts ...app.ParserOption,
 ) (*specification.Specification, error) {
-	builder := specification.NewBuilder()
+	var b specification.Builder
 
 	for _, opt := range opts {
-		opt(builder)
+		opt(&b)
 	}
 
 	if m.withErr {
-		return builder.Build()
+		return b.Build()
 	}
 
-	return builder.ErrlessBuild(), nil
+	return b.ErrlessBuild(), nil
 }

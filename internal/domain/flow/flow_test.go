@@ -99,7 +99,7 @@ func TestReduceFlow(t *testing.T) {
 		},
 		{
 			FlowReducer: func() *flow.Reducer {
-				spec := specification.NewBuilder().
+				spec := (&specification.Builder{}).
 					WithStory("foo", func(b *specification.StoryBuilder) {
 						b.WithScenario("koo", func(b *specification.ScenarioBuilder) {
 							b.WithThesis("too", func(b *specification.ThesisBuilder) {})
@@ -124,7 +124,7 @@ func TestReduceFlow(t *testing.T) {
 		},
 		{
 			FlowReducer: func() *flow.Reducer {
-				spec := specification.NewBuilder().
+				spec := (&specification.Builder{}).
 					WithStory("foo", func(b *specification.StoryBuilder) {
 						b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
 							b.WithThesis("baz", func(b *specification.ThesisBuilder) {})
@@ -154,7 +154,7 @@ func TestReduceFlow(t *testing.T) {
 		},
 		{
 			FlowReducer: func() *flow.Reducer {
-				spec := specification.NewBuilder().
+				spec := (&specification.Builder{}).
 					WithStory("doo", func(b *specification.StoryBuilder) {
 						b.WithScenario("zoo", func(b *specification.ScenarioBuilder) {
 							b.WithThesis("moo", func(b *specification.ThesisBuilder) {})

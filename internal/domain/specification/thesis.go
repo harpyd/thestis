@@ -24,8 +24,8 @@ type (
 		dependencies     []string
 		stage            Stage
 		behavior         string
-		httpBuilder      *HTTPBuilder
-		assertionBuilder *AssertionBuilder
+		httpBuilder      HTTPBuilder
+		assertionBuilder AssertionBuilder
 	}
 
 	Stage string
@@ -98,13 +98,6 @@ func (s Stage) IsValid() bool {
 
 func (s Stage) String() string {
 	return string(s)
-}
-
-func NewThesisBuilder() *ThesisBuilder {
-	return &ThesisBuilder{
-		assertionBuilder: NewAssertionBuilder(),
-		httpBuilder:      NewHTTPBuilder(),
-	}
 }
 
 var ErrUselessThesis = errors.New("useless thesis")
@@ -184,14 +177,14 @@ func (b *ThesisBuilder) WithStatement(stage Stage, behavior string) *ThesisBuild
 
 func (b *ThesisBuilder) WithAssertion(buildFn func(b *AssertionBuilder)) *ThesisBuilder {
 	b.assertionBuilder.Reset()
-	buildFn(b.assertionBuilder)
+	buildFn(&b.assertionBuilder)
 
 	return b
 }
 
 func (b *ThesisBuilder) WithHTTP(buildFn func(b *HTTPBuilder)) *ThesisBuilder {
 	b.httpBuilder.Reset()
-	buildFn(b.httpBuilder)
+	buildFn(&b.httpBuilder)
 
 	return b
 }

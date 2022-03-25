@@ -99,7 +99,7 @@ func TestHandleStartPerformance(t *testing.T) {
 				TestCampaignID: "68baf422-777f-4a0e-b35a-4fff5858af2d",
 				StartedByID:    "d8d1e4ab-8f24-4c79-a1f2-49e24b3f119a",
 			},
-			Specification: specification.NewBuilder().
+			Specification: (&specification.Builder{}).
 				WithTestCampaignID("d5a7b2ec-c04e-40d8-a2b5-b273d7ad7ffd").
 				WithOwnerID("d8d1e4ab-8f24-4c79-a1f2-49e24b3f119a").
 				ErrlessBuild(),
@@ -112,7 +112,7 @@ func TestHandleStartPerformance(t *testing.T) {
 				TestCampaignID: "5ee6228e-5b0b-4d40-b4e5-9a138bef9f84",
 				StartedByID:    "fb883739-2c8c-4a4e-bca2-f96b204f4ac8",
 			},
-			Specification: specification.NewBuilder().
+			Specification: (&specification.Builder{}).
 				WithTestCampaignID("5ee6228e-5b0b-4d40-b4e5-9a138bef9f84").
 				WithOwnerID("8ea9dca1-53da-4ed5-8f4b-660c8956ea45").
 				ErrlessBuild(),
@@ -125,7 +125,7 @@ func TestHandleStartPerformance(t *testing.T) {
 				TestCampaignID: "70c8e87d-395d-4ae6-b53e-3b2f587039a3",
 				StartedByID:    "aa584d3d-c790-4ed3-8bfa-19e1b6fed88e",
 			},
-			Specification: specification.NewBuilder().
+			Specification: (&specification.Builder{}).
 				WithTestCampaignID("70c8e87d-395d-4ae6-b53e-3b2f587039a3").
 				WithOwnerID("aa584d3d-c790-4ed3-8bfa-19e1b6fed88e").
 				ErrlessBuild(),

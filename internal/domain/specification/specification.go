@@ -131,10 +131,6 @@ func (s *Specification) ThesesCount() int {
 	return count
 }
 
-func NewBuilder() *Builder {
-	return &Builder{}
-}
-
 var ErrNoSpecificationStories = errors.New("no stories")
 
 func (b *Builder) Build() (*Specification, error) {
@@ -227,8 +223,9 @@ func (b *Builder) WithDescription(description string) *Builder {
 }
 
 func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder {
-	sb := NewStoryBuilder()
-	buildFn(sb)
+	var sb StoryBuilder
+
+	buildFn(&sb)
 
 	b.storyFactories = append(b.storyFactories, func() (Story, error) {
 		return sb.Build(NewStorySlug(slug))

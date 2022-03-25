@@ -186,7 +186,7 @@ func TestMaintainPerformance(t *testing.T) {
 			PerformanceFactory: func() *performance.Performance {
 				return performance.Unmarshal(performance.Params{
 					ID: "foo",
-					Specification: specification.NewBuilder().
+					Specification: (&specification.Builder{}).
 						WithID("bar").
 						WithStory("a", func(b *specification.StoryBuilder) {
 							b.WithScenario("b", func(b *specification.ScenarioBuilder) {
@@ -208,7 +208,7 @@ func TestMaintainPerformance(t *testing.T) {
 			PerformanceFactory: func() *performance.Performance {
 				return performance.FromSpecification(
 					"que",
-					specification.NewBuilder().
+					(&specification.Builder{}).
 						WithID("due").
 						ErrlessBuild(),
 				)
@@ -222,7 +222,7 @@ func TestMaintainPerformance(t *testing.T) {
 			PerformanceFactory: func() *performance.Performance {
 				return performance.FromSpecification(
 					"suu",
-					specification.NewBuilder().
+					(&specification.Builder{}).
 						WithID("quu").
 						WithStory("foo", func(b *specification.StoryBuilder) {
 							b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
@@ -267,7 +267,7 @@ func TestMaintainPerformance(t *testing.T) {
 			PerformanceFactory: func() *performance.Performance {
 				return performance.FromSpecification(
 					"perf",
-					specification.NewBuilder().
+					(&specification.Builder{}).
 						WithID("spec").
 						WithStory("foo", func(b *specification.StoryBuilder) {
 							b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
@@ -422,7 +422,7 @@ func TestMaintainPerformance(t *testing.T) {
 func TestCancelMaintainPerformance(t *testing.T) {
 	t.Parallel()
 
-	spec := specification.NewBuilder().
+	spec := (&specification.Builder{}).
 		WithID("perf").
 		WithStory("foo", func(b *specification.StoryBuilder) {
 			b.WithScenario("bar", func(b *specification.ScenarioBuilder) {

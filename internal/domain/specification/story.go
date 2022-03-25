@@ -59,10 +59,6 @@ func (s Story) Scenario(slug string) (scenario Scenario, ok bool) {
 	return
 }
 
-func NewStoryBuilder() *StoryBuilder {
-	return &StoryBuilder{}
-}
-
 var ErrNoStoryScenarios = errors.New("no scenarios")
 
 func (b *StoryBuilder) Build(slug Slug) (Story, error) {
@@ -144,8 +140,9 @@ func (b *StoryBuilder) WithWantTo(wantTo string) *StoryBuilder {
 }
 
 func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder)) *StoryBuilder {
-	sb := NewScenarioBuilder()
-	buildFn(sb)
+	var sb ScenarioBuilder
+
+	buildFn(&sb)
 
 	b.scenarioFactories = append(b.scenarioFactories, func(storySlug Slug) (Scenario, error) {
 		return sb.Build(NewScenarioSlug(storySlug.Story(), slug))
