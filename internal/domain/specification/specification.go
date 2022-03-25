@@ -2,7 +2,6 @@ package specification
 
 import (
 	"fmt"
-	"io"
 	"strings"
 	"time"
 
@@ -237,7 +236,7 @@ func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder
 	return b
 }
 
-type Error struct {
+type FailedBuildError struct {
 	msg  string
 	errs []error
 }
@@ -255,101 +254,58 @@ func WrapErrors(msg string, errs ...error) error {
 		return nil
 	}
 
-	return errors.WithStack(&Error{
+	return errors.WithStack(&FailedBuildError{
 		msg:  msg,
 		errs: nonNilErrs,
 	})
 }
 
-func WrapErrorsFromSlug(slug Slug, errs ...error) error {
+func WrapErrorsWithSlug(slug Slug, errs ...error) error {
 	return WrapErrors(slug.String(), errs...)
 }
 
-func (e *Error) Message() string {
+func (e *FailedBuildError) Message() string {
 	return e.msg
 }
 
-func (e *Error) Errors() []error {
+func (e *FailedBuildError) Errors() []error {
 	errs := make([]error, len(e.errs))
 	copy(errs, e.errs)
 
 	return errs
 }
 
-func (e *Error) Format(f fmt.State, verb rune) {
-	if verb == 'v' && f.Flag('+') {
-		e.writeMultiLine(f)
+const (
+	errorMsgSeparator       = ": "
+	leftNestedErrorsBorder  = "["
+	rightNestedErrorsBorder = "]"
+	nestedErrorsSeparator   = "; "
+)
 
-		return
-	}
-
-	e.writeSingleLine(f)
-}
-
-func (e *Error) Error() string {
+func (e *FailedBuildError) Error() string {
 	if e == nil {
 		return ""
 	}
 
 	var b strings.Builder
 
-	e.writeSingleLine(&b)
-
-	return b.String()
-}
-
-const (
-	singleLineMsgErrorSeparator = ": "
-	singleLineErrorSeparator    = "; "
-
-	multiLineMsgErrorSeparator = ":"
-	multiLineErrorSeparator    = "\n    "
-	multiLineErrorIndent       = "    "
-)
-
-func (e *Error) writeSingleLine(w io.Writer) {
-	_, _ = io.WriteString(w, e.msg+singleLineMsgErrorSeparator)
+	_, _ = b.WriteString(e.msg + errorMsgSeparator)
+	_, _ = b.WriteString(leftNestedErrorsBorder)
 
 	lastErrIdx := len(e.errs) - 1
 
 	for _, err := range e.errs[:lastErrIdx] {
-		_, _ = io.WriteString(w, fmt.Sprintf("%v", err))
-		_, _ = io.WriteString(w, singleLineErrorSeparator)
+		_, _ = b.WriteString(fmt.Sprintf("%v", err))
+		_, _ = b.WriteString(nestedErrorsSeparator)
 	}
 
-	_, _ = io.WriteString(w, fmt.Sprintf("%v", e.errs[lastErrIdx]))
+	_, _ = b.WriteString(fmt.Sprintf("%v", e.errs[lastErrIdx]))
+	_, _ = b.WriteString(rightNestedErrorsBorder)
+
+	return b.String()
 }
 
-func (e *Error) writeMultiLine(w io.Writer) {
-	_, _ = io.WriteString(w, e.msg+multiLineMsgErrorSeparator)
-
-	for _, err := range e.errs {
-		_, _ = io.WriteString(w, multiLineErrorSeparator)
-		writePrefixLine(w, multiLineErrorIndent, fmt.Sprintf("%v", err))
-	}
-}
-
-func writePrefixLine(w io.Writer, prefix, s string) {
-	first := true
-
-	for len(s) > 0 {
-		if first {
-			first = false
-		} else {
-			_, _ = io.WriteString(w, prefix)
-		}
-
-		idx := strings.IndexByte(s, '\n')
-		if idx < 0 {
-			idx = len(s) - 1
-		}
-
-		_, _ = io.WriteString(w, s[:idx+1])
-		s = s[idx+1:]
-	}
-}
-
-func (e *Error) Is(target error) bool {
+func (e *FailedBuildError) Is(target error) bool {
 	for _, err := range e.errs {
 		if errors.Is(err, target) {
 			return true
@@ -359,7 +315,7 @@ func (e *Error) Is(target error) bool {
 	return false
 }
 
-func (e *Error) As(target interface{}) bool {
+func (e *FailedBuildError) As(target interface{}) bool {
 	for _, err := range e.errs {
 		if errors.As(err, target) {
 			return true
