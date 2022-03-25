@@ -13,7 +13,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-func TestPerformanceCreation(t *testing.T) {
+func TestPerformance(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {

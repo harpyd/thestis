@@ -15,7 +15,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-func TestMessageCreation(t *testing.T) {
+func TestMessage(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
