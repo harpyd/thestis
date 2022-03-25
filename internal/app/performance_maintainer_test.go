@@ -461,7 +461,7 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			ExpectedOneOfMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						performance.WrapErrorWithTerminated(
+						performance.WrapErrorWithEvent(
 							context.Canceled,
 							performance.FiredCancel,
 						),
@@ -471,7 +471,7 @@ func TestCancelMaintainPerformance(t *testing.T) {
 				),
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						performance.WrapErrorWithTerminated(
+						performance.WrapErrorWithEvent(
 							context.Canceled,
 							performance.FiredCancel,
 						),
@@ -489,7 +489,7 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			ExpectedOneOfMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						performance.WrapErrorWithTerminated(
+						performance.WrapErrorWithEvent(
 							context.DeadlineExceeded,
 							performance.FiredCancel,
 						),
@@ -507,7 +507,7 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			ExpectedOneOfMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						performance.WrapErrorWithTerminated(
+						performance.WrapErrorWithEvent(
 							context.Canceled,
 							performance.FiredCancel,
 						),
@@ -517,7 +517,7 @@ func TestCancelMaintainPerformance(t *testing.T) {
 				),
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
-						performance.WrapErrorWithTerminated(
+						performance.WrapErrorWithEvent(
 							context.Canceled,
 							performance.FiredCancel,
 						),
