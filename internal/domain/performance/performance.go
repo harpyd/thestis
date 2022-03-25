@@ -268,7 +268,7 @@ func (p *Performance) runScenario(
 		var terr *TerminatedError
 
 		if errors.As(err, &terr) {
-			steps <- NewScenarioStepWithErr(err, scenario.Slug(), terr.event)
+			steps <- NewScenarioStepWithErr(err, scenario.Slug(), terr.Event())
 
 			return
 		}
