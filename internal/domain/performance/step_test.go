@@ -11,7 +11,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-func TestStepCreation(t *testing.T) {
+func TestStep(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
