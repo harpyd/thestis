@@ -520,7 +520,7 @@ func TestGetSpecificationStoryBySlug(t *testing.T) {
 
 var errTest = errors.New("foo")
 
-func TestIsWrappedInError(t *testing.T) {
+func TestIsWrappedInFailedBuildError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -552,7 +552,7 @@ func TestIsWrappedInError(t *testing.T) {
 	}
 }
 
-func TestAsWrappedInError(t *testing.T) {
+func TestAsWrappedInFailedBuildError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -586,7 +586,7 @@ func TestAsWrappedInError(t *testing.T) {
 	}
 }
 
-func TestAsError(t *testing.T) {
+func TestAsFailedBuildError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -619,7 +619,7 @@ func TestAsError(t *testing.T) {
 			},
 		},
 		{
-			GivenError: specification.WrapErrorsFromSlug(
+			GivenError: specification.WrapErrorsWithSlug(
 				specification.NewScenarioSlug("a", "b"),
 				errors.New("foo"),
 				errors.New("bar"),
@@ -632,7 +632,7 @@ func TestAsError(t *testing.T) {
 			},
 		},
 		{
-			GivenError: specification.WrapErrorsFromSlug(
+			GivenError: specification.WrapErrorsWithSlug(
 				specification.AnyThesisSlug(),
 				errors.New("foo"),
 				nil,
@@ -653,7 +653,7 @@ func TestAsError(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var target *specification.Error
+			var target *specification.FailedBuildError
 
 			if !c.ShouldBeWrapped {
 				t.Run("not", func(t *testing.T) {
@@ -678,25 +678,58 @@ func TestAsError(t *testing.T) {
 	}
 }
 
-func TestFormatError(t *testing.T) {
+func TestFormatFailedBuildError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		GivenError         error
-		ExpectedSingleLine string
-		ExpectedMultiLine  string
+		GivenError          error
+		ExpectedErrorString string
 	}{
-		// {
-		// 	GivenError: specification.WrapErrors(
-		// 		"foo",
-		// 		errors.New("bar"),
-		// 		errors.New("baz"),
-		// 	),
-		// 	ExpectedSingleLine: "foo: bar; baz",
-		// 	ExpectedMultiLine: "foo:\n" +
-		// 		"    bar\n" +
-		// 		"    baz",
-		// },
+		{
+			GivenError: specification.WrapErrors(
+				"foo",
+				errors.New("bar"),
+				errors.New("baz"),
+			),
+			ExpectedErrorString: "foo: [bar; baz]",
+		},
+		{
+			GivenError: specification.WrapErrorsWithSlug(
+				specification.NewThesisSlug("a", "b", "c"),
+				errors.New("ba\nbaba"),
+				errors.New("foo"),
+			),
+			ExpectedErrorString: "a.b.c: [ba\nbaba; foo]",
+		},
+		{
+			GivenError: specification.WrapErrors("foo",
+				specification.WrapErrors(
+					"bar",
+					errors.New("doo"),
+					errors.New("qoo"),
+				),
+			),
+			ExpectedErrorString: "foo: [bar: [doo; qoo]]",
+		},
+		{
+			GivenError: specification.WrapErrors(
+				"a",
+				specification.WrapErrors(
+					"b",
+					errors.New("c"),
+					errors.New("d"),
+				),
+				specification.WrapErrors(
+					"e",
+					errors.New("f"),
+					specification.WrapErrors(
+						"g",
+						errors.New("h"),
+					),
+				),
+			),
+			ExpectedErrorString: "a: [b: [c; d]; e: [f; g: [h]]]",
+		},
 	}
 
 	for i := range testCases {
@@ -705,17 +738,7 @@ func TestFormatError(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			t.Run("error", func(t *testing.T) {
-				require.EqualError(t, c.GivenError, c.ExpectedSingleLine)
-			})
-
-			t.Run("single_line", func(t *testing.T) {
-				require.Equal(t, c.ExpectedSingleLine, fmt.Sprintf("%v", c.GivenError))
-			})
-
-			t.Run("multi_line", func(t *testing.T) {
-				require.Equal(t, c.ExpectedMultiLine, fmt.Sprintf("%+v", c.GivenError))
-			})
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
 		})
 	}
 }
