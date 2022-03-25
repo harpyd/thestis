@@ -50,10 +50,11 @@ func TestBuildAssertionWithMethod(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewAssertionBuilder()
-			builder.WithMethod(c.GivenMethod)
+			var b specification.AssertionBuilder
 
-			assertion, err := builder.Build()
+			b.WithMethod(c.GivenMethod)
+
+			assertion, err := b.Build()
 
 			if c.ShouldBeErr {
 				var target *specification.NotAllowedAssertionMethodError
@@ -110,11 +111,11 @@ func TestBuildAssertionWithAsserts(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewAssertionBuilder()
+			var b specification.AssertionBuilder
 
-			c.Prepare(builder)
+			c.Prepare(&b)
 
-			assertion, err := builder.Build()
+			assertion, err := b.Build()
 			require.NoError(t, err)
 
 			asserts := assertion.Asserts()

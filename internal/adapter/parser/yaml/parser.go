@@ -27,20 +27,22 @@ func (s SpecificationParserService) ParseSpecification(reader io.Reader, opts ..
 }
 
 func build(spec specificationSchema, opts []app.ParserOption) (*specification.Specification, error) {
-	builder := specification.NewBuilder().
+	var b specification.Builder
+
+	b.
 		WithAuthor(spec.Author).
 		WithTitle(spec.Title).
 		WithDescription(spec.Description)
 
 	for _, opt := range opts {
-		opt(builder)
+		opt(&b)
 	}
 
 	for slug, story := range spec.Stories {
-		builder.WithStory(slug, buildStory(story))
+		b.WithStory(slug, buildStory(story))
 	}
 
-	return builder.Build()
+	return b.Build()
 }
 
 func buildStory(story storySchema) func(builder *specification.StoryBuilder) {

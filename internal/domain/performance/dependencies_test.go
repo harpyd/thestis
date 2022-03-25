@@ -169,7 +169,7 @@ func TestCollectDependencies(t *testing.T) {
 			ExpectedSnapshot: nil,
 		},
 		{
-			GivenScenario: specification.NewScenarioBuilder().
+			GivenScenario: (&specification.ScenarioBuilder{}).
 				WithThesis("dak", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Given, "dak")
 				}).
@@ -192,7 +192,7 @@ func TestCollectDependencies(t *testing.T) {
 			},
 		},
 		{
-			GivenScenario: specification.NewScenarioBuilder().
+			GivenScenario: (&specification.ScenarioBuilder{}).
 				WithThesis("qyz", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Given, "qyz")
 				}).
@@ -231,7 +231,7 @@ func TestCollectDependencies(t *testing.T) {
 			},
 		},
 		{
-			GivenScenario: specification.NewScenarioBuilder().
+			GivenScenario: (&specification.ScenarioBuilder{}).
 				WithThesis("baz", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Given, "baz")
 				}).
@@ -294,14 +294,14 @@ func TestWaitThesisDependencies(t *testing.T) {
 			ShouldWait:    true,
 		},
 		{
-			GivenScenario: specification.NewScenarioBuilder().
+			GivenScenario: (&specification.ScenarioBuilder{}).
 				WithThesis("poo", func(b *specification.ThesisBuilder) {}).
 				ErrlessBuild(specification.NewScenarioSlug("foo", "koo")),
 			ThesisToWait: specification.NewThesisSlug("foo", "koo", "poo"),
 			ShouldWait:   true,
 		},
 		{
-			GivenScenario: specification.NewScenarioBuilder().
+			GivenScenario: (&specification.ScenarioBuilder{}).
 				WithThesis("poo", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Given, "poo")
 					b.WithDependency("too")
@@ -314,7 +314,7 @@ func TestWaitThesisDependencies(t *testing.T) {
 			ShouldWait:   true,
 		},
 		{
-			GivenScenario: specification.NewScenarioBuilder().
+			GivenScenario: (&specification.ScenarioBuilder{}).
 				WithThesis("baz", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Given, "baz")
 					b.WithDependency("qyp")
@@ -335,7 +335,7 @@ func TestWaitThesisDependencies(t *testing.T) {
 			ShouldWait: true,
 		},
 		{
-			GivenScenario: specification.NewScenarioBuilder().
+			GivenScenario: (&specification.ScenarioBuilder{}).
 				WithThesis("baz", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Given, "baz")
 					b.WithDependency("bad")
@@ -351,7 +351,7 @@ func TestWaitThesisDependencies(t *testing.T) {
 			ShouldWait: false,
 		},
 		{
-			GivenScenario: specification.NewScenarioBuilder().
+			GivenScenario: (&specification.ScenarioBuilder{}).
 				WithThesis("baz", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Given, "baz")
 					b.WithDependency("qyp")

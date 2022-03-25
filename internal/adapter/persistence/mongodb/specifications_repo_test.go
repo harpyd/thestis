@@ -39,7 +39,7 @@ func TestSpecificationsRepository(t *testing.T) {
 }
 
 func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
-	specificationToFind := specification.NewBuilder().
+	specificationToFind := (&specification.Builder{}).
 		WithID("64825e35-7fa7-44a4-9ca2-81cfc7b0f0d8").
 		WithOwnerID("52d9af60-26be-46ea-90a6-efec5fbb4ccd").
 		WithAuthor("Djerys").
@@ -109,21 +109,27 @@ func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
 }
 
 func (s *SpecificationsRepositoryTestSuite) TestGetActiveSpecificationByTestCampaignID() {
+	var b specification.Builder
+
 	testCampaignID := "d0832b59-6e8a-46f6-9b57-92e8bf656e93"
 
-	firstSpec := specification.NewBuilder().
+	firstSpec := b.
 		WithID("358a938f-8191-4264-8070-4ac5914bc130").
 		WithAuthor("Djerys").
 		WithTestCampaignID(testCampaignID).
 		ErrlessBuild()
 
-	secondSpec := specification.NewBuilder().
+	b.Reset()
+
+	secondSpec := b.
 		WithID("8c1058aa-295a-47a0-83e9-a128c2bd22af").
 		WithAuthor("John").
 		WithTestCampaignID(testCampaignID).
 		ErrlessBuild()
 
-	lastSpec := specification.NewBuilder().
+	b.Reset()
+
+	lastSpec := b.
 		WithID("aa056dc5-b0e7-4695-a209-1d46805373c6").
 		WithAuthor("Leo").
 		WithTestCampaignID(testCampaignID).
@@ -178,13 +184,13 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 		{
 			Name: "failed_adding_one_specification_twice",
 			Before: func() {
-				spec := specification.NewBuilder().
+				spec := (&specification.Builder{}).
 					WithID("62a4e06b-c00f-49a5-a1c1-5906e5e2e1d5").
 					ErrlessBuild()
 
 				s.addSpecifications(spec)
 			},
-			Specification: specification.NewBuilder().
+			Specification: (&specification.Builder{}).
 				WithID("62a4e06b-c00f-49a5-a1c1-5906e5e2e1d5").
 				WithAuthor("Djerys").
 				WithOwnerID("6c204a55-023f-49bf-8c3d-1e7915b64f3a").
@@ -196,7 +202,7 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 		},
 		{
 			Name: "successful_adding",
-			Specification: specification.NewBuilder().
+			Specification: (&specification.Builder{}).
 				WithID("f517f320-7d07-44a5-9fbf-7e1eb6889e87").
 				WithAuthor("Djerys").
 				WithTitle("Test title").

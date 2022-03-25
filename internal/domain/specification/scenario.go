@@ -58,10 +58,6 @@ func (s Scenario) ThesesByStages(stages ...Stage) []Thesis {
 	return theses
 }
 
-func NewScenarioBuilder() *ScenarioBuilder {
-	return &ScenarioBuilder{}
-}
-
 var ErrNoScenarioTheses = errors.New("no theses")
 
 func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
@@ -119,8 +115,9 @@ func (b *ScenarioBuilder) WithDescription(description string) *ScenarioBuilder {
 }
 
 func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)) *ScenarioBuilder {
-	tb := NewThesisBuilder()
-	buildFn(tb)
+	var tb ThesisBuilder
+
+	buildFn(&tb)
 
 	b.thesisFactories = append(b.thesisFactories, func(scenarioSlug Slug) (Thesis, error) {
 		return tb.Build(NewThesisSlug(scenarioSlug.Story(), scenarioSlug.Scenario(), slug))

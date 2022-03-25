@@ -27,8 +27,8 @@ type (
 	}
 
 	HTTPBuilder struct {
-		requestBuilder  *HTTPRequestBuilder
-		responseBuilder *HTTPResponseBuilder
+		requestBuilder  HTTPRequestBuilder
+		responseBuilder HTTPResponseBuilder
 	}
 
 	HTTPRequestBuilder struct {
@@ -163,13 +163,6 @@ func (m HTTPMethod) String() string {
 	return string(m)
 }
 
-func NewHTTPBuilder() *HTTPBuilder {
-	return &HTTPBuilder{
-		requestBuilder:  NewHTTPRequestBuilder(),
-		responseBuilder: NewHTTPResponseBuilder(),
-	}
-}
-
 func (b *HTTPBuilder) Build() (HTTP, error) {
 	var w BuildErrorWrapper
 
@@ -198,20 +191,16 @@ func (b *HTTPBuilder) Reset() {
 
 func (b *HTTPBuilder) WithRequest(buildFn func(b *HTTPRequestBuilder)) *HTTPBuilder {
 	b.requestBuilder.Reset()
-	buildFn(b.requestBuilder)
+	buildFn(&b.requestBuilder)
 
 	return b
 }
 
 func (b *HTTPBuilder) WithResponse(buildFn func(b *HTTPResponseBuilder)) *HTTPBuilder {
 	b.responseBuilder.Reset()
-	buildFn(b.responseBuilder)
+	buildFn(&b.responseBuilder)
 
 	return b
-}
-
-func NewHTTPRequestBuilder() *HTTPRequestBuilder {
-	return &HTTPRequestBuilder{}
 }
 
 func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
@@ -276,10 +265,6 @@ func (b *HTTPRequestBuilder) WithBody(body map[string]interface{}) *HTTPRequestB
 	b.body = body
 
 	return b
-}
-
-func NewHTTPResponseBuilder() *HTTPResponseBuilder {
-	return &HTTPResponseBuilder{}
 }
 
 func (b *HTTPResponseBuilder) Build() (HTTPResponse, error) {

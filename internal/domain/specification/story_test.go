@@ -44,12 +44,12 @@ func TestBuildStorySlugging(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewStoryBuilder()
+			var b specification.StoryBuilder
 
 			var story specification.Story
 
 			buildFn := func() {
-				story = builder.ErrlessBuild(c.GivenSlug)
+				story = b.ErrlessBuild(c.GivenSlug)
 			}
 
 			if c.ShouldPanic {
@@ -72,11 +72,11 @@ func errlessBuildStory(
 ) specification.Story {
 	t.Helper()
 
-	builder := specification.NewStoryBuilder()
+	var b specification.StoryBuilder
 
-	prepare(builder)
+	prepare(&b)
 
-	return builder.ErrlessBuild(slug)
+	return b.ErrlessBuild(slug)
 }
 
 func TestBuildStoryWithDescription(t *testing.T) {
@@ -270,9 +270,9 @@ func TestBuildStoryWithScenarios(t *testing.T) {
 				b.WithScenario("baz", func(b *specification.ScenarioBuilder) {})
 			},
 			ExpectedScenarios: []specification.Scenario{
-				specification.NewScenarioBuilder().
+				(&specification.ScenarioBuilder{}).
 					ErrlessBuild(specification.NewScenarioSlug("foo", "bar")),
-				specification.NewScenarioBuilder().
+				(&specification.ScenarioBuilder{}).
 					ErrlessBuild(specification.NewScenarioSlug("foo", "baz")),
 			},
 			WantThisErr: false,
@@ -311,11 +311,11 @@ func TestBuildStoryWithScenarios(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewStoryBuilder()
+			var b specification.StoryBuilder
 
-			c.Prepare(builder)
+			c.Prepare(&b)
 
-			story, err := builder.Build(storySlug)
+			story, err := b.Build(storySlug)
 
 			if c.WantThisErr {
 				require.True(t, c.IsErr(err))
@@ -341,21 +341,25 @@ func TestGetStoryScenarioBySlug(t *testing.T) {
 		})
 	)
 
+	var b specification.ScenarioBuilder
+
 	bad, ok := story.Scenario("bad")
 	require.True(t, ok)
 	require.Equal(
 		t,
-		specification.NewScenarioBuilder().ErrlessBuild(
+		b.ErrlessBuild(
 			specification.NewScenarioSlug("foo", "bad"),
 		),
 		bad,
 	)
 
+	b.Reset()
+
 	baz, ok := story.Scenario("baz")
 	require.True(t, ok)
 	require.Equal(
 		t,
-		specification.NewScenarioBuilder().ErrlessBuild(
+		b.ErrlessBuild(
 			specification.NewScenarioSlug("foo", "baz"),
 		),
 		baz,

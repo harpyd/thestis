@@ -44,12 +44,12 @@ func TestBuildScenarioSlugging(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewScenarioBuilder()
+			var b specification.ScenarioBuilder
 
 			var scenario specification.Scenario
 
 			buildFn := func() {
-				scenario = builder.ErrlessBuild(c.GivenSlug)
+				scenario = b.ErrlessBuild(c.GivenSlug)
 			}
 
 			if c.ShouldPanic {
@@ -72,11 +72,11 @@ func errlessBuildScenario(
 ) specification.Scenario {
 	t.Helper()
 
-	builder := specification.NewScenarioBuilder()
+	var b specification.ScenarioBuilder
 
-	prepare(builder)
+	prepare(&b)
 
-	return builder.ErrlessBuild(slug)
+	return b.ErrlessBuild(slug)
 }
 
 func TestBuildScenarioWithDescription(t *testing.T) {
@@ -141,10 +141,10 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 				b.WithThesis("bad", func(b *specification.ThesisBuilder) {})
 			},
 			ExpectedTheses: []specification.Thesis{
-				specification.NewThesisBuilder().ErrlessBuild(
+				(&specification.ThesisBuilder{}).ErrlessBuild(
 					specification.NewThesisSlug(scenarioSlug.Story(), scenarioSlug.Scenario(), "baz"),
 				),
-				specification.NewThesisBuilder().ErrlessBuild(
+				(&specification.ThesisBuilder{}).ErrlessBuild(
 					specification.NewThesisSlug(scenarioSlug.Story(), scenarioSlug.Scenario(), "bad"),
 				),
 			},
@@ -174,11 +174,11 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			builder := specification.NewScenarioBuilder()
+			var b specification.ScenarioBuilder
 
-			c.Prepare(builder)
+			c.Prepare(&b)
 
-			scenario, err := builder.Build(scenarioSlug)
+			scenario, err := b.Build(scenarioSlug)
 
 			if c.WantThisErr {
 				require.True(t, c.IsErr(err))
@@ -229,7 +229,7 @@ func TestGetScenarioThesesByStages(t *testing.T) {
 				specification.Given,
 			},
 			ExpectedTheses: []specification.Thesis{
-				specification.NewThesisBuilder().
+				(&specification.ThesisBuilder{}).
 					WithStatement(specification.Given, "a").
 					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "a")),
 			},
@@ -246,7 +246,7 @@ func TestGetScenarioThesesByStages(t *testing.T) {
 				specification.Then,
 			},
 			ExpectedTheses: []specification.Thesis{
-				specification.NewThesisBuilder().
+				(&specification.ThesisBuilder{}).
 					WithStatement(specification.Given, "a").
 					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "a")),
 			},
@@ -267,7 +267,7 @@ func TestGetScenarioThesesByStages(t *testing.T) {
 				specification.Given,
 			},
 			ExpectedTheses: []specification.Thesis{
-				specification.NewThesisBuilder().
+				(&specification.ThesisBuilder{}).
 					WithStatement(specification.Given, "a").
 					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "a")),
 			},
@@ -288,7 +288,7 @@ func TestGetScenarioThesesByStages(t *testing.T) {
 				specification.When,
 			},
 			ExpectedTheses: []specification.Thesis{
-				specification.NewThesisBuilder().
+				(&specification.ThesisBuilder{}).
 					WithStatement(specification.When, "b").
 					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "b")),
 			},
@@ -309,7 +309,7 @@ func TestGetScenarioThesesByStages(t *testing.T) {
 				specification.Then,
 			},
 			ExpectedTheses: []specification.Thesis{
-				specification.NewThesisBuilder().
+				(&specification.ThesisBuilder{}).
 					WithStatement(specification.Then, "c").
 					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "c")),
 			},
@@ -332,13 +332,13 @@ func TestGetScenarioThesesByStages(t *testing.T) {
 				specification.Then,
 			},
 			ExpectedTheses: []specification.Thesis{
-				specification.NewThesisBuilder().
+				(&specification.ThesisBuilder{}).
 					WithStatement(specification.Given, "a").
 					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "a")),
-				specification.NewThesisBuilder().
+				(&specification.ThesisBuilder{}).
 					WithStatement(specification.When, "b").
 					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "b")),
-				specification.NewThesisBuilder().
+				(&specification.ThesisBuilder{}).
 					WithStatement(specification.Then, "c").
 					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "c")),
 			},
@@ -372,21 +372,25 @@ func TestGetScenarioThesisBySlug(t *testing.T) {
 		})
 	)
 
+	var b specification.ThesisBuilder
+
 	c, ok := scenario.Thesis("c")
 	require.True(t, ok)
 	require.Equal(
 		t,
-		specification.NewThesisBuilder().ErrlessBuild(
+		b.ErrlessBuild(
 			specification.NewThesisSlug("aaa", "bb", "c"),
 		),
 		c,
 	)
 
+	b.Reset()
+
 	d, ok := scenario.Thesis("d")
 	require.True(t, ok)
 	require.Equal(
 		t,
-		specification.NewThesisBuilder().ErrlessBuild(
+		b.ErrlessBuild(
 			specification.NewThesisSlug("aaa", "bb", "d"),
 		),
 		d,

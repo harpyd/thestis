@@ -35,7 +35,7 @@ func TestPerformance(t *testing.T) {
 		{
 			Performance: performance.FromSpecification(
 				"",
-				specification.NewBuilder().
+				(&specification.Builder{}).
 					ErrlessBuild(),
 			),
 			ExpectedID:               "",
@@ -46,7 +46,7 @@ func TestPerformance(t *testing.T) {
 		},
 		{
 			Performance: performance.Unmarshal(performance.Params{
-				Specification: specification.NewBuilder().
+				Specification: (&specification.Builder{}).
 					ErrlessBuild(),
 			}),
 			ExpectedID:               "",
@@ -58,7 +58,7 @@ func TestPerformance(t *testing.T) {
 		{
 			Performance: performance.FromSpecification(
 				"foo",
-				specification.NewBuilder().
+				(&specification.Builder{}).
 					WithID("bar").
 					WithOwnerID("baz").
 					WithStory("moo", func(b *specification.StoryBuilder) {
@@ -73,7 +73,7 @@ func TestPerformance(t *testing.T) {
 			ExpectedOwnerID:         "baz",
 			ExpectedStarted:         false,
 			ExpectedWorkingScenarios: []specification.Scenario{
-				specification.NewScenarioBuilder().
+				(&specification.ScenarioBuilder{}).
 					WithThesis("too", func(b *specification.ThesisBuilder) {}).
 					ErrlessBuild(specification.NewScenarioSlug("moo", "koo")),
 			},
@@ -81,7 +81,7 @@ func TestPerformance(t *testing.T) {
 		{
 			Performance: performance.Unmarshal(performance.Params{
 				ID: "foo",
-				Specification: specification.NewBuilder().
+				Specification: (&specification.Builder{}).
 					WithID("spc").
 					WithStory("boo", func(b *specification.StoryBuilder) {
 						b.WithScenario("zoo", func(b *specification.ScenarioBuilder) {
@@ -100,10 +100,10 @@ func TestPerformance(t *testing.T) {
 			ExpectedOwnerID:         "djr",
 			ExpectedStarted:         true,
 			ExpectedWorkingScenarios: []specification.Scenario{
-				specification.NewScenarioBuilder().
+				(&specification.ScenarioBuilder{}).
 					WithThesis("doo", func(b *specification.ThesisBuilder) {}).
 					ErrlessBuild(specification.NewScenarioSlug("boo", "zoo")),
-				specification.NewScenarioBuilder().
+				(&specification.ScenarioBuilder{}).
 					WithThesis("poo", func(b *specification.ThesisBuilder) {}).
 					ErrlessBuild(specification.NewScenarioSlug("boo", "koo")),
 			},
@@ -161,7 +161,7 @@ func TestStartPerformance(t *testing.T) {
 		{
 			GivenPerformance: performance.FromSpecification(
 				"",
-				specification.NewBuilder().ErrlessBuild(),
+				(&specification.Builder{}).ErrlessBuild(),
 			),
 			ExpectedSteps: nil,
 			ShouldBeErr:   false,
@@ -176,7 +176,7 @@ func TestStartPerformance(t *testing.T) {
 		{
 			GivenPerformance: performance.FromSpecification(
 				"ddq",
-				specification.NewBuilder().
+				(&specification.Builder{}).
 					WithStory("foo", func(b *specification.StoryBuilder) {
 						b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
 							b.WithThesis("baz", func(b *specification.ThesisBuilder) {
@@ -217,7 +217,7 @@ func TestStartPerformance(t *testing.T) {
 		{
 			GivenPerformance: performance.FromSpecification(
 				"bvs",
-				specification.NewBuilder().
+				(&specification.Builder{}).
 					WithStory("que", func(b *specification.StoryBuilder) {
 						b.WithScenario("pue", func(b *specification.ScenarioBuilder) {
 							b.WithThesis("due", func(b *specification.ThesisBuilder) {
@@ -262,7 +262,7 @@ func TestStartPerformance(t *testing.T) {
 		{
 			GivenPerformance: performance.FromSpecification(
 				"daq",
-				specification.NewBuilder().
+				(&specification.Builder{}).
 					WithStory("foo", func(b *specification.StoryBuilder) {
 						b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
 							b.WithThesis("baz", func(b *specification.ThesisBuilder) {
@@ -310,7 +310,7 @@ func TestStartPerformance(t *testing.T) {
 		{
 			GivenPerformance: performance.FromSpecification(
 				"hpd",
-				specification.NewBuilder().
+				(&specification.Builder{}).
 					WithStory("foo", func(b *specification.StoryBuilder) {
 						b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
 							b.WithThesis("baz", func(b *specification.ThesisBuilder) {})
@@ -355,7 +355,7 @@ func TestStartPerformance(t *testing.T) {
 		{
 			GivenPerformance: performance.FromSpecification(
 				"jqd",
-				specification.NewBuilder().
+				(&specification.Builder{}).
 					WithStory("rod", func(b *specification.StoryBuilder) {
 						b.WithScenario("dod", func(b *specification.ScenarioBuilder) {
 							b.WithThesis("mod", func(b *specification.ThesisBuilder) {
@@ -527,7 +527,7 @@ func TestPerformanceStartByStart(t *testing.T) {
 func TestCancelPerformanceContext(t *testing.T) {
 	t.Parallel()
 
-	spec := specification.NewBuilder().
+	spec := (&specification.Builder{}).
 		WithStory("foo", func(b *specification.StoryBuilder) {
 			b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
 				b.WithThesis("saz", func(b *specification.ThesisBuilder) {
@@ -916,7 +916,7 @@ func TestFormatRejectedError(t *testing.T) {
 func validSpecification(t *testing.T) *specification.Specification {
 	t.Helper()
 
-	spec, err := specification.NewBuilder().
+	spec, err := (&specification.Builder{}).
 		WithStory("story", func(b *specification.StoryBuilder) {
 			b.WithScenario("scenario", func(b *specification.ScenarioBuilder) {
 				b.WithThesis("a", func(b *specification.ThesisBuilder) {

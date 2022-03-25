@@ -76,7 +76,7 @@ func TestCanSeeSpecification(t *testing.T) {
 		{
 			Name:   "can_see",
 			UserID: "2e7f4a0b-a23a-4020-9138-756912b705bd",
-			Specification: specification.NewBuilder().
+			Specification: (&specification.Builder{}).
 				WithID("17099c59-19c5-4edf-ac0f-b0093fed1ffc").
 				WithOwnerID("2e7f4a0b-a23a-4020-9138-756912b705bd").
 				ErrlessBuild(),
@@ -85,7 +85,7 @@ func TestCanSeeSpecification(t *testing.T) {
 		{
 			Name:   "cannot_see",
 			UserID: "20002cdc-bc58-4e38-a0e0-c46bbfba76e5",
-			Specification: specification.NewBuilder().
+			Specification: (&specification.Builder{}).
 				WithID("772f14d3-640a-4e57-82fd-047f426ac623").
 				WithOwnerID("4e28e13b-877f-4e53-bc85-0744164b7187").
 				ErrlessBuild(),

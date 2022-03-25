@@ -84,10 +84,6 @@ func (am AssertionMethod) String() string {
 	return string(am)
 }
 
-func NewAssertionBuilder() *AssertionBuilder {
-	return &AssertionBuilder{}
-}
-
 func (b *AssertionBuilder) Build() (Assertion, error) {
 	var w BuildErrorWrapper
 
