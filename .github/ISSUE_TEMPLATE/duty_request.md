@@ -1,6 +1,6 @@
 ---
 name: Duty request
-about: Suggest an idea to refactor this project
+about: Suggest an idea to improve the technical part of this project
 title: "[DUTY]"
 labels: enhancement, good first issue
 assignees: ''
