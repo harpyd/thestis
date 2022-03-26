@@ -248,14 +248,14 @@ func (w *BuildErrorWrapper) WithError(err error) *BuildErrorWrapper {
 	return w
 }
 
-func (w *BuildErrorWrapper) Wrap(msg string) error {
+func (w *BuildErrorWrapper) Wrap(ctxMsg string) error {
 	if len(w.errs) == 0 {
 		return nil
 	}
 
 	return errors.WithStack(&BuildError{
-		msg:  msg,
-		errs: w.errs,
+		ctxMsg: ctxMsg,
+		errs:   w.errs,
 	})
 }
 
@@ -264,12 +264,12 @@ func (w *BuildErrorWrapper) SluggedWrap(slug Slug) error {
 }
 
 type BuildError struct {
-	msg  string
-	errs []error
+	ctxMsg string
+	errs   []error
 }
 
 func (e *BuildError) Context() string {
-	return e.msg
+	return e.ctxMsg
 }
 
 func (e *BuildError) Errors() []error {
@@ -293,7 +293,7 @@ func (e *BuildError) Error() string {
 
 	var b strings.Builder
 
-	_, _ = b.WriteString(e.msg + errorMsgSeparator)
+	_, _ = b.WriteString(e.ctxMsg + errorMsgSeparator)
 	_, _ = b.WriteString(leftNestedErrorsBorder)
 
 	lastErrIdx := len(e.errs) - 1
