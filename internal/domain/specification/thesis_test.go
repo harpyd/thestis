@@ -418,3 +418,91 @@ func TestBeforeStage(t *testing.T) {
 		})
 	}
 }
+
+func TestAsNotAllowedStageError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError      error
+		ShouldBeWrapped bool
+		ExpectedStage   specification.Stage
+	}{
+		{
+			GivenError:      nil,
+			ShouldBeWrapped: false,
+		},
+		{
+			GivenError:      &specification.NotAllowedStageError{},
+			ShouldBeWrapped: true,
+			ExpectedStage:   specification.NoStage,
+		},
+		{
+			GivenError:      specification.NewNotAllowedStageError(specification.Given),
+			ShouldBeWrapped: true,
+			ExpectedStage:   specification.Given,
+		},
+		{
+			GivenError:      specification.NewNotAllowedStageError("else"),
+			ShouldBeWrapped: true,
+			ExpectedStage:   "else",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var target *specification.NotAllowedStageError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &target))
+				})
+
+				return
+			}
+
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &target)
+
+				t.Run("stage", func(t *testing.T) {
+					require.Equal(t, c.ExpectedStage, target.Stage())
+				})
+			})
+		})
+	}
+}
+
+func TestFormatNotAllowedStageError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          error
+		ExpectedErrorString string
+	}{
+		{
+			GivenError:          &specification.NotAllowedStageError{},
+			ExpectedErrorString: "stage `` not allowed",
+		},
+		{
+			GivenError:          specification.NewNotAllowedStageError(specification.Given),
+			ExpectedErrorString: "stage `given` not allowed",
+		},
+		{
+			GivenError:          specification.NewNotAllowedStageError("deploy"),
+			ExpectedErrorString: "stage `deploy` not allowed",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
+		})
+	}
+}

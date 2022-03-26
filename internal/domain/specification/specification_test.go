@@ -619,7 +619,7 @@ func TestAsBuildError(t *testing.T) {
 
 	testCases := []struct {
 		GivenError      error
-		ShouldBeNil     bool
+		ShouldBeWrapped bool
 		ExpectedMessage string
 		ExpectedErrors  []error
 	}{
@@ -628,12 +628,13 @@ func TestAsBuildError(t *testing.T) {
 				WithError(nil).
 				WithError(nil).
 				Wrap("bob"),
-			ShouldBeNil: true,
+			ShouldBeWrapped: false,
 		},
 		{
 			GivenError: (&specification.BuildErrorWrapper{}).
 				WithError(errors.New("bar")).
 				Wrap("foo"),
+			ShouldBeWrapped: true,
 			ExpectedMessage: "foo",
 			ExpectedErrors: []error{
 				errors.New("bar"),
@@ -644,6 +645,7 @@ func TestAsBuildError(t *testing.T) {
 				WithError(errors.New("foo")).
 				WithError(errors.New("bar")).
 				SluggedWrap(specification.NewScenarioSlug("a", "b")),
+			ShouldBeWrapped: true,
 			ExpectedMessage: "a.b",
 			ExpectedErrors: []error{
 				errors.New("foo"),
@@ -656,6 +658,7 @@ func TestAsBuildError(t *testing.T) {
 				WithError(nil).
 				WithError(errors.New("bar")).
 				SluggedWrap(specification.AnyThesisSlug()),
+			ShouldBeWrapped: true,
 			ExpectedMessage: "*.*.*",
 			ExpectedErrors: []error{
 				errors.New("foo"),
@@ -672,9 +675,9 @@ func TestAsBuildError(t *testing.T) {
 
 			var target *specification.BuildError
 
-			if c.ShouldBeNil {
-				t.Run("nil", func(t *testing.T) {
-					require.Nil(t, c.GivenError)
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &target))
 				})
 
 				return

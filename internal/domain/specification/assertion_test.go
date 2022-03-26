@@ -1,6 +1,7 @@
 package specification_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -161,6 +162,143 @@ func TestAssertionMethodIsValid(t *testing.T) {
 			t.Parallel()
 
 			require.Equal(t, c.ShouldBeValid, c.GivenMethod.IsValid())
+		})
+	}
+}
+
+func TestAssert(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenAssert specification.Assert
+		Actual      string
+		Expected    interface{}
+	}{
+		{
+			GivenAssert: specification.NewAssert("", struct{}{}),
+			Actual:      "",
+			Expected:    struct{}{},
+		},
+		{
+			GivenAssert: specification.NewAssert("some", "foo"),
+			Actual:      "some",
+			Expected:    "foo",
+		},
+		{
+			GivenAssert: specification.NewAssert("map", map[string]interface{}{
+				"foo": true,
+				"bar": false,
+			}),
+			Actual: "map",
+			Expected: map[string]interface{}{
+				"foo": true,
+				"bar": false,
+			},
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			t.Run("actual", func(t *testing.T) {
+				require.Equal(t, c.Actual, c.GivenAssert.Actual())
+			})
+
+			t.Run("expected", func(t *testing.T) {
+				require.Equal(t, c.Expected, c.GivenAssert.Expected())
+			})
+		})
+	}
+}
+
+func TestAsNotAllowedAssertionMethodError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError      error
+		ShouldBeWrapped bool
+		ExpectedMethod  specification.AssertionMethod
+	}{
+		{
+			GivenError:      nil,
+			ShouldBeWrapped: false,
+		},
+		{
+			GivenError:      &specification.NotAllowedAssertionMethodError{},
+			ShouldBeWrapped: true,
+			ExpectedMethod:  specification.NoAssertionMethod,
+		},
+		{
+			GivenError: specification.NewNotAllowedAssertionMethodError(
+				specification.JSONPath,
+			),
+			ShouldBeWrapped: true,
+			ExpectedMethod:  specification.JSONPath,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var nerr *specification.NotAllowedAssertionMethodError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &nerr))
+				})
+
+				return
+			}
+
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &nerr)
+
+				t.Run("method", func(t *testing.T) {
+					require.Equal(t, c.ExpectedMethod, nerr.Method())
+				})
+			})
+		})
+	}
+}
+
+func TestFormatNotAllowedAssertionMethodError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          error
+		ExpectedErrorString string
+	}{
+		{
+			GivenError:          &specification.NotAllowedAssertionMethodError{},
+			ExpectedErrorString: "assertion method `` not allowed",
+		},
+		{
+			GivenError: specification.NewNotAllowedAssertionMethodError(
+				specification.NoAssertionMethod,
+			),
+			ExpectedErrorString: "assertion method `` not allowed",
+		},
+		{
+			GivenError: specification.NewNotAllowedAssertionMethodError(
+				specification.JSONPath,
+			),
+			ExpectedErrorString: "assertion method `jsonpath` not allowed",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
 		})
 	}
 }

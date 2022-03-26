@@ -32,6 +32,7 @@ type (
 )
 
 const (
+	NoStage      Stage = ""
 	UnknownStage Stage = "!"
 	Given        Stage = "given"
 	When         Stage = "when"
@@ -74,7 +75,7 @@ func (s Stage) Before() []Stage {
 		return []Stage{Given}
 	case Then:
 		return []Stage{Given, When}
-	case UnknownStage:
+	case NoStage, UnknownStage:
 		return nil
 	}
 
@@ -89,7 +90,7 @@ func (s Stage) IsValid() bool {
 		return true
 	case Then:
 		return true
-	case UnknownStage:
+	case NoStage, UnknownStage:
 		return false
 	}
 

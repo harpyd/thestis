@@ -1,6 +1,7 @@
 package specification_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -622,6 +623,11 @@ func TestHTTPMethodIsValid(t *testing.T) {
 			Method:        "PAST",
 			ShouldBeValid: false,
 		},
+		{
+			Name:          "unknown",
+			Method:        specification.UnknownHTTPMethod,
+			ShouldBeValid: false,
+		},
 	}
 
 	for i := range testCases {
@@ -673,6 +679,11 @@ func TestContentTypeIsValid(t *testing.T) {
 			ContentType:   "some/content",
 			ShouldBeValid: false,
 		},
+		{
+			Name:          "unknown",
+			ContentType:   specification.UnknownContentType,
+			ShouldBeValid: false,
+		},
 	}
 
 	for i := range testCases {
@@ -682,6 +693,198 @@ func TestContentTypeIsValid(t *testing.T) {
 			t.Parallel()
 
 			require.Equal(t, c.ShouldBeValid, c.ContentType.IsValid())
+		})
+	}
+}
+
+func TestAsNotAllowedContentTypeError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          error
+		ShouldBeWrapped     bool
+		ExpectedContentType specification.ContentType
+	}{
+		{
+			GivenError:      nil,
+			ShouldBeWrapped: false,
+		},
+		{
+			GivenError: specification.NewNotAllowedContentTypeError(
+				specification.ApplicationJSON,
+			),
+			ShouldBeWrapped:     true,
+			ExpectedContentType: specification.ApplicationJSON,
+		},
+		{
+			GivenError: specification.NewNotAllowedContentTypeError(
+				specification.UnknownContentType,
+			),
+			ShouldBeWrapped:     true,
+			ExpectedContentType: specification.UnknownContentType,
+		},
+		{
+			GivenError:          specification.NewNotAllowedContentTypeError("foo"),
+			ShouldBeWrapped:     true,
+			ExpectedContentType: "foo",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var target *specification.NotAllowedContentTypeError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &target))
+				})
+
+				return
+			}
+
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &target)
+
+				t.Run("content_type", func(t *testing.T) {
+					require.Equal(t, c.ExpectedContentType, target.ContentType())
+				})
+			})
+		})
+	}
+}
+
+func TestFormatNotAllowedContentTypeError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          error
+		ExpectedErrorString string
+	}{
+		{
+			GivenError:          &specification.NotAllowedContentTypeError{},
+			ExpectedErrorString: "content type `` not allowed",
+		},
+		{
+			GivenError: specification.NewNotAllowedContentTypeError(
+				specification.ApplicationXML,
+			),
+			ExpectedErrorString: "content type `application/xml` not allowed",
+		},
+		{
+			GivenError: specification.NewNotAllowedContentTypeError(
+				"bad",
+			),
+			ExpectedErrorString: "content type `bad` not allowed",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
+		})
+	}
+}
+
+func TestAsNotAllowedHTTPMethodError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError      error
+		ShouldBeWrapped bool
+		ExpectedMethod  specification.HTTPMethod
+	}{
+		{
+			GivenError:      nil,
+			ShouldBeWrapped: false,
+		},
+		{
+			GivenError:      &specification.NotAllowedHTTPMethodError{},
+			ShouldBeWrapped: true,
+			ExpectedMethod:  specification.NoHTTPMethod,
+		},
+		{
+			GivenError: specification.NewNotAllowedHTTPMethodError(
+				specification.UnknownHTTPMethod,
+			),
+			ShouldBeWrapped: true,
+			ExpectedMethod:  specification.UnknownHTTPMethod,
+		},
+		{
+			GivenError: specification.NewNotAllowedHTTPMethodError(
+				"wrong",
+			),
+			ShouldBeWrapped: true,
+			ExpectedMethod:  "wrong",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var target *specification.NotAllowedHTTPMethodError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &target))
+				})
+
+				return
+			}
+
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &target)
+
+				t.Run("method", func(t *testing.T) {
+					require.Equal(t, c.ExpectedMethod, target.Method())
+				})
+			})
+		})
+	}
+}
+
+func TestFormatNotAllowedHTTPMethodError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          error
+		ExpectedErrorString string
+	}{
+		{
+			GivenError:          &specification.NotAllowedHTTPMethodError{},
+			ExpectedErrorString: "HTTP method `` not allowed",
+		},
+		{
+			GivenError: specification.NewNotAllowedHTTPMethodError(
+				specification.GET,
+			),
+			ExpectedErrorString: "HTTP method `GET` not allowed",
+		},
+		{
+			GivenError: specification.NewNotAllowedHTTPMethodError(
+				"boom",
+			),
+			ExpectedErrorString: "HTTP method `boom` not allowed",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
 		})
 	}
 }
