@@ -1,7 +1,6 @@
 package testcampaign_test
 
 import (
-	"errors"
 	"testing"
 	"time"
 
@@ -10,14 +9,14 @@ import (
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
 
-func TestNew(t *testing.T) {
+func TestTestCampaign(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		Name        string
 		Params      testcampaign.Params
 		ShouldBeErr bool
-		IsErr       func(err error) bool
+		ExpectedErr error
 	}{
 		{
 			Name: "without_error",
@@ -39,7 +38,7 @@ func TestNew(t *testing.T) {
 				OwnerID:  "user-id",
 			},
 			ShouldBeErr: true,
-			IsErr:       testcampaign.IsEmptyIDError,
+			ExpectedErr: testcampaign.ErrEmptyID,
 		},
 		{
 			Name: "empty_user_id",
@@ -49,7 +48,7 @@ func TestNew(t *testing.T) {
 				Summary:  "",
 			},
 			ShouldBeErr: true,
-			IsErr:       testcampaign.IsEmptyOwnerIDError,
+			ExpectedErr: testcampaign.ErrEmptyOwnerID,
 		},
 	}
 
@@ -61,67 +60,80 @@ func TestNew(t *testing.T) {
 
 			tc, err := testcampaign.New(c.Params)
 
+			must := func() {
+				_ = testcampaign.MustNew(c.Params)
+			}
+
 			if c.ShouldBeErr {
-				require.True(t, c.IsErr(err))
+				t.Run("err", func(t *testing.T) {
+					t.Run("is", func(t *testing.T) {
+						require.ErrorIs(t, err, c.ExpectedErr)
+					})
+
+					t.Run("panic", func(t *testing.T) {
+						require.PanicsWithValue(t, c.ExpectedErr, must)
+					})
+				})
 
 				return
 			}
 
-			require.NoError(t, err)
-			require.Equal(t, c.Params.ID, tc.ID())
-			require.Equal(t, c.Params.ViewName, tc.ViewName())
-			require.Equal(t, c.Params.Summary, tc.Summary())
-			require.Equal(t, c.Params.CreatedAt, tc.CreatedAt())
+			t.Run("no_err", func(t *testing.T) {
+				require.NoError(t, err)
+				require.NotPanics(t, must)
+
+				t.Run("id", func(t *testing.T) {
+					require.Equal(t, c.Params.ID, tc.ID())
+				})
+
+				t.Run("owner_id", func(t *testing.T) {
+					require.Equal(t, c.Params.OwnerID, tc.OwnerID())
+				})
+
+				t.Run("view_name", func(t *testing.T) {
+					require.Equal(t, c.Params.ViewName, tc.ViewName())
+				})
+
+				t.Run("summary", func(t *testing.T) {
+					require.Equal(t, c.Params.Summary, tc.Summary())
+				})
+
+				t.Run("created_at", func(t *testing.T) {
+					require.Equal(t, c.Params.CreatedAt, tc.CreatedAt())
+				})
+			})
 		})
 	}
 }
 
-func TestTestCampaignErrors(t *testing.T) {
+func TestSetTestCampaignViewName(t *testing.T) {
 	t.Parallel()
 
-	testCases := []struct {
-		Name     string
-		Err      error
-		IsErr    func(err error) bool
-		Reversed bool
-	}{
-		{
-			Name:  "empty_id_error",
-			Err:   testcampaign.NewEmptyIDError(),
-			IsErr: testcampaign.IsEmptyIDError,
-		},
-		{
-			Name:     "NON_empty_id_error",
-			Err:      errors.New("empty id"),
-			IsErr:    testcampaign.IsEmptyIDError,
-			Reversed: true,
-		},
-		{
-			Name:  "empty_user_id_error",
-			Err:   testcampaign.NewEmptyOwnerIDError(),
-			IsErr: testcampaign.IsEmptyOwnerIDError,
-		},
-		{
-			Name:     "NON_empty_user_id_error",
-			Err:      errors.New("empty owner id"),
-			IsErr:    testcampaign.IsEmptyOwnerIDError,
-			Reversed: true,
-		},
-	}
+	tc := testcampaign.MustNew(testcampaign.Params{
+		ID:       "id",
+		OwnerID:  "owner-id",
+		ViewName: "foo",
+	})
 
-	for _, c := range testCases {
-		c := c
+	require.Equal(t, "foo", tc.ViewName())
 
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
+	tc.SetViewName("bar")
 
-			if c.Reversed {
-				require.False(t, c.IsErr(c.Err))
+	require.Equal(t, "bar", tc.ViewName())
+}
 
-				return
-			}
+func TestSetTestCampaignSummary(t *testing.T) {
+	t.Parallel()
 
-			require.True(t, c.IsErr(c.Err))
-		})
-	}
+	tc := testcampaign.MustNew(testcampaign.Params{
+		ID:      "id",
+		OwnerID: "owner-id",
+		Summary: "doo",
+	})
+
+	require.Equal(t, "doo", tc.Summary())
+
+	tc.SetSummary("qoo")
+
+	require.Equal(t, "qoo", tc.Summary())
 }
