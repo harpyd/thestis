@@ -268,7 +268,7 @@ type BuildError struct {
 	errs []error
 }
 
-func (e *BuildError) Message() string {
+func (e *BuildError) Context() string {
 	return e.msg
 }
 
