@@ -32,13 +32,18 @@ func MustNew(params Params) *TestCampaign {
 	return tc
 }
 
+var (
+	ErrEmptyID      = errors.New("empty test campaign ID")
+	ErrEmptyOwnerID = errors.New("empty owner ID")
+)
+
 func New(params Params) (*TestCampaign, error) {
 	if params.ID == "" {
-		return nil, NewEmptyIDError()
+		return nil, ErrEmptyID
 	}
 
 	if params.OwnerID == "" {
-		return nil, NewEmptyOwnerIDError()
+		return nil, ErrEmptyOwnerID
 	}
 
 	return &TestCampaign{
@@ -76,25 +81,4 @@ func (tc *TestCampaign) OwnerID() string {
 
 func (tc *TestCampaign) CreatedAt() time.Time {
 	return tc.createdAt
-}
-
-var (
-	errEmptyID      = errors.New("empty test campaign ID")
-	errEmptyOwnerID = errors.New("empty owner ID")
-)
-
-func NewEmptyIDError() error {
-	return errEmptyID
-}
-
-func IsEmptyIDError(err error) bool {
-	return errors.Is(err, errEmptyID)
-}
-
-func NewEmptyOwnerIDError() error {
-	return errEmptyOwnerID
-}
-
-func IsEmptyOwnerIDError(err error) bool {
-	return errors.Is(err, errEmptyOwnerID)
 }
