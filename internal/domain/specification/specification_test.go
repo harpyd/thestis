@@ -686,8 +686,8 @@ func TestAsBuildError(t *testing.T) {
 			t.Run("as", func(t *testing.T) {
 				require.ErrorAs(t, c.GivenError, &target)
 
-				t.Run("message", func(t *testing.T) {
-					require.Equal(t, c.ExpectedMessage, target.Message())
+				t.Run("context", func(t *testing.T) {
+					require.Equal(t, c.ExpectedMessage, target.Context())
 				})
 
 				t.Run("errors", func(t *testing.T) {
