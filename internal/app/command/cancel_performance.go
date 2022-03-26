@@ -42,7 +42,7 @@ func (h CancelPerformanceHandler) Handle(ctx context.Context, cmd app.CancelPerf
 		return err
 	}
 
-	if err := user.CanSeePerformance(cmd.CanceledByID, perf); err != nil {
+	if err := user.CanAccessPerformance(cmd.CanceledByID, perf, user.Read); err != nil {
 		return err
 	}
 

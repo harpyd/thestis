@@ -162,7 +162,11 @@ func TestHandleLoadSpecification(t *testing.T) {
 			}),
 			ParseWithErr: false,
 			ShouldBeErr:  true,
-			IsErr:        user.IsCantSeeTestCampaignError,
+			IsErr: func(err error) bool {
+				var target *user.AccessError
+
+				return errors.As(err, &target)
+			},
 		},
 	}
 
