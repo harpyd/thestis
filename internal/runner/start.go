@@ -27,13 +27,13 @@ import (
 	"github.com/harpyd/thestis/internal/config"
 	"github.com/harpyd/thestis/internal/port/http"
 	"github.com/harpyd/thestis/internal/port/http/auth"
+	"github.com/harpyd/thestis/internal/port/http/cors"
 	"github.com/harpyd/thestis/internal/port/http/logging"
 	"github.com/harpyd/thestis/internal/port/http/metrics"
 	v1 "github.com/harpyd/thestis/internal/port/http/v1"
 	"github.com/harpyd/thestis/internal/server"
 	"github.com/harpyd/thestis/pkg/auth/firebase"
 	"github.com/harpyd/thestis/pkg/database/mongodb"
-	"github.com/harpyd/thestis/pkg/http/cors"
 )
 
 func Start(configsPath string) {
