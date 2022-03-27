@@ -241,7 +241,7 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredPerform,
 				),
 				performance.NewThesisStepWithErr(
-					performance.WrapErrorWithEvent(
+					performance.WrapWithTerminatedError(
 						errors.New("expected failing"),
 						performance.FiredFail,
 					),
@@ -250,7 +250,7 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredFail,
 				),
 				performance.NewScenarioStepWithErr(
-					performance.WrapErrorWithEvent(
+					performance.WrapWithTerminatedError(
 						errors.New("expected failing"),
 						performance.FiredFail,
 					),
@@ -289,7 +289,7 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredPerform,
 				),
 				performance.NewThesisStepWithErr(
-					performance.WrapErrorWithEvent(
+					performance.WrapWithTerminatedError(
 						errors.New("expected canceling"),
 						performance.FiredCancel,
 					),
@@ -298,7 +298,7 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredCancel,
 				),
 				performance.NewScenarioStepWithErr(
-					performance.WrapErrorWithEvent(
+					performance.WrapWithTerminatedError(
 						errors.New("expected canceling"),
 						performance.FiredCancel,
 					),
@@ -329,7 +329,7 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredPerform,
 				),
 				performance.NewThesisStepWithErr(
-					performance.WrapErrorWithEvent(
+					performance.WrapWithTerminatedError(
 						performance.NewRejectedError(
 							performance.UnknownPerformer,
 						),
@@ -340,7 +340,7 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredCrash,
 				),
 				performance.NewScenarioStepWithErr(
-					performance.WrapErrorWithEvent(
+					performance.WrapWithTerminatedError(
 						performance.NewRejectedError(
 							performance.UnknownPerformer,
 						),
@@ -428,7 +428,7 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredPerform,
 				),
 				performance.NewThesisStepWithErr(
-					performance.WrapErrorWithEvent(
+					performance.WrapWithTerminatedError(
 						errors.New("expected crashing"),
 						performance.FiredCrash,
 					),
@@ -437,7 +437,7 @@ func TestStartPerformance(t *testing.T) {
 					performance.FiredCrash,
 				),
 				performance.NewScenarioStepWithErr(
-					performance.WrapErrorWithEvent(
+					performance.WrapWithTerminatedError(
 						errors.New("expected crashing"),
 						performance.FiredCrash,
 					),
@@ -567,7 +567,7 @@ func TestCancelPerformanceContext(t *testing.T) {
 			CancelBeforeStart: true,
 			ExpectedIncludedSteps: []performance.Step{
 				performance.NewScenarioStepWithErr(
-					performance.WrapErrorWithEvent(
+					performance.WrapWithTerminatedError(
 						context.Canceled,
 						performance.FiredCancel,
 					),
@@ -580,7 +580,7 @@ func TestCancelPerformanceContext(t *testing.T) {
 			CancelAfterReadFirstStep: true,
 			ExpectedIncludedSteps: []performance.Step{
 				performance.NewScenarioStepWithErr(
-					performance.WrapErrorWithEvent(
+					performance.WrapWithTerminatedError(
 						context.Canceled,
 						performance.FiredCancel,
 					),
@@ -643,21 +643,21 @@ func TestIsWrappedInTerminatedError(t *testing.T) {
 			ExpectedIs: false,
 		},
 		{
-			GivenError: performance.WrapErrorWithEvent(
+			GivenError: performance.WrapWithTerminatedError(
 				nil,
 				performance.FiredCrash,
 			),
 			ExpectedIs: false,
 		},
 		{
-			GivenError: performance.WrapErrorWithEvent(
+			GivenError: performance.WrapWithTerminatedError(
 				errors.New("foo"),
 				performance.FiredFail,
 			),
 			ExpectedIs: false,
 		},
 		{
-			GivenError: performance.WrapErrorWithEvent(
+			GivenError: performance.WrapWithTerminatedError(
 				errTest,
 				performance.FiredCrash,
 			),
@@ -688,21 +688,21 @@ func TestAsWrappedInTerminatedError(t *testing.T) {
 			ExpectedAs: false,
 		},
 		{
-			GivenError: performance.WrapErrorWithEvent(
+			GivenError: performance.WrapWithTerminatedError(
 				nil,
 				performance.FiredFail,
 			),
 			ExpectedAs: false,
 		},
 		{
-			GivenError: performance.WrapErrorWithEvent(
+			GivenError: performance.WrapWithTerminatedError(
 				errors.New("foo"),
 				performance.FiredFail,
 			),
 			ExpectedAs: false,
 		},
 		{
-			GivenError: performance.WrapErrorWithEvent(
+			GivenError: performance.WrapWithTerminatedError(
 				testError{},
 				performance.FiredCrash,
 			),
@@ -743,7 +743,7 @@ func TestAsTerminatedError(t *testing.T) {
 			ExpectedUnwrapped: nil,
 		},
 		{
-			GivenError: performance.WrapErrorWithEvent(
+			GivenError: performance.WrapWithTerminatedError(
 				errors.New("foo"),
 				performance.FiredCrash,
 			),
@@ -806,14 +806,14 @@ func TestFormatTerminatedError(t *testing.T) {
 			ExpectedErrorString: "performance has terminated",
 		},
 		{
-			GivenError: performance.WrapErrorWithEvent(
+			GivenError: performance.WrapWithTerminatedError(
 				errors.New("foo"),
 				performance.NoEvent,
 			),
 			ExpectedErrorString: "performance has terminated: foo",
 		},
 		{
-			GivenError: performance.WrapErrorWithEvent(
+			GivenError: performance.WrapWithTerminatedError(
 				errors.New("bar"),
 				performance.FiredCrash,
 			),
