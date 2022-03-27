@@ -203,10 +203,26 @@ type DuplicatedError struct {
 	slug Slug
 }
 
+type InvalidDependenciesError struct {
+	name string
+}
+
+type CyclicDependencyError struct {
+	name string
+}
+
 func NewDuplicatedError(slug Slug) error {
 	return errors.WithStack(&DuplicatedError{
 		slug: slug,
 	})
+}
+
+func NewInvalidDependenciesError(name string) error {
+	return errors.WithStack(&InvalidDependenciesError{name: name})
+}
+
+func NewCyclicDependencyError(name string) error {
+	return errors.WithStack(&CyclicDependencyError{name: name})
 }
 
 func (e *DuplicatedError) Slug() Slug {
@@ -219,4 +235,12 @@ func (e *DuplicatedError) Error() string {
 	}
 
 	return fmt.Sprintf("%s already exists", e.slug)
+}
+
+func (e *InvalidDependenciesError) Error() string {
+	return fmt.Sprintf("dependence by name=%v does not exist", e.name)
+}
+
+func (e *CyclicDependencyError) Error() string {
+	return fmt.Sprintf("cyclic dependence by name=%v", e.name)
 }
