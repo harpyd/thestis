@@ -55,7 +55,7 @@ func (h LoadSpecificationHandler) Handle(
 		return "", err
 	}
 
-	if err := user.CanSeeTestCampaign(cmd.LoadedByID, tc); err != nil {
+	if err := user.CanAccessTestCampaign(cmd.LoadedByID, tc, user.Read); err != nil {
 		return "", err
 	}
 

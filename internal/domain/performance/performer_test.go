@@ -32,20 +32,20 @@ func TestResult(t *testing.T) {
 				errors.New("foo"),
 			),
 			ExpectedEvent: performance.FiredFail,
-			ExpectedErr: performance.WrapErrorWithEvent(
+			ExpectedErr: performance.WrapWithTerminatedError(
 				errors.New("foo"),
 				performance.FiredFail,
 			),
 		},
 		{
 			GivenResult: performance.Fail(
-				performance.WrapErrorWithEvent(
+				performance.WrapWithTerminatedError(
 					errors.New("foo"),
 					performance.FiredFail,
 				),
 			),
 			ExpectedEvent: performance.FiredFail,
-			ExpectedErr: performance.WrapErrorWithEvent(
+			ExpectedErr: performance.WrapWithTerminatedError(
 				errors.New("bar"),
 				performance.FiredFail,
 			),
@@ -60,20 +60,20 @@ func TestResult(t *testing.T) {
 				errors.New("boo"),
 			),
 			ExpectedEvent: performance.FiredCrash,
-			ExpectedErr: performance.WrapErrorWithEvent(
+			ExpectedErr: performance.WrapWithTerminatedError(
 				errors.New("boo"),
 				performance.FiredCrash,
 			),
 		},
 		{
 			GivenResult: performance.Crash(
-				performance.WrapErrorWithEvent(
+				performance.WrapWithTerminatedError(
 					errors.New("qwe"),
 					performance.FiredCrash,
 				),
 			),
 			ExpectedEvent: performance.FiredCrash,
-			ExpectedErr: performance.WrapErrorWithEvent(
+			ExpectedErr: performance.WrapWithTerminatedError(
 				errors.New("qwe"),
 				performance.FiredCrash,
 			),
@@ -88,20 +88,20 @@ func TestResult(t *testing.T) {
 				errors.New("bar"),
 			),
 			ExpectedEvent: performance.FiredCancel,
-			ExpectedErr: performance.WrapErrorWithEvent(
+			ExpectedErr: performance.WrapWithTerminatedError(
 				errors.New("bar"),
 				performance.FiredCancel,
 			),
 		},
 		{
 			GivenResult: performance.Cancel(
-				performance.WrapErrorWithEvent(
+				performance.WrapWithTerminatedError(
 					errors.New("baz"),
 					performance.FiredCancel,
 				),
 			),
 			ExpectedEvent: performance.FiredCancel,
-			ExpectedErr: performance.WrapErrorWithEvent(
+			ExpectedErr: performance.WrapWithTerminatedError(
 				errors.New("baz"),
 				performance.FiredCancel,
 			),

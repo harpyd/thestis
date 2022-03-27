@@ -2,6 +2,7 @@ package command_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -117,7 +118,11 @@ func TestHandleStartPerformance(t *testing.T) {
 				WithOwnerID("8ea9dca1-53da-4ed5-8f4b-660c8956ea45").
 				ErrlessBuild(),
 			ShouldBeErr: true,
-			IsErr:       user.IsCantSeeSpecificationError,
+			IsErr: func(err error) bool {
+				var target *user.AccessError
+
+				return errors.As(err, &target)
+			},
 		},
 		{
 			Name: "success_performance_starting",

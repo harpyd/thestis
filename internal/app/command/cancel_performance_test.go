@@ -2,9 +2,9 @@ package command_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/app"
@@ -114,8 +114,12 @@ func TestHandleCancelPerformance(t *testing.T) {
 				OwnerID: "759cf65b-547b-4523-a9f4-9dd4f12188d2",
 				Started: true,
 			}),
-			ShouldBeErr:          true,
-			IsErr:                user.IsCantSeePerformanceError,
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				var target *user.AccessError
+
+				return errors.As(err, &target)
+			},
 			ExpectedPublishCalls: 0,
 		},
 		{

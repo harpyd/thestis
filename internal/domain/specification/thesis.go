@@ -104,10 +104,6 @@ func (s Stage) String() string {
 var ErrUselessThesis = errors.New("useless thesis")
 
 func (b *ThesisBuilder) Build(slug Slug) (Thesis, error) {
-	if err := slug.ShouldBeNotZero(); err != nil {
-		panic(err)
-	}
-
 	if err := slug.ShouldBeThesisKind(); err != nil {
 		panic(err)
 	}

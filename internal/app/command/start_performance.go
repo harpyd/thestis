@@ -57,7 +57,7 @@ func (h StartPerformanceHandler) Handle(
 		return "", nil, err
 	}
 
-	if err = user.CanSeeSpecification(cmd.StartedByID, spec); err != nil {
+	if err = user.CanAccessSpecification(cmd.StartedByID, spec, user.Read); err != nil {
 		return "", nil, err
 	}
 

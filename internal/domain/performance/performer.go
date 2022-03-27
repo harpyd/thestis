@@ -76,7 +76,7 @@ func Fail(err error) Result {
 	var terr *TerminatedError
 
 	if !errors.As(err, &terr) || terr.Event() != FiredFail {
-		err = WrapErrorWithEvent(err, FiredFail)
+		err = WrapWithTerminatedError(err, FiredFail)
 	}
 
 	return Result{
@@ -99,7 +99,7 @@ func Crash(err error) Result {
 	var terr *TerminatedError
 
 	if !errors.As(err, &terr) || terr.Event() != FiredCrash {
-		err = WrapErrorWithEvent(err, FiredCrash)
+		err = WrapWithTerminatedError(err, FiredCrash)
 	}
 
 	return Result{
@@ -120,7 +120,7 @@ func Cancel(err error) Result {
 	var terr *TerminatedError
 
 	if !errors.As(err, &terr) || terr.Event() != FiredCancel {
-		err = WrapErrorWithEvent(err, FiredCancel)
+		err = WrapWithTerminatedError(err, FiredCancel)
 	}
 
 	return Result{

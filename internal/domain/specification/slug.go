@@ -28,7 +28,6 @@ var (
 	ErrNotStorySlug    = errors.New("not story slug")
 	ErrNotScenarioSlug = errors.New("not scenario slug")
 	ErrNotThesisSlug   = errors.New("not thesis slug")
-	ErrZeroSlug        = errors.New("zero slug")
 )
 
 func AnyStorySlug() Slug {
@@ -113,14 +112,6 @@ func (s Slug) ShouldBeThesisKind() error {
 	}
 
 	return ErrNotThesisSlug
-}
-
-func (s Slug) ShouldBeNotZero() error {
-	if s.IsZero() {
-		return ErrZeroSlug
-	}
-
-	return nil
 }
 
 func (s Slug) Story() string {

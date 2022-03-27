@@ -126,7 +126,11 @@ func TestHandleRestartPerformance(t *testing.T) {
 				OwnerID: "0a5782ec-7580-4526-b4e4-c3a7489ca512",
 			}),
 			ShouldBeErr: true,
-			IsErr:       user.IsCantSeePerformanceError,
+			IsErr: func(err error) bool {
+				var target *user.AccessError
+
+				return errors.As(err, &target)
+			},
 		},
 		{
 			Name: "performance_already_started",

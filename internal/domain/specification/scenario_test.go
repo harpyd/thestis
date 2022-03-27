@@ -25,12 +25,6 @@ func TestBuildScenarioSlugging(t *testing.T) {
 			ShouldPanic: false,
 		},
 		{
-			Name:            "zero_slug",
-			GivenSlug:       specification.Slug{},
-			ShouldPanic:     true,
-			WithExpectedErr: specification.ErrZeroSlug,
-		},
-		{
 			Name:            "not_scenario_slug",
 			GivenSlug:       specification.NewStorySlug("foo"),
 			ShouldPanic:     true,

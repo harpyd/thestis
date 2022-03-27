@@ -61,10 +61,6 @@ func (s Scenario) ThesesByStages(stages ...Stage) []Thesis {
 var ErrNoScenarioTheses = errors.New("no theses")
 
 func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
-	if err := slug.ShouldBeNotZero(); err != nil {
-		panic(err)
-	}
-
 	if err := slug.ShouldBeScenarioKind(); err != nil {
 		panic(err)
 	}

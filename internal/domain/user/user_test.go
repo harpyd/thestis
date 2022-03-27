@@ -1,6 +1,8 @@
 package user_test
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,15 +13,15 @@ import (
 	"github.com/harpyd/thestis/internal/domain/user"
 )
 
-func TestCanSeeTestCampaign(t *testing.T) {
+func TestCanAccessTestCampaign(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		Name         string
 		UserID       string
 		TestCampaign *testcampaign.TestCampaign
+		Permission   user.Permission
 		ShouldBeErr  bool
-		IsErr        func(err error) bool
 	}{
 		{
 			Name:   "can_see",
@@ -30,6 +32,7 @@ func TestCanSeeTestCampaign(t *testing.T) {
 				ViewName: "test",
 				Summary:  "tests",
 			}),
+			Permission:  user.Read,
 			ShouldBeErr: false,
 		},
 		{
@@ -39,8 +42,8 @@ func TestCanSeeTestCampaign(t *testing.T) {
 				ID:      "c316d7d8-28df-4bce-b28a-80a4364c8c07",
 				OwnerID: "f4f560a1-138c-4812-b152-0d7b71236d7f",
 			}),
+			Permission:  user.Write,
 			ShouldBeErr: true,
-			IsErr:       user.IsCantSeeTestCampaignError,
 		},
 	}
 
@@ -50,10 +53,16 @@ func TestCanSeeTestCampaign(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			err := user.CanSeeTestCampaign(c.UserID, c.TestCampaign)
+			err := user.CanAccessTestCampaign(
+				c.UserID,
+				c.TestCampaign,
+				c.Permission,
+			)
 
 			if c.ShouldBeErr {
-				require.True(t, c.IsErr(err))
+				var target *user.AccessError
+
+				require.ErrorAs(t, err, &target)
 
 				return
 			}
@@ -63,15 +72,15 @@ func TestCanSeeTestCampaign(t *testing.T) {
 	}
 }
 
-func TestCanSeeSpecification(t *testing.T) {
+func TestCanAccessSpecification(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		Name          string
 		UserID        string
 		Specification *specification.Specification
+		Permission    user.Permission
 		ShouldBeErr   bool
-		IsErr         func(err error) bool
 	}{
 		{
 			Name:   "can_see",
@@ -80,6 +89,7 @@ func TestCanSeeSpecification(t *testing.T) {
 				WithID("17099c59-19c5-4edf-ac0f-b0093fed1ffc").
 				WithOwnerID("2e7f4a0b-a23a-4020-9138-756912b705bd").
 				ErrlessBuild(),
+			Permission:  user.Write,
 			ShouldBeErr: false,
 		},
 		{
@@ -90,7 +100,7 @@ func TestCanSeeSpecification(t *testing.T) {
 				WithOwnerID("4e28e13b-877f-4e53-bc85-0744164b7187").
 				ErrlessBuild(),
 			ShouldBeErr: true,
-			IsErr:       user.IsCantSeeSpecificationError,
+			Permission:  user.Read,
 		},
 	}
 
@@ -100,10 +110,16 @@ func TestCanSeeSpecification(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			err := user.CanSeeSpecification(c.UserID, c.Specification)
+			err := user.CanAccessSpecification(
+				c.UserID,
+				c.Specification,
+				c.Permission,
+			)
 
 			if c.ShouldBeErr {
-				require.True(t, c.IsErr(err))
+				var target *user.AccessError
+
+				require.ErrorAs(t, err, &target)
 
 				return
 			}
@@ -113,15 +129,15 @@ func TestCanSeeSpecification(t *testing.T) {
 	}
 }
 
-func TestCanSeePerformance(t *testing.T) {
+func TestCanAccessPerformance(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		Name        string
 		UserID      string
 		Performance *performance.Performance
+		Permission  user.Permission
 		ShouldBeErr bool
-		IsErr       func(err error) bool
 	}{
 		{
 			Name:   "can_see",
@@ -129,6 +145,7 @@ func TestCanSeePerformance(t *testing.T) {
 			Performance: performance.Unmarshal(performance.Params{
 				OwnerID: "e7b9f695-ea8d-4d31-a4ce-cfd5521d52c2",
 			}),
+			Permission:  user.Read,
 			ShouldBeErr: false,
 		},
 		{
@@ -137,8 +154,8 @@ func TestCanSeePerformance(t *testing.T) {
 			Performance: performance.Unmarshal(performance.Params{
 				OwnerID: "f36b38e0-829d-4bdf-af2d-de4e8e43b0c0",
 			}),
+			Permission:  user.Write,
 			ShouldBeErr: true,
-			IsErr:       user.IsCantSeePerformanceError,
 		},
 	}
 
@@ -148,10 +165,16 @@ func TestCanSeePerformance(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			err := user.CanSeePerformance(c.UserID, c.Performance)
+			err := user.CanAccessPerformance(
+				c.UserID,
+				c.Performance,
+				c.Permission,
+			)
 
 			if c.ShouldBeErr {
-				require.True(t, c.IsErr(err))
+				var target *user.AccessError
+
+				require.ErrorAs(t, err, &target)
 
 				return
 			}
@@ -161,63 +184,161 @@ func TestCanSeePerformance(t *testing.T) {
 	}
 }
 
-func TestUserErrors(t *testing.T) {
+func TestAsAccessError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name     string
-		Err      error
-		IsErr    func(err error) bool
-		Reversed bool
+		GivenError         error
+		ShouldBeWrapped    bool
+		ExpectedUserID     string
+		ExpectedResourceID string
+		ExpectedResource   user.Resource
+		ExpectedPermission user.Permission
 	}{
 		{
-			Name:  "cant_see_test_campaign_error",
-			Err:   user.NewCantSeeTestCampaignError("user-id", "owner-id"),
-			IsErr: user.IsCantSeeTestCampaignError,
+			GivenError:      nil,
+			ShouldBeWrapped: false,
 		},
 		{
-			Name:     "NON_cant_see_test_campaign_error",
-			Err:      user.NewCantSeePerformanceError("user-id", "owner-id"),
-			IsErr:    user.IsCantSeeTestCampaignError,
-			Reversed: true,
+			GivenError:         &user.AccessError{},
+			ShouldBeWrapped:    true,
+			ExpectedUserID:     "",
+			ExpectedResourceID: "",
+			ExpectedResource:   user.NoResource,
+			ExpectedPermission: user.NoPermission,
 		},
 		{
-			Name:  "cant_see_specification_error",
-			Err:   user.NewCantSeeSpecificationError("user-id", "owner-id"),
-			IsErr: user.IsCantSeeSpecificationError,
+			GivenError: user.NewAccessError(
+				"",
+				"",
+				user.NoResource,
+				user.NoPermission,
+			),
+			ShouldBeWrapped:    true,
+			ExpectedUserID:     "",
+			ExpectedResourceID: "",
+			ExpectedResource:   user.NoResource,
+			ExpectedPermission: user.NoPermission,
 		},
 		{
-			Name:     "NON_cant_see_specification_error",
-			Err:      user.NewCantSeeTestCampaignError("user-id", "owner-id"),
-			IsErr:    user.IsCantSeeSpecificationError,
-			Reversed: true,
-		},
-		{
-			Name:  "cant_see_performance_error",
-			Err:   user.NewCantSeePerformanceError("user-id", "owner-id"),
-			IsErr: user.IsCantSeePerformanceError,
-		},
-		{
-			Name:     "NON_cant_see_performance_error",
-			Err:      user.NewCantSeeSpecificationError("user-id", "owner-id"),
-			IsErr:    user.IsCantSeePerformanceError,
-			Reversed: true,
+			GivenError: user.NewAccessError(
+				"foo",
+				"boo",
+				user.Specification,
+				user.Read,
+			),
+			ShouldBeWrapped:    true,
+			ExpectedUserID:     "foo",
+			ExpectedResourceID: "boo",
+			ExpectedResource:   user.Specification,
+			ExpectedPermission: user.Read,
 		},
 	}
 
-	for _, c := range testCases {
-		c := c
+	for i := range testCases {
+		c := testCases[i]
 
-		t.Run(c.Name, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			if c.Reversed {
-				require.False(t, c.IsErr(c.Err))
+			var target *user.AccessError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &target))
+				})
 
 				return
 			}
 
-			require.True(t, c.IsErr(c.Err))
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &target)
+
+				t.Run("user_id", func(t *testing.T) {
+					require.Equal(t, c.ExpectedUserID, target.UserID())
+				})
+
+				t.Run("resource_id", func(t *testing.T) {
+					require.Equal(t, c.ExpectedResourceID, target.ResourceID())
+				})
+
+				t.Run("resource", func(t *testing.T) {
+					require.Equal(t, c.ExpectedResource, target.Resource())
+				})
+
+				t.Run("permission", func(t *testing.T) {
+					require.Equal(t, c.ExpectedPermission, target.Permission())
+				})
+			})
+		})
+	}
+}
+
+func TestFormatAccessError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          error
+		ExpectedErrorString string
+	}{
+		{
+			GivenError:          &user.AccessError{},
+			ExpectedErrorString: "can't access",
+		},
+		{
+			GivenError: user.NewAccessError(
+				"foo",
+				"",
+				user.NoResource,
+				user.NoPermission,
+			),
+			ExpectedErrorString: "user #foo can't access",
+		},
+		{
+			GivenError: user.NewAccessError(
+				"",
+				"bar",
+				user.NoResource,
+				user.NoPermission,
+			),
+			ExpectedErrorString: "can't access #bar",
+		},
+		{
+			GivenError: user.NewAccessError(
+				"",
+				"",
+				user.TestCampaign,
+				user.NoPermission,
+			),
+			ExpectedErrorString: "can't access test campaign",
+		},
+		{
+			GivenError: user.NewAccessError(
+				"",
+				"",
+				user.NoResource,
+				user.Read,
+			),
+			ExpectedErrorString: `can't access with "read" permission`,
+		},
+		{
+			GivenError: user.NewAccessError(
+				"foo",
+				"bar",
+				user.TestCampaign,
+				user.Read,
+			),
+			ExpectedErrorString: `user #foo can't access test campaign #bar with "read" permission`,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
 		})
 	}
 }

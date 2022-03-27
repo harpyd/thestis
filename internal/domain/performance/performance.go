@@ -221,7 +221,7 @@ func (p *Performance) run(ctx context.Context, steps chan<- Step) {
 func (p *Performance) runScenarios(ctx context.Context, steps chan<- Step) {
 	if ctx.Err() != nil {
 		steps <- NewScenarioStepWithErr(
-			WrapErrorWithEvent(ctx.Err(), FiredCancel),
+			WrapWithTerminatedError(ctx.Err(), FiredCancel),
 			specification.AnyScenarioSlug(),
 			FiredCancel,
 		)
@@ -352,7 +352,7 @@ type TerminatedError struct {
 	event Event
 }
 
-func WrapErrorWithEvent(err error, event Event) error {
+func WrapWithTerminatedError(err error, event Event) error {
 	if err == nil {
 		return nil
 	}

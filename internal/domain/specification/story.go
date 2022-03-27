@@ -62,10 +62,6 @@ func (s Story) Scenario(slug string) (scenario Scenario, ok bool) {
 var ErrNoStoryScenarios = errors.New("no scenarios")
 
 func (b *StoryBuilder) Build(slug Slug) (Story, error) {
-	if err := slug.ShouldBeNotZero(); err != nil {
-		panic(err)
-	}
-
 	if err := slug.ShouldBeStoryKind(); err != nil {
 		panic(err)
 	}

@@ -34,7 +34,9 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 		return
 	}
 
-	if user.IsCantSeeTestCampaignError(err) {
+	var aerr *user.AccessError
+
+	if errors.As(err, &aerr) {
 		httperr.Forbidden(string(ErrorSlugUserCantSeeTestCampaign), err, w, r)
 
 		return
@@ -64,7 +66,9 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 		return
 	}
 
-	if user.IsCantSeePerformanceError(err) {
+	var aerr *user.AccessError
+
+	if errors.As(err, &aerr) {
 		httperr.Forbidden(string(ErrorSlugUserCantSeePerformance), err, w, r)
 
 		return
@@ -98,7 +102,9 @@ func (h handler) CancelPerformance(w http.ResponseWriter, r *http.Request, perfo
 		return
 	}
 
-	if user.IsCantSeePerformanceError(err) {
+	var aerr *user.AccessError
+
+	if errors.As(err, &aerr) {
 		httperr.Forbidden(string(ErrorSlugUserCantSeePerformance), err, w, r)
 
 		return

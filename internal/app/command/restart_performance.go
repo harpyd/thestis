@@ -54,7 +54,7 @@ func (h RestartPerformanceHandler) Handle(
 		return nil, err
 	}
 
-	if err = user.CanSeePerformance(cmd.StartedByID, perf); err != nil {
+	if err = user.CanAccessPerformance(cmd.StartedByID, perf, user.Read); err != nil {
 		return nil, err
 	}
 
