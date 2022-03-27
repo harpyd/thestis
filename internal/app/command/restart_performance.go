@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/app"
+	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/user"
 )
 
@@ -13,14 +14,14 @@ type RestartPerformanceHandler struct {
 	perfsRepo     app.PerformancesRepository
 	specGetter    app.SpecificationGetter
 	maintainer    app.PerformanceMaintainer
-	performerOpts app.PerformerOptions
+	performerOpts []performance.Option
 }
 
 func NewRestartPerformanceHandler(
 	perfsRepo app.PerformancesRepository,
 	specGetter app.SpecificationGetter,
 	maintainer app.PerformanceMaintainer,
-	opts ...app.PerformerOption,
+	opts ...performance.Option,
 ) RestartPerformanceHandler {
 	if perfsRepo == nil {
 		panic("performances repository is nil")

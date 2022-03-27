@@ -15,14 +15,14 @@ type StartPerformanceHandler struct {
 	specsRepo     app.SpecificationsRepository
 	perfsRepo     app.PerformancesRepository
 	maintainer    app.PerformanceMaintainer
-	performerOpts app.PerformerOptions
+	performerOpts []performance.Option
 }
 
 func NewStartPerformanceHandler(
 	specsRepo app.SpecificationsRepository,
 	perfsRepo app.PerformancesRepository,
 	maintainer app.PerformanceMaintainer,
-	opts ...app.PerformerOption,
+	opts ...performance.Option,
 ) StartPerformanceHandler {
 	if specsRepo == nil {
 		panic("specifications repository is nil")
@@ -63,9 +63,7 @@ func (h StartPerformanceHandler) Handle(
 
 	perfID = uuid.New().String()
 
-	opts := h.performerOpts.ToPerformanceOptions()
-
-	perf := performance.FromSpecification(perfID, spec, opts...)
+	perf := performance.FromSpecification(perfID, spec, h.performerOpts...)
 
 	if err = h.perfsRepo.AddPerformance(ctx, perf); err != nil {
 		return "", nil, err

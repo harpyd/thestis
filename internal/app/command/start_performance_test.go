@@ -154,8 +154,8 @@ func TestHandleStartPerformance(t *testing.T) {
 					specsRepo,
 					perfsRepo,
 					maintainer,
-					app.WithHTTPPerformer(performance.PassingPerformer()),
-					app.WithAssertionPerformer(performance.FailingPerformer()),
+					performance.WithHTTP(performance.PassingPerformer()),
+					performance.WithAssertion(performance.FailingPerformer()),
 				)
 			)
 

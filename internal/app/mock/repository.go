@@ -205,7 +205,7 @@ func (m *PerformancesRepository) GetPerformance(
 	ctx context.Context,
 	perfID string,
 	_ app.SpecificationGetter,
-	_ ...app.PerformerOption,
+	_ ...performance.Option,
 ) (*performance.Performance, error) {
 	if ctx.Err() != nil {
 		return nil, app.WrapWithDatabaseError(ctx.Err())

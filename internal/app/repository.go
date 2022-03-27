@@ -57,7 +57,7 @@ type (
 			ctx context.Context,
 			perfID string,
 			specGetter SpecificationGetter,
-			opts ...PerformerOption,
+			opts ...performance.Option,
 		) (*performance.Performance, error)
 		AddPerformance(ctx context.Context, perf *performance.Performance) error
 	}

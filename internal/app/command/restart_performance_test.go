@@ -177,8 +177,8 @@ func TestHandleRestartPerformance(t *testing.T) {
 					perfsRepo,
 					app.DontGetSpecification(),
 					maintainer,
-					app.WithHTTPPerformer(performance.PassingPerformer()),
-					app.WithAssertionPerformer(performance.FailingPerformer()),
+					performance.WithHTTP(performance.PassingPerformer()),
+					performance.WithAssertion(performance.FailingPerformer()),
 				)
 			)
 
