@@ -197,5 +197,9 @@ func (e *DuplicatedError) Slug() Slug {
 }
 
 func (e *DuplicatedError) Error() string {
+	if e == nil || e.slug.IsZero() {
+		return ""
+	}
+
 	return fmt.Sprintf("%s already exists", e.slug)
 }
