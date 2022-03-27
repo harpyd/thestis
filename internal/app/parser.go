@@ -42,34 +42,28 @@ func WithSpecificationLoadedAt(loadedAt time.Time) ParserOption {
 	}
 }
 
-type parsingError struct {
+type ParseError struct {
 	err error
 }
 
-func NewParsingError(err error) error {
+func WrapWithParseError(err error) error {
 	if err == nil {
 		return nil
 	}
 
-	return errors.WithStack(parsingError{
+	return errors.WithStack(&ParseError{
 		err: err,
 	})
 }
 
-func IsParsingError(err error) bool {
-	var target parsingError
-
-	return errors.As(err, &target)
-}
-
-func (e parsingError) Cause() error {
+func (e *ParseError) Unwrap() error {
 	return e.err
 }
 
-func (e parsingError) Unwrap() error {
-	return e.err
-}
+func (e *ParseError) Error() string {
+	if e == nil || e.err == nil {
+		return ""
+	}
 
-func (e parsingError) Error() string {
 	return fmt.Sprintf("parsing specification: %s", e.err)
 }

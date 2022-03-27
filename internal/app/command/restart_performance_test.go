@@ -113,7 +113,9 @@ func TestHandleRestartPerformance(t *testing.T) {
 				OwnerID: "7177997a-b63d-4e1b-9288-0a581f7ff03a",
 			}),
 			ShouldBeErr: true,
-			IsErr:       app.IsPerformanceNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrPerformanceNotFound)
+			},
 		},
 		{
 			Name: "user_cannot_see_performance",

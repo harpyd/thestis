@@ -105,7 +105,9 @@ func TestHandleStartPerformance(t *testing.T) {
 				WithOwnerID("d8d1e4ab-8f24-4c79-a1f2-49e24b3f119a").
 				ErrlessBuild(),
 			ShouldBeErr: true,
-			IsErr:       app.IsSpecificationNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrSpecificationNotFound)
+			},
 		},
 		{
 			Name: "user_cannot_see_specification",

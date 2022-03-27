@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/pkg/errors"
+
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/port/http/httperr"
 )
@@ -42,7 +44,7 @@ func (h handler) GetTestCampaign(w http.ResponseWriter, r *http.Request, testCam
 		return
 	}
 
-	if app.IsTestCampaignNotFoundError(err) {
+	if errors.Is(err, app.ErrTestCampaignNotFound) {
 		httperr.NotFound(string(ErrorSlugTestCampaignNotFound), err, w, r)
 
 		return

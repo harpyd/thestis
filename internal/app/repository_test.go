@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,96 +10,91 @@ import (
 	"github.com/harpyd/thestis/internal/app"
 )
 
-func TestRepositoryErrors(t *testing.T) {
+func TestAsDatabaseError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name     string
-		Err      error
-		IsErr    func(err error) bool
-		Reversed bool
+		GivenError        error
+		ShouldBeWrapped   bool
+		ExpectedUnwrapped error
 	}{
 		{
-			Name:  "database_error",
-			Err:   app.NewDatabaseError(errors.New("failed to connect")),
-			IsErr: app.IsDatabaseError,
+			GivenError:      nil,
+			ShouldBeWrapped: false,
 		},
 		{
-			Name:     "NON_database_error",
-			Err:      errors.New("failed to connect"),
-			IsErr:    app.IsDatabaseError,
-			Reversed: true,
+			GivenError:      app.WrapWithDatabaseError(nil),
+			ShouldBeWrapped: false,
 		},
 		{
-			Name:  "test_campaign_not_found_error",
-			Err:   app.NewTestCampaignNotFoundError(errors.New("no documents")),
-			IsErr: app.IsTestCampaignNotFoundError,
+			GivenError:        &app.DatabaseError{},
+			ShouldBeWrapped:   true,
+			ExpectedUnwrapped: nil,
 		},
 		{
-			Name:     "NON_test_campaign_not_found_error",
-			Err:      errors.New("no documents"),
-			IsErr:    app.IsTestCampaignNotFoundError,
-			Reversed: true,
-		},
-		{
-			Name:  "specification_not_found_error",
-			Err:   app.NewSpecificationNotFoundError(errors.New("no documents")),
-			IsErr: app.IsSpecificationNotFoundError,
-		},
-		{
-			Name:     "NON_specification_not_found_error",
-			Err:      errors.New("no documents"),
-			IsErr:    app.IsSpecificationNotFoundError,
-			Reversed: true,
-		},
-		{
-			Name:  "performance_not_found_error",
-			Err:   app.NewPerformanceNotFoundError(errors.New("no documents")),
-			IsErr: app.IsPerformanceNotFoundError,
-		},
-		{
-			Name:     "NON_performance_not_found_error",
-			Err:      errors.New("no documents"),
-			IsErr:    app.IsPerformanceNotFoundError,
-			Reversed: true,
-		},
-		{
-			Name:  "flow_not_found_error",
-			Err:   app.NewFlowNotFoundError(errors.New("no documents")),
-			IsErr: app.IsFlowNotFoundError,
-		},
-		{
-			Name:     "NON_flow_not_found_error",
-			Err:      errors.New("no documents"),
-			IsErr:    app.IsFlowNotFoundError,
-			Reversed: true,
-		},
-		{
-			Name:  "already_exists_error",
-			Err:   app.NewAlreadyExistsError(errors.New("duplicate key")),
-			IsErr: app.IsAlreadyExistsError,
-		},
-		{
-			Name:     "NON_already_exists_error",
-			Err:      errors.New("duplicate key"),
-			IsErr:    app.IsAlreadyExistsError,
-			Reversed: true,
+			GivenError:        app.WrapWithDatabaseError(errors.New("foo")),
+			ShouldBeWrapped:   true,
+			ExpectedUnwrapped: errors.New("foo"),
 		},
 	}
 
-	for _, c := range testCases {
-		c := c
+	for i := range testCases {
+		c := testCases[i]
 
-		t.Run(c.Name, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			if c.Reversed {
-				require.False(t, c.IsErr(c.Err))
+			var target *app.DatabaseError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &target))
+				})
 
 				return
 			}
 
-			require.True(t, c.IsErr(c.Err))
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &target)
+
+				t.Run("unwrap", func(t *testing.T) {
+					if c.ExpectedUnwrapped != nil {
+						require.EqualError(t, target.Unwrap(), c.ExpectedUnwrapped.Error())
+
+						return
+					}
+
+					require.NoError(t, target.Unwrap())
+				})
+			})
+		})
+	}
+}
+
+func TestFormatDatabaseError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          error
+		ExpectedErrorString string
+	}{
+		{
+			GivenError:          &app.DatabaseError{},
+			ExpectedErrorString: "",
+		},
+		{
+			GivenError:          app.WrapWithDatabaseError(errors.New("failed")),
+			ExpectedErrorString: "database problem: failed",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
 		})
 	}
 }

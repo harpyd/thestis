@@ -2,6 +2,7 @@ package mongodb_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -65,7 +66,10 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 			},
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return app.IsAlreadyExistsError(err) && mongo.IsDuplicateKeyError(err)
+				var target *app.DatabaseError
+
+				return errors.As(err, &target) &&
+					mongo.IsDuplicateKeyError(err)
 			},
 		},
 		{

@@ -2,6 +2,7 @@ package mongodb_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -61,7 +62,9 @@ func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
 				UserID:          "b5f0e13d-ca3a-41f9-b297-53a2440c6080",
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsSpecificationNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrSpecificationNotFound)
+			},
 		},
 		{
 			Name: "by_existing_specification_id_and_non_existing_owner_id",
@@ -70,7 +73,9 @@ func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
 				UserID:          "4699c306-ba54-4a5d-916e-92c40646faca",
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsSpecificationNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrSpecificationNotFound)
+			},
 		},
 		{
 			Name: "by_non_existing_specification_id_and_existing_owner_id",
@@ -79,7 +84,9 @@ func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
 				UserID:          "52d9af60-26be-46ea-90a6-efec5fbb4ccd",
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsSpecificationNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrSpecificationNotFound)
+			},
 		},
 		{
 			Name: "by_existing_specification_id_and_existing_owner_id",
@@ -147,7 +154,9 @@ func (s *SpecificationsRepositoryTestSuite) TestGetActiveSpecificationByTestCamp
 			Name:           "non_existing_specification_with_test_campaign_id",
 			TestCampaignID: "1ba42415-588b-4a11-ab06-76b4a298658e",
 			ShouldBeErr:    true,
-			IsErr:          app.IsSpecificationNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrSpecificationNotFound)
+			},
 		},
 		{
 			Name:           "last_added_specification",
@@ -197,7 +206,10 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 				ErrlessBuild(),
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return app.IsAlreadyExistsError(err) && mongo.IsDuplicateKeyError(err)
+				var target *app.DatabaseError
+
+				return errors.As(err, &target) &&
+					mongo.IsDuplicateKeyError(err)
 			},
 		},
 		{

@@ -759,35 +759,31 @@ func TestAsTerminatedError(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var terr *performance.TerminatedError
+			var target *performance.TerminatedError
 
 			if !c.ShouldBeWrapped {
 				t.Run("not", func(t *testing.T) {
-					require.False(t, errors.As(c.GivenError, &terr))
-
-					t.Run("nil_unwrapped", func(t *testing.T) {
-						require.NoError(t, errors.Unwrap(c.GivenError))
-					})
+					require.False(t, errors.As(c.GivenError, &target))
 				})
 
 				return
 			}
 
 			t.Run("as", func(t *testing.T) {
-				require.ErrorAs(t, c.GivenError, &terr)
+				require.ErrorAs(t, c.GivenError, &target)
 
 				t.Run("unwrap", func(t *testing.T) {
 					if c.ExpectedUnwrapped != nil {
-						require.EqualError(t, terr.Unwrap(), c.ExpectedUnwrapped.Error())
+						require.EqualError(t, target.Unwrap(), c.ExpectedUnwrapped.Error())
 
 						return
 					}
 
-					require.NoError(t, terr.Unwrap())
+					require.NoError(t, target.Unwrap())
 				})
 
 				t.Run("event", func(t *testing.T) {
-					require.Equal(t, c.ExpectedEvent, terr.Event())
+					require.Equal(t, c.ExpectedEvent, target.Event())
 				})
 			})
 		})

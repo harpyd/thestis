@@ -26,7 +26,7 @@ func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testC
 		return
 	}
 
-	if app.IsTestCampaignNotFoundError(err) {
+	if errors.Is(err, app.ErrTestCampaignNotFound) {
 		httperr.NotFound(string(ErrorSlugTestCampaignNotFound), err, w, r)
 
 		return
@@ -64,7 +64,7 @@ func (h handler) GetSpecification(w http.ResponseWriter, r *http.Request, specif
 		return
 	}
 
-	if app.IsSpecificationNotFoundError(err) {
+	if errors.Is(err, app.ErrSpecificationNotFound) {
 		httperr.NotFound(string(ErrorSlugSpecificationNotFound), err, w, r)
 
 		return

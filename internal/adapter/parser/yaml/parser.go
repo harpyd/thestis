@@ -20,7 +20,7 @@ func (s SpecificationParserService) ParseSpecification(reader io.Reader, opts ..
 
 	var spec specificationSchema
 	if err := decoder.Decode(&spec); err != nil {
-		return nil, app.NewParsingError(err)
+		return nil, app.WrapWithParseError(err)
 	}
 
 	return build(spec, opts)

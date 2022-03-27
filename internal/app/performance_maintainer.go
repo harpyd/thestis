@@ -152,64 +152,50 @@ func (m Message) Event() performance.Event {
 	return m.event
 }
 
-type (
-	publishCancelError struct {
-		err error
-	}
+type PublishCancelError struct {
+	err error
+}
 
-	subscribeCancelError struct {
-		err error
-	}
-)
-
-func NewPublishCancelError(err error) error {
+func WrapWithPublishCancelError(err error) error {
 	if err == nil {
 		return nil
 	}
 
-	return errors.WithStack(publishCancelError{err: err})
+	return errors.WithStack(&PublishCancelError{err: err})
 }
 
-func IsPublishCancelError(err error) bool {
-	var target publishCancelError
-
-	return errors.As(err, &target)
-}
-
-func (e publishCancelError) Cause() error {
+func (e *PublishCancelError) Unwrap() error {
 	return e.err
 }
 
-func (e publishCancelError) Unwrap() error {
-	return e.err
-}
+func (e *PublishCancelError) Error() string {
+	if e == nil || e.err == nil {
+		return ""
+	}
 
-func (e publishCancelError) Error() string {
 	return fmt.Sprintf("publish cancel: %s", e.err)
 }
 
-func NewSubscribeCancelError(err error) error {
+type SubscribeCancelError struct {
+	err error
+}
+
+func WrapWithSubscribeCancelError(err error) error {
 	if err == nil {
 		return nil
 	}
 
-	return errors.WithStack(subscribeCancelError{err: err})
+	return errors.WithStack(&SubscribeCancelError{err: err})
 }
 
-func IsSubscribeCancelError(err error) bool {
-	var target subscribeCancelError
-
-	return errors.As(err, &target)
-}
-
-func (e subscribeCancelError) Cause() error {
+func (e *SubscribeCancelError) Unwrap() error {
 	return e.err
 }
 
-func (e subscribeCancelError) Unwrap() error {
-	return e.err
-}
+func (e *SubscribeCancelError) Error() string {
+	if e == nil || e.err == nil {
+		return ""
+	}
 
-func (e subscribeCancelError) Error() string {
 	return fmt.Sprintf("subscribe cancel: %s", e.err)
 }

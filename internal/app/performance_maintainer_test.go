@@ -583,52 +583,180 @@ func TestCancelMaintainPerformance(t *testing.T) {
 	}
 }
 
-func TestPubsubErrors(t *testing.T) {
+func TestAsPublishCancelError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name     string
-		Err      error
-		IsErr    func(err error) bool
-		Reversed bool
+		GivenError        error
+		ShouldBeWrapped   bool
+		ExpectedUnwrapped error
 	}{
 		{
-			Name:  "publish_cancel_error",
-			Err:   app.NewPublishCancelError(errors.New("wrong")),
-			IsErr: app.IsPublishCancelError,
+			GivenError:      nil,
+			ShouldBeWrapped: false,
 		},
 		{
-			Name:     "NON_publish_cancel_error",
-			Err:      fmt.Errorf("publish cancel: %w", errors.New("foo")),
-			IsErr:    app.IsPublishCancelError,
-			Reversed: true,
+			GivenError:      app.WrapWithPublishCancelError(nil),
+			ShouldBeWrapped: false,
 		},
 		{
-			Name:  "subscribe_cancel_error",
-			Err:   app.NewSubscribeCancelError(errors.New("bar")),
-			IsErr: app.IsSubscribeCancelError,
+			GivenError:        &app.PublishCancelError{},
+			ShouldBeWrapped:   true,
+			ExpectedUnwrapped: nil,
 		},
 		{
-			Name:     "NON_subscribe_cancel_error",
-			Err:      errors.New("subscribe cancel: wrong"),
-			IsErr:    app.IsSubscribeCancelError,
-			Reversed: true,
+			GivenError:        app.WrapWithPublishCancelError(errors.New("foo")),
+			ShouldBeWrapped:   true,
+			ExpectedUnwrapped: errors.New("foo"),
 		},
 	}
 
-	for _, c := range testCases {
-		c := c
+	for i := range testCases {
+		c := testCases[i]
 
-		t.Run(c.Name, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			if c.Reversed {
-				require.False(t, c.IsErr(c.Err))
+			var target *app.PublishCancelError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &target))
+				})
 
 				return
 			}
 
-			require.True(t, c.IsErr(c.Err))
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &target)
+
+				t.Run("unwrap", func(t *testing.T) {
+					if c.ExpectedUnwrapped != nil {
+						require.EqualError(t, target.Unwrap(), c.ExpectedUnwrapped.Error())
+
+						return
+					}
+
+					require.NoError(t, target.Unwrap())
+				})
+			})
+		})
+	}
+}
+
+func TestFormatPublishCancelError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          error
+		ExpectedErrorString string
+	}{
+		{
+			GivenError:          &app.PublishCancelError{},
+			ExpectedErrorString: "",
+		},
+		{
+			GivenError:          app.WrapWithPublishCancelError(errors.New("failed")),
+			ExpectedErrorString: "publish cancel: failed",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
+		})
+	}
+}
+
+func TestAsSubscribeCancelError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError        error
+		ShouldBeWrapped   bool
+		ExpectedUnwrapped error
+	}{
+		{
+			GivenError:      nil,
+			ShouldBeWrapped: false,
+		},
+		{
+			GivenError:      app.WrapWithSubscribeCancelError(nil),
+			ShouldBeWrapped: false,
+		},
+		{
+			GivenError:        &app.SubscribeCancelError{},
+			ShouldBeWrapped:   true,
+			ExpectedUnwrapped: nil,
+		},
+		{
+			GivenError:        app.WrapWithSubscribeCancelError(errors.New("qoo")),
+			ShouldBeWrapped:   true,
+			ExpectedUnwrapped: errors.New("qoo"),
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var target *app.SubscribeCancelError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &target))
+				})
+
+				return
+			}
+
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &target)
+
+				t.Run("unwrap", func(t *testing.T) {
+					if c.ExpectedUnwrapped != nil {
+						require.EqualError(t, target.Unwrap(), c.ExpectedUnwrapped.Error())
+
+						return
+					}
+
+					require.NoError(t, target.Unwrap())
+				})
+			})
+		})
+	}
+}
+
+func TestFormatSubscribeCancelError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          error
+		ExpectedErrorString string
+	}{
+		{
+			GivenError:          &app.SubscribeCancelError{},
+			ExpectedErrorString: "",
+		},
+		{
+			GivenError:          app.WrapWithSubscribeCancelError(errors.New("wrong")),
+			ExpectedErrorString: "subscribe cancel: wrong",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
 		})
 	}
 }

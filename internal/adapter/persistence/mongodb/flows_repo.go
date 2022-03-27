@@ -37,10 +37,10 @@ func (r *FlowsRepository) getFlowDocument(ctx context.Context, filter bson.M) (f
 	var document flowDocument
 	if err := r.flows.FindOne(ctx, filter).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments); err != nil {
-			return flowDocument{}, app.NewFlowNotFoundError(err)
+			return flowDocument{}, app.ErrFlowNotFound
 		}
 
-		return flowDocument{}, app.NewDatabaseError(err)
+		return flowDocument{}, app.WrapWithDatabaseError(err)
 	}
 
 	return document, nil
@@ -52,11 +52,11 @@ func (r *FlowsRepository) UpsertFlow(ctx context.Context, flow flow.Flow) error 
 	opt := options.Replace().SetUpsert(true)
 	_, err := r.flows.ReplaceOne(ctx, bson.M{"_id": flow.ID()}, document, opt)
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }
 
 func (r *FlowsRepository) RemoveAllFlows(ctx context.Context) error {
 	_, err := r.flows.DeleteOne(ctx, bson.D{})
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }

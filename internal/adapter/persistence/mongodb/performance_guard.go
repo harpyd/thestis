@@ -33,10 +33,10 @@ func (g *PerformanceGuard) AcquirePerformance(ctx context.Context, perfID string
 
 	if err := g.performances.FindOneAndUpdate(ctx, filter, update, opt).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return app.NewPerformanceNotFoundError(err)
+			return app.ErrPerformanceNotFound
 		}
 
-		return app.NewDatabaseError(err)
+		return app.WrapWithDatabaseError(err)
 	}
 
 	if document.Started {
@@ -51,8 +51,8 @@ func (g *PerformanceGuard) ReleasePerformance(ctx context.Context, perfID string
 
 	_, err := g.performances.UpdateByID(ctx, perfID, update)
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return app.NewPerformanceNotFoundError(err)
+		return app.ErrPerformanceNotFound
 	}
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }

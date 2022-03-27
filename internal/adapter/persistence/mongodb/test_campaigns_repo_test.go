@@ -2,6 +2,7 @@ package mongodb_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -64,7 +65,9 @@ func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
 				UserID:         "52d308aa-5a8a-4931-b558-73962e55d443",
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsTestCampaignNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrTestCampaignNotFound)
+			},
 		},
 		{
 			Name: "by_non_existing_test_campaign_id_and_existing_owner_id",
@@ -73,7 +76,9 @@ func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
 				UserID:         "54112816-3a55-4a28-82df-3c8e082fa0f8",
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsTestCampaignNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrTestCampaignNotFound)
+			},
 		},
 		{
 			Name: "by_existing_test_campaign_id_and_non_existing_owner_id",
@@ -82,7 +87,9 @@ func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
 				UserID:         "0c972872-b033-4fb1-a29b-2e14a8eb56f4",
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsTestCampaignNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrTestCampaignNotFound)
+			},
 		},
 		{
 			Name: "by_existing_test_campaign_id_and_existing_owner_id",
@@ -142,7 +149,10 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 			}),
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return app.IsAlreadyExistsError(err) && mongo.IsDuplicateKeyError(err)
+				var target *app.DatabaseError
+
+				return errors.As(err, &target) &&
+					mongo.IsDuplicateKeyError(err)
 			},
 		},
 		{
@@ -229,7 +239,9 @@ func (s *TestCampaignsRepositoryTestSuite) TestUpdateTestCampaign() {
 				return tc, nil
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsTestCampaignNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrTestCampaignNotFound)
+			},
 		},
 		{
 			Name:                   "update_summary",

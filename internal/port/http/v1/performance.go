@@ -42,7 +42,7 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 		return
 	}
 
-	if app.IsSpecificationNotFoundError(err) {
+	if errors.Is(err, app.ErrSpecificationNotFound) {
 		httperr.NotFound(string(ErrorSlugSpecificationNotFound), err, w, r)
 
 		return
@@ -74,7 +74,7 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 		return
 	}
 
-	if app.IsPerformanceNotFoundError(err) {
+	if errors.Is(err, app.ErrPerformanceNotFound) {
 		httperr.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
 
 		return
@@ -110,7 +110,7 @@ func (h handler) CancelPerformance(w http.ResponseWriter, r *http.Request, perfo
 		return
 	}
 
-	if app.IsPerformanceNotFoundError(err) {
+	if errors.Is(err, app.ErrPerformanceNotFound) {
 		httperr.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
 
 		return

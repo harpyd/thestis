@@ -27,7 +27,7 @@ func (g *PerformanceGuard) AcquirePerformance(ctx context.Context, _ string) err
 	g.acqCalls++
 
 	if ctx.Err() != nil {
-		return app.NewDatabaseError(ctx.Err())
+		return app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	return g.acqErr
@@ -37,7 +37,7 @@ func (g *PerformanceGuard) ReleasePerformance(ctx context.Context, _ string) err
 	g.rlsCalls++
 
 	if ctx.Err() != nil {
-		return app.NewDatabaseError(ctx.Err())
+		return app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	return g.rlsErr

@@ -1,49 +1,100 @@
 package app_test
 
 import (
+	"errors"
+	"fmt"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/app"
 )
 
-func TestParserErrors(t *testing.T) {
+func TestAsParseError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name     string
-		Err      error
-		IsErr    func(err error) bool
-		Reversed bool
+		GivenError        error
+		ShouldBeWrapped   bool
+		ExpectedUnwrapped error
 	}{
 		{
-			Name:  "parsing_error",
-			Err:   app.NewParsingError(errors.New("decoding failed")),
-			IsErr: app.IsParsingError,
+			GivenError:      nil,
+			ShouldBeWrapped: false,
 		},
 		{
-			Name:     "NON_parsing_error",
-			Err:      errors.New("decoding failed"),
-			IsErr:    app.IsParsingError,
-			Reversed: true,
+			GivenError:      app.WrapWithParseError(nil),
+			ShouldBeWrapped: false,
+		},
+		{
+			GivenError:        &app.ParseError{},
+			ShouldBeWrapped:   true,
+			ExpectedUnwrapped: nil,
+		},
+		{
+			GivenError:        app.WrapWithParseError(errors.New("foo")),
+			ShouldBeWrapped:   true,
+			ExpectedUnwrapped: errors.New("foo"),
 		},
 	}
 
-	for _, c := range testCases {
-		c := c
+	for i := range testCases {
+		c := testCases[i]
 
-		t.Run(c.Name, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			if c.Reversed {
-				require.False(t, c.IsErr(c.Err))
+			var target *app.ParseError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &target))
+				})
 
 				return
 			}
 
-			require.True(t, c.IsErr(c.Err))
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &target)
+
+				t.Run("unwrap", func(t *testing.T) {
+					if c.ExpectedUnwrapped != nil {
+						require.EqualError(t, target.Unwrap(), c.ExpectedUnwrapped.Error())
+
+						return
+					}
+
+					require.NoError(t, target.Unwrap())
+				})
+			})
+		})
+	}
+}
+
+func TestFormatParseError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          error
+		ExpectedErrorString string
+	}{
+		{
+			GivenError:          &app.ParseError{},
+			ExpectedErrorString: "",
+		},
+		{
+			GivenError:          app.WrapWithParseError(errors.New("foo")),
+			ExpectedErrorString: "parsing specification: foo",
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
 		})
 	}
 }

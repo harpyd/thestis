@@ -58,10 +58,10 @@ func (r *TestCampaignsRepository) getTestCampaignDocument(
 	var document testCampaignDocument
 	if err := r.testCampaigns.FindOne(ctx, filter).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return testCampaignDocument{}, app.NewTestCampaignNotFoundError(err)
+			return testCampaignDocument{}, app.ErrTestCampaignNotFound
 		}
 
-		return testCampaignDocument{}, app.NewDatabaseError(err)
+		return testCampaignDocument{}, app.WrapWithDatabaseError(err)
 	}
 
 	return document, nil
@@ -69,11 +69,8 @@ func (r *TestCampaignsRepository) getTestCampaignDocument(
 
 func (r *TestCampaignsRepository) AddTestCampaign(ctx context.Context, tc *testcampaign.TestCampaign) error {
 	_, err := r.testCampaigns.InsertOne(ctx, marshalToTestCampaignDocument(tc))
-	if mongo.IsDuplicateKeyError(err) {
-		return app.NewAlreadyExistsError(err)
-	}
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }
 
 func (r *TestCampaignsRepository) UpdateTestCampaign(
@@ -92,10 +89,10 @@ func (r *TestCampaignsRepository) UpdateTestCampaign(
 		var document testCampaignDocument
 		if err := r.testCampaigns.FindOne(ctx, bson.M{"_id": tcID}).Decode(&document); err != nil {
 			if errors.Is(err, mongo.ErrNoDocuments) {
-				return nil, app.NewTestCampaignNotFoundError(err)
+				return nil, app.ErrTestCampaignNotFound
 			}
 
-			return nil, app.NewDatabaseError(err)
+			return nil, app.WrapWithDatabaseError(err)
 		}
 
 		tc := document.unmarshalToTestCampaign()
@@ -109,7 +106,7 @@ func (r *TestCampaignsRepository) UpdateTestCampaign(
 		replaceOpt := options.Replace().SetUpsert(true)
 		filter := bson.M{"_id": updatedDocument.ID}
 		if _, err := r.testCampaigns.ReplaceOne(ctx, filter, updatedDocument, replaceOpt); err != nil {
-			return nil, app.NewDatabaseError(err)
+			return nil, app.WrapWithDatabaseError(err)
 		}
 
 		return nil, nil
@@ -121,5 +118,5 @@ func (r *TestCampaignsRepository) UpdateTestCampaign(
 func (r *TestCampaignsRepository) RemoveAllTestCampaigns(ctx context.Context) error {
 	_, err := r.testCampaigns.DeleteMany(ctx, bson.D{})
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }

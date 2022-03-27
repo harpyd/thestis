@@ -99,8 +99,10 @@ func TestHandleCancelPerformance(t *testing.T) {
 				OwnerID: "c89ba386-0976-4671-913d-9252ba29aca4",
 				Started: true,
 			}),
-			ShouldBeErr:          true,
-			IsErr:                app.IsPerformanceNotFoundError,
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrPerformanceNotFound)
+			},
 			ExpectedPublishCalls: 0,
 		},
 		{

@@ -90,10 +90,10 @@ func (r *SpecificationsRepository) getSpecificationDocument(
 	var document specificationDocument
 	if err := r.specifications.FindOne(ctx, filter, opt).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return specificationDocument{}, app.NewSpecificationNotFoundError(err)
+			return specificationDocument{}, app.ErrSpecificationNotFound
 		}
 
-		return specificationDocument{}, app.NewDatabaseError(err)
+		return specificationDocument{}, app.WrapWithDatabaseError(err)
 	}
 
 	return document, nil
@@ -101,15 +101,12 @@ func (r *SpecificationsRepository) getSpecificationDocument(
 
 func (r *SpecificationsRepository) AddSpecification(ctx context.Context, spec *specification.Specification) error {
 	_, err := r.specifications.InsertOne(ctx, marshalToSpecificationDocument(spec))
-	if mongo.IsDuplicateKeyError(err) {
-		return app.NewAlreadyExistsError(err)
-	}
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }
 
 func (r *SpecificationsRepository) RemoveAllSpecifications(ctx context.Context) error {
 	_, err := r.specifications.DeleteMany(ctx, bson.D{})
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }

@@ -146,7 +146,7 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 					),
 				),
 				app.NewMessageFromError(
-					app.NewDatabaseError(context.Canceled),
+					app.WrapWithDatabaseError(context.Canceled),
 				),
 			},
 			ExpectedStatuses: []flow.Status{

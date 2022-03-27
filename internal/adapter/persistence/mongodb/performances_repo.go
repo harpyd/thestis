@@ -51,10 +51,10 @@ func (r *PerformancesRepository) getPerformanceDocument(
 	var document performanceDocument
 	if err := r.performances.FindOne(ctx, filter).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return performanceDocument{}, app.NewPerformanceNotFoundError(err)
+			return performanceDocument{}, app.ErrPerformanceNotFound
 		}
 
-		return performanceDocument{}, app.NewDatabaseError(err)
+		return performanceDocument{}, app.WrapWithDatabaseError(err)
 	}
 
 	return document, nil
@@ -62,15 +62,12 @@ func (r *PerformancesRepository) getPerformanceDocument(
 
 func (r *PerformancesRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
 	_, err := r.performances.InsertOne(ctx, marshalToPerformanceDocument(perf))
-	if mongo.IsDuplicateKeyError(err) {
-		return app.NewAlreadyExistsError(err)
-	}
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }
 
 func (r *PerformancesRepository) RemoveAllPerformances(ctx context.Context) error {
 	_, err := r.performances.DeleteMany(ctx, bson.D{})
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }
