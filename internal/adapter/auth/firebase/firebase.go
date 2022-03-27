@@ -26,7 +26,7 @@ var (
 	errUnableToVerifyJWT = errors.New("unable to verify jwt")
 )
 
-func (p Provider) AuthenticatedUser(ctx context.Context, r *http.Request) (auth.User, error) {
+func (p Provider) AuthenticateUser(ctx context.Context, r *http.Request) (auth.User, error) {
 	bearerToken := tokenFromHeader(r)
 
 	if bearerToken == "" {

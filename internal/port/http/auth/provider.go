@@ -8,7 +8,7 @@ import (
 )
 
 type Provider interface {
-	AuthenticatedUser(ctx context.Context, r *http.Request) (User, error)
+	AuthenticateUser(ctx context.Context, r *http.Request) (User, error)
 }
 
 type User struct {

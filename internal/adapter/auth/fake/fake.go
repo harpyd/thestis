@@ -22,7 +22,7 @@ var (
 	errInvalidJWT     = errors.New("invalid jwt")
 )
 
-func (p Provider) AuthenticatedUser(_ context.Context, r *http.Request) (auth.User, error) {
+func (p Provider) AuthenticateUser(_ context.Context, r *http.Request) (auth.User, error) {
 	var claims jwt.MapClaims
 
 	token, err := request.ParseFromRequest(

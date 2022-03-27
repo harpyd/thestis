@@ -12,7 +12,7 @@ func Middleware(provider Provider) func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
-			user, err := provider.AuthenticatedUser(ctx, r)
+			user, err := provider.AuthenticateUser(ctx, r)
 			if err != nil {
 				httperr.Unauthorized("unable-to-verify-user", err, w, r)
 
