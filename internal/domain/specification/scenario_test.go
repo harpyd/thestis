@@ -169,21 +169,7 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 			},
 			WantThisErr: true,
 			IsErr: func(err error) bool {
-				var target *specification.InvalidDependenciesError
-
-				return errors.As(err, &target)
-			},
-		},
-		{
-			Name: "thesis_has_cyclic_dependencies",
-			Prepare: func(b *specification.ScenarioBuilder) {
-				b.WithThesis("baz", func(b *specification.ThesisBuilder) {
-					b.WithDependency("baz")
-				})
-			},
-			WantThisErr: true,
-			IsErr: func(err error) bool {
-				var target *specification.CyclicDependencyError
+				var target *specification.NonExistentDependencyError
 
 				return errors.As(err, &target)
 			},

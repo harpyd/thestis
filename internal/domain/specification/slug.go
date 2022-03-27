@@ -203,12 +203,9 @@ type DuplicatedError struct {
 	slug Slug
 }
 
-type InvalidDependenciesError struct {
-	name string
-}
-
-type CyclicDependencyError struct {
-	name string
+type NonExistentDependencyError struct {
+	slug             Slug
+	nameOfDependency string
 }
 
 func NewDuplicatedError(slug Slug) error {
@@ -217,12 +214,11 @@ func NewDuplicatedError(slug Slug) error {
 	})
 }
 
-func NewInvalidDependenciesError(name string) error {
-	return errors.WithStack(&InvalidDependenciesError{name: name})
-}
-
-func NewCyclicDependencyError(name string) error {
-	return errors.WithStack(&CyclicDependencyError{name: name})
+func NewNonExistentDependencyError(slug Slug, nameOfDependency string) error {
+	return errors.WithStack(&NonExistentDependencyError{
+		slug:             slug,
+		nameOfDependency: nameOfDependency,
+	})
 }
 
 func (e *DuplicatedError) Slug() Slug {
@@ -237,10 +233,10 @@ func (e *DuplicatedError) Error() string {
 	return fmt.Sprintf("%s already exists", e.slug)
 }
 
-func (e *InvalidDependenciesError) Error() string {
-	return fmt.Sprintf("dependence by name=%v does not exist", e.name)
+func (e *NonExistentDependencyError) Slug() Slug {
+	return e.slug
 }
 
-func (e *CyclicDependencyError) Error() string {
-	return fmt.Sprintf("cyclic dependence by name=%v", e.name)
+func (e *NonExistentDependencyError) Error() string {
+	return fmt.Sprintf("%q in %q does not exist", e.nameOfDependency, e.slug.thesis)
 }

@@ -90,7 +90,7 @@ func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
 		scenario.theses[thesis.Slug().Thesis()] = thesis
 	}
 
-	w = checkThesesDependencies(w, scenario.theses)
+	checkThesesDependencies(&w, scenario.theses)
 
 	return scenario, w.SluggedWrap(slug)
 }
@@ -124,18 +124,12 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 	return b
 }
 
-func checkThesesDependencies(w BuildErrorWrapper, theses map[string]Thesis) BuildErrorWrapper {
-	for checkedName, value := range theses {
-		for _, dependence := range value.dependencies {
-			if _, ok := theses[dependence.Thesis()]; !ok {
-				w.WithError(NewInvalidDependenciesError(checkedName))
-			}
-
-			if checkedName == dependence.Thesis() {
-				w.WithError(NewCyclicDependencyError(checkedName))
+func checkThesesDependencies(w *BuildErrorWrapper, theses map[string]Thesis) {
+	for _, value := range theses {
+		for _, dependency := range value.dependencies {
+			if _, ok := theses[dependency.Thesis()]; !ok {
+				w.WithError(NewNonExistentDependencyError(value.slug, dependency.Thesis()))
 			}
 		}
 	}
-
-	return w
 }
