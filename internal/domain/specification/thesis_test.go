@@ -488,6 +488,34 @@ func TestFormatNotAllowedStageError(t *testing.T) {
 			GivenError:          specification.NewNotAllowedStageError("deploy"),
 			ExpectedErrorString: "stage `deploy` not allowed",
 		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
+		})
+	}
+}
+
+func TestUndefinedDependencyError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError          error
+		ExpectedErrorString string
+	}{
+		{
+			GivenError:          &specification.UndefinedDependencyError{},
+			ExpectedErrorString: "undefined `` dependency",
+		},
+		{
+			GivenError:          specification.NewUndefinedDependencyError(specification.Slug{}),
+			ExpectedErrorString: "undefined `` dependency",
+		},
 		{
 			GivenError: specification.NewUndefinedDependencyError(
 				specification.NewThesisSlug("t1", "t2", "t3")),
