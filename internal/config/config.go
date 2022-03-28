@@ -13,6 +13,7 @@ import (
 const (
 	defaultHTTPPort               = 8080
 	defaultHTTPRWTimeout          = 10 * time.Second
+	defaultHTTPShutdownTimeout    = 10 * time.Second
 	defaultPerformanceFlowTimeout = 24 * time.Hour
 )
 
@@ -48,10 +49,11 @@ type (
 	}
 
 	HTTP struct {
-		Port           string
-		ReadTimeout    time.Duration
-		WriteTimeout   time.Duration
-		AllowedOrigins []string
+		Port            string
+		ReadTimeout     time.Duration
+		WriteTimeout    time.Duration
+		ShutdownTimeout time.Duration
+		AllowedOrigins  []string
 	}
 
 	Mongo struct {
@@ -110,6 +112,7 @@ func setDefaults() {
 	viper.SetDefault("http.port", defaultHTTPPort)
 	viper.SetDefault("http.readTimeout", defaultHTTPRWTimeout)
 	viper.SetDefault("http.writeTimeout", defaultHTTPRWTimeout)
+	viper.SetDefault("http.shutdownTimeout", defaultHTTPShutdownTimeout)
 	viper.SetDefault("performance.flowTimeout", defaultPerformanceFlowTimeout)
 }
 

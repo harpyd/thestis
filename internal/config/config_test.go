@@ -51,10 +51,11 @@ func TestFromPath(t *testing.T) {
 			ExpectedConfig: &config.Config{
 				Environment: "local",
 				HTTP: config.HTTP{
-					Port:           "8080",
-					ReadTimeout:    8 * time.Second,
-					WriteTimeout:   10 * time.Second,
-					AllowedOrigins: []string{"https://some-a.com", "https://some-b.com"},
+					Port:            "8080",
+					ReadTimeout:     8 * time.Second,
+					WriteTimeout:    10 * time.Second,
+					ShutdownTimeout: 15 * time.Second,
+					AllowedOrigins:  []string{"https://some-a.com", "https://some-b.com"},
 				},
 				Mongo: config.Mongo{
 					URI:          "some://uri",
