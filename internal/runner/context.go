@@ -114,6 +114,8 @@ func New(configsPath string) *Context {
 }
 
 func (c *Context) Start() {
+	c.logger.Info("Runner started")
+
 	c.logger.Info(
 		"HTTP server started",
 		app.StringLogField("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
@@ -125,28 +127,28 @@ func (c *Context) Start() {
 }
 
 func (c *Context) Stop() {
+	c.shutdownServer()
+	c.disconnectMongo()
+	c.disconnectNATS()
+
+	c.logger.Info("Runner stopped")
+
+	c.syncZap()
+}
+
+func (c *Context) shutdownServer() {
 	if err := c.server.Shutdown(); err != nil {
 		c.logger.Fatal("Server shutdown failed", err)
 	}
 
-	if err := c.mongoDatabase().Client().Disconnect(context.Background()); err != nil {
-		c.logger.Fatal("Mongo disconnection failed", err)
-	}
-
-	c.natsConnection().Close()
-
-	c.logger.Info("Runner stopped")
-
-	if err := c.zapLogger().Sync(); err != nil {
-		log.Fatalf("Failed to sync zap logger: %v", err)
-	}
+	c.logger.Info("Server shutdown succeed")
 }
 
-func (c *Context) zapLogger() *zap.Logger {
+func (c *Context) zap() *zap.Logger {
 	c.zapSingleton.once.Do(func() {
 		logger, err := zap.NewProduction()
 		if err != nil {
-			log.Fatalf("Failed to initialize zap logger: %v", err)
+			log.Fatalf("Failed to create zap logger: %v", err)
 		}
 
 		c.zapSingleton.logger = logger
@@ -155,7 +157,13 @@ func (c *Context) zapLogger() *zap.Logger {
 	return c.zapSingleton.logger
 }
 
-func (c *Context) mongoDatabase() *mongo.Database {
+func (c *Context) syncZap() {
+	if err := c.zap().Sync(); err != nil {
+		log.Fatalf("Failed to sync zap logger: %v", err)
+	}
+}
+
+func (c *Context) mongo() *mongo.Database {
 	c.mongoSingleton.once.Do(func() {
 		client, err := mongodb.NewClient(
 			c.config.Mongo.URI,
@@ -174,7 +182,15 @@ func (c *Context) mongoDatabase() *mongo.Database {
 	return c.mongoSingleton.db
 }
 
-func (c *Context) natsConnection() *nats.Conn {
+func (c *Context) disconnectMongo() {
+	if err := c.mongo().Client().Disconnect(context.Background()); err != nil {
+		c.logger.Fatal("Mongo disconnection failed", err)
+	}
+
+	c.logger.Info("Mongo disconnected")
+}
+
+func (c *Context) nats() *nats.Conn {
 	c.natsSingleton.once.Do(func() {
 		conn, err := nats.Connect(c.config.Nats.URL)
 		if err != nil {
@@ -189,23 +205,29 @@ func (c *Context) natsConnection() *nats.Conn {
 	return c.natsSingleton.conn
 }
 
-func (c *Context) firebaseClient() *fireauth.Client {
+func (c *Context) disconnectNATS() {
+	c.nats().Close()
+
+	c.logger.Info("NATS disconnected")
+}
+
+func (c *Context) firebaseAuth() *fireauth.Client {
 	c.firebaseSingleton.once.Do(func() {
 		client, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
 		if err != nil {
-			c.logger.Fatal("Failed to create Firebase Auth client", err)
+			c.logger.Fatal("Failed to connect to Firebase Auth", err)
 		}
 
 		c.firebaseSingleton.client = client
 
-		c.logger.Info("Firebase Auth client created")
+		c.logger.Info("Connected to Firebase Auth")
 	})
 
 	return c.firebaseSingleton.client
 }
 
 func (c *Context) initLogger() {
-	c.logger = zapAdapter.NewLogger(c.zapLogger())
+	c.logger = zapAdapter.NewLogger(c.zap())
 }
 
 func (c *Context) initConfig(configsPath string) {
@@ -220,7 +242,7 @@ func (c *Context) initConfig(configsPath string) {
 }
 
 func (c *Context) initPersistent() {
-	db := c.mongoDatabase()
+	db := c.mongo()
 	logField := app.StringLogField("db", "mongo")
 
 	var (
@@ -297,7 +319,7 @@ func (c *Context) initMetrics() {
 
 func (c *Context) initSignalBus() {
 	if c.config.Performance.SignalBus == config.Nats {
-		bus := natsio.NewPerformanceCancelSignalBus(c.natsConnection())
+		bus := natsio.NewPerformanceCancelSignalBus(c.nats())
 
 		c.signalBus.publisher = bus
 		c.signalBus.subscriber = bus
@@ -333,7 +355,7 @@ func (c *Context) initPerformance() {
 }
 
 func (c *Context) initPerformanceGuard() {
-	c.performance.guard = mongoAdapter.NewPerformanceGuard(c.mongoDatabase())
+	c.performance.guard = mongoAdapter.NewPerformanceGuard(c.mongo())
 }
 
 func (c *Context) initStepsPolicy() {
@@ -360,7 +382,7 @@ func (c *Context) initAuthenticationProvider() {
 	case config.FakeAuth:
 		c.authProvider = fakeAdapter.NewProvider()
 	case config.FirebaseAuth:
-		c.authProvider = firebaseAdapter.NewProvider(c.firebaseClient())
+		c.authProvider = firebaseAdapter.NewProvider(c.firebaseAuth())
 	default:
 		c.logger.Fatal(
 			"Invalid auth type",
