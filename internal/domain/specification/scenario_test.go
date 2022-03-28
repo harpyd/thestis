@@ -161,15 +161,15 @@ func TestBuildScenarioWithTheses(t *testing.T) {
 			},
 		},
 		{
-			Name: "thesis_has_invalid_dependencies",
+			Name: "thesis_has_undefined_dependencies",
 			Prepare: func(b *specification.ScenarioBuilder) {
 				b.WithThesis("baz", func(b *specification.ThesisBuilder) {
-					b.WithDependency("non-existent")
+					b.WithDependency("undefined")
 				})
 			},
 			WantThisErr: true,
 			IsErr: func(err error) bool {
-				var target *specification.NonExistentDependencyError
+				var target *specification.UndefinedDependencyError
 
 				return errors.As(err, &target)
 			},

@@ -203,21 +203,9 @@ type DuplicatedError struct {
 	slug Slug
 }
 
-type NonExistentDependencyError struct {
-	slug             Slug
-	nameOfDependency string
-}
-
 func NewDuplicatedError(slug Slug) error {
 	return errors.WithStack(&DuplicatedError{
 		slug: slug,
-	})
-}
-
-func NewNonExistentDependencyError(slug Slug, nameOfDependency string) error {
-	return errors.WithStack(&NonExistentDependencyError{
-		slug:             slug,
-		nameOfDependency: nameOfDependency,
 	})
 }
 
@@ -231,12 +219,4 @@ func (e *DuplicatedError) Error() string {
 	}
 
 	return fmt.Sprintf("%s already exists", e.slug)
-}
-
-func (e *NonExistentDependencyError) Slug() Slug {
-	return e.slug
-}
-
-func (e *NonExistentDependencyError) Error() string {
-	return fmt.Sprintf("%q in %q does not exist", e.nameOfDependency, e.slug.thesis)
 }
