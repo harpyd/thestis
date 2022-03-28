@@ -2,7 +2,7 @@ package v1
 
 import (
 	"fmt"
-	"net/http"
+	stdhttp "net/http"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/pkg/errors"
@@ -10,10 +10,10 @@ import (
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/user"
-	"github.com/harpyd/thestis/internal/port/http/httperr"
+	"github.com/harpyd/thestis/internal/port/http"
 )
 
-func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCampaignID string) {
+func (h handler) StartPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request, testCampaignID string) {
 	cmd, ok := unmarshalStartPerformanceCommand(w, r, testCampaignID)
 	if !ok {
 		return
@@ -22,7 +22,7 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 	perfID, messages, err := h.app.Commands.StartPerformance.Handle(r.Context(), cmd)
 	if err == nil {
 		w.Header().Set("Location", fmt.Sprintf("/performances/%s", perfID))
-		w.WriteHeader(http.StatusAccepted)
+		w.WriteHeader(stdhttp.StatusAccepted)
 
 		go h.logMessages(
 			r,
@@ -37,21 +37,21 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 	var aerr *user.AccessError
 
 	if errors.As(err, &aerr) {
-		httperr.Forbidden(string(ErrorSlugUserCantSeeTestCampaign), err, w, r)
+		http.Forbidden(string(ErrorSlugUserCantSeeTestCampaign), err, w, r)
 
 		return
 	}
 
 	if errors.Is(err, app.ErrSpecificationNotFound) {
-		httperr.NotFound(string(ErrorSlugSpecificationNotFound), err, w, r)
+		http.NotFound(string(ErrorSlugSpecificationNotFound), err, w, r)
 
 		return
 	}
 
-	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
+	http.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
-func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, performanceID string) {
+func (h handler) RestartPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request, performanceID string) {
 	cmd, ok := unmarshalRestartPerformanceCommand(w, r, performanceID)
 	if !ok {
 		return
@@ -59,7 +59,7 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 
 	messages, err := h.app.Commands.RestartPerformance.Handle(r.Context(), cmd)
 	if err == nil {
-		w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(stdhttp.StatusNoContent)
 
 		go h.logMessages(r, messages, app.BoolLogField("restarted", true))
 
@@ -69,27 +69,27 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 	var aerr *user.AccessError
 
 	if errors.As(err, &aerr) {
-		httperr.Forbidden(string(ErrorSlugUserCantSeePerformance), err, w, r)
+		http.Forbidden(string(ErrorSlugUserCantSeePerformance), err, w, r)
 
 		return
 	}
 
 	if errors.Is(err, app.ErrPerformanceNotFound) {
-		httperr.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
+		http.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
 
 		return
 	}
 
 	if errors.Is(err, performance.ErrAlreadyStarted) {
-		httperr.Conflict(string(ErrorSlugPerformanceAlreadyStarted), err, w, r)
+		http.Conflict(string(ErrorSlugPerformanceAlreadyStarted), err, w, r)
 
 		return
 	}
 
-	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
+	http.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
-func (h handler) CancelPerformance(w http.ResponseWriter, r *http.Request, performanceID string) {
+func (h handler) CancelPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request, performanceID string) {
 	cmd, ok := unmarshalCancelPerformanceCommand(w, r, performanceID)
 	if !ok {
 		return
@@ -97,7 +97,7 @@ func (h handler) CancelPerformance(w http.ResponseWriter, r *http.Request, perfo
 
 	err := h.app.Commands.CancelPerformance.Handle(r.Context(), cmd)
 	if err == nil {
-		w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(stdhttp.StatusNoContent)
 
 		return
 	}
@@ -105,35 +105,35 @@ func (h handler) CancelPerformance(w http.ResponseWriter, r *http.Request, perfo
 	var aerr *user.AccessError
 
 	if errors.As(err, &aerr) {
-		httperr.Forbidden(string(ErrorSlugUserCantSeePerformance), err, w, r)
+		http.Forbidden(string(ErrorSlugUserCantSeePerformance), err, w, r)
 
 		return
 	}
 
 	if errors.Is(err, app.ErrPerformanceNotFound) {
-		httperr.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
+		http.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
 
 		return
 	}
 
 	if errors.Is(err, performance.ErrNotStarted) {
-		httperr.Conflict(string(ErrorSlugPerformanceNotStarted), err, w, r)
+		http.Conflict(string(ErrorSlugPerformanceNotStarted), err, w, r)
 
 		return
 	}
 
-	httperr.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
+	http.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
-func (h handler) GetPerformancesHistory(w http.ResponseWriter, _ *http.Request, _ string) {
-	w.WriteHeader(http.StatusNotImplemented)
+func (h handler) GetPerformancesHistory(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ string) {
+	w.WriteHeader(stdhttp.StatusNotImplemented)
 }
 
-func (h handler) GetPerformance(w http.ResponseWriter, _ *http.Request, _ string) {
-	w.WriteHeader(http.StatusNotImplemented)
+func (h handler) GetPerformance(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ string) {
+	w.WriteHeader(stdhttp.StatusNotImplemented)
 }
 
-func (h handler) logMessages(r *http.Request, messages <-chan app.Message, extraFields ...app.LogField) {
+func (h handler) logMessages(r *stdhttp.Request, messages <-chan app.Message, extraFields ...app.LogField) {
 	extraFields = append(extraFields, app.StringLogField("requestId", middleware.GetReqID(r.Context())))
 
 	for msg := range messages {

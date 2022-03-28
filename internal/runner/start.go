@@ -26,10 +26,6 @@ import (
 	"github.com/harpyd/thestis/internal/app/query"
 	"github.com/harpyd/thestis/internal/config"
 	"github.com/harpyd/thestis/internal/port/http"
-	"github.com/harpyd/thestis/internal/port/http/auth"
-	"github.com/harpyd/thestis/internal/port/http/cors"
-	"github.com/harpyd/thestis/internal/port/http/logging"
-	"github.com/harpyd/thestis/internal/port/http/metrics"
 	v1 "github.com/harpyd/thestis/internal/port/http/v1"
 	"github.com/harpyd/thestis/internal/server"
 	"github.com/harpyd/thestis/pkg/auth/firebase"
@@ -45,11 +41,11 @@ type Context struct {
 	config       *config.Config
 	persistent   persistentContext
 	specParser   app.SpecificationParserService
-	metrics      app.MetricsService
+	metrics      metricsContext
 	performance  performanceContext
 	signalBus    signalBusContext
 	app          *app.Application
-	authProvider auth.Provider
+	authProvider http.AuthProvider
 	server       *server.Server
 
 	cancel func()
@@ -88,6 +84,10 @@ type persistentContext struct {
 type signalBusContext struct {
 	publisher  app.PerformanceCancelPublisher
 	subscriber app.PerformanceCancelSubscriber
+}
+
+type metricsContext struct {
+	httpMetric http.MetricCollector
 }
 
 func New(configsPath string) *Context {
@@ -257,12 +257,12 @@ func (c *Context) initApplication() {
 }
 
 func (c *Context) initMetrics() {
-	mrs, err := prometheus.NewMetricsService()
+	mrs, err := prometheus.NewMetricCollector()
 	if err != nil {
 		c.logger.Fatal("Failed to register metrics", err)
 	}
 
-	c.metrics = mrs
+	c.metrics.httpMetric = mrs
 
 	c.logger.Info("Metrics registration completed", app.StringLogField("db", "prometheus"))
 }
@@ -349,16 +349,16 @@ func (c *Context) initServer() {
 		Middlewares: []http.Middleware{
 			middleware.RequestID,
 			middleware.RealIP,
-			logging.Middleware(c.logger),
+			http.LoggingMiddleware(c.logger),
 			middleware.Recoverer,
-			cors.Middleware(c.config.HTTP.AllowedOrigins),
+			http.CORSMiddleware(c.config.HTTP.AllowedOrigins),
 			middleware.NoCache,
-			metrics.Middleware(c.metrics),
+			http.MetricsMiddleware(c.metrics.httpMetric),
 		},
 		Routes: []http.Route{
 			{
 				Pattern: "/v1",
-				Handler: v1.NewHandler(c.app, c.logger, auth.Middleware(c.authProvider)),
+				Handler: v1.NewHandler(c.app, c.logger, http.AuthMiddleware(c.authProvider)),
 			},
 			{
 				Pattern: "/swagger",

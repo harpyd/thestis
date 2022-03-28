@@ -1,14 +1,10 @@
-package cors
+package http
 
-import (
-	"net/http"
-
-	"github.com/go-chi/cors"
-)
+import "github.com/go-chi/cors"
 
 const maxAge = 300
 
-func Middleware(allowedOrigins []string) func(next http.Handler) http.Handler {
+func CORSMiddleware(allowedOrigins []string) Middleware {
 	return cors.New(cors.Options{
 		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},

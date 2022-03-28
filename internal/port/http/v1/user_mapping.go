@@ -1,18 +1,17 @@
 package v1
 
 import (
-	"net/http"
+	stdhttp "net/http"
 
-	"github.com/harpyd/thestis/internal/port/http/auth"
-	"github.com/harpyd/thestis/internal/port/http/httperr"
+	"github.com/harpyd/thestis/internal/port/http"
 )
 
-func unmarshalUser(w http.ResponseWriter, r *http.Request) (auth.User, bool) {
-	user, err := auth.UserFromCtx(r.Context())
+func unmarshalUser(w stdhttp.ResponseWriter, r *stdhttp.Request) (http.User, bool) {
+	user, err := http.UserFromCtx(r.Context())
 	if err != nil {
-		httperr.Unauthorized(string(ErrorSlugUnauthorizedUser), err, w, r)
+		http.Unauthorized(string(ErrorSlugUnauthorizedUser), err, w, r)
 
-		return auth.User{}, false
+		return http.User{}, false
 	}
 
 	return user, true

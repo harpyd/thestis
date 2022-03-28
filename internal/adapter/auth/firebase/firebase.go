@@ -2,20 +2,20 @@ package firebase
 
 import (
 	"context"
-	"net/http"
+	stdhttp "net/http"
 	"strings"
 
-	fireauth "firebase.google.com/go/auth"
+	"firebase.google.com/go/auth"
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/port/http/auth"
+	"github.com/harpyd/thestis/internal/port/http"
 )
 
 type Provider struct {
-	authClient *fireauth.Client
+	authClient *auth.Client
 }
 
-func NewProvider(authClient *fireauth.Client) Provider {
+func NewProvider(authClient *auth.Client) Provider {
 	return Provider{
 		authClient: authClient,
 	}
@@ -26,25 +26,25 @@ var (
 	errUnableToVerifyJWT = errors.New("unable to verify jwt")
 )
 
-func (p Provider) AuthenticateUser(ctx context.Context, r *http.Request) (auth.User, error) {
+func (p Provider) AuthenticateUser(ctx context.Context, r *stdhttp.Request) (http.User, error) {
 	bearerToken := tokenFromHeader(r)
 
 	if bearerToken == "" {
-		return auth.User{}, errEmptyBearerToken
+		return http.User{}, errEmptyBearerToken
 	}
 
 	token, err := p.authClient.VerifyIDToken(ctx, bearerToken)
 	if err != nil {
-		return auth.User{}, errUnableToVerifyJWT
+		return http.User{}, errUnableToVerifyJWT
 	}
 
-	return auth.User{
+	return http.User{
 		UUID:        token.UID,
 		DisplayName: token.Claims["name"].(string),
 	}, err
 }
 
-func tokenFromHeader(r *http.Request) string {
+func tokenFromHeader(r *stdhttp.Request) string {
 	headerValue := r.Header.Get("Authorization")
 
 	if len(headerValue) > 7 && strings.ToLower(headerValue[0:6]) == "bearer" {

@@ -3,17 +3,17 @@ package v1
 import (
 	"fmt"
 	"io"
-	"net/http"
+	stdhttp "net/http"
 
 	"github.com/go-chi/render"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/port/http/httperr"
+	"github.com/harpyd/thestis/internal/port/http"
 )
 
 func unmarshalToSpecificationSourceCommand(
-	w http.ResponseWriter,
-	r *http.Request,
+	w stdhttp.ResponseWriter,
+	r *stdhttp.Request,
 	testCampaignID string,
 ) (cmd app.LoadSpecificationCommand, ok bool) {
 	user, ok := unmarshalUser(w, r)
@@ -23,7 +23,7 @@ func unmarshalToSpecificationSourceCommand(
 
 	content, err := io.ReadAll(r.Body)
 	if err != nil {
-		httperr.BadRequest(string(ErrorSlugBadRequest), err, w, r)
+		http.BadRequest(string(ErrorSlugBadRequest), err, w, r)
 
 		return
 	}
@@ -36,8 +36,8 @@ func unmarshalToSpecificationSourceCommand(
 }
 
 func unmarshalToSpecificSpecificationQuery(
-	w http.ResponseWriter,
-	r *http.Request,
+	w stdhttp.ResponseWriter,
+	r *stdhttp.Request,
 	specificationID string,
 ) (qry app.SpecificSpecificationQuery, ok bool) {
 	user, ok := unmarshalUser(w, r)
@@ -51,7 +51,7 @@ func unmarshalToSpecificSpecificationQuery(
 	}, true
 }
 
-func marshalToSpecificationResponse(w http.ResponseWriter, r *http.Request, spec app.SpecificSpecification) {
+func marshalToSpecificationResponse(w stdhttp.ResponseWriter, r *stdhttp.Request, spec app.SpecificSpecification) {
 	response := SpecificationResponse{
 		Specification: marshalToSpecification(spec),
 		SourceUri:     "",
