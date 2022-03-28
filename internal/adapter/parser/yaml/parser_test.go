@@ -110,7 +110,7 @@ func TestParseSpecification(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			parser := yaml.NewSpecificationParserService()
+			parser := yaml.NewSpecificationParser()
 
 			specFile, err := os.Open(c.SpecPath)
 			require.NoError(t, err)

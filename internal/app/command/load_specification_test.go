@@ -22,7 +22,7 @@ func TestPanickingNewLoadSpecificationHandler(t *testing.T) {
 		Name                   string
 		GivenSpecsRepo         app.SpecificationsRepository
 		GivenTestCampaignsRepo app.TestCampaignsRepository
-		GivenSpecParserService app.SpecificationParserService
+		GivenSpecParserService app.SpecificationParser
 		ShouldPanic            bool
 		PanicMessage           string
 	}{

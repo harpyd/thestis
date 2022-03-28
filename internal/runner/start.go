@@ -40,7 +40,7 @@ type Context struct {
 	logger       app.LoggingService
 	config       *config.Config
 	persistent   persistentContext
-	specParser   app.SpecificationParserService
+	specParser   app.SpecificationParser
 	metrics      metricsContext
 	performance  performanceContext
 	signalBus    signalBusContext
@@ -222,7 +222,7 @@ func (c *Context) initPersistent() {
 }
 
 func (c *Context) initSpecificationParser() {
-	c.specParser = yaml.NewSpecificationParserService()
+	c.specParser = yaml.NewSpecificationParser()
 	c.logger.Info("Specification parser service initialization completed", app.StringLogField("type", "yaml"))
 }
 

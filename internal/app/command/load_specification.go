@@ -15,13 +15,13 @@ import (
 type LoadSpecificationHandler struct {
 	specsRepo         app.SpecificationsRepository
 	testCampaignsRepo app.TestCampaignsRepository
-	specParserService app.SpecificationParserService
+	specParserService app.SpecificationParser
 }
 
 func NewLoadSpecificationHandler(
 	specsRepo app.SpecificationsRepository,
 	testCampaignsRepo app.TestCampaignsRepository,
-	specParserService app.SpecificationParserService,
+	specParserService app.SpecificationParser,
 ) LoadSpecificationHandler {
 	if specsRepo == nil {
 		panic("specifications repository is nil")

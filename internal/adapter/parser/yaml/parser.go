@@ -9,13 +9,16 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-type SpecificationParserService struct{}
+type SpecificationParser struct{}
 
-func NewSpecificationParserService() SpecificationParserService {
-	return SpecificationParserService{}
+func NewSpecificationParser() SpecificationParser {
+	return SpecificationParser{}
 }
 
-func (s SpecificationParserService) ParseSpecification(reader io.Reader, opts ...app.ParserOption) (*specification.Specification, error) {
+func (s SpecificationParser) ParseSpecification(
+	reader io.Reader,
+	opts ...app.ParserOption,
+) (*specification.Specification, error) {
 	decoder := yaml.NewDecoder(reader)
 
 	var spec specificationSchema

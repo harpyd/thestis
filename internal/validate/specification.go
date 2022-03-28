@@ -21,7 +21,7 @@ func Specification(specPath string) {
 		log.Fatalf("%s: %s", specPath, err)
 	}
 
-	parser := yaml.NewSpecificationParserService()
+	parser := yaml.NewSpecificationParser()
 
 	if _, err := parser.ParseSpecification(specFile); err != nil {
 		log.Fatalf("%s:\n%s", specFile.Name(), formatError(err, errorIndent))

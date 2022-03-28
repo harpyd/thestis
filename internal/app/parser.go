@@ -11,7 +11,7 @@ import (
 )
 
 type (
-	SpecificationParserService interface {
+	SpecificationParser interface {
 		ParseSpecification(reader io.Reader, opts ...ParserOption) (*specification.Specification, error)
 	}
 
