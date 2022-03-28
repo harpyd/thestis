@@ -130,7 +130,7 @@ func (c *Context) Stop() {
 		c.logger.Fatal("Server shutdown failed", err)
 	}
 
-	if err := c.zapSingleton.logger.Sync(); err != nil {
+	if err := c.zapLogger().Sync(); err != nil {
 		log.Fatal("Failed to sync zap logger")
 	}
 }
