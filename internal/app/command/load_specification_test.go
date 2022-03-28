@@ -19,51 +19,51 @@ func TestPanickingNewLoadSpecificationHandler(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name                   string
-		GivenSpecsRepo         app.SpecificationsRepository
-		GivenTestCampaignsRepo app.TestCampaignsRepository
-		GivenSpecParserService app.SpecificationParserService
-		ShouldPanic            bool
-		PanicMessage           string
+		Name                  string
+		GivenSpecRepo         app.SpecificationRepository
+		GivenTestCampaignRepo app.TestCampaignRepository
+		GivenSpecParser       app.SpecificationParser
+		ShouldPanic           bool
+		PanicMessage          string
 	}{
 		{
-			Name:                   "all_dependencies_are_not_nil",
-			GivenSpecsRepo:         mock.NewSpecificationsRepository(),
-			GivenTestCampaignsRepo: mock.NewTestCampaignsRepository(),
-			GivenSpecParserService: mock.NewSpecificationParserService(false),
-			ShouldPanic:            false,
+			Name:                  "all_dependencies_are_not_nil",
+			GivenSpecRepo:         mock.NewSpecificationRepository(),
+			GivenTestCampaignRepo: mock.NewTestCampaignRepository(),
+			GivenSpecParser:       mock.NewSpecificationParserService(false),
+			ShouldPanic:           false,
 		},
 		{
-			Name:                   "specifications_repository_is_nil",
-			GivenSpecsRepo:         nil,
-			GivenTestCampaignsRepo: mock.NewTestCampaignsRepository(),
-			GivenSpecParserService: mock.NewSpecificationParserService(false),
-			ShouldPanic:            true,
-			PanicMessage:           "specifications repository is nil",
+			Name:                  "specification_repository_is_nil",
+			GivenSpecRepo:         nil,
+			GivenTestCampaignRepo: mock.NewTestCampaignRepository(),
+			GivenSpecParser:       mock.NewSpecificationParserService(false),
+			ShouldPanic:           true,
+			PanicMessage:          "specification repository is nil",
 		},
 		{
-			Name:                   "test_campaigns_repository_is_nil",
-			GivenSpecsRepo:         mock.NewSpecificationsRepository(),
-			GivenTestCampaignsRepo: nil,
-			GivenSpecParserService: mock.NewSpecificationParserService(false),
-			ShouldPanic:            true,
-			PanicMessage:           "test campaigns repository is nil",
+			Name:                  "test_campaign_repository_is_nil",
+			GivenSpecRepo:         mock.NewSpecificationRepository(),
+			GivenTestCampaignRepo: nil,
+			GivenSpecParser:       mock.NewSpecificationParserService(false),
+			ShouldPanic:           true,
+			PanicMessage:          "test campaign repository is nil",
 		},
 		{
-			Name:                   "specification_parser_service_is_nil",
-			GivenSpecsRepo:         mock.NewSpecificationsRepository(),
-			GivenTestCampaignsRepo: mock.NewTestCampaignsRepository(),
-			GivenSpecParserService: nil,
-			ShouldPanic:            true,
-			PanicMessage:           "specification parser service is nil",
+			Name:                  "specification_parser_is_nil",
+			GivenSpecRepo:         mock.NewSpecificationRepository(),
+			GivenTestCampaignRepo: mock.NewTestCampaignRepository(),
+			GivenSpecParser:       nil,
+			ShouldPanic:           true,
+			PanicMessage:          "specification parser is nil",
 		},
 		{
-			Name:                   "all_dependencies_are_nil",
-			GivenSpecsRepo:         nil,
-			GivenTestCampaignsRepo: nil,
-			GivenSpecParserService: nil,
-			ShouldPanic:            true,
-			PanicMessage:           "specifications repository is nil",
+			Name:                  "all_dependencies_are_nil",
+			GivenSpecRepo:         nil,
+			GivenTestCampaignRepo: nil,
+			GivenSpecParser:       nil,
+			ShouldPanic:           true,
+			PanicMessage:          "specification repository is nil",
 		},
 	}
 
@@ -75,9 +75,9 @@ func TestPanickingNewLoadSpecificationHandler(t *testing.T) {
 
 			init := func() {
 				_ = command.NewLoadSpecificationHandler(
-					c.GivenSpecsRepo,
-					c.GivenTestCampaignsRepo,
-					c.GivenSpecParserService,
+					c.GivenSpecRepo,
+					c.GivenTestCampaignRepo,
+					c.GivenSpecParser,
 				)
 			}
 
@@ -177,10 +177,10 @@ func TestHandleLoadSpecification(t *testing.T) {
 			t.Parallel()
 
 			var (
-				specsRepo = mock.NewSpecificationsRepository()
-				tcsRepo   = mock.NewTestCampaignsRepository(c.TestCampaign)
-				parser    = mock.NewSpecificationParserService(c.ParseWithErr)
-				handler   = command.NewLoadSpecificationHandler(specsRepo, tcsRepo, parser)
+				specRepo = mock.NewSpecificationRepository()
+				tcsRepo  = mock.NewTestCampaignRepository(c.TestCampaign)
+				parser   = mock.NewSpecificationParserService(c.ParseWithErr)
+				handler  = command.NewLoadSpecificationHandler(specRepo, tcsRepo, parser)
 			)
 
 			ctx := context.Background()
@@ -189,14 +189,14 @@ func TestHandleLoadSpecification(t *testing.T) {
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))
-				require.Equal(t, 0, specsRepo.SpecificationsNumber())
+				require.Equal(t, 0, specRepo.SpecificationsNumber())
 
 				return
 			}
 
 			require.NoError(t, err)
 			require.NotEmpty(t, specID)
-			require.Equal(t, 1, specsRepo.SpecificationsNumber())
+			require.Equal(t, 1, specRepo.SpecificationsNumber())
 		})
 	}
 }

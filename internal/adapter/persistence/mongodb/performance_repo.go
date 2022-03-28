@@ -11,25 +11,25 @@ import (
 	"github.com/harpyd/thestis/internal/domain/performance"
 )
 
-type PerformancesRepository struct {
+type PerformanceRepository struct {
 	performances *mongo.Collection
 }
 
 const performancesCollection = "performances"
 
-func NewPerformancesRepository(db *mongo.Database) *PerformancesRepository {
-	r := &PerformancesRepository{
+func NewPerformanceRepository(db *mongo.Database) *PerformanceRepository {
+	r := &PerformanceRepository{
 		performances: db.Collection(performancesCollection),
 	}
 
 	return r
 }
 
-func (r *PerformancesRepository) GetPerformance(
+func (r *PerformanceRepository) GetPerformance(
 	ctx context.Context,
 	perfID string,
 	specGetter app.SpecificationGetter,
-	opts ...app.PerformerOption,
+	opts ...performance.Option,
 ) (*performance.Performance, error) {
 	document, err := r.getPerformanceDocument(ctx, bson.M{"_id": perfID})
 	if err != nil {
@@ -44,33 +44,30 @@ func (r *PerformancesRepository) GetPerformance(
 	return document.unmarshalToPerformance(spec, opts), nil
 }
 
-func (r *PerformancesRepository) getPerformanceDocument(
+func (r *PerformanceRepository) getPerformanceDocument(
 	ctx context.Context,
 	filter bson.M,
 ) (performanceDocument, error) {
 	var document performanceDocument
 	if err := r.performances.FindOne(ctx, filter).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return performanceDocument{}, app.NewPerformanceNotFoundError(err)
+			return performanceDocument{}, app.ErrPerformanceNotFound
 		}
 
-		return performanceDocument{}, app.NewDatabaseError(err)
+		return performanceDocument{}, app.WrapWithDatabaseError(err)
 	}
 
 	return document, nil
 }
 
-func (r *PerformancesRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
+func (r *PerformanceRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
 	_, err := r.performances.InsertOne(ctx, marshalToPerformanceDocument(perf))
-	if mongo.IsDuplicateKeyError(err) {
-		return app.NewAlreadyExistsError(err)
-	}
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }
 
-func (r *PerformancesRepository) RemoveAllPerformances(ctx context.Context) error {
+func (r *PerformanceRepository) RemoveAllPerformances(ctx context.Context) error {
 	_, err := r.performances.DeleteMany(ctx, bson.D{})
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }

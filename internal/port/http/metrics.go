@@ -1,15 +1,17 @@
-package metrics
+package http
 
 import (
 	"net/http"
 	"strconv"
 
 	"github.com/urfave/negroni"
-
-	"github.com/harpyd/thestis/internal/app"
 )
 
-func Middleware(metricsService app.MetricsService) func(next http.Handler) http.Handler {
+type MetricCollector interface {
+	IncRequestsCount(status, method, path string)
+}
+
+func MetricsMiddleware(metric MetricCollector) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			method, path := r.Method, r.URL.Path
@@ -18,7 +20,7 @@ func Middleware(metricsService app.MetricsService) func(next http.Handler) http.
 			next.ServeHTTP(lrw, r)
 
 			status := strconv.Itoa(lrw.Status())
-			metricsService.IncRequestsCount(status, method, path)
+			metric.IncRequestsCount(status, method, path)
 		})
 	}
 }

@@ -12,24 +12,24 @@ import (
 )
 
 type StartPerformanceHandler struct {
-	specsRepo     app.SpecificationsRepository
-	perfsRepo     app.PerformancesRepository
+	specRepo      app.SpecificationRepository
+	perfRepo      app.PerformanceRepository
 	maintainer    app.PerformanceMaintainer
-	performerOpts app.PerformerOptions
+	performerOpts []performance.Option
 }
 
 func NewStartPerformanceHandler(
-	specsRepo app.SpecificationsRepository,
-	perfsRepo app.PerformancesRepository,
+	specRepo app.SpecificationRepository,
+	perfRepo app.PerformanceRepository,
 	maintainer app.PerformanceMaintainer,
-	opts ...app.PerformerOption,
+	opts ...performance.Option,
 ) StartPerformanceHandler {
-	if specsRepo == nil {
-		panic("specifications repository is nil")
+	if specRepo == nil {
+		panic("specification repository is nil")
 	}
 
-	if perfsRepo == nil {
-		panic("performances repository is nil")
+	if perfRepo == nil {
+		panic("performance repository is nil")
 	}
 
 	if maintainer == nil {
@@ -37,8 +37,8 @@ func NewStartPerformanceHandler(
 	}
 
 	return StartPerformanceHandler{
-		specsRepo:     specsRepo,
-		perfsRepo:     perfsRepo,
+		specRepo:      specRepo,
+		perfRepo:      perfRepo,
 		maintainer:    maintainer,
 		performerOpts: opts,
 	}
@@ -52,7 +52,7 @@ func (h StartPerformanceHandler) Handle(
 		err = errors.Wrap(err, "new performance starting")
 	}()
 
-	spec, err := h.specsRepo.GetActiveSpecificationByTestCampaignID(ctx, cmd.TestCampaignID)
+	spec, err := h.specRepo.GetActiveSpecificationByTestCampaignID(ctx, cmd.TestCampaignID)
 	if err != nil {
 		return "", nil, err
 	}
@@ -63,11 +63,9 @@ func (h StartPerformanceHandler) Handle(
 
 	perfID = uuid.New().String()
 
-	opts := h.performerOpts.ToPerformanceOptions()
+	perf := performance.FromSpecification(perfID, spec, h.performerOpts...)
 
-	perf := performance.FromSpecification(perfID, spec, opts...)
-
-	if err = h.perfsRepo.AddPerformance(ctx, perf); err != nil {
+	if err = h.perfRepo.AddPerformance(ctx, perf); err != nil {
 		return "", nil, err
 	}
 

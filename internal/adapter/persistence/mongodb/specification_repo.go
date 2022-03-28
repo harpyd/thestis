@@ -12,13 +12,13 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-type SpecificationsRepository struct {
+type SpecificationRepository struct {
 	specifications *mongo.Collection
 }
 
 const specificationsCollection = "specifications"
 
-func NewSpecificationsRepository(db *mongo.Database) *SpecificationsRepository {
+func NewSpecificationRepository(db *mongo.Database) *SpecificationRepository {
 	col := db.Collection(specificationsCollection)
 
 	_, err := col.Indexes().CreateOne(context.Background(), mongo.IndexModel{
@@ -29,12 +29,12 @@ func NewSpecificationsRepository(db *mongo.Database) *SpecificationsRepository {
 		panic(err)
 	}
 
-	return &SpecificationsRepository{
+	return &SpecificationRepository{
 		specifications: col,
 	}
 }
 
-func (r *SpecificationsRepository) GetSpecification(
+func (r *SpecificationRepository) GetSpecification(
 	ctx context.Context,
 	specID string,
 ) (*specification.Specification, error) {
@@ -46,7 +46,7 @@ func (r *SpecificationsRepository) GetSpecification(
 	return document.unmarshalToSpecification(), nil
 }
 
-func (r *SpecificationsRepository) GetActiveSpecificationByTestCampaignID(
+func (r *SpecificationRepository) GetActiveSpecificationByTestCampaignID(
 	ctx context.Context,
 	testCampaignID string,
 ) (*specification.Specification, error) {
@@ -63,7 +63,7 @@ func (r *SpecificationsRepository) GetActiveSpecificationByTestCampaignID(
 	return document.unmarshalToSpecification(), nil
 }
 
-func (r *SpecificationsRepository) FindSpecification(
+func (r *SpecificationRepository) FindSpecification(
 	ctx context.Context,
 	qry app.SpecificSpecificationQuery,
 ) (app.SpecificSpecification, error) {
@@ -80,7 +80,7 @@ func (r *SpecificationsRepository) FindSpecification(
 	return document.unmarshalToSpecificSpecification(), nil
 }
 
-func (r *SpecificationsRepository) getSpecificationDocument(
+func (r *SpecificationRepository) getSpecificationDocument(
 	ctx context.Context,
 	filter bson.M,
 	sort bson.M,
@@ -90,26 +90,23 @@ func (r *SpecificationsRepository) getSpecificationDocument(
 	var document specificationDocument
 	if err := r.specifications.FindOne(ctx, filter, opt).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return specificationDocument{}, app.NewSpecificationNotFoundError(err)
+			return specificationDocument{}, app.ErrSpecificationNotFound
 		}
 
-		return specificationDocument{}, app.NewDatabaseError(err)
+		return specificationDocument{}, app.WrapWithDatabaseError(err)
 	}
 
 	return document, nil
 }
 
-func (r *SpecificationsRepository) AddSpecification(ctx context.Context, spec *specification.Specification) error {
+func (r *SpecificationRepository) AddSpecification(ctx context.Context, spec *specification.Specification) error {
 	_, err := r.specifications.InsertOne(ctx, marshalToSpecificationDocument(spec))
-	if mongo.IsDuplicateKeyError(err) {
-		return app.NewAlreadyExistsError(err)
-	}
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }
 
-func (r *SpecificationsRepository) RemoveAllSpecifications(ctx context.Context) error {
+func (r *SpecificationRepository) RemoveAllSpecifications(ctx context.Context) error {
 	_, err := r.specifications.DeleteMany(ctx, bson.D{})
 
-	return app.NewDatabaseError(err)
+	return app.WrapWithDatabaseError(err)
 }

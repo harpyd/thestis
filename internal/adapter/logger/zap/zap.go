@@ -6,39 +6,39 @@ import (
 	"github.com/harpyd/thestis/internal/app"
 )
 
-type LoggingService struct {
+type Logger struct {
 	logger *zap.Logger
 }
 
-func NewLoggingService(logger *zap.Logger) *LoggingService {
-	return &LoggingService{
+func NewLogger(logger *zap.Logger) *Logger {
+	return &Logger{
 		logger: logger,
 	}
 }
 
-func (l LoggingService) With(fields ...app.LogField) app.LoggingService {
-	return &LoggingService{
+func (l Logger) With(fields ...app.LogField) app.Logger {
+	return &Logger{
 		logger: l.logger.With(mapToZapFields(fields)...),
 	}
 }
 
-func (l LoggingService) Debug(msg string, fields ...app.LogField) {
+func (l Logger) Debug(msg string, fields ...app.LogField) {
 	l.logger.Debug(msg, mapToZapFields(fields)...)
 }
 
-func (l LoggingService) Info(msg string, fields ...app.LogField) {
+func (l Logger) Info(msg string, fields ...app.LogField) {
 	l.logger.Info(msg, mapToZapFields(fields)...)
 }
 
-func (l LoggingService) Warn(msg string, err error, fields ...app.LogField) {
+func (l Logger) Warn(msg string, err error, fields ...app.LogField) {
 	l.logger.Warn(msg, mapToZapFieldsWithErr(err, fields)...)
 }
 
-func (l LoggingService) Error(msg string, err error, fields ...app.LogField) {
+func (l Logger) Error(msg string, err error, fields ...app.LogField) {
 	l.logger.Error(msg, mapToZapFieldsWithErr(err, fields)...)
 }
 
-func (l LoggingService) Fatal(msg string, err error, fields ...app.LogField) {
+func (l Logger) Fatal(msg string, err error, fields ...app.LogField) {
 	l.logger.Fatal(msg, mapToZapFieldsWithErr(err, fields)...)
 }
 

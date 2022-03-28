@@ -19,37 +19,37 @@ func TestPanickingNewCancelPerformanceHandler(t *testing.T) {
 
 	testCases := []struct {
 		Name           string
-		GivenPerfsRepo app.PerformancesRepository
+		GivenPerfRepo  app.PerformanceRepository
 		GivenPublisher app.PerformanceCancelPublisher
 		ShouldPanic    bool
 		PanicMessage   string
 	}{
 		{
 			Name:           "all_dependencies_are_not_nil",
-			GivenPerfsRepo: mock.NewPerformancesRepository(),
+			GivenPerfRepo:  mock.NewPerformanceRepository(),
 			GivenPublisher: mock.NewPerformanceCancelPubsub(),
 			ShouldPanic:    false,
 		},
 		{
-			Name:           "performances_repository_is_nil",
-			GivenPerfsRepo: nil,
+			Name:           "performance_repository_is_nil",
+			GivenPerfRepo:  nil,
 			GivenPublisher: mock.NewPerformanceCancelPubsub(),
 			ShouldPanic:    true,
-			PanicMessage:   "performances repository is nil",
+			PanicMessage:   "performance repository is nil",
 		},
 		{
 			Name:           "performance_cancel_publisher_is_nil",
-			GivenPerfsRepo: mock.NewPerformancesRepository(),
+			GivenPerfRepo:  mock.NewPerformanceRepository(),
 			GivenPublisher: nil,
 			ShouldPanic:    true,
 			PanicMessage:   "performance cancel publisher is nil",
 		},
 		{
 			Name:           "all_dependencies_are_nil",
-			GivenPerfsRepo: nil,
+			GivenPerfRepo:  nil,
 			GivenPublisher: nil,
 			ShouldPanic:    true,
-			PanicMessage:   "performances repository is nil",
+			PanicMessage:   "performance repository is nil",
 		},
 	}
 
@@ -61,7 +61,7 @@ func TestPanickingNewCancelPerformanceHandler(t *testing.T) {
 
 			init := func() {
 				_ = command.NewCancelPerformanceHandler(
-					c.GivenPerfsRepo,
+					c.GivenPerfRepo,
 					c.GivenPublisher,
 				)
 			}
@@ -99,8 +99,10 @@ func TestHandleCancelPerformance(t *testing.T) {
 				OwnerID: "c89ba386-0976-4671-913d-9252ba29aca4",
 				Started: true,
 			}),
-			ShouldBeErr:          true,
-			IsErr:                app.IsPerformanceNotFoundError,
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrPerformanceNotFound)
+			},
 			ExpectedPublishCalls: 0,
 		},
 		{
@@ -162,9 +164,9 @@ func TestHandleCancelPerformance(t *testing.T) {
 			t.Parallel()
 
 			var (
-				perfsRepo    = mock.NewPerformancesRepository(c.Performance)
+				perfRepo     = mock.NewPerformanceRepository(c.Performance)
 				cancelPubsub = mock.NewPerformanceCancelPubsub()
-				handler      = command.NewCancelPerformanceHandler(perfsRepo, cancelPubsub)
+				handler      = command.NewCancelPerformanceHandler(perfRepo, cancelPubsub)
 			)
 
 			err := handler.Handle(context.Background(), c.Command)

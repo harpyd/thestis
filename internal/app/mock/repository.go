@@ -13,19 +13,15 @@ import (
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
 
-var (
-	errNoSuchID                 = errors.New("no such id in mock map")
-	errDuplicateID              = errors.New("duplicate id in mock map")
-	errNoSpecWithTestCampaignID = errors.New("no specification with test campaign id in mock map")
-)
+var errDuplicateID = errors.New("duplicate id in mock map")
 
-type TestCampaignsRepository struct {
+type TestCampaignRepository struct {
 	mu        sync.RWMutex
 	campaigns map[string]testcampaign.TestCampaign
 }
 
-func NewTestCampaignsRepository(tcs ...*testcampaign.TestCampaign) *TestCampaignsRepository {
-	tcm := &TestCampaignsRepository{
+func NewTestCampaignRepository(tcs ...*testcampaign.TestCampaign) *TestCampaignRepository {
+	tcm := &TestCampaignRepository{
 		campaigns: make(map[string]testcampaign.TestCampaign, len(tcs)),
 	}
 
@@ -36,9 +32,9 @@ func NewTestCampaignsRepository(tcs ...*testcampaign.TestCampaign) *TestCampaign
 	return tcm
 }
 
-func (m *TestCampaignsRepository) GetTestCampaign(ctx context.Context, tcID string) (*testcampaign.TestCampaign, error) {
+func (m *TestCampaignRepository) GetTestCampaign(ctx context.Context, tcID string) (*testcampaign.TestCampaign, error) {
 	if ctx.Err() != nil {
-		return nil, app.NewDatabaseError(ctx.Err())
+		return nil, app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.RLock()
@@ -46,22 +42,22 @@ func (m *TestCampaignsRepository) GetTestCampaign(ctx context.Context, tcID stri
 
 	tc, ok := m.campaigns[tcID]
 	if !ok {
-		return nil, app.NewTestCampaignNotFoundError(errNoSuchID)
+		return nil, app.ErrTestCampaignNotFound
 	}
 
 	return &tc, nil
 }
 
-func (m *TestCampaignsRepository) AddTestCampaign(ctx context.Context, tc *testcampaign.TestCampaign) error {
+func (m *TestCampaignRepository) AddTestCampaign(ctx context.Context, tc *testcampaign.TestCampaign) error {
 	if ctx.Err() != nil {
-		return app.NewDatabaseError(ctx.Err())
+		return app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if _, ok := m.campaigns[tc.ID()]; ok {
-		return app.NewAlreadyExistsError(errDuplicateID)
+		return app.WrapWithDatabaseError(errDuplicateID)
 	}
 
 	m.campaigns[tc.ID()] = *tc
@@ -69,13 +65,13 @@ func (m *TestCampaignsRepository) AddTestCampaign(ctx context.Context, tc *testc
 	return nil
 }
 
-func (m *TestCampaignsRepository) UpdateTestCampaign(
+func (m *TestCampaignRepository) UpdateTestCampaign(
 	ctx context.Context,
 	tcID string,
 	updateFn app.TestCampaignUpdater,
 ) error {
 	if ctx.Err() != nil {
-		return app.NewDatabaseError(ctx.Err())
+		return app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.Lock()
@@ -83,7 +79,7 @@ func (m *TestCampaignsRepository) UpdateTestCampaign(
 
 	tc, ok := m.campaigns[tcID]
 	if !ok {
-		return app.NewTestCampaignNotFoundError(errNoSuchID)
+		return app.ErrTestCampaignNotFound
 	}
 
 	updatedTC, err := updateFn(ctx, &tc)
@@ -96,20 +92,20 @@ func (m *TestCampaignsRepository) UpdateTestCampaign(
 	return nil
 }
 
-func (m *TestCampaignsRepository) TestCampaignsNumber() int {
+func (m *TestCampaignRepository) TestCampaignsNumber() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	return len(m.campaigns)
 }
 
-type SpecificationsRepository struct {
+type SpecificationRepository struct {
 	mu             sync.RWMutex
 	specifications map[string]specification.Specification
 }
 
-func NewSpecificationsRepository(specs ...*specification.Specification) *SpecificationsRepository {
-	m := &SpecificationsRepository{
+func NewSpecificationRepository(specs ...*specification.Specification) *SpecificationRepository {
+	m := &SpecificationRepository{
 		specifications: make(map[string]specification.Specification, len(specs)),
 	}
 
@@ -120,12 +116,12 @@ func NewSpecificationsRepository(specs ...*specification.Specification) *Specifi
 	return m
 }
 
-func (m *SpecificationsRepository) GetSpecification(
+func (m *SpecificationRepository) GetSpecification(
 	ctx context.Context,
 	specID string,
 ) (*specification.Specification, error) {
 	if ctx.Err() != nil {
-		return nil, app.NewDatabaseError(ctx.Err())
+		return nil, app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.RLock()
@@ -133,18 +129,18 @@ func (m *SpecificationsRepository) GetSpecification(
 
 	spec, ok := m.specifications[specID]
 	if !ok {
-		return nil, app.NewSpecificationNotFoundError(errNoSuchID)
+		return nil, app.ErrSpecificationNotFound
 	}
 
 	return &spec, nil
 }
 
-func (m *SpecificationsRepository) GetActiveSpecificationByTestCampaignID(
+func (m *SpecificationRepository) GetActiveSpecificationByTestCampaignID(
 	ctx context.Context,
 	tcID string,
 ) (*specification.Specification, error) {
 	if ctx.Err() != nil {
-		return nil, app.NewDatabaseError(ctx.Err())
+		return nil, app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.RLock()
@@ -156,22 +152,22 @@ func (m *SpecificationsRepository) GetActiveSpecificationByTestCampaignID(
 		}
 	}
 
-	return nil, app.NewSpecificationNotFoundError(errNoSpecWithTestCampaignID)
+	return nil, app.ErrSpecificationNotFound
 }
 
-func (m *SpecificationsRepository) AddSpecification(
+func (m *SpecificationRepository) AddSpecification(
 	ctx context.Context,
 	spec *specification.Specification,
 ) error {
 	if ctx.Err() != nil {
-		return app.NewDatabaseError(ctx.Err())
+		return app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if _, ok := m.specifications[spec.ID()]; ok {
-		return app.NewAlreadyExistsError(errDuplicateID)
+		return app.WrapWithDatabaseError(errDuplicateID)
 	}
 
 	m.specifications[spec.ID()] = *spec
@@ -179,7 +175,7 @@ func (m *SpecificationsRepository) AddSpecification(
 	return nil
 }
 
-func (m *SpecificationsRepository) SpecificationsNumber() int {
+func (m *SpecificationRepository) SpecificationsNumber() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -187,14 +183,14 @@ func (m *SpecificationsRepository) SpecificationsNumber() int {
 }
 
 type (
-	PerformancesRepository struct {
+	PerformanceRepository struct {
 		mu           sync.RWMutex
 		performances map[string]performance.Performance
 	}
 )
 
-func NewPerformancesRepository(perfs ...*performance.Performance) *PerformancesRepository {
-	m := &PerformancesRepository{
+func NewPerformanceRepository(perfs ...*performance.Performance) *PerformanceRepository {
+	m := &PerformanceRepository{
 		performances: make(map[string]performance.Performance, len(perfs)),
 	}
 
@@ -205,14 +201,14 @@ func NewPerformancesRepository(perfs ...*performance.Performance) *PerformancesR
 	return m
 }
 
-func (m *PerformancesRepository) GetPerformance(
+func (m *PerformanceRepository) GetPerformance(
 	ctx context.Context,
 	perfID string,
 	_ app.SpecificationGetter,
-	_ ...app.PerformerOption,
+	_ ...performance.Option,
 ) (*performance.Performance, error) {
 	if ctx.Err() != nil {
-		return nil, app.NewDatabaseError(ctx.Err())
+		return nil, app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.RLock()
@@ -220,22 +216,22 @@ func (m *PerformancesRepository) GetPerformance(
 
 	perf, ok := m.performances[perfID]
 	if !ok {
-		return nil, app.NewPerformanceNotFoundError(errNoSuchID)
+		return nil, app.ErrPerformanceNotFound
 	}
 
 	return &perf, nil
 }
 
-func (m *PerformancesRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
+func (m *PerformanceRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
 	if ctx.Err() != nil {
-		return app.NewDatabaseError(ctx.Err())
+		return app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if _, ok := m.performances[perf.ID()]; ok {
-		return app.NewAlreadyExistsError(errDuplicateID)
+		return app.WrapWithDatabaseError(errDuplicateID)
 	}
 
 	m.performances[perf.ID()] = *perf
@@ -243,20 +239,20 @@ func (m *PerformancesRepository) AddPerformance(ctx context.Context, perf *perfo
 	return nil
 }
 
-func (m *PerformancesRepository) PerformancesNumber() int {
+func (m *PerformanceRepository) PerformancesNumber() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	return len(m.performances)
 }
 
-type FlowsRepository struct {
+type FlowRepository struct {
 	mu    sync.RWMutex
 	flows map[string]flow.Flow
 }
 
-func NewFlowsRepository(flows ...flow.Flow) *FlowsRepository {
-	m := &FlowsRepository{
+func NewFlowRepository(flows ...flow.Flow) *FlowRepository {
+	m := &FlowRepository{
 		flows: make(map[string]flow.Flow, len(flows)),
 	}
 
@@ -267,9 +263,9 @@ func NewFlowsRepository(flows ...flow.Flow) *FlowsRepository {
 	return m
 }
 
-func (m *FlowsRepository) GetFlow(ctx context.Context, flowID string) (flow.Flow, error) {
+func (m *FlowRepository) GetFlow(ctx context.Context, flowID string) (flow.Flow, error) {
 	if ctx.Err() != nil {
-		return flow.Flow{}, app.NewDatabaseError(ctx.Err())
+		return flow.Flow{}, app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.RLock()
@@ -277,15 +273,15 @@ func (m *FlowsRepository) GetFlow(ctx context.Context, flowID string) (flow.Flow
 
 	f, ok := m.flows[flowID]
 	if !ok {
-		return flow.Flow{}, app.NewFlowNotFoundError(errNoSuchID)
+		return flow.Flow{}, app.ErrFlowNotFound
 	}
 
 	return f, nil
 }
 
-func (m *FlowsRepository) UpsertFlow(ctx context.Context, flow flow.Flow) error {
+func (m *FlowRepository) UpsertFlow(ctx context.Context, flow flow.Flow) error {
 	if ctx.Err() != nil {
-		return app.NewDatabaseError(ctx.Err())
+		return app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.Lock()

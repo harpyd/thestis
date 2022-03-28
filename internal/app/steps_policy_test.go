@@ -20,21 +20,21 @@ func TestPanickingNewEveryStepSavingPolicy(t *testing.T) {
 	const saveTimeout = 1 * time.Second
 
 	testCases := []struct {
-		Name           string
-		GivenFlowsRepo app.FlowsRepository
-		ShouldPanic    bool
-		PanicMessage   string
+		Name          string
+		GivenFlowRepo app.FlowRepository
+		ShouldPanic   bool
+		PanicMessage  string
 	}{
 		{
-			Name:           "all_dependencies_are_not_nil",
-			GivenFlowsRepo: mock.NewFlowsRepository(),
-			ShouldPanic:    false,
+			Name:          "all_dependencies_are_not_nil",
+			GivenFlowRepo: mock.NewFlowRepository(),
+			ShouldPanic:   false,
 		},
 		{
-			Name:           "all_dependencies_are_nil",
-			GivenFlowsRepo: nil,
-			ShouldPanic:    true,
-			PanicMessage:   "flows repository is nil",
+			Name:          "all_dependencies_are_nil",
+			GivenFlowRepo: nil,
+			ShouldPanic:   true,
+			PanicMessage:  "flow repository is nil",
 		},
 	}
 
@@ -45,7 +45,7 @@ func TestPanickingNewEveryStepSavingPolicy(t *testing.T) {
 			t.Parallel()
 
 			init := func() {
-				_ = app.NewEveryStepSavingPolicy(c.GivenFlowsRepo, saveTimeout)
+				_ = app.NewEveryStepSavingPolicy(c.GivenFlowRepo, saveTimeout)
 			}
 
 			if !c.ShouldPanic {
@@ -146,7 +146,7 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 					),
 				),
 				app.NewMessageFromError(
-					app.NewDatabaseError(context.Canceled),
+					app.WrapWithDatabaseError(context.Canceled),
 				),
 			},
 			ExpectedStatuses: []flow.Status{
@@ -171,8 +171,8 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 			const saveTimeout = 3 * time.Second
 
 			var (
-				flowsRepo = mock.NewFlowsRepository()
-				policy    = app.NewEveryStepSavingPolicy(flowsRepo, saveTimeout)
+				flowRepo = mock.NewFlowRepository()
+				policy   = app.NewEveryStepSavingPolicy(flowRepo, saveTimeout)
 			)
 
 			var (

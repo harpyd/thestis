@@ -1,4 +1,4 @@
-package httperr
+package http
 
 import (
 	"net/http"
@@ -6,7 +6,6 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/port/http/logging"
 )
 
 func BadRequest(slug string, err error, w http.ResponseWriter, r *http.Request) {
@@ -38,7 +37,7 @@ func InternalServerError(slug string, err error, w http.ResponseWriter, r *http.
 }
 
 func httpRespondWithError(err error, slug string, w http.ResponseWriter, r *http.Request, logMSg string, status int) {
-	logging.Logger(r).Warn(logMSg, err, app.StringLogField("errorSlug", slug))
+	logger(r).Warn(logMSg, err, app.StringLogField("errorSlug", slug))
 
 	var details string
 	if err != nil {

@@ -2,13 +2,13 @@ package fake
 
 import (
 	"context"
-	"net/http"
+	stdhttp "net/http"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/golang-jwt/jwt/request"
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/port/http/auth"
+	"github.com/harpyd/thestis/internal/port/http"
 )
 
 type Provider struct{}
@@ -22,7 +22,7 @@ var (
 	errInvalidJWT     = errors.New("invalid jwt")
 )
 
-func (p Provider) AuthenticatedUser(_ context.Context, r *http.Request) (auth.User, error) {
+func (p Provider) AuthenticateUser(_ context.Context, r *stdhttp.Request) (http.User, error) {
 	var claims jwt.MapClaims
 
 	token, err := request.ParseFromRequest(
@@ -34,14 +34,14 @@ func (p Provider) AuthenticatedUser(_ context.Context, r *http.Request) (auth.Us
 		request.WithClaims(&claims),
 	)
 	if err != nil {
-		return auth.User{}, errUnableToGetJWT
+		return http.User{}, errUnableToGetJWT
 	}
 
 	if !token.Valid {
-		return auth.User{}, errInvalidJWT
+		return http.User{}, errInvalidJWT
 	}
 
-	return auth.User{
+	return http.User{
 		UUID:        claims["userUuid"].(string),
 		DisplayName: claims["name"].(string),
 	}, nil

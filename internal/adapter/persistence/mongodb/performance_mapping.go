@@ -1,7 +1,6 @@
 package mongodb
 
 import (
-	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
@@ -33,14 +32,12 @@ func marshalToSlugDocument(slug specification.Slug) slugDocument {
 
 func (d performanceDocument) unmarshalToPerformance(
 	spec *specification.Specification,
-	opts app.PerformerOptions,
+	opts []performance.Option,
 ) *performance.Performance {
-	options := opts.ToPerformanceOptions()
-
 	return performance.Unmarshal(performance.Params{
 		ID:            d.ID,
 		Specification: spec,
 		OwnerID:       d.OwnerID,
 		Started:       d.Started,
-	}, options...)
+	}, opts...)
 }

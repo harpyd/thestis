@@ -12,15 +12,15 @@ import (
 )
 
 type CreateTestCampaignHandler struct {
-	testCampaignsRepo app.TestCampaignsRepository
+	testCampaignRepo app.TestCampaignRepository
 }
 
-func NewCreateTestCampaignHandler(repo app.TestCampaignsRepository) CreateTestCampaignHandler {
+func NewCreateTestCampaignHandler(repo app.TestCampaignRepository) CreateTestCampaignHandler {
 	if repo == nil {
-		panic("test campaigns repository is nil")
+		panic("test campaign repository is nil")
 	}
 
-	return CreateTestCampaignHandler{testCampaignsRepo: repo}
+	return CreateTestCampaignHandler{testCampaignRepo: repo}
 }
 
 func (h CreateTestCampaignHandler) Handle(
@@ -44,7 +44,7 @@ func (h CreateTestCampaignHandler) Handle(
 		return "", err
 	}
 
-	if err = h.testCampaignsRepo.AddTestCampaign(ctx, tc); err != nil {
+	if err = h.testCampaignRepo.AddTestCampaign(ctx, tc); err != nil {
 		return "", err
 	}
 

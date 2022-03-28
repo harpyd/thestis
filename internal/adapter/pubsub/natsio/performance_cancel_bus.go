@@ -19,7 +19,7 @@ func NewPerformanceCancelSignalBus(conn *nats.Conn) PerformanceCancelSignalBus {
 }
 
 func (p PerformanceCancelSignalBus) PublishPerformanceCancel(perfID string) error {
-	return app.NewPublishCancelError(p.conn.Publish(subject(perfID), []byte{}))
+	return app.WrapWithPublishCancelError(p.conn.Publish(subject(perfID), []byte{}))
 }
 
 func (p PerformanceCancelSignalBus) SubscribePerformanceCancel(perfID string) (<-chan app.CancelSignal, error) {
@@ -29,11 +29,11 @@ func (p PerformanceCancelSignalBus) SubscribePerformanceCancel(perfID string) (<
 		close(canceled)
 	})
 	if err != nil {
-		return nil, app.NewSubscribeCancelError(err)
+		return nil, app.WrapWithSubscribeCancelError(err)
 	}
 
 	if err := sub.AutoUnsubscribe(1); err != nil {
-		return nil, app.NewSubscribeCancelError(err)
+		return nil, app.WrapWithSubscribeCancelError(err)
 	}
 
 	return canceled, nil

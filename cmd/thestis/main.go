@@ -16,5 +16,7 @@ func main() {
 		configsPath = defaultConfigsPath
 	}
 
-	runner.Start(configsPath)
+	r := runner.New(configsPath)
+
+	r.Start()
 }

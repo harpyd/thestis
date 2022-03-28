@@ -2,6 +2,7 @@ package runner
 
 import (
 	"fmt"
+	"log"
 	stdhttp "net/http"
 	"strings"
 	"sync"
@@ -26,37 +27,28 @@ import (
 	"github.com/harpyd/thestis/internal/app/query"
 	"github.com/harpyd/thestis/internal/config"
 	"github.com/harpyd/thestis/internal/port/http"
-	"github.com/harpyd/thestis/internal/port/http/auth"
-	"github.com/harpyd/thestis/internal/port/http/cors"
-	"github.com/harpyd/thestis/internal/port/http/logging"
-	"github.com/harpyd/thestis/internal/port/http/metrics"
 	v1 "github.com/harpyd/thestis/internal/port/http/v1"
 	"github.com/harpyd/thestis/internal/server"
 	"github.com/harpyd/thestis/pkg/auth/firebase"
 	"github.com/harpyd/thestis/pkg/database/mongodb"
 )
 
-func Start(configsPath string) {
-	newRunner(configsPath).start()
-}
-
-type runnerContext struct {
+type Context struct {
+	zapSingleton
 	mongoSingleton
 	natsSingleton
 	firebaseSingleton
 
-	logger       app.LoggingService
+	logger       app.Logger
 	config       *config.Config
 	persistent   persistentContext
-	specParser   app.SpecificationParserService
-	metrics      app.MetricsService
+	specParser   app.SpecificationParser
+	metrics      metricsContext
 	performance  performanceContext
 	signalBus    signalBusContext
 	app          *app.Application
-	authProvider auth.Provider
+	authProvider http.AuthProvider
 	server       *server.Server
-
-	cancel func()
 }
 
 type mongoSingleton struct {
@@ -74,6 +66,11 @@ type firebaseSingleton struct {
 	client *fireauth.Client
 }
 
+type zapSingleton struct {
+	once   sync.Once
+	logger *zap.Logger
+}
+
 type performanceContext struct {
 	guard       app.PerformanceGuard
 	stepsPolicy app.StepsPolicy
@@ -81,10 +78,10 @@ type performanceContext struct {
 }
 
 type persistentContext struct {
-	testCampaignsRepo      app.TestCampaignsRepository
-	specsRepo              app.SpecificationsRepository
-	perfsRepo              app.PerformancesRepository
-	flowsRepo              app.FlowsRepository
+	testCampaignRepo       app.TestCampaignRepository
+	specRepo               app.SpecificationRepository
+	perfRepo               app.PerformanceRepository
+	flowRepo               app.FlowRepository
 	specificTestCampaignRM app.SpecificTestCampaignReadModel
 	specificSpecRM         app.SpecificSpecificationReadModel
 }
@@ -94,10 +91,14 @@ type signalBusContext struct {
 	subscriber app.PerformanceCancelSubscriber
 }
 
-func newRunner(configsPath string) *runnerContext {
-	c := &runnerContext{}
+type metricsContext struct {
+	httpMetric http.MetricCollector
+}
 
-	c.cancel = c.initLogger()
+func New(configsPath string) *Context {
+	c := &Context{}
+
+	c.initLogger()
 	c.initConfig(configsPath)
 	c.initPersistent()
 	c.initSpecificationParser()
@@ -111,7 +112,43 @@ func newRunner(configsPath string) *runnerContext {
 	return c
 }
 
-func (c *runnerContext) mongoDatabase() *mongo.Database {
+func (c *Context) Start() {
+	c.logger.Info(
+		"HTTP server started",
+		app.StringLogField("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
+	)
+
+	if err := c.server.Start(); !errors.Is(err, stdhttp.ErrServerClosed) {
+		c.logger.Fatal("HTTP server stopped unexpectedly", err)
+	}
+
+	c.logger.Info("HTTP server stopped gracefully")
+}
+
+func (c *Context) Stop() {
+	if err := c.server.Shutdown(); err != nil {
+		c.logger.Fatal("Server shutdown failed", err)
+	}
+
+	if err := c.zapSingleton.logger.Sync(); err != nil {
+		log.Fatal("Failed to sync zap logger")
+	}
+}
+
+func (c *Context) zapLogger() *zap.Logger {
+	c.zapSingleton.once.Do(func() {
+		logger, err := zap.NewProduction()
+		if err != nil {
+			log.Fatal("Failed to initialize zap logger")
+		}
+
+		c.zapSingleton.logger = logger
+	})
+
+	return c.zapSingleton.logger
+}
+
+func (c *Context) mongoDatabase() *mongo.Database {
 	c.mongoSingleton.once.Do(func() {
 		client, err := mongodb.NewClient(
 			c.config.Mongo.URI,
@@ -130,7 +167,7 @@ func (c *runnerContext) mongoDatabase() *mongo.Database {
 	return c.mongoSingleton.db
 }
 
-func (c *runnerContext) natsConnection() *nats.Conn {
+func (c *Context) natsConnection() *nats.Conn {
 	c.natsSingleton.once.Do(func() {
 		conn, err := nats.Connect(c.config.Nats.URL)
 		if err != nil {
@@ -145,7 +182,7 @@ func (c *runnerContext) natsConnection() *nats.Conn {
 	return c.natsSingleton.conn
 }
 
-func (c *runnerContext) firebaseClient() *fireauth.Client {
+func (c *Context) firebaseClient() *fireauth.Client {
 	c.firebaseSingleton.once.Do(func() {
 		client, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
 		if err != nil {
@@ -160,31 +197,11 @@ func (c *runnerContext) firebaseClient() *fireauth.Client {
 	return c.firebaseSingleton.client
 }
 
-func (c *runnerContext) start() {
-	defer c.cancel()
-
-	c.logger.Info(
-		"HTTP server started",
-		app.StringLogField("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
-	)
-
-	err := c.server.Start()
-
-	c.logger.Fatal("HTTP server stopped", err)
+func (c *Context) initLogger() {
+	c.logger = zapAdapter.NewLogger(c.zapLogger())
 }
 
-func (c *runnerContext) initLogger() func() {
-	logger, _ := zap.NewProduction()
-	syncFunc := func() {
-		_ = logger.Sync()
-	}
-
-	c.logger = zapAdapter.NewLoggingService(logger)
-
-	return syncFunc
-}
-
-func (c *runnerContext) initConfig(configsPath string) {
+func (c *Context) initConfig(configsPath string) {
 	cfg, err := config.FromPath(configsPath)
 	if err != nil {
 		c.logger.Fatal("Failed to parse config", err)
@@ -195,61 +212,61 @@ func (c *runnerContext) initConfig(configsPath string) {
 	c.logger.Info("Config parsing completed")
 }
 
-func (c *runnerContext) initPersistent() {
+func (c *Context) initPersistent() {
 	db := c.mongoDatabase()
 	logField := app.StringLogField("db", "mongo")
 
 	var (
-		testCampaignsRepo = mongoAdapter.NewTestCampaignsRepository(db)
-		specsRepo         = mongoAdapter.NewSpecificationsRepository(db)
-		perfsRepo         = mongoAdapter.NewPerformancesRepository(db)
-		flowsRepo         = mongoAdapter.NewFlowsRepository(db)
+		testCampaignRepo = mongoAdapter.NewTestCampaignRepository(db)
+		specRepo         = mongoAdapter.NewSpecificationRepository(db)
+		perfRepo         = mongoAdapter.NewPerformanceRepository(db)
+		flowRepo         = mongoAdapter.NewFlowRepository(db)
 	)
 
-	c.persistent.testCampaignsRepo = testCampaignsRepo
-	c.logger.Info("Test campaigns repository initialization completed", logField)
+	c.persistent.testCampaignRepo = testCampaignRepo
+	c.logger.Info("Test campaign repository initialization completed", logField)
 
-	c.persistent.specsRepo = specsRepo
-	c.logger.Info("Specifications repository initialization completed", logField)
+	c.persistent.specRepo = specRepo
+	c.logger.Info("Specification repository initialization completed", logField)
 
-	c.persistent.perfsRepo = perfsRepo
-	c.logger.Info("Performances repository initialization completed", logField)
+	c.persistent.perfRepo = perfRepo
+	c.logger.Info("Performance repository initialization completed", logField)
 
-	c.persistent.flowsRepo = flowsRepo
-	c.logger.Info("Flows repository initialization completed", logField)
+	c.persistent.flowRepo = flowRepo
+	c.logger.Info("Flow repository initialization completed", logField)
 
-	c.persistent.specificTestCampaignRM = testCampaignsRepo
-	c.logger.Info("Specific test campaigns read model initialization completed", logField)
+	c.persistent.specificTestCampaignRM = testCampaignRepo
+	c.logger.Info("Specific test campaign read model initialization completed", logField)
 
-	c.persistent.specificSpecRM = specsRepo
-	c.logger.Info("Specific specifications read model initialization completed", logField)
+	c.persistent.specificSpecRM = specRepo
+	c.logger.Info("Specific specification read model initialization completed", logField)
 }
 
-func (c *runnerContext) initSpecificationParser() {
-	c.specParser = yaml.NewSpecificationParserService()
+func (c *Context) initSpecificationParser() {
+	c.specParser = yaml.NewSpecificationParser()
 	c.logger.Info("Specification parser service initialization completed", app.StringLogField("type", "yaml"))
 }
 
-func (c *runnerContext) initApplication() {
+func (c *Context) initApplication() {
 	c.app = &app.Application{
 		Commands: app.Commands{
-			CreateTestCampaign: command.NewCreateTestCampaignHandler(c.persistent.testCampaignsRepo),
+			CreateTestCampaign: command.NewCreateTestCampaignHandler(c.persistent.testCampaignRepo),
 			LoadSpecification: command.NewLoadSpecificationHandler(
-				c.persistent.specsRepo,
-				c.persistent.testCampaignsRepo,
+				c.persistent.specRepo,
+				c.persistent.testCampaignRepo,
 				c.specParser,
 			),
 			StartPerformance: command.NewStartPerformanceHandler(
-				c.persistent.specsRepo,
-				c.persistent.perfsRepo,
+				c.persistent.specRepo,
+				c.persistent.perfRepo,
 				c.performance.maintainer,
 			),
 			RestartPerformance: command.NewRestartPerformanceHandler(
-				c.persistent.perfsRepo,
-				c.persistent.specsRepo,
+				c.persistent.perfRepo,
+				c.persistent.specRepo,
 				c.performance.maintainer,
 			),
-			CancelPerformance: command.NewCancelPerformanceHandler(c.persistent.perfsRepo, c.signalBus.publisher),
+			CancelPerformance: command.NewCancelPerformanceHandler(c.persistent.perfRepo, c.signalBus.publisher),
 		},
 		Queries: app.Queries{
 			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(c.persistent.specificTestCampaignRM),
@@ -260,18 +277,18 @@ func (c *runnerContext) initApplication() {
 	c.logger.Info("Application context initialization completed")
 }
 
-func (c *runnerContext) initMetrics() {
-	mrs, err := prometheus.NewMetricsService()
+func (c *Context) initMetrics() {
+	mrs, err := prometheus.NewMetricCollector()
 	if err != nil {
 		c.logger.Fatal("Failed to register metrics", err)
 	}
 
-	c.metrics = mrs
+	c.metrics.httpMetric = mrs
 
 	c.logger.Info("Metrics registration completed", app.StringLogField("db", "prometheus"))
 }
 
-func (c *runnerContext) initSignalBus() {
+func (c *Context) initSignalBus() {
 	if c.config.Performance.SignalBus == config.Nats {
 		bus := natsio.NewPerformanceCancelSignalBus(c.natsConnection())
 
@@ -291,7 +308,7 @@ func (c *runnerContext) initSignalBus() {
 	)
 }
 
-func (c *runnerContext) initPerformance() {
+func (c *Context) initPerformance() {
 	c.initPerformanceGuard()
 	c.initStepsPolicy()
 
@@ -308,14 +325,14 @@ func (c *runnerContext) initPerformance() {
 	)
 }
 
-func (c *runnerContext) initPerformanceGuard() {
+func (c *Context) initPerformanceGuard() {
 	c.performance.guard = mongoAdapter.NewPerformanceGuard(c.mongoDatabase())
 }
 
-func (c *runnerContext) initStepsPolicy() {
+func (c *Context) initStepsPolicy() {
 	if c.config.Performance.Policy == config.EveryStepSavingPolicy {
 		c.performance.stepsPolicy = app.NewEveryStepSavingPolicy(
-			c.persistent.flowsRepo,
+			c.persistent.flowRepo,
 			c.config.EveryStepSaving.SaveTimeout,
 		)
 
@@ -329,7 +346,7 @@ func (c *runnerContext) initStepsPolicy() {
 	)
 }
 
-func (c *runnerContext) initAuthenticationProvider() {
+func (c *Context) initAuthenticationProvider() {
 	authType := c.config.Auth.With
 
 	switch authType {
@@ -348,21 +365,21 @@ func (c *runnerContext) initAuthenticationProvider() {
 	c.logger.Info("Authentication provider initialization completed", app.StringLogField("auth", authType))
 }
 
-func (c *runnerContext) initServer() {
-	c.server = server.New(c.config, http.NewHandler(http.Params{
+func (c *Context) initServer() {
+	c.server = server.New(c.config.HTTP, http.NewHandler(http.Params{
 		Middlewares: []http.Middleware{
 			middleware.RequestID,
 			middleware.RealIP,
-			logging.Middleware(c.logger),
+			http.LoggingMiddleware(c.logger),
 			middleware.Recoverer,
-			cors.Middleware(c.config.HTTP.AllowedOrigins),
+			http.CORSMiddleware(c.config.HTTP.AllowedOrigins),
 			middleware.NoCache,
-			metrics.Middleware(c.metrics),
+			http.MetricsMiddleware(c.metrics.httpMetric),
 		},
 		Routes: []http.Route{
 			{
 				Pattern: "/v1",
-				Handler: v1.NewHandler(c.app, c.logger, auth.Middleware(c.authProvider)),
+				Handler: v1.NewHandler(c.app, c.logger, http.AuthMiddleware(c.authProvider)),
 			},
 			{
 				Pattern: "/swagger",

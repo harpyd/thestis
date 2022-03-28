@@ -1,4 +1,4 @@
-package logging
+package http
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 )
 
 type Formatter struct {
-	logging app.LoggingService
+	logging app.Logger
 }
 
 func (l *Formatter) NewLogEntry(r *http.Request) middleware.LogEntry {
@@ -44,7 +44,7 @@ func copyRequestBody(r *http.Request) string {
 }
 
 type logEntry struct {
-	logging   app.LoggingService
+	logging   app.Logger
 	uri       string
 	requestID string
 }
@@ -70,11 +70,15 @@ func (e *logEntry) Panic(v interface{}, stack []byte) {
 	)
 }
 
-func Logger(r *http.Request) app.LoggingService {
+func logger(r *http.Request) app.Logger {
 	entry, ok := middleware.GetLogEntry(r).(*logEntry)
 	if !ok {
 		panic("LogEntry isn't *logEntry")
 	}
 
 	return entry.logging
+}
+
+func LoggingMiddleware(loggingService app.Logger) Middleware {
+	return middleware.RequestLogger(&Formatter{logging: loggingService})
 }

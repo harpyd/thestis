@@ -6,24 +6,25 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/app"
+	"github.com/harpyd/thestis/internal/domain/performance"
 	"github.com/harpyd/thestis/internal/domain/user"
 )
 
 type RestartPerformanceHandler struct {
-	perfsRepo     app.PerformancesRepository
+	perfRepo      app.PerformanceRepository
 	specGetter    app.SpecificationGetter
 	maintainer    app.PerformanceMaintainer
-	performerOpts app.PerformerOptions
+	performerOpts []performance.Option
 }
 
 func NewRestartPerformanceHandler(
-	perfsRepo app.PerformancesRepository,
+	perfRepo app.PerformanceRepository,
 	specGetter app.SpecificationGetter,
 	maintainer app.PerformanceMaintainer,
-	opts ...app.PerformerOption,
+	opts ...performance.Option,
 ) RestartPerformanceHandler {
-	if perfsRepo == nil {
-		panic("performances repository is nil")
+	if perfRepo == nil {
+		panic("performance repository is nil")
 	}
 
 	if specGetter == nil {
@@ -35,7 +36,7 @@ func NewRestartPerformanceHandler(
 	}
 
 	return RestartPerformanceHandler{
-		perfsRepo:     perfsRepo,
+		perfRepo:      perfRepo,
 		maintainer:    maintainer,
 		performerOpts: opts,
 	}
@@ -49,7 +50,7 @@ func (h RestartPerformanceHandler) Handle(
 		err = errors.Wrap(err, "performance restarting")
 	}()
 
-	perf, err := h.perfsRepo.GetPerformance(ctx, cmd.PerformanceID, h.specGetter, h.performerOpts...)
+	perf, err := h.perfRepo.GetPerformance(ctx, cmd.PerformanceID, h.specGetter, h.performerOpts...)
 	if err != nil {
 		return nil, err
 	}

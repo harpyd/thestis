@@ -18,14 +18,14 @@ type PerformanceGuardTestSuite struct {
 	MongoTestFixtures
 
 	guard *mongodb.PerformanceGuard
-	repo  *mongodb.PerformancesRepository
+	repo  *mongodb.PerformanceRepository
 
 	perfID string
 }
 
 func (s *PerformanceGuardTestSuite) SetupTest() {
 	s.guard = mongodb.NewPerformanceGuard(s.db)
-	s.repo = mongodb.NewPerformancesRepository(s.db)
+	s.repo = mongodb.NewPerformanceRepository(s.db)
 
 	s.perfID = "2db44433-7142-4080-bada-844afccfedbf"
 

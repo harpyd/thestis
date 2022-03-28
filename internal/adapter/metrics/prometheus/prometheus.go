@@ -1,15 +1,13 @@
 package prometheus
 
-import (
-	"github.com/prometheus/client_golang/prometheus"
-)
+import "github.com/prometheus/client_golang/prometheus"
 
-type MetricsService struct {
+type MetricCollector struct {
 	requestsTotal prometheus.Counter
 	requests      *prometheus.CounterVec
 }
 
-func NewMetricsService() (*MetricsService, error) {
+func NewMetricCollector() (*MetricCollector, error) {
 	requestsTotal := prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "thestis_requests_total",
 		Help: "Total number of requests",
@@ -31,13 +29,13 @@ func NewMetricsService() (*MetricsService, error) {
 		return nil, err
 	}
 
-	return &MetricsService{
+	return &MetricCollector{
 		requestsTotal: requestsTotal,
 		requests:      requests,
 	}, nil
 }
 
-func (m *MetricsService) IncRequestsCount(status, method, path string) {
+func (m *MetricCollector) IncRequestsCount(status, method, path string) {
 	m.requestsTotal.Inc()
 	m.requests.WithLabelValues(status, method, path).Inc()
 }

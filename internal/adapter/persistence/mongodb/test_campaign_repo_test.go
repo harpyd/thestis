@@ -2,6 +2,7 @@ package mongodb_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -13,33 +14,33 @@ import (
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
 
-type TestCampaignsRepositoryTestSuite struct {
+type TestCampaignRepositoryTestSuite struct {
 	suite.Suite
 	MongoTestFixtures
 
-	repo *mongodb.TestCampaignsRepository
+	repo *mongodb.TestCampaignRepository
 }
 
-func (s *TestCampaignsRepositoryTestSuite) SetupTest() {
-	s.repo = mongodb.NewTestCampaignsRepository(s.db)
+func (s *TestCampaignRepositoryTestSuite) SetupTest() {
+	s.repo = mongodb.NewTestCampaignRepository(s.db)
 }
 
-func (s *TestCampaignsRepositoryTestSuite) TearDownTest() {
+func (s *TestCampaignRepositoryTestSuite) TearDownTest() {
 	err := s.repo.RemoveAllTestCampaigns(context.Background())
 	s.Require().NoError(err)
 }
 
-func TestCampaignsRepository(t *testing.T) {
+func TestCampaignRepository(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Integration tests are skipped")
 	}
 
-	suite.Run(t, &TestCampaignsRepositoryTestSuite{
+	suite.Run(t, &TestCampaignRepositoryTestSuite{
 		MongoTestFixtures: MongoTestFixtures{t: t},
 	})
 }
 
-func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
+func (s *TestCampaignRepositoryTestSuite) TestFindTestCampaign() {
 	testCampaignToFind, err := testcampaign.New(testcampaign.Params{
 		ID:        "c0b28d44-d603-4756-bd25-8b3034e1dc77",
 		ViewName:  "some name",
@@ -64,7 +65,9 @@ func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
 				UserID:         "52d308aa-5a8a-4931-b558-73962e55d443",
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsTestCampaignNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrTestCampaignNotFound)
+			},
 		},
 		{
 			Name: "by_non_existing_test_campaign_id_and_existing_owner_id",
@@ -73,7 +76,9 @@ func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
 				UserID:         "54112816-3a55-4a28-82df-3c8e082fa0f8",
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsTestCampaignNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrTestCampaignNotFound)
+			},
 		},
 		{
 			Name: "by_existing_test_campaign_id_and_non_existing_owner_id",
@@ -82,7 +87,9 @@ func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
 				UserID:         "0c972872-b033-4fb1-a29b-2e14a8eb56f4",
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsTestCampaignNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrTestCampaignNotFound)
+			},
 		},
 		{
 			Name: "by_existing_test_campaign_id_and_existing_owner_id",
@@ -114,7 +121,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestFindTestCampaign() {
 	}
 }
 
-func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
+func (s *TestCampaignRepositoryTestSuite) TestAddTestCampaign() {
 	testCases := []struct {
 		Name         string
 		Before       func()
@@ -142,7 +149,10 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 			}),
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return app.IsAlreadyExistsError(err) && mongo.IsDuplicateKeyError(err)
+				var target *app.DatabaseError
+
+				return errors.As(err, &target) &&
+					mongo.IsDuplicateKeyError(err)
 			},
 		},
 		{
@@ -202,7 +212,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestAddTestCampaign() {
 	}
 }
 
-func (s *TestCampaignsRepositoryTestSuite) TestUpdateTestCampaign() {
+func (s *TestCampaignRepositoryTestSuite) TestUpdateTestCampaign() {
 	testCampaignToUpdate, err := testcampaign.New(testcampaign.Params{
 		ID:        "0b723635-4691-4eae-aca8-79b230989f9d",
 		OwnerID:   "3dd1ee11-2520-4de1-859a-b8d6fbb003e9",
@@ -229,7 +239,9 @@ func (s *TestCampaignsRepositoryTestSuite) TestUpdateTestCampaign() {
 				return tc, nil
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsTestCampaignNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrTestCampaignNotFound)
+			},
 		},
 		{
 			Name:                   "update_summary",
@@ -279,7 +291,7 @@ func (s *TestCampaignsRepositoryTestSuite) TestUpdateTestCampaign() {
 	}
 }
 
-func (s *TestCampaignsRepositoryTestSuite) addTestCampaigns(tcs ...*testcampaign.TestCampaign) {
+func (s *TestCampaignRepositoryTestSuite) addTestCampaigns(tcs ...*testcampaign.TestCampaign) {
 	s.T().Helper()
 
 	ctx := context.Background()
@@ -290,7 +302,7 @@ func (s *TestCampaignsRepositoryTestSuite) addTestCampaigns(tcs ...*testcampaign
 	}
 }
 
-func (s *TestCampaignsRepositoryTestSuite) getTestCampaign(tcID string) *testcampaign.TestCampaign {
+func (s *TestCampaignRepositoryTestSuite) getTestCampaign(tcID string) *testcampaign.TestCampaign {
 	s.T().Helper()
 
 	tc, err := s.repo.GetTestCampaign(context.Background(), tcID)
@@ -299,7 +311,7 @@ func (s *TestCampaignsRepositoryTestSuite) getTestCampaign(tcID string) *testcam
 	return tc
 }
 
-func (s *TestCampaignsRepositoryTestSuite) requireTestCampaignsEqual(expected, actual *testcampaign.TestCampaign) {
+func (s *TestCampaignRepositoryTestSuite) requireTestCampaignsEqual(expected, actual *testcampaign.TestCampaign) {
 	s.Require().Equal(expected.ID(), actual.ID())
 	s.Require().Equal(expected.OwnerID(), actual.OwnerID())
 	s.Require().Equal(expected.Summary(), actual.Summary())
@@ -307,7 +319,7 @@ func (s *TestCampaignsRepositoryTestSuite) requireTestCampaignsEqual(expected, a
 	s.requireTimesEqualWithRounding(expected.CreatedAt(), actual.CreatedAt())
 }
 
-func (s *TestCampaignsRepositoryTestSuite) requireTimesEqualWithRounding(expected, actual time.Time) {
+func (s *TestCampaignRepositoryTestSuite) requireTimesEqualWithRounding(expected, actual time.Time) {
 	s.T().Helper()
 
 	s.Require().True(round(expected).Equal(round(actual)))

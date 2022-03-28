@@ -20,39 +20,39 @@ func TestPanickingNewStartPerformanceHandler(t *testing.T) {
 
 	testCases := []struct {
 		Name            string
-		GivenSpecsRepo  app.SpecificationsRepository
-		GivenPerfsRepo  app.PerformancesRepository
+		GivenSpecRepo   app.SpecificationRepository
+		GivenPerfRepo   app.PerformanceRepository
 		GivenMaintainer app.PerformanceMaintainer
 		ShouldPanic     bool
 		PanicMessage    string
 	}{
 		{
 			Name:            "all_dependencies_are_not_nil",
-			GivenSpecsRepo:  mock.NewSpecificationsRepository(),
-			GivenPerfsRepo:  mock.NewPerformancesRepository(),
+			GivenSpecRepo:   mock.NewSpecificationRepository(),
+			GivenPerfRepo:   mock.NewPerformanceRepository(),
 			GivenMaintainer: mock.NewPerformanceMaintainer(false),
 			ShouldPanic:     false,
 		},
 		{
-			Name:            "specifications_repository_is_nil",
-			GivenSpecsRepo:  nil,
-			GivenPerfsRepo:  mock.NewPerformancesRepository(),
+			Name:            "specification_repository_is_nil",
+			GivenSpecRepo:   nil,
+			GivenPerfRepo:   mock.NewPerformanceRepository(),
 			GivenMaintainer: mock.NewPerformanceMaintainer(false),
 			ShouldPanic:     true,
-			PanicMessage:    "specifications repository is nil",
+			PanicMessage:    "specification repository is nil",
 		},
 		{
-			Name:            "performances_repository_is_nil",
-			GivenSpecsRepo:  mock.NewSpecificationsRepository(),
-			GivenPerfsRepo:  nil,
+			Name:            "performance_repository_is_nil",
+			GivenSpecRepo:   mock.NewSpecificationRepository(),
+			GivenPerfRepo:   nil,
 			GivenMaintainer: mock.NewPerformanceMaintainer(false),
 			ShouldPanic:     true,
-			PanicMessage:    "performances repository is nil",
+			PanicMessage:    "performance repository is nil",
 		},
 		{
 			Name:            "performance_maintainer_is_nil",
-			GivenSpecsRepo:  mock.NewSpecificationsRepository(),
-			GivenPerfsRepo:  mock.NewPerformancesRepository(),
+			GivenSpecRepo:   mock.NewSpecificationRepository(),
+			GivenPerfRepo:   mock.NewPerformanceRepository(),
 			GivenMaintainer: nil,
 			ShouldPanic:     true,
 			PanicMessage:    "performance maintainer is nil",
@@ -67,8 +67,8 @@ func TestPanickingNewStartPerformanceHandler(t *testing.T) {
 
 			init := func() {
 				_ = command.NewStartPerformanceHandler(
-					c.GivenSpecsRepo,
-					c.GivenPerfsRepo,
+					c.GivenSpecRepo,
+					c.GivenPerfRepo,
 					c.GivenMaintainer,
 				)
 			}
@@ -105,7 +105,9 @@ func TestHandleStartPerformance(t *testing.T) {
 				WithOwnerID("d8d1e4ab-8f24-4c79-a1f2-49e24b3f119a").
 				ErrlessBuild(),
 			ShouldBeErr: true,
-			IsErr:       app.IsSpecificationNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrSpecificationNotFound)
+			},
 		},
 		{
 			Name: "user_cannot_see_specification",
@@ -145,15 +147,15 @@ func TestHandleStartPerformance(t *testing.T) {
 			t.Parallel()
 
 			var (
-				specsRepo  = mock.NewSpecificationsRepository(c.Specification)
-				perfsRepo  = mock.NewPerformancesRepository()
+				specRepo   = mock.NewSpecificationRepository(c.Specification)
+				perfRepo   = mock.NewPerformanceRepository()
 				maintainer = mock.NewPerformanceMaintainer(false)
 				handler    = command.NewStartPerformanceHandler(
-					specsRepo,
-					perfsRepo,
+					specRepo,
+					perfRepo,
 					maintainer,
-					app.WithHTTPPerformer(performance.PassingPerformer()),
-					app.WithAssertionPerformer(performance.FailingPerformer()),
+					performance.WithHTTP(performance.PassingPerformer()),
+					performance.WithAssertion(performance.FailingPerformer()),
 				)
 			)
 
@@ -163,7 +165,7 @@ func TestHandleStartPerformance(t *testing.T) {
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))
-				require.Equal(t, 0, perfsRepo.PerformancesNumber())
+				require.Equal(t, 0, perfRepo.PerformancesNumber())
 
 				return
 			}
@@ -172,7 +174,7 @@ func TestHandleStartPerformance(t *testing.T) {
 
 			require.NotEmpty(t, perfID)
 			require.NotNil(t, messages)
-			require.Equal(t, 1, perfsRepo.PerformancesNumber())
+			require.Equal(t, 1, perfRepo.PerformancesNumber())
 		})
 	}
 }

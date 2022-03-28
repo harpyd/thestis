@@ -2,6 +2,7 @@ package mongodb_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -12,33 +13,33 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-type SpecificationsRepositoryTestSuite struct {
+type SpecificationRepositoryTestSuite struct {
 	suite.Suite
 	MongoTestFixtures
 
-	repo *mongodb.SpecificationsRepository
+	repo *mongodb.SpecificationRepository
 }
 
-func (s *SpecificationsRepositoryTestSuite) SetupTest() {
-	s.repo = mongodb.NewSpecificationsRepository(s.db)
+func (s *SpecificationRepositoryTestSuite) SetupTest() {
+	s.repo = mongodb.NewSpecificationRepository(s.db)
 }
 
-func (s *SpecificationsRepositoryTestSuite) TearDownTest() {
+func (s *SpecificationRepositoryTestSuite) TearDownTest() {
 	err := s.repo.RemoveAllSpecifications(context.Background())
 	s.Require().NoError(err)
 }
 
-func TestSpecificationsRepository(t *testing.T) {
+func TestSpecificationRepository(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Integration tests are skipped")
 	}
 
-	suite.Run(t, &SpecificationsRepositoryTestSuite{
+	suite.Run(t, &SpecificationRepositoryTestSuite{
 		MongoTestFixtures: MongoTestFixtures{t: t},
 	})
 }
 
-func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
+func (s *SpecificationRepositoryTestSuite) TestFindSpecification() {
 	specificationToFind := (&specification.Builder{}).
 		WithID("64825e35-7fa7-44a4-9ca2-81cfc7b0f0d8").
 		WithOwnerID("52d9af60-26be-46ea-90a6-efec5fbb4ccd").
@@ -61,7 +62,9 @@ func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
 				UserID:          "b5f0e13d-ca3a-41f9-b297-53a2440c6080",
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsSpecificationNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrSpecificationNotFound)
+			},
 		},
 		{
 			Name: "by_existing_specification_id_and_non_existing_owner_id",
@@ -70,7 +73,9 @@ func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
 				UserID:          "4699c306-ba54-4a5d-916e-92c40646faca",
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsSpecificationNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrSpecificationNotFound)
+			},
 		},
 		{
 			Name: "by_non_existing_specification_id_and_existing_owner_id",
@@ -79,7 +84,9 @@ func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
 				UserID:          "52d9af60-26be-46ea-90a6-efec5fbb4ccd",
 			},
 			ShouldBeErr: true,
-			IsErr:       app.IsSpecificationNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrSpecificationNotFound)
+			},
 		},
 		{
 			Name: "by_existing_specification_id_and_existing_owner_id",
@@ -108,7 +115,7 @@ func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
 	}
 }
 
-func (s *SpecificationsRepositoryTestSuite) TestGetActiveSpecificationByTestCampaignID() {
+func (s *SpecificationRepositoryTestSuite) TestGetActiveSpecificationByTestCampaignID() {
 	var b specification.Builder
 
 	testCampaignID := "d0832b59-6e8a-46f6-9b57-92e8bf656e93"
@@ -147,7 +154,9 @@ func (s *SpecificationsRepositoryTestSuite) TestGetActiveSpecificationByTestCamp
 			Name:           "non_existing_specification_with_test_campaign_id",
 			TestCampaignID: "1ba42415-588b-4a11-ab06-76b4a298658e",
 			ShouldBeErr:    true,
-			IsErr:          app.IsSpecificationNotFoundError,
+			IsErr: func(err error) bool {
+				return errors.Is(err, app.ErrSpecificationNotFound)
+			},
 		},
 		{
 			Name:           "last_added_specification",
@@ -173,7 +182,7 @@ func (s *SpecificationsRepositoryTestSuite) TestGetActiveSpecificationByTestCamp
 	}
 }
 
-func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
+func (s *SpecificationRepositoryTestSuite) TestAddSpecification() {
 	testCases := []struct {
 		Name          string
 		Before        func()
@@ -197,7 +206,10 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 				ErrlessBuild(),
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return app.IsAlreadyExistsError(err) && mongo.IsDuplicateKeyError(err)
+				var target *app.DatabaseError
+
+				return errors.As(err, &target) &&
+					mongo.IsDuplicateKeyError(err)
 			},
 		},
 		{
@@ -236,7 +248,7 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 	}
 }
 
-func (s *SpecificationsRepositoryTestSuite) getSpecification(specID string) *specification.Specification {
+func (s *SpecificationRepositoryTestSuite) getSpecification(specID string) *specification.Specification {
 	s.T().Helper()
 
 	spec, err := s.repo.GetSpecification(context.Background(), specID)
@@ -245,7 +257,7 @@ func (s *SpecificationsRepositoryTestSuite) getSpecification(specID string) *spe
 	return spec
 }
 
-func (s *SpecificationsRepositoryTestSuite) addSpecifications(specs ...*specification.Specification) {
+func (s *SpecificationRepositoryTestSuite) addSpecifications(specs ...*specification.Specification) {
 	s.T().Helper()
 
 	ctx := context.Background()
