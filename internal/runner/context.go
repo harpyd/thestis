@@ -2,6 +2,7 @@ package runner
 
 import (
 	"fmt"
+	"log"
 	stdhttp "net/http"
 	"strings"
 	"sync"
@@ -33,11 +34,12 @@ import (
 )
 
 type Context struct {
+	zapSingleton
 	mongoSingleton
 	natsSingleton
 	firebaseSingleton
 
-	logger       app.LoggingService
+	logger       app.Logger
 	config       *config.Config
 	persistent   persistentContext
 	specParser   app.SpecificationParser
@@ -47,8 +49,6 @@ type Context struct {
 	app          *app.Application
 	authProvider http.AuthProvider
 	server       *server.Server
-
-	cancel func()
 }
 
 type mongoSingleton struct {
@@ -64,6 +64,11 @@ type natsSingleton struct {
 type firebaseSingleton struct {
 	once   sync.Once
 	client *fireauth.Client
+}
+
+type zapSingleton struct {
+	once   sync.Once
+	logger *zap.Logger
 }
 
 type performanceContext struct {
@@ -93,7 +98,7 @@ type metricsContext struct {
 func New(configsPath string) *Context {
 	c := &Context{}
 
-	c.cancel = c.initLogger()
+	c.initLogger()
 	c.initConfig(configsPath)
 	c.initPersistent()
 	c.initSpecificationParser()
@@ -108,16 +113,39 @@ func New(configsPath string) *Context {
 }
 
 func (c *Context) Start() {
-	defer c.cancel()
-
 	c.logger.Info(
 		"HTTP server started",
 		app.StringLogField("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
 	)
 
-	err := c.server.Start()
+	if err := c.server.Start(); !errors.Is(err, stdhttp.ErrServerClosed) {
+		c.logger.Fatal("HTTP server stopped unexpectedly", err)
+	}
 
-	c.logger.Fatal("HTTP server stopped", err)
+	c.logger.Info("HTTP server stopped")
+}
+
+func (c *Context) Stop() {
+	if err := c.server.Shutdown(); err != nil {
+		c.logger.Fatal("Server shutdown failed", err)
+	}
+
+	if err := c.zapSingleton.logger.Sync(); err != nil {
+		log.Fatal("Failed to sync zap logger")
+	}
+}
+
+func (c *Context) zapLogger() *zap.Logger {
+	c.zapSingleton.once.Do(func() {
+		logger, err := zap.NewProduction()
+		if err != nil {
+			log.Fatal("Failed to initialize zap logger")
+		}
+
+		c.zapSingleton.logger = logger
+	})
+
+	return c.zapSingleton.logger
 }
 
 func (c *Context) mongoDatabase() *mongo.Database {
@@ -169,15 +197,8 @@ func (c *Context) firebaseClient() *fireauth.Client {
 	return c.firebaseSingleton.client
 }
 
-func (c *Context) initLogger() func() {
-	logger, _ := zap.NewProduction()
-	syncFunc := func() {
-		_ = logger.Sync()
-	}
-
-	c.logger = zapAdapter.NewLoggingService(logger)
-
-	return syncFunc
+func (c *Context) initLogger() {
+	c.logger = zapAdapter.NewLogger(c.zapLogger())
 }
 
 func (c *Context) initConfig(configsPath string) {
@@ -345,7 +366,7 @@ func (c *Context) initAuthenticationProvider() {
 }
 
 func (c *Context) initServer() {
-	c.server = server.New(c.config, http.NewHandler(http.Params{
+	c.server = server.New(c.config.HTTP, http.NewHandler(http.Params{
 		Middlewares: []http.Middleware{
 			middleware.RequestID,
 			middleware.RealIP,

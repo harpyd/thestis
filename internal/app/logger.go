@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-type LoggingService interface {
-	With(fields ...LogField) LoggingService
+type Logger interface {
+	With(fields ...LogField) Logger
 	Debug(msg string, fields ...LogField)
 	Info(msg string, fields ...LogField)
 	Warn(msg string, err error, fields ...LogField)

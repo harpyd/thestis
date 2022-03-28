@@ -11,12 +11,12 @@ import (
 
 type handler struct {
 	app    *app.Application
-	logger app.LoggingService
+	logger app.Logger
 }
 
 func NewHandler(
 	application *app.Application,
-	logger app.LoggingService,
+	logger app.Logger,
 	middlewares ...http.Middleware,
 ) stdhttp.Handler {
 	r := chi.NewRouter()
