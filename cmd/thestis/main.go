@@ -2,6 +2,9 @@ package main
 
 import (
 	"flag"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/harpyd/thestis/internal/runner"
 )
@@ -16,7 +19,13 @@ func main() {
 		configsPath = defaultConfigsPath
 	}
 
+	interrupted := make(chan os.Signal, 1)
+	signal.Notify(interrupted, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
 	r := runner.New(configsPath)
 
-	r.Start()
+	go r.Start()
+
+	<-interrupted
+	r.Stop()
 }
