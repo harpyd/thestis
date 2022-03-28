@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 	"log"
 	stdhttp "net/http"
@@ -121,8 +122,6 @@ func (c *Context) Start() {
 	if err := c.server.Start(); !errors.Is(err, stdhttp.ErrServerClosed) {
 		c.logger.Fatal("HTTP server stopped unexpectedly", err)
 	}
-
-	c.logger.Info("HTTP server stopped gracefully")
 }
 
 func (c *Context) Stop() {
@@ -130,8 +129,16 @@ func (c *Context) Stop() {
 		c.logger.Fatal("Server shutdown failed", err)
 	}
 
+	if err := c.mongoDatabase().Client().Disconnect(context.Background()); err != nil {
+		c.logger.Fatal("Mongo disconnection failed", err)
+	}
+
+	c.natsConnection().Close()
+
+	c.logger.Info("Runner stopped")
+
 	if err := c.zapLogger().Sync(); err != nil {
-		log.Fatal("Failed to sync zap logger")
+		log.Fatalf("Failed to sync zap logger: %v", err)
 	}
 }
 
@@ -139,7 +146,7 @@ func (c *Context) zapLogger() *zap.Logger {
 	c.zapSingleton.once.Do(func() {
 		logger, err := zap.NewProduction()
 		if err != nil {
-			log.Fatal("Failed to initialize zap logger")
+			log.Fatalf("Failed to initialize zap logger: %v", err)
 		}
 
 		c.zapSingleton.logger = logger
