@@ -11,21 +11,21 @@ import (
 	"github.com/harpyd/thestis/internal/domain/performance"
 )
 
-type PerformancesRepository struct {
+type PerformanceRepository struct {
 	performances *mongo.Collection
 }
 
 const performancesCollection = "performances"
 
-func NewPerformancesRepository(db *mongo.Database) *PerformancesRepository {
-	r := &PerformancesRepository{
+func NewPerformanceRepository(db *mongo.Database) *PerformanceRepository {
+	r := &PerformanceRepository{
 		performances: db.Collection(performancesCollection),
 	}
 
 	return r
 }
 
-func (r *PerformancesRepository) GetPerformance(
+func (r *PerformanceRepository) GetPerformance(
 	ctx context.Context,
 	perfID string,
 	specGetter app.SpecificationGetter,
@@ -44,7 +44,7 @@ func (r *PerformancesRepository) GetPerformance(
 	return document.unmarshalToPerformance(spec, opts), nil
 }
 
-func (r *PerformancesRepository) getPerformanceDocument(
+func (r *PerformanceRepository) getPerformanceDocument(
 	ctx context.Context,
 	filter bson.M,
 ) (performanceDocument, error) {
@@ -60,13 +60,13 @@ func (r *PerformancesRepository) getPerformanceDocument(
 	return document, nil
 }
 
-func (r *PerformancesRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
+func (r *PerformanceRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
 	_, err := r.performances.InsertOne(ctx, marshalToPerformanceDocument(perf))
 
 	return app.WrapWithDatabaseError(err)
 }
 
-func (r *PerformancesRepository) RemoveAllPerformances(ctx context.Context) error {
+func (r *PerformanceRepository) RemoveAllPerformances(ctx context.Context) error {
 	_, err := r.performances.DeleteMany(ctx, bson.D{})
 
 	return app.WrapWithDatabaseError(err)

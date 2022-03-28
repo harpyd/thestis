@@ -20,7 +20,7 @@ var (
 )
 
 type (
-	TestCampaignsRepository interface {
+	TestCampaignRepository interface {
 		GetTestCampaign(ctx context.Context, tcID string) (*testcampaign.TestCampaign, error)
 		AddTestCampaign(ctx context.Context, tc *testcampaign.TestCampaign) error
 		UpdateTestCampaign(ctx context.Context, tcID string, updateFn TestCampaignUpdater) error
@@ -37,7 +37,7 @@ type (
 )
 
 type (
-	SpecificationsRepository interface {
+	SpecificationRepository interface {
 		GetSpecification(ctx context.Context, specID string) (*specification.Specification, error)
 		GetActiveSpecificationByTestCampaignID(
 			ctx context.Context,
@@ -52,7 +52,7 @@ type (
 )
 
 type (
-	PerformancesRepository interface {
+	PerformanceRepository interface {
 		GetPerformance(
 			ctx context.Context,
 			perfID string,
@@ -85,7 +85,7 @@ func (f getSpecificationFunc) GetSpecification(_ context.Context, _ string) (*sp
 	return f(), nil
 }
 
-type FlowsRepository interface {
+type FlowRepository interface {
 	GetFlow(ctx context.Context, flowID string) (flow.Flow, error)
 	UpsertFlow(ctx context.Context, flow flow.Flow) error
 }

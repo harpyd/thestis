@@ -15,21 +15,21 @@ func TestPanickingNewCreateTestCampaignHandler(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name                   string
-		GivenTestCampaignsRepo app.TestCampaignsRepository
-		ShouldPanic            bool
-		PanicMessage           string
+		Name                  string
+		GivenTestCampaignRepo app.TestCampaignRepository
+		ShouldPanic           bool
+		PanicMessage          string
 	}{
 		{
-			Name:                   "all_dependencies_are_not_nil",
-			GivenTestCampaignsRepo: mock.NewTestCampaignsRepository(),
-			ShouldPanic:            false,
+			Name:                  "all_dependencies_are_not_nil",
+			GivenTestCampaignRepo: mock.NewTestCampaignRepository(),
+			ShouldPanic:           false,
 		},
 		{
-			Name:                   "all_dependencies_are_nil",
-			GivenTestCampaignsRepo: nil,
-			ShouldPanic:            true,
-			PanicMessage:           "test campaigns repository is nil",
+			Name:                  "all_dependencies_are_nil",
+			GivenTestCampaignRepo: nil,
+			ShouldPanic:           true,
+			PanicMessage:          "test campaign repository is nil",
 		},
 	}
 
@@ -40,7 +40,7 @@ func TestPanickingNewCreateTestCampaignHandler(t *testing.T) {
 			t.Parallel()
 
 			init := func() {
-				_ = command.NewCreateTestCampaignHandler(c.GivenTestCampaignsRepo)
+				_ = command.NewCreateTestCampaignHandler(c.GivenTestCampaignRepo)
 			}
 
 			if !c.ShouldPanic {
@@ -80,7 +80,7 @@ func TestHandleCreateTestCampaign(t *testing.T) {
 			t.Parallel()
 
 			var (
-				repo    = mock.NewTestCampaignsRepository()
+				repo    = mock.NewTestCampaignRepository()
 				handler = command.NewCreateTestCampaignHandler(repo)
 			)
 

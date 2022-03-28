@@ -14,33 +14,33 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-type PerformancesRepositoryTestSuite struct {
+type PerformanceRepositoryTestSuite struct {
 	suite.Suite
 	MongoTestFixtures
 
-	repo *mongodb.PerformancesRepository
+	repo *mongodb.PerformanceRepository
 }
 
-func (s *PerformancesRepositoryTestSuite) SetupTest() {
-	s.repo = mongodb.NewPerformancesRepository(s.db)
+func (s *PerformanceRepositoryTestSuite) SetupTest() {
+	s.repo = mongodb.NewPerformanceRepository(s.db)
 }
 
-func (s *PerformancesRepositoryTestSuite) TearDownTest() {
+func (s *PerformanceRepositoryTestSuite) TearDownTest() {
 	err := s.repo.RemoveAllPerformances(context.Background())
 	s.Require().NoError(err)
 }
 
-func TestPerformancesRepository(t *testing.T) {
+func TestPerformanceRepository(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Integration tests are skipped")
 	}
 
-	suite.Run(t, &PerformancesRepositoryTestSuite{
+	suite.Run(t, &PerformanceRepositoryTestSuite{
 		MongoTestFixtures: MongoTestFixtures{t: t},
 	})
 }
 
-func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
+func (s *PerformanceRepositoryTestSuite) TestAddPerformance() {
 	testCases := []struct {
 		Name                   string
 		Before                 func()
@@ -116,7 +116,7 @@ func (s *PerformancesRepositoryTestSuite) TestAddPerformance() {
 	}
 }
 
-func (s *PerformancesRepositoryTestSuite) addPerformances(perfs ...*performance.Performance) {
+func (s *PerformanceRepositoryTestSuite) addPerformances(perfs ...*performance.Performance) {
 	s.T().Helper()
 
 	ctx := context.Background()

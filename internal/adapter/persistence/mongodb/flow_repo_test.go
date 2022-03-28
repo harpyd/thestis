@@ -11,33 +11,33 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-type FlowsRepositoryTestSuite struct {
+type FlowRepositoryTestSuite struct {
 	suite.Suite
 	MongoTestFixtures
 
-	repo *mongodb.FlowsRepository
+	repo *mongodb.FlowRepository
 }
 
-func (s *FlowsRepositoryTestSuite) SetupTest() {
-	s.repo = mongodb.NewFlowsRepository(s.db)
+func (s *FlowRepositoryTestSuite) SetupTest() {
+	s.repo = mongodb.NewFlowRepository(s.db)
 }
 
-func (s *FlowsRepositoryTestSuite) TearDownTest() {
+func (s *FlowRepositoryTestSuite) TearDownTest() {
 	err := s.repo.RemoveAllFlows(context.Background())
 	s.Require().NoError(err)
 }
 
-func TestFlowsRepository(t *testing.T) {
+func TestFlowRepository(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Integration tests are skipped")
 	}
 
-	suite.Run(t, &FlowsRepositoryTestSuite{
+	suite.Run(t, &FlowRepositoryTestSuite{
 		MongoTestFixtures: MongoTestFixtures{t: t},
 	})
 }
 
-func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
+func (s *FlowRepositoryTestSuite) TestUpsertFlow() {
 	testCases := []struct {
 		Name        string
 		Before      func()
@@ -120,7 +120,7 @@ func (s *FlowsRepositoryTestSuite) TestUpsertFlow() {
 	}
 }
 
-func (s *FlowsRepositoryTestSuite) getFlow(flowID string) flow.Flow {
+func (s *FlowRepositoryTestSuite) getFlow(flowID string) flow.Flow {
 	s.T().Helper()
 
 	f, err := s.repo.GetFlow(context.Background(), flowID)
@@ -129,7 +129,7 @@ func (s *FlowsRepositoryTestSuite) getFlow(flowID string) flow.Flow {
 	return f
 }
 
-func (s *FlowsRepositoryTestSuite) addFlows(flows ...flow.Flow) {
+func (s *FlowRepositoryTestSuite) addFlows(flows ...flow.Flow) {
 	s.T().Helper()
 
 	ctx := context.Background()

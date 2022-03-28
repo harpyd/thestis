@@ -13,33 +13,33 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-type SpecificationsRepositoryTestSuite struct {
+type SpecificationRepositoryTestSuite struct {
 	suite.Suite
 	MongoTestFixtures
 
-	repo *mongodb.SpecificationsRepository
+	repo *mongodb.SpecificationRepository
 }
 
-func (s *SpecificationsRepositoryTestSuite) SetupTest() {
-	s.repo = mongodb.NewSpecificationsRepository(s.db)
+func (s *SpecificationRepositoryTestSuite) SetupTest() {
+	s.repo = mongodb.NewSpecificationRepository(s.db)
 }
 
-func (s *SpecificationsRepositoryTestSuite) TearDownTest() {
+func (s *SpecificationRepositoryTestSuite) TearDownTest() {
 	err := s.repo.RemoveAllSpecifications(context.Background())
 	s.Require().NoError(err)
 }
 
-func TestSpecificationsRepository(t *testing.T) {
+func TestSpecificationRepository(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Integration tests are skipped")
 	}
 
-	suite.Run(t, &SpecificationsRepositoryTestSuite{
+	suite.Run(t, &SpecificationRepositoryTestSuite{
 		MongoTestFixtures: MongoTestFixtures{t: t},
 	})
 }
 
-func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
+func (s *SpecificationRepositoryTestSuite) TestFindSpecification() {
 	specificationToFind := (&specification.Builder{}).
 		WithID("64825e35-7fa7-44a4-9ca2-81cfc7b0f0d8").
 		WithOwnerID("52d9af60-26be-46ea-90a6-efec5fbb4ccd").
@@ -115,7 +115,7 @@ func (s *SpecificationsRepositoryTestSuite) TestFindSpecification() {
 	}
 }
 
-func (s *SpecificationsRepositoryTestSuite) TestGetActiveSpecificationByTestCampaignID() {
+func (s *SpecificationRepositoryTestSuite) TestGetActiveSpecificationByTestCampaignID() {
 	var b specification.Builder
 
 	testCampaignID := "d0832b59-6e8a-46f6-9b57-92e8bf656e93"
@@ -182,7 +182,7 @@ func (s *SpecificationsRepositoryTestSuite) TestGetActiveSpecificationByTestCamp
 	}
 }
 
-func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
+func (s *SpecificationRepositoryTestSuite) TestAddSpecification() {
 	testCases := []struct {
 		Name          string
 		Before        func()
@@ -248,7 +248,7 @@ func (s *SpecificationsRepositoryTestSuite) TestAddSpecification() {
 	}
 }
 
-func (s *SpecificationsRepositoryTestSuite) getSpecification(specID string) *specification.Specification {
+func (s *SpecificationRepositoryTestSuite) getSpecification(specID string) *specification.Specification {
 	s.T().Helper()
 
 	spec, err := s.repo.GetSpecification(context.Background(), specID)
@@ -257,7 +257,7 @@ func (s *SpecificationsRepositoryTestSuite) getSpecification(specID string) *spe
 	return spec
 }
 
-func (s *SpecificationsRepositoryTestSuite) addSpecifications(specs ...*specification.Specification) {
+func (s *SpecificationRepositoryTestSuite) addSpecifications(specs ...*specification.Specification) {
 	s.T().Helper()
 
 	ctx := context.Background()

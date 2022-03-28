@@ -12,19 +12,19 @@ import (
 	"github.com/harpyd/thestis/internal/domain/flow"
 )
 
-type FlowsRepository struct {
+type FlowRepository struct {
 	flows *mongo.Collection
 }
 
 const flows = "flows"
 
-func NewFlowsRepository(db *mongo.Database) *FlowsRepository {
-	return &FlowsRepository{
+func NewFlowRepository(db *mongo.Database) *FlowRepository {
+	return &FlowRepository{
 		flows: db.Collection(flows),
 	}
 }
 
-func (r *FlowsRepository) GetFlow(ctx context.Context, flowID string) (flow.Flow, error) {
+func (r *FlowRepository) GetFlow(ctx context.Context, flowID string) (flow.Flow, error) {
 	document, err := r.getFlowDocument(ctx, bson.M{"_id": flowID})
 	if err != nil {
 		return flow.Flow{}, err
@@ -33,7 +33,7 @@ func (r *FlowsRepository) GetFlow(ctx context.Context, flowID string) (flow.Flow
 	return document.unmarshalToFlow(), err
 }
 
-func (r *FlowsRepository) getFlowDocument(ctx context.Context, filter bson.M) (flowDocument, error) {
+func (r *FlowRepository) getFlowDocument(ctx context.Context, filter bson.M) (flowDocument, error) {
 	var document flowDocument
 	if err := r.flows.FindOne(ctx, filter).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments); err != nil {
@@ -46,7 +46,7 @@ func (r *FlowsRepository) getFlowDocument(ctx context.Context, filter bson.M) (f
 	return document, nil
 }
 
-func (r *FlowsRepository) UpsertFlow(ctx context.Context, flow flow.Flow) error {
+func (r *FlowRepository) UpsertFlow(ctx context.Context, flow flow.Flow) error {
 	document := marshalToFlowDocument(flow)
 
 	opt := options.Replace().SetUpsert(true)
@@ -55,7 +55,7 @@ func (r *FlowsRepository) UpsertFlow(ctx context.Context, flow flow.Flow) error 
 	return app.WrapWithDatabaseError(err)
 }
 
-func (r *FlowsRepository) RemoveAllFlows(ctx context.Context) error {
+func (r *FlowRepository) RemoveAllFlows(ctx context.Context) error {
 	_, err := r.flows.DeleteOne(ctx, bson.D{})
 
 	return app.WrapWithDatabaseError(err)

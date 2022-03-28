@@ -78,10 +78,10 @@ type performanceContext struct {
 }
 
 type persistentContext struct {
-	testCampaignsRepo      app.TestCampaignsRepository
-	specsRepo              app.SpecificationsRepository
-	perfsRepo              app.PerformancesRepository
-	flowsRepo              app.FlowsRepository
+	testCampaignRepo       app.TestCampaignRepository
+	specRepo               app.SpecificationRepository
+	perfRepo               app.PerformanceRepository
+	flowRepo               app.FlowRepository
 	specificTestCampaignRM app.SpecificTestCampaignReadModel
 	specificSpecRM         app.SpecificSpecificationReadModel
 }
@@ -217,29 +217,29 @@ func (c *Context) initPersistent() {
 	logField := app.StringLogField("db", "mongo")
 
 	var (
-		testCampaignsRepo = mongoAdapter.NewTestCampaignsRepository(db)
-		specsRepo         = mongoAdapter.NewSpecificationsRepository(db)
-		perfsRepo         = mongoAdapter.NewPerformancesRepository(db)
-		flowsRepo         = mongoAdapter.NewFlowsRepository(db)
+		testCampaignRepo = mongoAdapter.NewTestCampaignRepository(db)
+		specRepo         = mongoAdapter.NewSpecificationRepository(db)
+		perfRepo         = mongoAdapter.NewPerformanceRepository(db)
+		flowRepo         = mongoAdapter.NewFlowRepository(db)
 	)
 
-	c.persistent.testCampaignsRepo = testCampaignsRepo
-	c.logger.Info("Test campaigns repository initialization completed", logField)
+	c.persistent.testCampaignRepo = testCampaignRepo
+	c.logger.Info("Test campaign repository initialization completed", logField)
 
-	c.persistent.specsRepo = specsRepo
-	c.logger.Info("Specifications repository initialization completed", logField)
+	c.persistent.specRepo = specRepo
+	c.logger.Info("Specification repository initialization completed", logField)
 
-	c.persistent.perfsRepo = perfsRepo
-	c.logger.Info("Performances repository initialization completed", logField)
+	c.persistent.perfRepo = perfRepo
+	c.logger.Info("Performance repository initialization completed", logField)
 
-	c.persistent.flowsRepo = flowsRepo
-	c.logger.Info("Flows repository initialization completed", logField)
+	c.persistent.flowRepo = flowRepo
+	c.logger.Info("Flow repository initialization completed", logField)
 
-	c.persistent.specificTestCampaignRM = testCampaignsRepo
-	c.logger.Info("Specific test campaigns read model initialization completed", logField)
+	c.persistent.specificTestCampaignRM = testCampaignRepo
+	c.logger.Info("Specific test campaign read model initialization completed", logField)
 
-	c.persistent.specificSpecRM = specsRepo
-	c.logger.Info("Specific specifications read model initialization completed", logField)
+	c.persistent.specificSpecRM = specRepo
+	c.logger.Info("Specific specification read model initialization completed", logField)
 }
 
 func (c *Context) initSpecificationParser() {
@@ -250,23 +250,23 @@ func (c *Context) initSpecificationParser() {
 func (c *Context) initApplication() {
 	c.app = &app.Application{
 		Commands: app.Commands{
-			CreateTestCampaign: command.NewCreateTestCampaignHandler(c.persistent.testCampaignsRepo),
+			CreateTestCampaign: command.NewCreateTestCampaignHandler(c.persistent.testCampaignRepo),
 			LoadSpecification: command.NewLoadSpecificationHandler(
-				c.persistent.specsRepo,
-				c.persistent.testCampaignsRepo,
+				c.persistent.specRepo,
+				c.persistent.testCampaignRepo,
 				c.specParser,
 			),
 			StartPerformance: command.NewStartPerformanceHandler(
-				c.persistent.specsRepo,
-				c.persistent.perfsRepo,
+				c.persistent.specRepo,
+				c.persistent.perfRepo,
 				c.performance.maintainer,
 			),
 			RestartPerformance: command.NewRestartPerformanceHandler(
-				c.persistent.perfsRepo,
-				c.persistent.specsRepo,
+				c.persistent.perfRepo,
+				c.persistent.specRepo,
 				c.performance.maintainer,
 			),
-			CancelPerformance: command.NewCancelPerformanceHandler(c.persistent.perfsRepo, c.signalBus.publisher),
+			CancelPerformance: command.NewCancelPerformanceHandler(c.persistent.perfRepo, c.signalBus.publisher),
 		},
 		Queries: app.Queries{
 			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(c.persistent.specificTestCampaignRM),
@@ -332,7 +332,7 @@ func (c *Context) initPerformanceGuard() {
 func (c *Context) initStepsPolicy() {
 	if c.config.Performance.Policy == config.EveryStepSavingPolicy {
 		c.performance.stepsPolicy = app.NewEveryStepSavingPolicy(
-			c.persistent.flowsRepo,
+			c.persistent.flowRepo,
 			c.config.EveryStepSaving.SaveTimeout,
 		)
 

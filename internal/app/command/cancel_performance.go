@@ -10,16 +10,16 @@ import (
 )
 
 type CancelPerformanceHandler struct {
-	perfsRepo app.PerformancesRepository
+	perfRepo  app.PerformanceRepository
 	publisher app.PerformanceCancelPublisher
 }
 
 func NewCancelPerformanceHandler(
-	perfsRepo app.PerformancesRepository,
+	perfRepo app.PerformanceRepository,
 	cancelPub app.PerformanceCancelPublisher,
 ) CancelPerformanceHandler {
-	if perfsRepo == nil {
-		panic("performances repository is nil")
+	if perfRepo == nil {
+		panic("performance repository is nil")
 	}
 
 	if cancelPub == nil {
@@ -27,7 +27,7 @@ func NewCancelPerformanceHandler(
 	}
 
 	return CancelPerformanceHandler{
-		perfsRepo: perfsRepo,
+		perfRepo:  perfRepo,
 		publisher: cancelPub,
 	}
 }
@@ -37,7 +37,7 @@ func (h CancelPerformanceHandler) Handle(ctx context.Context, cmd app.CancelPerf
 		err = errors.Wrap(err, "performance cancellation")
 	}()
 
-	perf, err := h.perfsRepo.GetPerformance(ctx, cmd.PerformanceID, app.DontGetSpecification())
+	perf, err := h.perfRepo.GetPerformance(ctx, cmd.PerformanceID, app.DontGetSpecification())
 	if err != nil {
 		return err
 	}

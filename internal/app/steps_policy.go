@@ -18,18 +18,18 @@ type StepsPolicy interface {
 }
 
 type everyStepSavingPolicy struct {
-	flowsRepo FlowsRepository
-	timeout   time.Duration
+	flowRepo FlowRepository
+	timeout  time.Duration
 }
 
-func NewEveryStepSavingPolicy(flowsRepo FlowsRepository, saveTimeout time.Duration) StepsPolicy {
-	if flowsRepo == nil {
-		panic("flows repository is nil")
+func NewEveryStepSavingPolicy(flowRepo FlowRepository, saveTimeout time.Duration) StepsPolicy {
+	if flowRepo == nil {
+		panic("flow repository is nil")
 	}
 
 	return &everyStepSavingPolicy{
-		flowsRepo: flowsRepo,
-		timeout:   saveTimeout,
+		flowRepo: flowRepo,
+		timeout:  saveTimeout,
 	}
 }
 
@@ -40,7 +40,7 @@ func (p *everyStepSavingPolicy) HandleSteps(
 	messages chan<- Message,
 ) {
 	defer func() {
-		if err := p.flowsRepo.UpsertFlow(
+		if err := p.flowRepo.UpsertFlow(
 			context.Background(),
 			fr.Reduce(),
 		); err != nil {
@@ -63,5 +63,5 @@ func (p *everyStepSavingPolicy) upsertFlowWithTimeout(ctx context.Context, flow 
 	ctx, cancel := context.WithTimeout(ctx, p.timeout)
 	defer cancel()
 
-	return p.flowsRepo.UpsertFlow(ctx, flow)
+	return p.flowRepo.UpsertFlow(ctx, flow)
 }
