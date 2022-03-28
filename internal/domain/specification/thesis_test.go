@@ -488,6 +488,11 @@ func TestFormatNotAllowedStageError(t *testing.T) {
 			GivenError:          specification.NewNotAllowedStageError("deploy"),
 			ExpectedErrorString: "stage `deploy` not allowed",
 		},
+		{
+			GivenError: specification.NewUndefinedDependencyError(
+				specification.NewThesisSlug("t1", "t2", "t3")),
+			ExpectedErrorString: "undefined `t1.t2.t3` dependency",
+		},
 	}
 
 	for i := range testCases {

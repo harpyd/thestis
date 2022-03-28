@@ -207,3 +207,21 @@ func (e *NotAllowedStageError) Error() string {
 
 	return fmt.Sprintf("stage `%s` not allowed", e.stage)
 }
+
+type UndefinedDependencyError struct {
+	slug Slug
+}
+
+func NewUndefinedDependencyError(slug Slug) error {
+	return errors.WithStack(&UndefinedDependencyError{
+		slug: slug,
+	})
+}
+
+func (e *UndefinedDependencyError) Slug() Slug {
+	return e.slug
+}
+
+func (e *UndefinedDependencyError) Error() string {
+	return fmt.Sprintf("undefined `%s` dependency", e.slug)
+}

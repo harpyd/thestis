@@ -125,10 +125,10 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 }
 
 func checkThesesDependencies(w *BuildErrorWrapper, theses map[string]Thesis) {
-	for _, value := range theses {
-		for _, dependency := range value.dependencies {
+	for _, thesis := range theses {
+		for _, dependency := range thesis.dependencies {
 			if _, ok := theses[dependency.Thesis()]; !ok {
-				w.WithError(NewNonExistentDependencyError(value.slug, dependency.Thesis()))
+				w.WithError(NewUndefinedDependencyError(thesis.slug))
 			}
 		}
 	}
