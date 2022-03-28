@@ -122,7 +122,7 @@ func (c *Context) Start() {
 		c.logger.Fatal("HTTP server stopped unexpectedly", err)
 	}
 
-	c.logger.Info("HTTP server stopped")
+	c.logger.Info("HTTP server stopped gracefully")
 }
 
 func (c *Context) Stop() {
