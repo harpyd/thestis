@@ -20,8 +20,11 @@ thestis-build:
 lint:
 	golangci-lint run
 
-dev: thestis-build
+run-dev: thestis-build
 	docker-compose -f ./deployments/dev/docker-compose.yml --project-directory . up --remove-orphans thestis
+
+stop-dev:
+	docker-compose -f ./deployments/dev/docker-compose.yml --project-directory . stop thestis
 
 test-unit:
 	go test --short -v -race -coverpkg=./... -coverprofile=unit-all.out ./...
