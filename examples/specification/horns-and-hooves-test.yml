@@ -83,7 +83,7 @@ stories:
             after:
               - getSoldProducts
             assertion:
-              with: JSONPATH
+              with: jsonpath
               assert:
                 - actual: getSoldProducts.response.body.products..itemsCount
                   expected: [ 103, 21 ]
