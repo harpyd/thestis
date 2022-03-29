@@ -130,6 +130,21 @@ func (s Slug) Kind() SlugKind {
 	return s.kind
 }
 
+func (s Slug) Partial() string {
+	switch s.kind {
+	case StorySlug:
+		return replaceIfEmpty(s.story)
+	case ScenarioSlug:
+		return replaceIfEmpty(s.scenario)
+	case ThesisSlug:
+		return replaceIfEmpty(s.thesis)
+	case NoSlug:
+		return ""
+	}
+
+	return ""
+}
+
 func (s Slug) IsZero() bool {
 	return s == Slug{}
 }
