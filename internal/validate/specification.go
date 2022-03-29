@@ -13,7 +13,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-const errorIndent = 2
+const errorIndent = "  "
 
 func Specification(specPath string) {
 	specFile, err := os.Open(specPath)
@@ -33,11 +33,11 @@ const (
 	errorColor   = color.FgRed
 )
 
-func formatError(err error, indent int) string {
+func formatError(err error, indent string) string {
 	return formatErrorWithStartIndent(err, indent, indent)
 }
 
-func formatErrorWithStartIndent(err error, startIndent, indent int) string {
+func formatErrorWithStartIndent(err error, startIndent, indent string) string {
 	if err == nil {
 		return ""
 	}
@@ -55,13 +55,13 @@ func formatErrorWithStartIndent(err error, startIndent, indent int) string {
 
 	var b strings.Builder
 
-	_, _ = fmt.Fprintf(&b, "%s:\n", contextColor.Render(target.Context()))
+	_, _ = fmt.Fprintf(&b, "%s:", contextColor.Render(target.Context()))
 
 	for _, err := range errs {
 		_, _ = fmt.Fprintf(
 			&b,
-			"%s%s",
-			strings.Repeat(" ", indent),
+			"\n%s%s",
+			indent,
 			formatErrorWithStartIndent(err, startIndent, startIndent+indent),
 		)
 	}
