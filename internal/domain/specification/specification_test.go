@@ -617,11 +617,22 @@ func TestAsWrappedInBuildError(t *testing.T) {
 func TestAsBuildError(t *testing.T) {
 	t.Parallel()
 
+	type stringContext struct {
+		Value string
+		Ok    bool
+	}
+
+	type slugContext struct {
+		Value specification.Slug
+		Ok    bool
+	}
+
 	testCases := []struct {
-		GivenError      error
-		ShouldBeWrapped bool
-		ExpectedMessage string
-		ExpectedErrors  []error
+		GivenError            error
+		ShouldBeWrapped       bool
+		ExpectedStringContext stringContext
+		ExpectedSlugContext   slugContext
+		ExpectedErrors        []error
 	}{
 		{
 			GivenError: (&specification.BuildErrorWrapper{}).
@@ -635,7 +646,10 @@ func TestAsBuildError(t *testing.T) {
 				WithError(errors.New("bar")).
 				Wrap("foo"),
 			ShouldBeWrapped: true,
-			ExpectedMessage: "foo",
+			ExpectedStringContext: stringContext{
+				Value: "foo",
+				Ok:    true,
+			},
 			ExpectedErrors: []error{
 				errors.New("bar"),
 			},
@@ -646,7 +660,10 @@ func TestAsBuildError(t *testing.T) {
 				WithError(errors.New("bar")).
 				SluggedWrap(specification.NewScenarioSlug("a", "b")),
 			ShouldBeWrapped: true,
-			ExpectedMessage: "a.b",
+			ExpectedSlugContext: slugContext{
+				Value: specification.NewScenarioSlug("a", "b"),
+				Ok:    true,
+			},
 			ExpectedErrors: []error{
 				errors.New("foo"),
 				errors.New("bar"),
@@ -659,7 +676,10 @@ func TestAsBuildError(t *testing.T) {
 				WithError(errors.New("bar")).
 				SluggedWrap(specification.AnyThesisSlug()),
 			ShouldBeWrapped: true,
-			ExpectedMessage: "*.*.*",
+			ExpectedSlugContext: slugContext{
+				Value: specification.AnyThesisSlug(),
+				Ok:    true,
+			},
 			ExpectedErrors: []error{
 				errors.New("foo"),
 				errors.New("bar"),
@@ -686,8 +706,18 @@ func TestAsBuildError(t *testing.T) {
 			t.Run("as", func(t *testing.T) {
 				require.ErrorAs(t, c.GivenError, &target)
 
-				t.Run("context", func(t *testing.T) {
-					require.Equal(t, c.ExpectedMessage, target.Context())
+				t.Run("string_context", func(t *testing.T) {
+					msg, ok := target.StringContext()
+
+					require.Equal(t, c.ExpectedStringContext.Ok, ok)
+					require.Equal(t, c.ExpectedStringContext.Value, msg)
+				})
+
+				t.Run("slug_context", func(t *testing.T) {
+					slug, ok := target.SlugContext()
+
+					require.Equal(t, c.ExpectedSlugContext.Ok, ok)
+					require.Equal(t, c.ExpectedSlugContext.Value, slug)
 				})
 
 				t.Run("errors", func(t *testing.T) {

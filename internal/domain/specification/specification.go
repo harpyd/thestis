@@ -254,22 +254,37 @@ func (w *BuildErrorWrapper) Wrap(ctxMsg string) error {
 	}
 
 	return errors.WithStack(&BuildError{
-		ctxMsg: ctxMsg,
-		errs:   w.errs,
+		context: ctxMsg,
+		errs:    w.errs,
 	})
 }
 
 func (w *BuildErrorWrapper) SluggedWrap(slug Slug) error {
-	return w.Wrap(slug.String())
+	if len(w.errs) == 0 {
+		return nil
+	}
+
+	return errors.WithStack(&BuildError{
+		context: slug,
+		errs:    w.errs,
+	})
 }
 
 type BuildError struct {
-	ctxMsg string
-	errs   []error
+	context interface{}
+	errs    []error
 }
 
-func (e *BuildError) Context() string {
-	return e.ctxMsg
+func (e *BuildError) StringContext() (string, bool) {
+	v, ok := e.context.(string)
+
+	return v, ok
+}
+
+func (e *BuildError) SlugContext() (Slug, bool) {
+	v, ok := e.context.(Slug)
+
+	return v, ok
 }
 
 func (e *BuildError) Errors() []error {
@@ -293,17 +308,17 @@ func (e *BuildError) Error() string {
 
 	var b strings.Builder
 
-	_, _ = b.WriteString(e.ctxMsg + errorMsgSeparator)
+	_, _ = fmt.Fprintf(&b, "%s%s", e.context, errorMsgSeparator)
 	_, _ = b.WriteString(leftNestedErrorsBorder)
 
 	lastErrIdx := len(e.errs) - 1
 
 	for _, err := range e.errs[:lastErrIdx] {
-		_, _ = b.WriteString(fmt.Sprintf("%v", err))
+		_, _ = fmt.Fprintf(&b, "%v", err)
 		_, _ = b.WriteString(nestedErrorsSeparator)
 	}
 
-	_, _ = b.WriteString(fmt.Sprintf("%v", e.errs[lastErrIdx]))
+	_, _ = fmt.Fprintf(&b, "%v", e.errs[lastErrIdx])
 	_, _ = b.WriteString(rightNestedErrorsBorder)
 
 	return b.String()

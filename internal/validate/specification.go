@@ -55,7 +55,7 @@ func formatErrorWithStartIndent(err error, startIndent, indent string) string {
 
 	var b strings.Builder
 
-	_, _ = fmt.Fprintf(&b, "%s:", contextColor.Render(target.Context()))
+	_, _ = fmt.Fprintf(&b, "%s:", contextColor.Render(prefix(target)))
 
 	for _, err := range errs {
 		_, _ = fmt.Fprintf(
@@ -67,4 +67,14 @@ func formatErrorWithStartIndent(err error, startIndent, indent string) string {
 	}
 
 	return b.String()
+}
+
+func prefix(err *specification.BuildError) string {
+	if slug, ok := err.SlugContext(); ok {
+		return slug.Partial()
+	}
+
+	msg, _ := err.StringContext()
+
+	return msg
 }
