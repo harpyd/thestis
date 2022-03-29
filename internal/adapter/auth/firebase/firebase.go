@@ -41,7 +41,7 @@ func (p Provider) AuthenticateUser(ctx context.Context, r *stdhttp.Request) (htt
 	return http.User{
 		UUID:        token.UID,
 		DisplayName: token.Claims["name"].(string),
-	}, err
+	}, nil
 }
 
 func tokenFromHeader(r *stdhttp.Request) string {
