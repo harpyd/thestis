@@ -18,8 +18,9 @@ func NewProvider() Provider {
 }
 
 var (
-	errUnableToGetJWT = errors.New("unable to get jwt")
-	errInvalidJWT     = errors.New("invalid jwt")
+	errUnableToGetJWT   = errors.New("unable to get jwt")
+	errInvalidJWT       = errors.New("invalid jwt")
+	errInvalidClaimType = errors.New("invalid claim type")
 )
 
 func (p Provider) AuthenticateUser(_ context.Context, r *stdhttp.Request) (http.User, error) {
@@ -41,8 +42,18 @@ func (p Provider) AuthenticateUser(_ context.Context, r *stdhttp.Request) (http.
 		return http.User{}, errInvalidJWT
 	}
 
+	uuid, ok := claims["userUuid"].(string)
+	if !ok {
+		return http.User{}, errInvalidClaimType
+	}
+
+	displayName, ok := claims["name"].(string)
+	if !ok {
+		return http.User{}, errInvalidClaimType
+	}
+
 	return http.User{
-		UUID:        claims["userUuid"].(string),
-		DisplayName: claims["name"].(string),
+		UUID:        uuid,
+		DisplayName: displayName,
 	}, nil
 }
