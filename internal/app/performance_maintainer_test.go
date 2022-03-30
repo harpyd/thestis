@@ -100,6 +100,7 @@ func TestPanickingNewPerformanceMaintainer(t *testing.T) {
 		GivenGuard       app.PerformanceGuard
 		GivenSubscriber  app.PerformanceCancelSubscriber
 		GivenStepsPolicy app.StepsPolicy
+		GivenEnqueuer    app.Enqueuer
 		ShouldPanic      bool
 		PanicMessage     string
 	}{
@@ -108,6 +109,7 @@ func TestPanickingNewPerformanceMaintainer(t *testing.T) {
 			GivenGuard:       mock.NewPerformanceGuard(nil, nil),
 			GivenSubscriber:  mock.NewPerformanceCancelPubsub(),
 			GivenStepsPolicy: mock.NewStepsPolicy(),
+			GivenEnqueuer:    mock.NewEnqueuer(),
 			ShouldPanic:      false,
 		},
 		{
@@ -115,6 +117,7 @@ func TestPanickingNewPerformanceMaintainer(t *testing.T) {
 			GivenGuard:       nil,
 			GivenSubscriber:  mock.NewPerformanceCancelPubsub(),
 			GivenStepsPolicy: mock.NewStepsPolicy(),
+			GivenEnqueuer:    mock.NewEnqueuer(),
 			ShouldPanic:      true,
 			PanicMessage:     "performance guard is nil",
 		},
@@ -123,6 +126,7 @@ func TestPanickingNewPerformanceMaintainer(t *testing.T) {
 			GivenGuard:       mock.NewPerformanceGuard(nil, nil),
 			GivenSubscriber:  nil,
 			GivenStepsPolicy: mock.NewStepsPolicy(),
+			GivenEnqueuer:    mock.NewEnqueuer(),
 			ShouldPanic:      true,
 			PanicMessage:     "performance cancel subscriber is nil",
 		},
@@ -131,14 +135,25 @@ func TestPanickingNewPerformanceMaintainer(t *testing.T) {
 			GivenGuard:       mock.NewPerformanceGuard(nil, nil),
 			GivenSubscriber:  mock.NewPerformanceCancelPubsub(),
 			GivenStepsPolicy: nil,
+			GivenEnqueuer:    mock.NewEnqueuer(),
 			ShouldPanic:      true,
 			PanicMessage:     "steps policy is nil",
 		},
 		{
-			Name:             "all_dependencies_are_nil",
-			GivenGuard:       nil,
+			Name:             "enqueuer_is_nil",
+			GivenGuard:       mock.NewPerformanceGuard(nil, nil),
 			GivenSubscriber:  mock.NewPerformanceCancelPubsub(),
 			GivenStepsPolicy: mock.NewStepsPolicy(),
+			GivenEnqueuer:    nil,
+			ShouldPanic:      true,
+			PanicMessage:     "enqueuer is nil",
+		},
+		{
+			Name:             "all_dependencies_are_nil",
+			GivenGuard:       nil,
+			GivenSubscriber:  nil,
+			GivenStepsPolicy: nil,
+			GivenEnqueuer:    nil,
 			ShouldPanic:      true,
 			PanicMessage:     "performance guard is nil",
 		},
@@ -155,6 +170,7 @@ func TestPanickingNewPerformanceMaintainer(t *testing.T) {
 					c.GivenGuard,
 					c.GivenSubscriber,
 					c.GivenStepsPolicy,
+					c.GivenEnqueuer,
 					flowTimeout,
 				)
 			}
@@ -181,28 +197,6 @@ func TestMaintainPerformance(t *testing.T) {
 		IsErr              func(err error) bool
 		ExpectedMessages   []app.Message
 	}{
-		{
-			Name: "already_started_performance",
-			PerformanceFactory: func() *performance.Performance {
-				return performance.Unmarshal(performance.Params{
-					ID: "foo",
-					Specification: (&specification.Builder{}).
-						WithID("bar").
-						WithStory("a", func(b *specification.StoryBuilder) {
-							b.WithScenario("b", func(b *specification.ScenarioBuilder) {
-								b.WithThesis("c", func(b *specification.ThesisBuilder) {})
-							})
-						}).
-						ErrlessBuild(),
-					Started: true,
-				})
-			},
-			Guard:       errlessPerformanceGuard(t),
-			ShouldBeErr: true,
-			IsErr: func(err error) bool {
-				return errors.Is(err, performance.ErrAlreadyStarted)
-			},
-		},
 		{
 			Name: "performance_acquire_error",
 			PerformanceFactory: func() *performance.Performance {
@@ -377,12 +371,14 @@ func TestMaintainPerformance(t *testing.T) {
 			var (
 				cancelPubsub = mock.NewPerformanceCancelPubsub()
 				stepsPolicy  = mock.NewStepsPolicy()
+				enqueuer     = mock.NewEnqueuer()
 			)
 
 			maintainer := app.NewPerformanceMaintainer(
 				c.Guard,
 				cancelPubsub,
 				stepsPolicy,
+				enqueuer,
 				flowTimeout,
 			)
 
@@ -404,6 +400,10 @@ func TestMaintainPerformance(t *testing.T) {
 
 			t.Run("subscribe_performance_canceled", func(t *testing.T) {
 				require.Equal(t, 1, cancelPubsub.SubscribeCalls())
+			})
+
+			t.Run("performing_enqueued", func(t *testing.T) {
+				require.Equal(t, 1, enqueuer.EnqueueCalls())
 			})
 
 			t.Run("messages", func(t *testing.T) {
@@ -539,12 +539,14 @@ func TestCancelMaintainPerformance(t *testing.T) {
 				guard        = errlessPerformanceGuard(t)
 				cancelPubsub = mock.NewPerformanceCancelPubsub()
 				stepsPolicy  = mock.NewStepsPolicy()
+				enqueuer     = mock.NewEnqueuer()
 			)
 
 			maintainer := app.NewPerformanceMaintainer(
 				guard,
 				cancelPubsub,
 				stepsPolicy,
+				enqueuer,
 				c.FlowTimeout,
 			)
 
