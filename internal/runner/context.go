@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	fireauth "firebase.google.com/go/auth"
+	"github.com/gammazero/workerpool"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/nats-io/nats.go"
 	"github.com/pkg/errors"
@@ -39,6 +40,7 @@ type Context struct {
 	mongoSingleton
 	natsSingleton
 	firebaseSingleton
+	performanceWPSingleton
 
 	logger       app.Logger
 	config       *config.Config
@@ -72,10 +74,16 @@ type zapSingleton struct {
 	logger *zap.Logger
 }
 
+type performanceWPSingleton struct {
+	once sync.Once
+	wp   *workerpool.WorkerPool
+}
+
 type performanceContext struct {
 	guard       app.PerformanceGuard
 	stepsPolicy app.StepsPolicy
 	maintainer  app.PerformanceMaintainer
+	enqueuer    app.Enqueuer
 }
 
 type persistentContext struct {
@@ -211,6 +219,19 @@ func (c *Context) disconnectNATS() {
 	c.logger.Info("NATS disconnected")
 }
 
+func (c *Context) performanceWorkerPool() *workerpool.WorkerPool {
+	c.performanceWPSingleton.once.Do(func() {
+		c.performanceWPSingleton.wp = workerpool.New(10)
+
+		c.logger.Info(
+			"Performance worker pool initialization completed",
+			app.IntLogField("workers", c.config.Performance.Workers),
+		)
+	})
+
+	return c.performanceWPSingleton.wp
+}
+
 func (c *Context) firebaseAuth() *fireauth.Client {
 	c.firebaseSingleton.once.Do(func() {
 		client, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
@@ -340,11 +361,13 @@ func (c *Context) initSignalBus() {
 func (c *Context) initPerformance() {
 	c.initPerformanceGuard()
 	c.initStepsPolicy()
+	c.initEnqueuer()
 
 	c.performance.maintainer = app.NewPerformanceMaintainer(
 		c.performance.guard,
 		c.signalBus.subscriber,
 		c.performance.stepsPolicy,
+		c.performance.enqueuer,
 		c.config.Performance.FlowTimeout,
 	)
 
@@ -373,6 +396,10 @@ func (c *Context) initStepsPolicy() {
 		errors.Errorf("%s is not valid steps policy", c.config.Performance.Policy),
 		app.StringLogField("allowed", config.EveryStepSavingPolicy),
 	)
+}
+
+func (c *Context) initEnqueuer() {
+	c.performance.enqueuer = app.EnqueueFunc(c.performanceWorkerPool().Submit)
 }
 
 func (c *Context) initAuthenticationProvider() {
