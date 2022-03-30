@@ -33,10 +33,21 @@ type PerformanceMaintainer interface {
 	MaintainPerformance(ctx context.Context, perf *performance.Performance) (<-chan Message, error)
 }
 
+type Enqueuer interface {
+	Enqueue(fn func())
+}
+
+type EnqueueFunc func(fn func())
+
+func (e EnqueueFunc) Enqueue(fn func()) {
+	e(fn)
+}
+
 type performanceMaintainer struct {
 	guard       PerformanceGuard
 	subscriber  PerformanceCancelSubscriber
 	stepsPolicy StepsPolicy
+	enqueuer    Enqueuer
 	timeout     time.Duration
 }
 
@@ -44,6 +55,7 @@ func NewPerformanceMaintainer(
 	guard PerformanceGuard,
 	cancelSub PerformanceCancelSubscriber,
 	stepsPolicy StepsPolicy,
+	enqueuer Enqueuer,
 	flowTimeout time.Duration,
 ) PerformanceMaintainer {
 	if guard == nil {
@@ -58,10 +70,15 @@ func NewPerformanceMaintainer(
 		panic("steps policy is nil")
 	}
 
+	if enqueuer == nil {
+		panic("enqueuer is nil")
+	}
+
 	return &performanceMaintainer{
 		guard:       guard,
 		subscriber:  cancelSub,
 		stepsPolicy: stepsPolicy,
+		enqueuer:    enqueuer,
 		timeout:     flowTimeout,
 	}
 }
@@ -79,19 +96,9 @@ func (m *performanceMaintainer) MaintainPerformance(
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, m.timeout)
-
-	steps, err := perf.Start(ctx)
-	if err != nil {
-		cancel()
-
-		return nil, err
-	}
-
 	messages := make(chan Message)
 
-	go func() {
-		defer cancel()
+	m.enqueuer.Enqueue(func() {
 		defer close(messages)
 		defer func() {
 			if err := m.guard.ReleasePerformance(
@@ -102,7 +109,8 @@ func (m *performanceMaintainer) MaintainPerformance(
 			}
 		}()
 
-		fr := flow.FromPerformance(uuid.New().String(), perf)
+		ctx, cancel := context.WithTimeout(ctx, m.timeout)
+		defer cancel()
 
 		go func() {
 			select {
@@ -112,8 +120,12 @@ func (m *performanceMaintainer) MaintainPerformance(
 			}
 		}()
 
+		steps := perf.MustStart(ctx)
+
+		fr := flow.FromPerformance(uuid.New().String(), perf)
+
 		m.stepsPolicy.HandleSteps(ctx, fr, steps, messages)
-	}()
+	})
 
 	return messages, nil
 }
