@@ -19,6 +19,7 @@ performance:
   flowTimeout: 24h
   policy: everyStepSaving
   signalBus: nats
+  workers: 10
 everyStepSaving:
   saveTimeout: 30s
 nats:
