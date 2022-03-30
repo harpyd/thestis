@@ -9,6 +9,7 @@ mongo:
   databaseName: ${MONGO_DATABASE:thestis}
   username: ${MONGO_USERNAME:admin}
   password: ${MONGO_PASSWORD:qwerty}
+  disconnectTimeout: 10s
 
 auth:
   with: ${AUTH_TYPE:firebase}

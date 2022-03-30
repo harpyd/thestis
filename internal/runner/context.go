@@ -7,7 +7,6 @@ import (
 	stdhttp "net/http"
 	"strings"
 	"sync"
-	"time"
 
 	fireauth "firebase.google.com/go/auth"
 	"github.com/gammazero/workerpool"
@@ -162,7 +161,13 @@ func (c *Context) Stop() {
 }
 
 func (c *Context) shutdownServer() error {
-	return c.server.Shutdown()
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		c.config.HTTP.ShutdownTimeout,
+	)
+	defer cancel()
+
+	return c.server.Shutdown(ctx)
 }
 
 func (c *Context) zap() *zap.Logger {
@@ -204,7 +209,10 @@ func (c *Context) mongo() *mongo.Database {
 }
 
 func (c *Context) disconnectMongo() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		c.config.Mongo.DisconnectTimeout,
+	)
 	defer cancel()
 
 	return c.mongo().Client().Disconnect(ctx)
