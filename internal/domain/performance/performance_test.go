@@ -153,45 +153,51 @@ func TestStartPerformance(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		GivenPerformance *performance.Performance
-		ExpectedSteps    []performance.Step
-		ShouldBeErr      bool
-		ExpectedErr      error
+		PerformanceFactory func() *performance.Performance
+		ExpectedSteps      []performance.Step
+		ShouldBeErr        bool
+		ExpectedErr        error
 	}{
 		{
-			GivenPerformance: performance.FromSpecification(
-				"",
-				(&specification.Builder{}).ErrlessBuild(),
-			),
+			PerformanceFactory: func() *performance.Performance {
+				return performance.FromSpecification(
+					"",
+					(&specification.Builder{}).ErrlessBuild(),
+				)
+			},
 			ExpectedSteps: nil,
 			ShouldBeErr:   false,
 		},
 		{
-			GivenPerformance: performance.Unmarshal(performance.Params{
-				Started: true,
-			}),
+			PerformanceFactory: func() *performance.Performance {
+				return performance.Unmarshal(performance.Params{
+					Started: true,
+				})
+			},
 			ShouldBeErr: true,
 			ExpectedErr: performance.ErrAlreadyStarted,
 		},
 		{
-			GivenPerformance: performance.FromSpecification(
-				"ddq",
-				(&specification.Builder{}).
-					WithStory("foo", func(b *specification.StoryBuilder) {
-						b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
-							b.WithThesis("baz", func(b *specification.ThesisBuilder) {
-								b.WithHTTP(func(b *specification.HTTPBuilder) {
-									b.WithRequest(func(b *specification.HTTPRequestBuilder) {
-										b.WithMethod(specification.GET)
-										b.WithURL("https://some-url.com")
+			PerformanceFactory: func() *performance.Performance {
+				return performance.FromSpecification(
+					"ddq",
+					(&specification.Builder{}).
+						WithStory("foo", func(b *specification.StoryBuilder) {
+							b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
+								b.WithThesis("baz", func(b *specification.ThesisBuilder) {
+									b.WithHTTP(func(b *specification.HTTPBuilder) {
+										b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+											b.WithMethod(specification.GET)
+											b.WithURL("https://some-url.com")
+										})
 									})
 								})
 							})
-						})
-					}).
-					ErrlessBuild(),
-				performance.WithHTTP(performance.PassingPerformer()),
-			),
+						}).
+						ErrlessBuild(),
+					performance.WithHTTP(performance.PassingPerformer()),
+				)
+			},
 			ExpectedSteps: []performance.Step{
 				performance.NewScenarioStep(
 					specification.NewScenarioSlug("foo", "bar"),
@@ -215,69 +221,73 @@ func TestStartPerformance(t *testing.T) {
 			ShouldBeErr: false,
 		},
 		{
-			GivenPerformance: performance.FromSpecification(
-				"bvs",
-				(&specification.Builder{}).
-					WithStory("que", func(b *specification.StoryBuilder) {
-						b.WithScenario("pue", func(b *specification.ScenarioBuilder) {
-							b.WithThesis("due", func(b *specification.ThesisBuilder) {
-								b.WithAssertion(func(b *specification.AssertionBuilder) {
-									b.WithMethod(specification.JSONPath)
-								})
-							})
-						})
-					}).
-					ErrlessBuild(),
-				performance.WithAssertion(performance.FailingPerformer()),
-			),
-			ExpectedSteps: []performance.Step{
-				performance.NewScenarioStep(
-					specification.NewScenarioSlug("que", "pue"),
-					performance.FiredPerform,
-				),
-				performance.NewThesisStep(
-					specification.NewThesisSlug("que", "pue", "due"),
-					performance.AssertionPerformer,
-					performance.FiredPerform,
-				),
-				performance.NewThesisStepWithErr(
-					performance.WrapWithTerminatedError(
-						errors.New("expected failing"),
-						performance.FiredFail,
-					),
-					specification.NewThesisSlug("que", "pue", "due"),
-					performance.AssertionPerformer,
-					performance.FiredFail,
-				),
-				performance.NewScenarioStepWithErr(
-					performance.WrapWithTerminatedError(
-						errors.New("expected failing"),
-						performance.FiredFail,
-					),
-					specification.NewScenarioSlug("que", "pue"),
-					performance.FiredFail,
-				),
-			},
-		},
-		{
-			GivenPerformance: performance.FromSpecification(
-				"daq",
-				(&specification.Builder{}).
-					WithStory("foo", func(b *specification.StoryBuilder) {
-						b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
-							b.WithThesis("baz", func(b *specification.ThesisBuilder) {
-								b.WithHTTP(func(b *specification.HTTPBuilder) {
-									b.WithRequest(func(b *specification.HTTPRequestBuilder) {
-										b.WithMethod(specification.GET)
-										b.WithURL("https://test.com")
+			PerformanceFactory: func() *performance.Performance {
+				return performance.FromSpecification(
+					"bvs",
+					(&specification.Builder{}).
+						WithStory("que", func(b *specification.StoryBuilder) {
+							b.WithScenario("pue", func(b *specification.ScenarioBuilder) {
+								b.WithThesis("due", func(b *specification.ThesisBuilder) {
+									b.WithAssertion(func(b *specification.AssertionBuilder) {
+										b.WithMethod(specification.JSONPath)
 									})
 								})
 							})
-						})
-					}).
-					ErrlessBuild(),
-				performance.WithHTTP(performance.CancelingPerformer()),
-			),
+						}).
+						ErrlessBuild(),
+					performance.WithAssertion(performance.FailingPerformer()),
+				)
+			},
+			ExpectedSteps: []performance.Step{
+				performance.NewScenarioStep(
+					specification.NewScenarioSlug("que", "pue"),
+					performance.FiredPerform,
+				),
+				performance.NewThesisStep(
+					specification.NewThesisSlug("que", "pue", "due"),
+					performance.AssertionPerformer,
+					performance.FiredPerform,
+				),
+				performance.NewThesisStepWithErr(
+					performance.WrapWithTerminatedError(
+						errors.New("expected failing"),
+						performance.FiredFail,
+					),
+					specification.NewThesisSlug("que", "pue", "due"),
+					performance.AssertionPerformer,
+					performance.FiredFail,
+				),
+				performance.NewScenarioStepWithErr(
+					performance.WrapWithTerminatedError(
+						errors.New("expected failing"),
+						performance.FiredFail,
+					),
+					specification.NewScenarioSlug("que", "pue"),
+					performance.FiredFail,
+				),
+			},
+		},
+		{
+			PerformanceFactory: func() *performance.Performance {
+				return performance.FromSpecification(
+					"daq",
+					(&specification.Builder{}).
+						WithStory("foo", func(b *specification.StoryBuilder) {
+							b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
+								b.WithThesis("baz", func(b *specification.ThesisBuilder) {
+									b.WithHTTP(func(b *specification.HTTPBuilder) {
+										b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+											b.WithMethod(specification.GET)
+											b.WithURL("https://test.com")
+										})
+									})
+								})
+							})
+						}).
+						ErrlessBuild(),
+					performance.WithHTTP(performance.CancelingPerformer()),
+				)
+			},
 			ExpectedSteps: []performance.Step{
 				performance.NewScenarioStep(
 					specification.NewScenarioSlug("foo", "bar"),
@@ -308,16 +318,18 @@ func TestStartPerformance(t *testing.T) {
 			},
 		},
 		{
-			GivenPerformance: performance.FromSpecification(
-				"hpd",
-				(&specification.Builder{}).
-					WithStory("foo", func(b *specification.StoryBuilder) {
-						b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
-							b.WithThesis("baz", func(b *specification.ThesisBuilder) {})
-						})
-					}).
-					ErrlessBuild(),
-			),
+			PerformanceFactory: func() *performance.Performance {
+				return performance.FromSpecification(
+					"hpd",
+					(&specification.Builder{}).
+						WithStory("foo", func(b *specification.StoryBuilder) {
+							b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
+								b.WithThesis("baz", func(b *specification.ThesisBuilder) {})
+							})
+						}).
+						ErrlessBuild(),
+				)
+			},
 			ExpectedSteps: []performance.Step{
 				performance.NewScenarioStep(
 					specification.NewScenarioSlug("foo", "bar"),
@@ -353,42 +365,44 @@ func TestStartPerformance(t *testing.T) {
 			ShouldBeErr: false,
 		},
 		{
-			GivenPerformance: performance.FromSpecification(
-				"jqd",
-				(&specification.Builder{}).
-					WithStory("rod", func(b *specification.StoryBuilder) {
-						b.WithScenario("dod", func(b *specification.ScenarioBuilder) {
-							b.WithThesis("mod", func(b *specification.ThesisBuilder) {
-								b.WithStatement(specification.Given, "mod")
-								b.WithHTTP(func(b *specification.HTTPBuilder) {
-									b.WithRequest(func(b *specification.HTTPRequestBuilder) {
-										b.WithMethod(specification.GET)
-										b.WithURL("https://test-api.net")
+			PerformanceFactory: func() *performance.Performance {
+				return performance.FromSpecification(
+					"jqd",
+					(&specification.Builder{}).
+						WithStory("rod", func(b *specification.StoryBuilder) {
+							b.WithScenario("dod", func(b *specification.ScenarioBuilder) {
+								b.WithThesis("mod", func(b *specification.ThesisBuilder) {
+									b.WithStatement(specification.Given, "mod")
+									b.WithHTTP(func(b *specification.HTTPBuilder) {
+										b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+											b.WithMethod(specification.GET)
+											b.WithURL("https://test-api.net")
+										})
+									})
+								})
+								b.WithThesis("zod", func(b *specification.ThesisBuilder) {
+									b.WithStatement(specification.Then, "zod")
+									b.WithAssertion(func(b *specification.AssertionBuilder) {
+										b.WithMethod(specification.JSONPath)
 									})
 								})
 							})
-							b.WithThesis("zod", func(b *specification.ThesisBuilder) {
-								b.WithStatement(specification.Then, "zod")
-								b.WithAssertion(func(b *specification.AssertionBuilder) {
-									b.WithMethod(specification.JSONPath)
-								})
-							})
-						})
-						b.WithScenario("sod", func(b *specification.ScenarioBuilder) {
-							b.WithThesis("nod", func(b *specification.ThesisBuilder) {
-								b.WithStatement(specification.Given, "nod")
-								b.WithHTTP(func(b *specification.HTTPBuilder) {
-									b.WithRequest(func(b *specification.HTTPRequestBuilder) {
-										b.WithURL("https://last-api.com")
+							b.WithScenario("sod", func(b *specification.ScenarioBuilder) {
+								b.WithThesis("nod", func(b *specification.ThesisBuilder) {
+									b.WithStatement(specification.Given, "nod")
+									b.WithHTTP(func(b *specification.HTTPBuilder) {
+										b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+											b.WithURL("https://last-api.com")
+										})
 									})
 								})
 							})
-						})
-					}).
-					ErrlessBuild(),
-				performance.WithHTTP(performance.PassingPerformer()),
-				performance.WithAssertion(performance.CrashingPerformer()),
-			),
+						}).
+						ErrlessBuild(),
+					performance.WithHTTP(performance.PassingPerformer()),
+					performance.WithAssertion(performance.CrashingPerformer()),
+				)
+			},
 			ExpectedSteps: []performance.Step{
 				performance.NewScenarioStep(
 					specification.NewScenarioSlug("rod", "sod"),
@@ -455,13 +469,27 @@ func TestStartPerformance(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			steps, err := c.GivenPerformance.Start(context.Background())
+			ctx := context.Background()
+
+			steps, err := c.PerformanceFactory().Start(ctx)
+
+			must := func() {
+				_ = c.PerformanceFactory().MustStart(ctx)
+			}
 
 			if c.ShouldBeErr {
 				t.Run("err", func(t *testing.T) {
 					require.ErrorIs(t, err, c.ExpectedErr)
 				})
+
+				t.Run("panics", func(t *testing.T) {
+					require.PanicsWithError(t, c.ExpectedErr.Error(), must)
+				})
 			} else {
+				t.Run("not_panics", func(t *testing.T) {
+					require.NotPanics(t, must)
+				})
+
 				t.Run("steps", func(t *testing.T) {
 					require.NoError(t, err)
 
