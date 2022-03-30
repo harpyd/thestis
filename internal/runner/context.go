@@ -7,6 +7,7 @@ import (
 	stdhttp "net/http"
 	"strings"
 	"sync"
+	"time"
 
 	fireauth "firebase.google.com/go/auth"
 	"github.com/gammazero/workerpool"
@@ -15,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	fakeAdapter "github.com/harpyd/thestis/internal/adapter/auth/fake"
@@ -135,21 +137,32 @@ func (c *Context) Start() {
 }
 
 func (c *Context) Stop() {
-	c.shutdownServer()
-	c.disconnectMongo()
+	defer c.syncZap()
+
+	c.stopPerformanceWorkerPool()
+	c.logger.Info("Performance worker pool stopped")
+
+	err := multierr.Append(
+		c.shutdownServer(),
+		c.disconnectMongo(),
+	)
+
+	c.logger.Info("Server shutdown succeeded")
+	c.logger.Info("Mongo disconnected")
+
 	c.disconnectNATS()
 
-	c.logger.Info("Runner stopped")
+	c.logger.Info("NATS disconnected")
 
-	c.syncZap()
-}
-
-func (c *Context) shutdownServer() {
-	if err := c.server.Shutdown(); err != nil {
-		c.logger.Fatal("Server shutdown failed", err)
+	if err != nil {
+		c.logger.Fatal("Runner stopped incorrectly", err)
 	}
 
-	c.logger.Info("Server shutdown succeed")
+	c.logger.Info("Runner stopped")
+}
+
+func (c *Context) shutdownServer() error {
+	return c.server.Shutdown()
 }
 
 func (c *Context) zap() *zap.Logger {
@@ -190,12 +203,11 @@ func (c *Context) mongo() *mongo.Database {
 	return c.mongoSingleton.db
 }
 
-func (c *Context) disconnectMongo() {
-	if err := c.mongo().Client().Disconnect(context.Background()); err != nil {
-		c.logger.Fatal("Mongo disconnection failed", err)
-	}
+func (c *Context) disconnectMongo() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	c.logger.Info("Mongo disconnected")
+	return c.mongo().Client().Disconnect(ctx)
 }
 
 func (c *Context) nats() *nats.Conn {
@@ -215,8 +227,6 @@ func (c *Context) nats() *nats.Conn {
 
 func (c *Context) disconnectNATS() {
 	c.nats().Close()
-
-	c.logger.Info("NATS disconnected")
 }
 
 func (c *Context) performanceWorkerPool() *workerpool.WorkerPool {
@@ -230,6 +240,10 @@ func (c *Context) performanceWorkerPool() *workerpool.WorkerPool {
 	})
 
 	return c.performanceWPSingleton.wp
+}
+
+func (c *Context) stopPerformanceWorkerPool() {
+	c.performanceWorkerPool().StopWait()
 }
 
 func (c *Context) firebaseAuth() *fireauth.Client {
