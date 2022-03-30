@@ -73,6 +73,7 @@ func TestFromPath(t *testing.T) {
 					FlowTimeout: 24 * time.Hour,
 					Policy:      config.EveryStepSavingPolicy,
 					SignalBus:   config.Nats,
+					Workers:     34,
 				},
 				EveryStepSaving: config.EveryStepSaving{
 					SaveTimeout: 30 * time.Second,

@@ -15,6 +15,7 @@ const (
 	defaultHTTPRWTimeout          = 10 * time.Second
 	defaultHTTPShutdownTimeout    = 10 * time.Second
 	defaultPerformanceFlowTimeout = 24 * time.Hour
+	defaultPerformanceWorkers     = 100
 )
 
 type Env = string
@@ -75,6 +76,7 @@ type (
 		FlowTimeout time.Duration
 		Policy      StepsPolicy
 		SignalBus   SignalBus
+		Workers     int
 	}
 
 	EveryStepSaving struct {
@@ -114,6 +116,7 @@ func setDefaults() {
 	viper.SetDefault("http.writeTimeout", defaultHTTPRWTimeout)
 	viper.SetDefault("http.shutdownTimeout", defaultHTTPShutdownTimeout)
 	viper.SetDefault("performance.flowTimeout", defaultPerformanceFlowTimeout)
+	viper.SetDefault("performance.workers", defaultPerformanceWorkers)
 }
 
 func parseConfig(configsPath, env string) error {
