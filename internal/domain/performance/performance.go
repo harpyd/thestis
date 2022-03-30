@@ -199,7 +199,7 @@ func (p *Performance) Start(ctx context.Context) (<-chan Step, error) {
 	return steps, nil
 }
 
-// MustStart is similar to Start, but instead of the error if panics.
+// MustStart is similar to Start, but instead of the error it panics.
 func (p *Performance) MustStart(ctx context.Context) <-chan Step {
 	steps, err := p.Start(ctx)
 	if err != nil {
