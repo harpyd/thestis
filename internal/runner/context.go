@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 	"log"
 	stdhttp "net/http"
@@ -8,11 +9,13 @@ import (
 	"sync"
 
 	fireauth "firebase.google.com/go/auth"
+	"github.com/gammazero/workerpool"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/nats-io/nats.go"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.uber.org/multierr"
 	"go.uber.org/zap"
 
 	fakeAdapter "github.com/harpyd/thestis/internal/adapter/auth/fake"
@@ -38,6 +41,7 @@ type Context struct {
 	mongoSingleton
 	natsSingleton
 	firebaseSingleton
+	performanceWPSingleton
 
 	logger       app.Logger
 	config       *config.Config
@@ -71,10 +75,16 @@ type zapSingleton struct {
 	logger *zap.Logger
 }
 
+type performanceWPSingleton struct {
+	once sync.Once
+	wp   *workerpool.WorkerPool
+}
+
 type performanceContext struct {
 	guard       app.PerformanceGuard
 	stepsPolicy app.StepsPolicy
 	maintainer  app.PerformanceMaintainer
+	enqueuer    app.Enqueuer
 }
 
 type persistentContext struct {
@@ -113,6 +123,8 @@ func New(configsPath string) *Context {
 }
 
 func (c *Context) Start() {
+	c.logger.Info("Runner started")
+
 	c.logger.Info(
 		"HTTP server started",
 		app.StringLogField("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
@@ -121,25 +133,48 @@ func (c *Context) Start() {
 	if err := c.server.Start(); !errors.Is(err, stdhttp.ErrServerClosed) {
 		c.logger.Fatal("HTTP server stopped unexpectedly", err)
 	}
-
-	c.logger.Info("HTTP server stopped gracefully")
 }
 
 func (c *Context) Stop() {
-	if err := c.server.Shutdown(); err != nil {
-		c.logger.Fatal("Server shutdown failed", err)
+	defer c.syncZap()
+
+	c.stopPerformanceWorkerPool()
+	c.logger.Info("Performance worker pool stopped")
+
+	err := multierr.Append(
+		c.shutdownServer(),
+		c.disconnectMongo(),
+	)
+
+	c.logger.Info("Server shutdown succeeded")
+	c.logger.Info("Mongo disconnected")
+
+	c.disconnectNATS()
+
+	c.logger.Info("NATS disconnected")
+
+	if err != nil {
+		c.logger.Fatal("Runner stopped incorrectly", err)
 	}
 
-	if err := c.zapSingleton.logger.Sync(); err != nil {
-		log.Fatal("Failed to sync zap logger")
-	}
+	c.logger.Info("Runner stopped")
 }
 
-func (c *Context) zapLogger() *zap.Logger {
+func (c *Context) shutdownServer() error {
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		c.config.HTTP.ShutdownTimeout,
+	)
+	defer cancel()
+
+	return c.server.Shutdown(ctx)
+}
+
+func (c *Context) zap() *zap.Logger {
 	c.zapSingleton.once.Do(func() {
 		logger, err := zap.NewProduction()
 		if err != nil {
-			log.Fatal("Failed to initialize zap logger")
+			log.Fatalf("Failed to create zap logger: %v", err)
 		}
 
 		c.zapSingleton.logger = logger
@@ -148,7 +183,13 @@ func (c *Context) zapLogger() *zap.Logger {
 	return c.zapSingleton.logger
 }
 
-func (c *Context) mongoDatabase() *mongo.Database {
+func (c *Context) syncZap() {
+	if err := c.zap().Sync(); err != nil {
+		log.Fatalf("Failed to sync zap logger: %v", err)
+	}
+}
+
+func (c *Context) mongo() *mongo.Database {
 	c.mongoSingleton.once.Do(func() {
 		client, err := mongodb.NewClient(
 			c.config.Mongo.URI,
@@ -167,7 +208,17 @@ func (c *Context) mongoDatabase() *mongo.Database {
 	return c.mongoSingleton.db
 }
 
-func (c *Context) natsConnection() *nats.Conn {
+func (c *Context) disconnectMongo() error {
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		c.config.Mongo.DisconnectTimeout,
+	)
+	defer cancel()
+
+	return c.mongo().Client().Disconnect(ctx)
+}
+
+func (c *Context) nats() *nats.Conn {
 	c.natsSingleton.once.Do(func() {
 		conn, err := nats.Connect(c.config.Nats.URL)
 		if err != nil {
@@ -182,23 +233,44 @@ func (c *Context) natsConnection() *nats.Conn {
 	return c.natsSingleton.conn
 }
 
-func (c *Context) firebaseClient() *fireauth.Client {
+func (c *Context) disconnectNATS() {
+	c.nats().Close()
+}
+
+func (c *Context) performanceWorkerPool() *workerpool.WorkerPool {
+	c.performanceWPSingleton.once.Do(func() {
+		c.performanceWPSingleton.wp = workerpool.New(10)
+
+		c.logger.Info(
+			"Performance worker pool initialization completed",
+			app.IntLogField("workers", c.config.Performance.Workers),
+		)
+	})
+
+	return c.performanceWPSingleton.wp
+}
+
+func (c *Context) stopPerformanceWorkerPool() {
+	c.performanceWorkerPool().StopWait()
+}
+
+func (c *Context) firebaseAuth() *fireauth.Client {
 	c.firebaseSingleton.once.Do(func() {
 		client, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
 		if err != nil {
-			c.logger.Fatal("Failed to create Firebase Auth client", err)
+			c.logger.Fatal("Failed to connect to Firebase Auth", err)
 		}
 
 		c.firebaseSingleton.client = client
 
-		c.logger.Info("Firebase Auth client created")
+		c.logger.Info("Connected to Firebase Auth")
 	})
 
 	return c.firebaseSingleton.client
 }
 
 func (c *Context) initLogger() {
-	c.logger = zapAdapter.NewLogger(c.zapLogger())
+	c.logger = zapAdapter.NewLogger(c.zap())
 }
 
 func (c *Context) initConfig(configsPath string) {
@@ -213,7 +285,7 @@ func (c *Context) initConfig(configsPath string) {
 }
 
 func (c *Context) initPersistent() {
-	db := c.mongoDatabase()
+	db := c.mongo()
 	logField := app.StringLogField("db", "mongo")
 
 	var (
@@ -290,7 +362,7 @@ func (c *Context) initMetrics() {
 
 func (c *Context) initSignalBus() {
 	if c.config.Performance.SignalBus == config.Nats {
-		bus := natsio.NewPerformanceCancelSignalBus(c.natsConnection())
+		bus := natsio.NewPerformanceCancelSignalBus(c.nats())
 
 		c.signalBus.publisher = bus
 		c.signalBus.subscriber = bus
@@ -311,11 +383,13 @@ func (c *Context) initSignalBus() {
 func (c *Context) initPerformance() {
 	c.initPerformanceGuard()
 	c.initStepsPolicy()
+	c.initEnqueuer()
 
 	c.performance.maintainer = app.NewPerformanceMaintainer(
 		c.performance.guard,
 		c.signalBus.subscriber,
 		c.performance.stepsPolicy,
+		c.performance.enqueuer,
 		c.config.Performance.FlowTimeout,
 	)
 
@@ -326,7 +400,7 @@ func (c *Context) initPerformance() {
 }
 
 func (c *Context) initPerformanceGuard() {
-	c.performance.guard = mongoAdapter.NewPerformanceGuard(c.mongoDatabase())
+	c.performance.guard = mongoAdapter.NewPerformanceGuard(c.mongo())
 }
 
 func (c *Context) initStepsPolicy() {
@@ -346,6 +420,10 @@ func (c *Context) initStepsPolicy() {
 	)
 }
 
+func (c *Context) initEnqueuer() {
+	c.performance.enqueuer = app.EnqueueFunc(c.performanceWorkerPool().Submit)
+}
+
 func (c *Context) initAuthenticationProvider() {
 	authType := c.config.Auth.With
 
@@ -353,7 +431,7 @@ func (c *Context) initAuthenticationProvider() {
 	case config.FakeAuth:
 		c.authProvider = fakeAdapter.NewProvider()
 	case config.FirebaseAuth:
-		c.authProvider = firebaseAdapter.NewProvider(c.firebaseClient())
+		c.authProvider = firebaseAdapter.NewProvider(c.firebaseAuth())
 	default:
 		c.logger.Fatal(
 			"Invalid auth type",

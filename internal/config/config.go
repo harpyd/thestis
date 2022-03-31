@@ -14,7 +14,9 @@ const (
 	defaultHTTPPort               = 8080
 	defaultHTTPRWTimeout          = 10 * time.Second
 	defaultHTTPShutdownTimeout    = 10 * time.Second
+	defaultMongoDisconnectTimeout = 10 * time.Second
 	defaultPerformanceFlowTimeout = 24 * time.Hour
+	defaultPerformanceWorkers     = 100
 )
 
 type Env = string
@@ -57,10 +59,11 @@ type (
 	}
 
 	Mongo struct {
-		URI          string
-		DatabaseName string
-		Username     string
-		Password     string
+		URI               string
+		DatabaseName      string
+		Username          string
+		Password          string
+		DisconnectTimeout time.Duration
 	}
 
 	Auth struct {
@@ -75,6 +78,7 @@ type (
 		FlowTimeout time.Duration
 		Policy      StepsPolicy
 		SignalBus   SignalBus
+		Workers     int
 	}
 
 	EveryStepSaving struct {
@@ -113,7 +117,9 @@ func setDefaults() {
 	viper.SetDefault("http.readTimeout", defaultHTTPRWTimeout)
 	viper.SetDefault("http.writeTimeout", defaultHTTPRWTimeout)
 	viper.SetDefault("http.shutdownTimeout", defaultHTTPShutdownTimeout)
+	viper.SetDefault("mongo.disconnectTimeout", defaultMongoDisconnectTimeout)
 	viper.SetDefault("performance.flowTimeout", defaultPerformanceFlowTimeout)
+	viper.SetDefault("performance.workers", defaultPerformanceWorkers)
 }
 
 func parseConfig(configsPath, env string) error {

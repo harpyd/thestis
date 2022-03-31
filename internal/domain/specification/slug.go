@@ -130,24 +130,41 @@ func (s Slug) Kind() SlugKind {
 	return s.kind
 }
 
+// Partial returns a Kind part of the Slug.
+// If Slug is zero, return an empty string.
+func (s Slug) Partial() string {
+	switch s.kind {
+	case StorySlug:
+		return replaceSlugIfEmpty(s.story)
+	case ScenarioSlug:
+		return replaceSlugIfEmpty(s.scenario)
+	case ThesisSlug:
+		return replaceSlugIfEmpty(s.thesis)
+	case NoSlug:
+		return ""
+	}
+
+	return ""
+}
+
 func (s Slug) IsZero() bool {
 	return s == Slug{}
 }
 
 const (
-	emptyReplace   = "*"
-	slugsSeparator = "."
+	emptySlugReplace = "*"
+	slugsSeparator   = "."
 )
 
 func (s Slug) String() string {
 	switch s.kind {
 	case StorySlug:
-		return replaceIfEmpty(s.story)
+		return replaceSlugIfEmpty(s.story)
 	case ScenarioSlug:
 		slugs := mapSlugs([]string{
 			s.story,
 			s.scenario,
-		}, replaceIfEmpty)
+		}, replaceSlugIfEmpty)
 
 		return strings.Join(slugs, slugsSeparator)
 	case ThesisSlug:
@@ -155,7 +172,7 @@ func (s Slug) String() string {
 			s.story,
 			s.scenario,
 			s.thesis,
-		}, replaceIfEmpty)
+		}, replaceSlugIfEmpty)
 
 		return strings.Join(slugs, slugsSeparator)
 	case NoSlug:
@@ -174,9 +191,9 @@ func mapSlugs(slugs []string, fn func(string) string) []string {
 	return res
 }
 
-func replaceIfEmpty(s string) string {
+func replaceSlugIfEmpty(s string) string {
 	if s == "" {
-		return emptyReplace
+		return emptySlugReplace
 	}
 
 	return s

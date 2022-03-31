@@ -20,6 +20,7 @@ func TestNewSlug(t *testing.T) {
 		ExpectedThesis   string
 		ExpectedString   string
 		ExpectedKind     specification.SlugKind
+		ExpectedPartial  string
 	}{
 		{
 			GivenSlug:        specification.Slug{},
@@ -28,6 +29,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "",
 			ExpectedKind:     specification.NoSlug,
+			ExpectedPartial:  "",
 		},
 		{
 			GivenSlug:        specification.AnyStorySlug(),
@@ -36,6 +38,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "*",
 			ExpectedKind:     specification.StorySlug,
+			ExpectedPartial:  "*",
 		},
 		{
 			GivenSlug:        specification.NewStorySlug(""),
@@ -44,6 +47,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "*",
 			ExpectedKind:     specification.StorySlug,
+			ExpectedPartial:  "*",
 		},
 		{
 			GivenSlug:        specification.NewStorySlug("story"),
@@ -52,6 +56,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "story",
 			ExpectedKind:     specification.StorySlug,
+			ExpectedPartial:  "story",
 		},
 		{
 			GivenSlug:        specification.AnyScenarioSlug(),
@@ -60,6 +65,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "*.*",
 			ExpectedKind:     specification.ScenarioSlug,
+			ExpectedPartial:  "*",
 		},
 		{
 			GivenSlug:        specification.NewScenarioSlug("", ""),
@@ -68,6 +74,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "*.*",
 			ExpectedKind:     specification.ScenarioSlug,
+			ExpectedPartial:  "*",
 		},
 		{
 			GivenSlug:        specification.NewScenarioSlug("story", ""),
@@ -76,6 +83,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "story.*",
 			ExpectedKind:     specification.ScenarioSlug,
+			ExpectedPartial:  "*",
 		},
 		{
 			GivenSlug:        specification.NewScenarioSlug("", "scenario"),
@@ -84,6 +92,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "*.scenario",
 			ExpectedKind:     specification.ScenarioSlug,
+			ExpectedPartial:  "scenario",
 		},
 		{
 			GivenSlug:        specification.NewScenarioSlug("story", "scenario"),
@@ -92,6 +101,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "story.scenario",
 			ExpectedKind:     specification.ScenarioSlug,
+			ExpectedPartial:  "scenario",
 		},
 		{
 			GivenSlug:        specification.AnyThesisSlug(),
@@ -100,6 +110,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "*.*.*",
 			ExpectedKind:     specification.ThesisSlug,
+			ExpectedPartial:  "*",
 		},
 		{
 			GivenSlug:        specification.NewThesisSlug("", "", ""),
@@ -108,6 +119,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "*.*.*",
 			ExpectedKind:     specification.ThesisSlug,
+			ExpectedPartial:  "*",
 		},
 		{
 			GivenSlug:        specification.NewThesisSlug("story", "", ""),
@@ -116,6 +128,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "story.*.*",
 			ExpectedKind:     specification.ThesisSlug,
+			ExpectedPartial:  "*",
 		},
 		{
 			GivenSlug:        specification.NewThesisSlug("story", "scenario", ""),
@@ -124,6 +137,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "",
 			ExpectedString:   "story.scenario.*",
 			ExpectedKind:     specification.ThesisSlug,
+			ExpectedPartial:  "*",
 		},
 		{
 			GivenSlug:        specification.NewThesisSlug("story", "scenario", "thesis"),
@@ -132,6 +146,7 @@ func TestNewSlug(t *testing.T) {
 			ExpectedThesis:   "thesis",
 			ExpectedString:   "story.scenario.thesis",
 			ExpectedKind:     specification.ThesisSlug,
+			ExpectedPartial:  "thesis",
 		},
 	}
 
@@ -159,6 +174,10 @@ func TestNewSlug(t *testing.T) {
 
 			t.Run("kind", func(t *testing.T) {
 				require.Equal(t, c.ExpectedKind, c.GivenSlug.Kind())
+			})
+
+			t.Run("partial", func(t *testing.T) {
+				require.Equal(t, c.ExpectedPartial, c.GivenSlug.Partial())
 			})
 		})
 	}

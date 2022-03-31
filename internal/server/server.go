@@ -9,7 +9,6 @@ import (
 
 type Server struct {
 	serv *http.Server
-	cfg  config.HTTP
 }
 
 func New(cfg config.HTTP, handler http.Handler) *Server {
@@ -20,7 +19,6 @@ func New(cfg config.HTTP, handler http.Handler) *Server {
 			ReadTimeout:  cfg.ReadTimeout,
 			WriteTimeout: cfg.WriteTimeout,
 		},
-		cfg: cfg,
 	}
 }
 
@@ -28,9 +26,6 @@ func (s *Server) Start() error {
 	return s.serv.ListenAndServe()
 }
 
-func (s *Server) Shutdown() error {
-	ctx, cancel := context.WithTimeout(context.Background(), s.cfg.ShutdownTimeout)
-	defer cancel()
-
+func (s *Server) Shutdown(ctx context.Context) error {
 	return s.serv.Shutdown(ctx)
 }

@@ -24,6 +24,7 @@ func NewProvider(authClient *auth.Client) Provider {
 var (
 	errEmptyBearerToken  = errors.New("empty bearer token")
 	errUnableToVerifyJWT = errors.New("unable to verify jwt")
+	errInvalidClaimType  = errors.New("invalid claim type")
 )
 
 func (p Provider) AuthenticateUser(ctx context.Context, r *stdhttp.Request) (http.User, error) {
@@ -38,10 +39,15 @@ func (p Provider) AuthenticateUser(ctx context.Context, r *stdhttp.Request) (htt
 		return http.User{}, errUnableToVerifyJWT
 	}
 
+	displayName, ok := token.Claims["name"].(string)
+	if !ok {
+		return http.User{}, errInvalidClaimType
+	}
+
 	return http.User{
 		UUID:        token.UID,
-		DisplayName: token.Claims["name"].(string),
-	}, err
+		DisplayName: displayName,
+	}, nil
 }
 
 func tokenFromHeader(r *stdhttp.Request) string {

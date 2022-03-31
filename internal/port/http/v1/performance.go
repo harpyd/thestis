@@ -125,7 +125,7 @@ func (h handler) CancelPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request,
 	http.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
-func (h handler) GetPerformancesHistory(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ string) {
+func (h handler) GetPerformanceHistory(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ string) {
 	w.WriteHeader(stdhttp.StatusNotImplemented)
 }
 

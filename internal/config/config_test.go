@@ -58,10 +58,11 @@ func TestFromPath(t *testing.T) {
 					AllowedOrigins:  []string{"https://some-a.com", "https://some-b.com"},
 				},
 				Mongo: config.Mongo{
-					URI:          "some://uri",
-					DatabaseName: "someName",
-					Username:     "admin",
-					Password:     "0000",
+					URI:               "some://uri",
+					DatabaseName:      "someName",
+					Username:          "admin",
+					Password:          "0000",
+					DisconnectTimeout: 13 * time.Second,
 				},
 				Firebase: config.Firebase{
 					ServiceAccountFile: "path/to/serviceAccount.json",
@@ -73,6 +74,7 @@ func TestFromPath(t *testing.T) {
 					FlowTimeout: 24 * time.Hour,
 					Policy:      config.EveryStepSavingPolicy,
 					SignalBus:   config.Nats,
+					Workers:     34,
 				},
 				EveryStepSaving: config.EveryStepSaving{
 					SaveTimeout: 30 * time.Second,

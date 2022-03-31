@@ -9,6 +9,7 @@ mongo:
   databaseName: ${MONGO_DATABASE}
   username: ${MONGO_USERNAME:admin}
   password: ${MONGO_PASSWORD:0000}
+  disconnectTimeout: 13s
 auth:
   with: ${AUTH_TYPE:fake}
 firebase:
@@ -17,6 +18,7 @@ performance:
   flowTimeout: 24h
   policy: everyStepSaving
   signalBus: nats
+  workers: 34
 everyStepSaving:
   saveTimeout: 30s
 nats:

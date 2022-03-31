@@ -20,8 +20,11 @@ thestis-build:
 lint:
 	golangci-lint run
 
-dev: thestis-build
+run-dev: thestis-build
 	docker-compose -f ./deployments/dev/docker-compose.yml --project-directory . up --remove-orphans thestis
+
+stop-dev:
+	docker-compose -f ./deployments/dev/docker-compose.yml --project-directory . stop thestis
 
 test-unit:
 	go test --short -v -race -coverpkg=./... -coverprofile=unit-all.out ./...
@@ -31,7 +34,7 @@ test-unit:
 test-integration:
 	make run-test-db
 	make run-test-nats
-	MallocNanoZone=0 go test -v -race -coverprofile=integration.out ./internal/adapter/... ./internal/config/... || (make stop-test-nats && make stop-test-db && exit 1)
+	MallocNanoZone=0 go test -v -race -coverpkg=./... -coverprofile=integration.out ./internal/adapter/... ./internal/config/... || (make stop-test-nats && make stop-test-db && exit 1)
 	make stop-test-db
 	make stop-test-nats
 
