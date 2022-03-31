@@ -501,7 +501,7 @@ func TestFormatNotAllowedStageError(t *testing.T) {
 	}
 }
 
-func TestUndefinedDependencyError(t *testing.T) {
+func TestFormatUndefinedDependencyError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -530,6 +530,64 @@ func TestUndefinedDependencyError(t *testing.T) {
 			t.Parallel()
 
 			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
+		})
+	}
+}
+
+func TestAsUndefinedDependencyError(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		GivenError      error
+		ShouldBeWrapped bool
+		ExpectedSlug    specification.Slug
+	}{
+		{
+			GivenError:      nil,
+			ShouldBeWrapped: false,
+		},
+		{
+			GivenError:      &specification.UndefinedDependencyError{},
+			ShouldBeWrapped: true,
+			ExpectedSlug:    specification.Slug{},
+		},
+		{
+			GivenError:      specification.NewUndefinedDependencyError(specification.Slug{}),
+			ShouldBeWrapped: true,
+			ExpectedSlug:    specification.Slug{},
+		},
+		{
+			GivenError: specification.NewUndefinedDependencyError(
+				specification.NewThesisSlug("a", "b", "c"),
+			),
+			ShouldBeWrapped: true,
+			ExpectedSlug:    specification.NewThesisSlug("a", "b", "c"),
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var target *specification.UndefinedDependencyError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &target))
+				})
+
+				return
+			}
+
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &target)
+
+				t.Run("slug", func(t *testing.T) {
+					require.Equal(t, c.ExpectedSlug, target.Slug())
+				})
+			})
 		})
 	}
 }
