@@ -45,7 +45,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TestCampaignResponse"
+                items:
+                  $ref: "#/components/schemas/TestCampaignResponse"
 
   /test-campaigns/{testCampaignId}:
     get:
@@ -63,7 +64,7 @@ paths:
           description: Test campaign ID to return.
       responses:
         200:
-          description: Found previously created test campaigns.
+          description: Found previously created test campaign.
           content:
             application/json:
               schema:
@@ -460,7 +461,7 @@ components:
                             code: HRN-3134141
                             batchSize: 103
                         response:
-                          allowedCodes: [201]
+                          allowedCodes: [ 201 ]
                           allowedContentType: application/json
                     - slug: deliverHooves
                       given: hooves delivered to the warehouse
@@ -475,7 +476,7 @@ components:
                             code: HVS-3123313
                             batchSize: 313
                         response:
-                          allowedCodes: [201]
+                          allowedCodes: [ 201 ]
                           allowedContentType: application/json
                     - slug: sellHornsAndHooves
                       when: selling horns and hooves
@@ -493,7 +494,7 @@ components:
                                 itemsCount: 20
                                 itemPrice: 1003
                         response:
-                          allowedCodes: [201]
+                          allowedCodes: [ 201 ]
                           allowedContentType: application/json
                     - slug: getSoldProducts
                       then: get sold products
@@ -502,7 +503,7 @@ components:
                           method: GET
                           url: https://api.warehouse/v1/{{sellHornsAndHooves.response.headers.Content-Location}}
                         response:
-                          allowedCodes: [200]
+                          allowedCodes: [ 200 ]
                           allowedContentType: application/json
                     - slug: checkSoldProducts
                       then: check that products added to sold products
@@ -512,7 +513,7 @@ components:
                         with: JSONPATH
                         assert:
                           - actual: getSoldProducts.response.body.products..itemsCount
-                            expected: [103, 21]
+                            expected: [ 103, 21 ]
 
     StartPerformanceRequest:
       type: object
