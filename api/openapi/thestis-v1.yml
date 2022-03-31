@@ -228,8 +228,8 @@ paths:
     get:
       tags:
         - performance
-      operationId: getPerformancesHistory
-      summary: Returns performances history.
+      operationId: getPerformanceHistory
+      summary: Returns performance history.
       parameters:
         - in: path
           name: testCampaignId

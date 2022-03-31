@@ -40,9 +40,9 @@ type ServerInterface interface {
 	// Asynchronously starts performing of test campaign active specification performance.
 	// (POST /test-campaigns/{testCampaignId}/performance)
 	StartPerformance(w http.ResponseWriter, r *http.Request, testCampaignId string)
-	// Returns performances history.
+	// Returns performance history.
 	// (GET /test-campaigns/{testCampaignId}/performances)
-	GetPerformancesHistory(w http.ResponseWriter, r *http.Request, testCampaignId string)
+	GetPerformanceHistory(w http.ResponseWriter, r *http.Request, testCampaignId string)
 	// Loads specification to test campaign.
 	// (POST /test-campaigns/{testCampaignId}/specification)
 	LoadSpecification(w http.ResponseWriter, r *http.Request, testCampaignId string)
@@ -269,8 +269,8 @@ func (siw *ServerInterfaceWrapper) StartPerformance(w http.ResponseWriter, r *ht
 	handler(w, r.WithContext(ctx))
 }
 
-// GetPerformancesHistory operation middleware
-func (siw *ServerInterfaceWrapper) GetPerformancesHistory(w http.ResponseWriter, r *http.Request) {
+// GetPerformanceHistory operation middleware
+func (siw *ServerInterfaceWrapper) GetPerformanceHistory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
@@ -285,7 +285,7 @@ func (siw *ServerInterfaceWrapper) GetPerformancesHistory(w http.ResponseWriter,
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetPerformancesHistory(w, r, testCampaignId)
+		siw.Handler.GetPerformanceHistory(w, r, testCampaignId)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -462,7 +462,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/test-campaigns/{testCampaignId}/performance", wrapper.StartPerformance)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/test-campaigns/{testCampaignId}/performances", wrapper.GetPerformancesHistory)
+		r.Get(options.BaseURL+"/test-campaigns/{testCampaignId}/performances", wrapper.GetPerformanceHistory)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/test-campaigns/{testCampaignId}/specification", wrapper.LoadSpecification)
