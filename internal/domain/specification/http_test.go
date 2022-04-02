@@ -766,19 +766,19 @@ func TestFormatNotAllowedContentTypeError(t *testing.T) {
 	}{
 		{
 			GivenError:          &specification.NotAllowedContentTypeError{},
-			ExpectedErrorString: "content type `` not allowed",
+			ExpectedErrorString: `content type "" not allowed`,
 		},
 		{
 			GivenError: specification.NewNotAllowedContentTypeError(
 				specification.ApplicationXML,
 			),
-			ExpectedErrorString: "content type `application/xml` not allowed",
+			ExpectedErrorString: `content type "application/xml" not allowed`,
 		},
 		{
 			GivenError: specification.NewNotAllowedContentTypeError(
 				"bad",
 			),
-			ExpectedErrorString: "content type `bad` not allowed",
+			ExpectedErrorString: `content type "bad" not allowed`,
 		},
 	}
 
