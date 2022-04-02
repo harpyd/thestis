@@ -480,7 +480,13 @@ func TestFormatDuplicatedError(t *testing.T) {
 			GivenError: specification.NewDuplicatedError(
 				specification.NewStorySlug("foo"),
 			),
-			ExpectedErrorString: "foo already exists",
+			ExpectedErrorString: `"foo" already exists`,
+		},
+		{
+			GivenError: specification.NewDuplicatedError(
+				specification.NewScenarioSlug("a", "b"),
+			),
+			ExpectedErrorString: `"b" already exists`,
 		},
 	}
 

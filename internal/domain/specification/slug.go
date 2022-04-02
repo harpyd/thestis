@@ -218,5 +218,5 @@ func (e *DuplicatedError) Error() string {
 		return ""
 	}
 
-	return fmt.Sprintf("%s already exists", e.slug)
+	return fmt.Sprintf("%q already exists", e.slug.Partial())
 }
