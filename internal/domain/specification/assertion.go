@@ -146,5 +146,5 @@ func (e *NotAllowedAssertionMethodError) Error() string {
 		return ""
 	}
 
-	return fmt.Sprintf("assertion method `%s` not allowed", e.method)
+	return fmt.Sprintf("assertion method %q not allowed", e.method)
 }

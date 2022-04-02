@@ -276,19 +276,19 @@ func TestFormatNotAllowedAssertionMethodError(t *testing.T) {
 	}{
 		{
 			GivenError:          &specification.NotAllowedAssertionMethodError{},
-			ExpectedErrorString: "assertion method `` not allowed",
+			ExpectedErrorString: `assertion method "" not allowed`,
 		},
 		{
 			GivenError: specification.NewNotAllowedAssertionMethodError(
 				specification.NoAssertionMethod,
 			),
-			ExpectedErrorString: "assertion method `` not allowed",
+			ExpectedErrorString: `assertion method "" not allowed`,
 		},
 		{
 			GivenError: specification.NewNotAllowedAssertionMethodError(
 				specification.JSONPath,
 			),
-			ExpectedErrorString: "assertion method `jsonpath` not allowed",
+			ExpectedErrorString: `assertion method "jsonpath" not allowed`,
 		},
 	}
 
