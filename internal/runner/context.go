@@ -150,7 +150,6 @@ func (c *Context) Stop() {
 	c.logger.Info("Mongo disconnected")
 
 	c.disconnectNATS()
-
 	c.logger.Info("NATS disconnected")
 
 	if err != nil {
