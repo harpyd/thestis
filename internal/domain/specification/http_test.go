@@ -862,19 +862,19 @@ func TestFormatNotAllowedHTTPMethodError(t *testing.T) {
 	}{
 		{
 			GivenError:          &specification.NotAllowedHTTPMethodError{},
-			ExpectedErrorString: "HTTP method `` not allowed",
+			ExpectedErrorString: `HTTP method "" not allowed`,
 		},
 		{
 			GivenError: specification.NewNotAllowedHTTPMethodError(
 				specification.GET,
 			),
-			ExpectedErrorString: "HTTP method `GET` not allowed",
+			ExpectedErrorString: `HTTP method "GET" not allowed`,
 		},
 		{
 			GivenError: specification.NewNotAllowedHTTPMethodError(
 				"boom",
 			),
-			ExpectedErrorString: "HTTP method `boom` not allowed",
+			ExpectedErrorString: `HTTP method "boom" not allowed`,
 		},
 	}
 

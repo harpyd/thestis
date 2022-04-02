@@ -332,7 +332,7 @@ func (e *NotAllowedContentTypeError) Error() string {
 		return ""
 	}
 
-	return fmt.Sprintf(`content type %q not allowed`, e.contentType)
+	return fmt.Sprintf("content type %q not allowed", e.contentType)
 }
 
 type NotAllowedHTTPMethodError struct {
@@ -354,5 +354,5 @@ func (e *NotAllowedHTTPMethodError) Error() string {
 		return ""
 	}
 
-	return fmt.Sprintf("HTTP method `%s` not allowed", e.method)
+	return fmt.Sprintf("HTTP method %q not allowed", e.method)
 }
