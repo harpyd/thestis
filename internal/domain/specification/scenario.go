@@ -128,7 +128,7 @@ func checkThesesDependencies(w *BuildErrorWrapper, theses map[string]Thesis) {
 	for _, thesis := range theses {
 		for _, dependency := range thesis.dependencies {
 			if _, ok := theses[dependency.Thesis()]; !ok {
-				w.WithError(NewUndefinedDependencyError(thesis.slug))
+				w.WithError(NewUndefinedDependencyError(dependency))
 			}
 		}
 	}
