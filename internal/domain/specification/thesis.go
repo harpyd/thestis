@@ -205,7 +205,7 @@ func (e *NotAllowedStageError) Error() string {
 		return ""
 	}
 
-	return fmt.Sprintf("stage `%s` not allowed", e.stage)
+	return fmt.Sprintf("stage %q not allowed", e.stage)
 }
 
 type UndefinedDependencyError struct {

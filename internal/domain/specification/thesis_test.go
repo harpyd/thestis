@@ -478,15 +478,15 @@ func TestFormatNotAllowedStageError(t *testing.T) {
 	}{
 		{
 			GivenError:          &specification.NotAllowedStageError{},
-			ExpectedErrorString: "stage `` not allowed",
+			ExpectedErrorString: `stage "" not allowed`,
 		},
 		{
 			GivenError:          specification.NewNotAllowedStageError(specification.Given),
-			ExpectedErrorString: "stage `given` not allowed",
+			ExpectedErrorString: `stage "given" not allowed`,
 		},
 		{
 			GivenError:          specification.NewNotAllowedStageError("deploy"),
-			ExpectedErrorString: "stage `deploy` not allowed",
+			ExpectedErrorString: `stage "deploy" not allowed`,
 		},
 	}
 
