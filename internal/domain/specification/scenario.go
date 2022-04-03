@@ -91,6 +91,7 @@ func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
 	}
 
 	checkThesesDependencies(&w, scenario.theses)
+	checkCycleDependencies(&w, scenario)
 
 	return scenario, w.SluggedWrap(slug)
 }
@@ -132,4 +133,66 @@ func checkThesesDependencies(w *BuildErrorWrapper, theses map[string]Thesis) {
 			}
 		}
 	}
+}
+
+func checkCycleDependencies(w *BuildErrorWrapper, scenario Scenario) {
+	g := NewGraph(scenario.theses)
+	if g.IsCyclic() {
+		w.WithError(NewCycleDependenciesError(scenario.Slug()))
+	}
+}
+
+type Graph struct {
+	adj map[string][]string
+}
+
+func NewGraph(theses map[string]Thesis) *Graph {
+	adj := make(map[string][]string)
+
+	for key, value := range theses {
+		for _, dependency := range value.dependencies {
+			adj[key] = append(adj[key], dependency.thesis)
+		}
+	}
+
+	return &Graph{
+		adj: adj,
+	}
+}
+
+func (g *Graph) isCyclicUtil(i string, visited map[string]bool, recStack map[string]bool) bool {
+	if recStack[i] {
+		return true
+	}
+
+	if visited[i] {
+		return false
+	}
+
+	visited[i] = true
+	recStack[i] = true
+	children := g.adj[i]
+
+	for _, c := range children {
+		if g.isCyclicUtil(c, visited, recStack) {
+			return true
+		}
+	}
+
+	recStack[i] = false
+
+	return false
+}
+
+func (g *Graph) IsCyclic() bool {
+	visited := make(map[string]bool)
+	recStack := make(map[string]bool)
+
+	for key := range g.adj {
+		if g.isCyclicUtil(key, visited, recStack) {
+			return true
+		}
+	}
+
+	return false
 }

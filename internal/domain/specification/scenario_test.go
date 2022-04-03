@@ -407,3 +407,126 @@ func TestGetScenarioThesisBySlug(t *testing.T) {
 	_, ok = scenario.Thesis("f")
 	require.False(t, ok)
 }
+
+func TestCheckCycleInThesesDependencies(t *testing.T) {
+	t.Parallel()
+
+	scenarioSlug := specification.NewScenarioSlug("foo", "bar")
+
+	testCases := []struct {
+		Name        string
+		Prepare     func(b *specification.ScenarioBuilder)
+		WantThisErr bool
+		IsErr       func(err error) bool
+	}{
+		{
+			Name: "thesis_has_cycle_dependencies",
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("t1", func(b *specification.ThesisBuilder) {
+					b.WithDependency("t2")
+				})
+				b.WithThesis("t2", func(b *specification.ThesisBuilder) {
+					b.WithDependency("t3")
+				})
+				b.WithThesis("t3", func(b *specification.ThesisBuilder) {
+					b.WithDependency("t1")
+				})
+			},
+			WantThisErr: true,
+			IsErr: func(err error) bool {
+				var target *specification.CycleDependenciesError
+
+				return errors.As(err, &target)
+			},
+		},
+		{
+			Name: "thesis_without_cycle_dependencies",
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("t1", func(b *specification.ThesisBuilder) {
+					b.WithDependency("t2")
+				})
+				b.WithThesis("t2", func(b *specification.ThesisBuilder) {
+					b.WithDependency("t3")
+				})
+			},
+			WantThisErr: false,
+			IsErr: func(err error) bool {
+				var target *specification.CycleDependenciesError
+
+				return errors.As(err, &target)
+			},
+		},
+		{
+			Name: "thesis_void_dependencies",
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("t1", func(b *specification.ThesisBuilder) {})
+				b.WithThesis("t2", func(b *specification.ThesisBuilder) {})
+			},
+			WantThisErr: false,
+			IsErr: func(err error) bool {
+				var target *specification.CycleDependenciesError
+
+				return errors.As(err, &target)
+			},
+		},
+		{
+			Name:        "void_thesis",
+			Prepare:     func(b *specification.ScenarioBuilder) {},
+			WantThisErr: false,
+			IsErr: func(err error) bool {
+				var target *specification.CycleDependenciesError
+
+				return errors.As(err, &target)
+			},
+		},
+
+		{
+			Name: "thesis_has_hard_cycle_dependencies",
+			Prepare: func(b *specification.ScenarioBuilder) {
+				b.WithThesis("t1", func(b *specification.ThesisBuilder) {
+					b.WithDependency("t2")
+					b.WithDependency("t3")
+					b.WithDependency("t4")
+				})
+				b.WithThesis("t2", func(b *specification.ThesisBuilder) {
+					b.WithDependency("t5")
+				})
+				b.WithThesis("t3", func(b *specification.ThesisBuilder) {
+					b.WithDependency("t2")
+				})
+				b.WithThesis("t4", func(b *specification.ThesisBuilder) {})
+				b.WithThesis("t5", func(b *specification.ThesisBuilder) {
+					b.WithDependency("t3")
+				})
+			},
+			WantThisErr: true,
+			IsErr: func(err error) bool {
+				var target *specification.CycleDependenciesError
+
+				return errors.As(err, &target)
+			},
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			var b specification.ScenarioBuilder
+
+			c.Prepare(&b)
+
+			_, err := b.Build(scenarioSlug)
+
+			if c.WantThisErr {
+				require.True(t, c.IsErr(err))
+
+				return
+			}
+
+			require.False(t, c.IsErr(err))
+		})
+	}
+}
