@@ -225,3 +225,21 @@ func (e *UndefinedDependencyError) Slug() Slug {
 func (e *UndefinedDependencyError) Error() string {
 	return fmt.Sprintf("undefined `%s` dependency", e.slug)
 }
+
+type CycleDependenciesError struct {
+	slug Slug
+}
+
+func NewCycleDependenciesError(slug Slug) error {
+	return errors.WithStack(&CycleDependenciesError{
+		slug: slug,
+	})
+}
+
+func (e *CycleDependenciesError) Slug() Slug {
+	return e.slug
+}
+
+func (e *CycleDependenciesError) Error() string {
+	return fmt.Sprintf("`%s` cycle dependencies", e.slug)
+}
