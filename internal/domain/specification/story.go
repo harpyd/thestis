@@ -13,14 +13,14 @@ type (
 	}
 
 	StoryBuilder struct {
-		description       string
-		asA               string
-		inOrderTo         string
-		wantTo            string
-		scenarioFactories []scenarioFactory
+		description string
+		asA         string
+		inOrderTo   string
+		wantTo      string
+		scenarioFns []scenarioFunc
 	}
 
-	scenarioFactory func(storySlug Slug) (Scenario, error)
+	scenarioFunc func(storySlug Slug) (Scenario, error)
 )
 
 func (s Story) Slug() Slug {
@@ -77,12 +77,12 @@ func (b *StoryBuilder) Build(slug Slug) (Story, error) {
 
 	var w BuildErrorWrapper
 
-	if len(b.scenarioFactories) == 0 {
+	if len(b.scenarioFns) == 0 {
 		w.WithError(ErrNoStoryScenarios)
 	}
 
-	for _, scenarioFry := range b.scenarioFactories {
-		scenario, err := scenarioFry(slug)
+	for _, fn := range b.scenarioFns {
+		scenario, err := fn(slug)
 		w.WithError(err)
 
 		if _, ok := story.scenarios[scenario.Slug().Scenario()]; ok {
@@ -108,7 +108,7 @@ func (b *StoryBuilder) Reset() {
 	b.asA = ""
 	b.inOrderTo = ""
 	b.wantTo = ""
-	b.scenarioFactories = nil
+	b.scenarioFns = nil
 }
 
 func (b *StoryBuilder) WithDescription(description string) *StoryBuilder {
@@ -140,7 +140,7 @@ func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder
 
 	buildFn(&sb)
 
-	b.scenarioFactories = append(b.scenarioFactories, func(storySlug Slug) (Scenario, error) {
+	b.scenarioFns = append(b.scenarioFns, func(storySlug Slug) (Scenario, error) {
 		return sb.Build(NewScenarioSlug(storySlug.Story(), slug))
 	})
 
