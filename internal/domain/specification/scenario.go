@@ -10,11 +10,11 @@ type (
 	}
 
 	ScenarioBuilder struct {
-		description     string
-		thesisFactories []thesisFactory
+		description string
+		thesisFns   []thesisFunc
 	}
 
-	thesisFactory func(scenarioSlug Slug) (Thesis, error)
+	thesisFunc func(scenarioSlug Slug) (Thesis, error)
 )
 
 func (s Scenario) Slug() Slug {
@@ -73,12 +73,12 @@ func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
 
 	var w BuildErrorWrapper
 
-	if len(b.thesisFactories) == 0 {
+	if len(b.thesisFns) == 0 {
 		w.WithError(ErrNoScenarioTheses)
 	}
 
-	for _, thesisFry := range b.thesisFactories {
-		thesis, err := thesisFry(slug)
+	for _, fn := range b.thesisFns {
+		thesis, err := fn(slug)
 		w.WithError(err)
 
 		if _, ok := scenario.theses[thesis.Slug().Thesis()]; ok {
@@ -103,7 +103,7 @@ func (b *ScenarioBuilder) ErrlessBuild(slug Slug) Scenario {
 
 func (b *ScenarioBuilder) Reset() {
 	b.description = ""
-	b.thesisFactories = nil
+	b.thesisFns = nil
 }
 
 func (b *ScenarioBuilder) WithDescription(description string) *ScenarioBuilder {
@@ -117,7 +117,7 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 
 	buildFn(&tb)
 
-	b.thesisFactories = append(b.thesisFactories, func(scenarioSlug Slug) (Thesis, error) {
+	b.thesisFns = append(b.thesisFns, func(scenarioSlug Slug) (Thesis, error) {
 		return tb.Build(NewThesisSlug(scenarioSlug.Story(), scenarioSlug.Scenario(), slug))
 	})
 
