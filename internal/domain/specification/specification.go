@@ -29,10 +29,10 @@ type (
 		author         string
 		title          string
 		description    string
-		storyFactories []storyFactory
+		storyFns       []storyFunc
 	}
 
-	storyFactory func() (Story, error)
+	storyFunc func() (Story, error)
 )
 
 func (s *Specification) ID() string {
@@ -142,17 +142,17 @@ func (b *Builder) Build() (*Specification, error) {
 		author:         b.author,
 		title:          b.title,
 		description:    b.description,
-		stories:        make(map[string]Story, len(b.storyFactories)),
+		stories:        make(map[string]Story, len(b.storyFns)),
 	}
 
 	var w BuildErrorWrapper
 
-	if len(b.storyFactories) == 0 {
+	if len(b.storyFns) == 0 {
 		w.WithError(ErrNoSpecificationStories)
 	}
 
-	for _, storyFry := range b.storyFactories {
-		story, err := storyFry()
+	for _, fn := range b.storyFns {
+		story, err := fn()
 		w.WithError(err)
 
 		if _, ok := spec.stories[story.Slug().Story()]; ok {
@@ -177,7 +177,7 @@ func (b *Builder) Reset() {
 	b.author = ""
 	b.title = ""
 	b.description = ""
-	b.storyFactories = nil
+	b.storyFns = nil
 }
 
 func (b *Builder) WithID(id string) *Builder {
@@ -227,7 +227,7 @@ func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder
 
 	buildFn(&sb)
 
-	b.storyFactories = append(b.storyFactories, func() (Story, error) {
+	b.storyFns = append(b.storyFns, func() (Story, error) {
 		return sb.Build(NewStorySlug(slug))
 	})
 
