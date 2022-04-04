@@ -223,7 +223,7 @@ func (e *UndefinedDependencyError) Slug() Slug {
 }
 
 func (e *UndefinedDependencyError) Error() string {
-	return fmt.Sprintf("undefined `%s` dependency", e.slug)
+	return fmt.Sprintf("undefined %q dependency", e.slug.Partial())
 }
 
 type CycleDependenciesError struct {

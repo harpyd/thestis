@@ -510,16 +510,16 @@ func TestFormatUndefinedDependencyError(t *testing.T) {
 	}{
 		{
 			GivenError:          &specification.UndefinedDependencyError{},
-			ExpectedErrorString: "undefined `` dependency",
+			ExpectedErrorString: `undefined "" dependency`,
 		},
 		{
 			GivenError:          specification.NewUndefinedDependencyError(specification.Slug{}),
-			ExpectedErrorString: "undefined `` dependency",
+			ExpectedErrorString: `undefined "" dependency`,
 		},
 		{
 			GivenError: specification.NewUndefinedDependencyError(
-				specification.NewThesisSlug("t1", "t2", "t3")),
-			ExpectedErrorString: "undefined `t1.t2.t3` dependency",
+				specification.NewThesisSlug("a", "b", "c")),
+			ExpectedErrorString: `undefined "c" dependency`,
 		},
 	}
 
