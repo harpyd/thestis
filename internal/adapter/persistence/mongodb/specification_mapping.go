@@ -136,8 +136,8 @@ func marshalToThesisDocument(thesis specification.Thesis) thesisDocument {
 		Slug:  thesis.Slug().Thesis(),
 		After: marshalSlugsToStrings(thesis.Dependencies()),
 		Statement: statementDocument{
-			Stage:    thesis.Statement().Stage(),
-			Behavior: thesis.Statement().Behavior(),
+			Stage:    thesis.Stage(),
+			Behavior: thesis.Behavior(),
 		},
 		HTTP:      marshalToHTTPDocument(thesis.HTTP()),
 		Assertion: marshalToAssertionDocument(thesis.Assertion()),

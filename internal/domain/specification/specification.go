@@ -32,7 +32,7 @@ type (
 		storyFns       []storyFunc
 	}
 
-	storyFunc func() (Story, error)
+	storyFunc func() Story
 )
 
 func (s *Specification) ID() string {
@@ -133,8 +133,36 @@ func (s *Specification) ThesesCount() int {
 
 var ErrNoSpecificationStories = errors.New("no stories")
 
+func (s *Specification) validate() error {
+	var w BuildErrorWrapper
+
+	if len(s.stories) == 0 {
+		w.WithError(ErrNoSpecificationStories)
+	}
+
+	for _, story := range s.stories {
+		w.WithError(story.validate())
+	}
+
+	return w.Wrap("specification")
+}
+
 func (b *Builder) Build() (*Specification, error) {
-	spec := &Specification{
+	spec := b.build()
+
+	if err := spec.validate(); err != nil {
+		return nil, err
+	}
+
+	return spec, nil
+}
+
+func (b *Builder) ErrlessBuild() *Specification {
+	return b.build()
+}
+
+func (b *Builder) build() *Specification {
+	return &Specification{
 		id:             b.id,
 		ownerID:        b.ownerID,
 		testCampaignID: b.testCampaignID,
@@ -142,35 +170,24 @@ func (b *Builder) Build() (*Specification, error) {
 		author:         b.author,
 		title:          b.title,
 		description:    b.description,
-		stories:        make(map[string]Story, len(b.storyFns)),
+		stories:        storiesOrNil(b.storyFns),
 	}
-
-	var w BuildErrorWrapper
-
-	if len(b.storyFns) == 0 {
-		w.WithError(ErrNoSpecificationStories)
-	}
-
-	for _, fn := range b.storyFns {
-		story, err := fn()
-		w.WithError(err)
-
-		if _, ok := spec.stories[story.Slug().Story()]; ok {
-			w.WithError(NewDuplicatedError(story.Slug()))
-
-			continue
-		}
-
-		spec.stories[story.Slug().Story()] = story
-	}
-
-	return spec, w.Wrap("specification")
 }
 
-func (b *Builder) ErrlessBuild() *Specification {
-	s, _ := b.Build()
+func storiesOrNil(fns []storyFunc) map[string]Story {
+	if len(fns) == 0 {
+		return nil
+	}
 
-	return s
+	stories := make(map[string]Story, len(fns))
+
+	for _, fn := range fns {
+		story := fn()
+
+		stories[story.Slug().Story()] = story
+	}
+
+	return stories
 }
 
 func (b *Builder) Reset() {
@@ -227,7 +244,7 @@ func (b *Builder) WithStory(slug string, buildFn func(b *StoryBuilder)) *Builder
 
 	buildFn(&sb)
 
-	b.storyFns = append(b.storyFns, func() (Story, error) {
+	b.storyFns = append(b.storyFns, func() Story {
 		return sb.Build(NewStorySlug(slug))
 	})
 

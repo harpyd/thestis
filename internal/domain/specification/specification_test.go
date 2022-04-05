@@ -11,7 +11,7 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
-func errlessBuildSpecification(
+func errlessBuildSpec(
 	t *testing.T,
 	prepare func(b *specification.Builder),
 ) *specification.Specification {
@@ -55,9 +55,9 @@ func TestBuildSpecificationWithID(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			id := errlessBuildSpecification(t, c.Prepare).ID()
+			actualID := errlessBuildSpec(t, c.Prepare).ID()
 
-			require.Equal(t, c.ExpectedID, id)
+			require.Equal(t, c.ExpectedID, actualID)
 		})
 	}
 }
@@ -93,9 +93,9 @@ func TestBuildSpecificationWithOwnerID(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			ownerID := errlessBuildSpecification(t, c.Prepare).OwnerID()
+			actualOwnerID := errlessBuildSpec(t, c.Prepare).OwnerID()
 
-			require.Equal(t, c.ExpectedOwnerID, ownerID)
+			require.Equal(t, c.ExpectedOwnerID, actualOwnerID)
 		})
 	}
 }
@@ -131,9 +131,9 @@ func TestBuildSpecificationWithTestCampaignID(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			testCampaignID := errlessBuildSpecification(t, c.Prepare).TestCampaignID()
+			actualTestCampaignID := errlessBuildSpec(t, c.Prepare).TestCampaignID()
 
-			require.Equal(t, c.ExpectedTestCampaignID, testCampaignID)
+			require.Equal(t, c.ExpectedTestCampaignID, actualTestCampaignID)
 		})
 	}
 }
@@ -171,9 +171,9 @@ func TestBuildSpecificationWithLoadedAt(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			loadedAt := errlessBuildSpecification(t, c.Prepare).LoadedAt()
+			actualLoadedAt := errlessBuildSpec(t, c.Prepare).LoadedAt()
 
-			require.Equal(t, c.ExpectedLoadedAt, loadedAt)
+			require.Equal(t, c.ExpectedLoadedAt, actualLoadedAt)
 		})
 	}
 }
@@ -209,9 +209,9 @@ func TestBuildSpecificationWithAuthor(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			author := errlessBuildSpecification(t, c.Prepare).Author()
+			actualAuthor := errlessBuildSpec(t, c.Prepare).Author()
 
-			require.Equal(t, c.ExpectedAuthor, author)
+			require.Equal(t, c.ExpectedAuthor, actualAuthor)
 		})
 	}
 }
@@ -247,9 +247,9 @@ func TestBuildSpecificationWithTitle(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			title := errlessBuildSpecification(t, c.Prepare).Title()
+			actualTitle := errlessBuildSpec(t, c.Prepare).Title()
 
-			require.Equal(t, c.ExpectedTitle, title)
+			require.Equal(t, c.ExpectedTitle, actualTitle)
 		})
 	}
 }
@@ -285,9 +285,9 @@ func TestBuildSpecificationWithDescription(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			description := errlessBuildSpecification(t, c.Prepare).Description()
+			actualDescription := errlessBuildSpec(t, c.Prepare).Description()
 
-			require.Equal(t, c.ExpectedDescription, description)
+			require.Equal(t, c.ExpectedDescription, actualDescription)
 		})
 	}
 }
@@ -296,24 +296,18 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name              string
 		Prepare           func(b *specification.Builder)
 		ExpectedStories   []specification.Story
 		ExpectedScenarios []specification.Scenario
 		ExpectedTheses    []specification.Thesis
-		WantThisErr       bool
-		IsErr             func(err error) bool
 	}{
 		{
-			Name:        "no_stories",
-			Prepare:     func(b *specification.Builder) {},
-			WantThisErr: true,
-			IsErr: func(err error) bool {
-				return errors.Is(err, specification.ErrNoSpecificationStories)
-			},
+			Prepare:           func(b *specification.Builder) {},
+			ExpectedStories:   nil,
+			ExpectedScenarios: nil,
+			ExpectedTheses:    nil,
 		},
 		{
-			Name: "three_stories",
 			Prepare: func(b *specification.Builder) {
 				b.WithStory("foo", func(b *specification.StoryBuilder) {})
 				b.WithStory("bar", func(b *specification.StoryBuilder) {})
@@ -321,42 +315,28 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 			},
 			ExpectedStories: []specification.Story{
 				(&specification.StoryBuilder{}).
-					ErrlessBuild(specification.NewStorySlug("foo")),
+					Build(specification.NewStorySlug("foo")),
 				(&specification.StoryBuilder{}).
-					ErrlessBuild(specification.NewStorySlug("bar")),
+					Build(specification.NewStorySlug("bar")),
 				(&specification.StoryBuilder{}).
-					ErrlessBuild(specification.NewStorySlug("baz")),
+					Build(specification.NewStorySlug("baz")),
 			},
-			WantThisErr: false,
-			IsErr: func(err error) bool {
-				return errors.Is(err, specification.ErrNoSpecificationStories)
-			},
+			ExpectedScenarios: nil,
+			ExpectedTheses:    nil,
 		},
 		{
-			Name: "story_already_exists",
 			Prepare: func(b *specification.Builder) {
 				b.WithStory("oops", func(b *specification.StoryBuilder) {})
 				b.WithStory("oops", func(b *specification.StoryBuilder) {})
 			},
-			WantThisErr: true,
-			IsErr: func(err error) bool {
-				var target *specification.DuplicatedError
-
-				return errors.As(err, &target)
+			ExpectedStories: []specification.Story{
+				(&specification.StoryBuilder{}).
+					Build(specification.NewStorySlug("oops")),
 			},
+			ExpectedScenarios: nil,
+			ExpectedTheses:    nil,
 		},
 		{
-			Name: "no_story_scenarios",
-			Prepare: func(b *specification.Builder) {
-				b.WithStory("foo", func(b *specification.StoryBuilder) {})
-			},
-			WantThisErr: true,
-			IsErr: func(err error) bool {
-				return errors.Is(err, specification.ErrNoStoryScenarios)
-			},
-		},
-		{
-			Name: "stories_having_scenarios",
 			Prepare: func(b *specification.Builder) {
 				b.WithStory("foo", func(b *specification.StoryBuilder) {
 					b.WithScenario("bar", func(b *specification.ScenarioBuilder) {})
@@ -368,36 +348,37 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 			ExpectedStories: []specification.Story{
 				(&specification.StoryBuilder{}).
 					WithScenario("bar", func(b *specification.ScenarioBuilder) {}).
-					ErrlessBuild(specification.NewStorySlug("foo")),
+					Build(specification.NewStorySlug("foo")),
 				(&specification.StoryBuilder{}).
 					WithScenario("bad", func(b *specification.ScenarioBuilder) {}).
-					ErrlessBuild(specification.NewStorySlug("baz")),
+					Build(specification.NewStorySlug("baz")),
 			},
 			ExpectedScenarios: []specification.Scenario{
 				(&specification.ScenarioBuilder{}).
-					ErrlessBuild(specification.NewScenarioSlug("foo", "bar")),
+					Build(specification.NewScenarioSlug("foo", "bar")),
 				(&specification.ScenarioBuilder{}).
-					ErrlessBuild(specification.NewScenarioSlug("baz", "bad")),
+					Build(specification.NewScenarioSlug("baz", "bad")),
 			},
-			WantThisErr: false,
-			IsErr: func(err error) bool {
-				return errors.Is(err, specification.ErrNoStoryScenarios)
-			},
+			ExpectedTheses: nil,
 		},
 		{
-			Name: "not_scenario_theses",
 			Prepare: func(b *specification.Builder) {
 				b.WithStory("foo", func(b *specification.StoryBuilder) {
 					b.WithScenario("bar", func(b *specification.ScenarioBuilder) {})
 				})
 			},
-			WantThisErr: true,
-			IsErr: func(err error) bool {
-				return errors.Is(err, specification.ErrNoScenarioTheses)
+			ExpectedStories: []specification.Story{
+				(&specification.StoryBuilder{}).
+					WithScenario("bar", func(b *specification.ScenarioBuilder) {}).
+					Build(specification.NewStorySlug("foo")),
 			},
+			ExpectedScenarios: []specification.Scenario{
+				(&specification.ScenarioBuilder{}).
+					Build(specification.NewScenarioSlug("foo", "bar")),
+			},
+			ExpectedTheses: nil,
 		},
 		{
-			Name: "stories_having_scenarios_having_theses",
 			Prepare: func(b *specification.Builder) {
 				b.WithStory("foo", func(b *specification.StoryBuilder) {
 					b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
@@ -422,35 +403,31 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 					WithScenario("kap", func(b *specification.ScenarioBuilder) {
 						b.WithThesis("dam", func(b *specification.ThesisBuilder) {})
 					}).
-					ErrlessBuild(specification.NewStorySlug("foo")),
+					Build(specification.NewStorySlug("foo")),
 				(&specification.StoryBuilder{}).
 					WithScenario("qyp", func(b *specification.ScenarioBuilder) {
 						b.WithThesis("dyq", func(b *specification.ThesisBuilder) {})
 					}).
-					ErrlessBuild(specification.NewStorySlug("qyz")),
+					Build(specification.NewStorySlug("qyz")),
 			},
 			ExpectedScenarios: []specification.Scenario{
 				(&specification.ScenarioBuilder{}).
 					WithThesis("baz", func(b *specification.ThesisBuilder) {}).
-					ErrlessBuild(specification.NewScenarioSlug("foo", "bar")),
+					Build(specification.NewScenarioSlug("foo", "bar")),
 				(&specification.ScenarioBuilder{}).
 					WithThesis("dam", func(b *specification.ThesisBuilder) {}).
-					ErrlessBuild(specification.NewScenarioSlug("foo", "kap")),
+					Build(specification.NewScenarioSlug("foo", "kap")),
 				(&specification.ScenarioBuilder{}).
 					WithThesis("dyq", func(b *specification.ThesisBuilder) {}).
-					ErrlessBuild(specification.NewScenarioSlug("qyz", "qyp")),
+					Build(specification.NewScenarioSlug("qyz", "qyp")),
 			},
 			ExpectedTheses: []specification.Thesis{
 				(&specification.ThesisBuilder{}).
-					ErrlessBuild(specification.NewThesisSlug("foo", "bar", "baz")),
+					Build(specification.NewThesisSlug("foo", "bar", "baz")),
 				(&specification.ThesisBuilder{}).
-					ErrlessBuild(specification.NewThesisSlug("foo", "kap", "dam")),
+					Build(specification.NewThesisSlug("foo", "kap", "dam")),
 				(&specification.ThesisBuilder{}).
-					ErrlessBuild(specification.NewThesisSlug("qyz", "qyp", "dyq")),
-			},
-			WantThisErr: false,
-			IsErr: func(err error) bool {
-				return errors.Is(err, specification.ErrNoScenarioTheses)
+					Build(specification.NewThesisSlug("qyz", "qyp", "dyq")),
 			},
 		},
 	}
@@ -458,22 +435,10 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 	for i := range testCases {
 		c := testCases[i]
 
-		t.Run(c.Name, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var b specification.Builder
-
-			c.Prepare(&b)
-
-			spec, err := b.Build()
-
-			if c.WantThisErr {
-				require.True(t, c.IsErr(err))
-
-				return
-			}
-
-			require.False(t, c.IsErr(err))
+			spec := errlessBuildSpec(t, c.Prepare)
 
 			t.Run("stories", func(t *testing.T) {
 				require.ElementsMatch(t, c.ExpectedStories, spec.Stories())
@@ -505,7 +470,7 @@ func TestBuildSpecificationWithStories(t *testing.T) {
 func TestGetSpecificationStoryBySlug(t *testing.T) {
 	t.Parallel()
 
-	story := errlessBuildSpecification(t, func(b *specification.Builder) {
+	story := errlessBuildSpec(t, func(b *specification.Builder) {
 		b.WithStory("foo", func(b *specification.StoryBuilder) {})
 		b.WithStory("bar", func(b *specification.StoryBuilder) {})
 	})
@@ -516,7 +481,7 @@ func TestGetSpecificationStoryBySlug(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(
 		t,
-		b.ErrlessBuild(
+		b.Build(
 			specification.NewStorySlug("foo"),
 		),
 		foo,
@@ -528,7 +493,7 @@ func TestGetSpecificationStoryBySlug(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(
 		t,
-		b.ErrlessBuild(
+		b.Build(
 			specification.NewStorySlug("bar"),
 		),
 		bar,

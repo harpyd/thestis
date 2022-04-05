@@ -179,7 +179,7 @@ func TestCollectDependencies(t *testing.T) {
 				WithThesis("qwe", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Then, "qwe")
 				}).
-				ErrlessBuild(specification.NewScenarioSlug("foo", "bak")),
+				Build(specification.NewScenarioSlug("foo", "bak")),
 			ExpectedSlug: specification.NewScenarioSlug("foo", "bak"),
 			ExpectedSnapshot: performance.DependenciesSnapshot{
 				specification.NewThesisSlug("foo", "bak", "map"): {
@@ -210,7 +210,7 @@ func TestCollectDependencies(t *testing.T) {
 				WithThesis("tad", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Then, "tad")
 				}).
-				ErrlessBuild(specification.NewScenarioSlug("foo", "bar")),
+				Build(specification.NewScenarioSlug("foo", "bar")),
 			ExpectedSlug: specification.NewScenarioSlug("foo", "bar"),
 			ExpectedSnapshot: performance.DependenciesSnapshot{
 				specification.NewThesisSlug("foo", "bar", "bad"): {
@@ -238,7 +238,7 @@ func TestCollectDependencies(t *testing.T) {
 				WithThesis("bad", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Then, "bad")
 				}).
-				ErrlessBuild(specification.NewScenarioSlug("foo", "loo")),
+				Build(specification.NewScenarioSlug("foo", "loo")),
 			ExpectedSlug: specification.NewScenarioSlug("foo", "loo"),
 			ExpectedSnapshot: performance.DependenciesSnapshot{
 				specification.NewThesisSlug("foo", "loo", "bad"): {
@@ -296,7 +296,7 @@ func TestWaitThesisDependencies(t *testing.T) {
 		{
 			GivenScenario: (&specification.ScenarioBuilder{}).
 				WithThesis("poo", func(b *specification.ThesisBuilder) {}).
-				ErrlessBuild(specification.NewScenarioSlug("foo", "koo")),
+				Build(specification.NewScenarioSlug("foo", "koo")),
 			ThesisToWait: specification.NewThesisSlug("foo", "koo", "poo"),
 			ShouldWait:   true,
 		},
@@ -309,7 +309,7 @@ func TestWaitThesisDependencies(t *testing.T) {
 				WithThesis("too", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Given, "too")
 				}).
-				ErrlessBuild(specification.NewScenarioSlug("foo", "koo")),
+				Build(specification.NewScenarioSlug("foo", "koo")),
 			ThesisToWait: specification.NewThesisSlug("foo", "koo", "nop"),
 			ShouldWait:   true,
 		},
@@ -326,7 +326,7 @@ func TestWaitThesisDependencies(t *testing.T) {
 				WithThesis("qyz", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Given, "qyz")
 				}).
-				ErrlessBuild(specification.NewScenarioSlug("foo", "bar")),
+				Build(specification.NewScenarioSlug("foo", "bar")),
 			ThesisToWait: specification.NewThesisSlug("foo", "bar", "baz"),
 			ThesesToDo: []specification.Slug{
 				specification.NewThesisSlug("foo", "bar", "qyp"),
@@ -343,7 +343,7 @@ func TestWaitThesisDependencies(t *testing.T) {
 				WithThesis("bad", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Given, "bad")
 				}).
-				ErrlessBuild(specification.NewScenarioSlug("foo", "bar")),
+				Build(specification.NewScenarioSlug("foo", "bar")),
 			ThesisToWait: specification.NewThesisSlug("foo", "bar", "baz"),
 			ThesesToDo: []specification.Slug{
 				specification.NewThesisSlug("foo", "bar", "tad"),
@@ -367,7 +367,7 @@ func TestWaitThesisDependencies(t *testing.T) {
 				WithThesis("pyz", func(b *specification.ThesisBuilder) {
 					b.WithStatement(specification.Given, "pyz")
 				}).
-				ErrlessBuild(specification.NewScenarioSlug("foo", "bar")),
+				Build(specification.NewScenarioSlug("foo", "bar")),
 			ThesisToWait: specification.NewThesisSlug("foo", "bar", "baz"),
 			ThesesToDo: []specification.Slug{
 				specification.NewThesisSlug("foo", "bar", "qyp"),

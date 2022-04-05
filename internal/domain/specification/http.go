@@ -81,6 +81,24 @@ func (h HTTP) IsZero() bool {
 	return h.Response().IsZero() && h.Request().IsZero()
 }
 
+var ErrNoHTTPRequest = errors.New("no request")
+
+func (h HTTP) validate() error {
+	var w BuildErrorWrapper
+
+	if h.request.IsZero() {
+		w.WithError(ErrNoHTTPRequest)
+	} else {
+		w.WithError(h.request.validate())
+	}
+
+	if !h.response.IsZero() {
+		w.WithError(h.response.validate())
+	}
+
+	return w.Wrap("HTTP")
+}
+
 func (r HTTPRequest) Method() HTTPMethod {
 	return r.method
 }
@@ -94,11 +112,15 @@ func (r HTTPRequest) ContentType() ContentType {
 }
 
 func (r HTTPRequest) Body() map[string]interface{} {
-	if r.body == nil {
+	return copyBody(r.body)
+}
+
+func copyBody(body map[string]interface{}) map[string]interface{} {
+	if len(body) == 0 {
 		return nil
 	}
 
-	return deepcopy.StringInterfaceMap(r.body)
+	return deepcopy.StringInterfaceMap(body)
 }
 
 func (r HTTPRequest) IsZero() bool {
@@ -106,12 +128,30 @@ func (r HTTPRequest) IsZero() bool {
 		r.contentType == NoContentType && len(r.body) == 0
 }
 
+func (r HTTPRequest) validate() error {
+	var w BuildErrorWrapper
+
+	if !r.method.IsValid() {
+		w.WithError(NewNotAllowedHTTPMethodError(r.method))
+	}
+
+	if !r.contentType.IsValid() {
+		w.WithError(NewNotAllowedContentTypeError(r.contentType))
+	}
+
+	return w.Wrap("request")
+}
+
 func (r HTTPResponse) AllowedCodes() []int {
-	if len(r.allowedCodes) == 0 {
+	return copyAllowedCodes(r.allowedCodes)
+}
+
+func copyAllowedCodes(codes []int) []int {
+	if len(codes) == 0 {
 		return nil
 	}
 
-	return deepcopy.IntSlice(r.allowedCodes)
+	return deepcopy.IntSlice(codes)
 }
 
 func (r HTTPResponse) AllowedContentType() ContentType {
@@ -120,6 +160,16 @@ func (r HTTPResponse) AllowedContentType() ContentType {
 
 func (r HTTPResponse) IsZero() bool {
 	return r.allowedContentType == NoContentType && len(r.allowedCodes) == 0
+}
+
+func (r HTTPResponse) validate() error {
+	var w BuildErrorWrapper
+
+	if !r.allowedContentType.IsValid() {
+		w.WithError(NewNotAllowedContentTypeError(r.allowedContentType))
+	}
+
+	return w.Wrap("response")
 }
 
 func (ct ContentType) IsValid() bool {
@@ -163,25 +213,11 @@ func (m HTTPMethod) String() string {
 	return string(m)
 }
 
-func (b *HTTPBuilder) Build() (HTTP, error) {
-	var w BuildErrorWrapper
-
-	request, err := b.requestBuilder.Build()
-	w.WithError(err)
-
-	response, err := b.responseBuilder.Build()
-	w.WithError(err)
-
+func (b *HTTPBuilder) Build() HTTP {
 	return HTTP{
-		request:  request,
-		response: response,
-	}, w.Wrap("HTTP")
-}
-
-func (b *HTTPBuilder) ErrlessBuild() HTTP {
-	h, _ := b.Build()
-
-	return h
+		request:  b.requestBuilder.Build(),
+		response: b.responseBuilder.Build(),
+	}
 }
 
 func (b *HTTPBuilder) Reset() {
@@ -203,37 +239,21 @@ func (b *HTTPBuilder) WithResponse(buildFn func(b *HTTPResponseBuilder)) *HTTPBu
 	return b
 }
 
-func (b *HTTPRequestBuilder) Build() (HTTPRequest, error) {
-	var w BuildErrorWrapper
-
-	if !b.method.IsValid() {
-		w.WithError(NewNotAllowedHTTPMethodError(b.method))
-	}
-
-	if !b.contentType.IsValid() {
-		w.WithError(NewNotAllowedContentTypeError(b.contentType))
-	}
-
+func (b *HTTPRequestBuilder) Build() HTTPRequest {
 	return HTTPRequest{
 		method:      b.method,
 		url:         b.url,
 		contentType: b.contentType,
-		body:        copyBody(b.body),
-	}, w.Wrap("request")
+		body:        bodyOrNil(b.body),
+	}
 }
 
-func copyBody(body map[string]interface{}) map[string]interface{} {
+func bodyOrNil(body map[string]interface{}) map[string]interface{} {
 	if len(body) == 0 {
 		return nil
 	}
 
-	return deepcopy.StringInterfaceMap(body)
-}
-
-func (b *HTTPRequestBuilder) ErrlessBuild() HTTPRequest {
-	r, _ := b.Build()
-
-	return r
+	return body
 }
 
 func (b *HTTPRequestBuilder) Reset() {
@@ -267,31 +287,19 @@ func (b *HTTPRequestBuilder) WithBody(body map[string]interface{}) *HTTPRequestB
 	return b
 }
 
-func (b *HTTPResponseBuilder) Build() (HTTPResponse, error) {
-	var w BuildErrorWrapper
-
-	if !b.allowedContentType.IsValid() {
-		w.WithError(NewNotAllowedContentTypeError(b.allowedContentType))
-	}
-
+func (b *HTTPResponseBuilder) Build() HTTPResponse {
 	return HTTPResponse{
-		allowedCodes:       copyAllowedCodes(b.allowedCodes),
+		allowedCodes:       allowedCodesOrNil(b.allowedCodes),
 		allowedContentType: b.allowedContentType,
-	}, w.Wrap("response")
+	}
 }
 
-func copyAllowedCodes(codes []int) []int {
+func allowedCodesOrNil(codes []int) []int {
 	if len(codes) == 0 {
 		return nil
 	}
 
-	return deepcopy.IntSlice(codes)
-}
-
-func (b *HTTPResponseBuilder) ErrlessBuild() HTTPResponse {
-	r, _ := b.Build()
-
-	return r
+	return codes
 }
 
 func (b *HTTPResponseBuilder) Reset() {
