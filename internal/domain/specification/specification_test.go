@@ -24,6 +24,220 @@ func errlessBuildSpec(
 	return b.ErrlessBuild()
 }
 
+func TestValidateSpecificationBuilding(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		Prepare     func(b *specification.Builder)
+		ShouldBeErr bool
+		IsErr       func(err error) bool
+	}{
+		{
+			Prepare:     func(b *specification.Builder) {},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoSpecificationStories)
+			},
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithStory("foo", func(b *specification.StoryBuilder) {})
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoStoryScenarios)
+			},
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithStory("foo", func(b *specification.StoryBuilder) {
+					b.WithScenario("bar", func(b *specification.ScenarioBuilder) {})
+				})
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoScenarioTheses)
+			},
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithStory("aaa", func(b *specification.StoryBuilder) {
+					b.WithScenario("bb", func(b *specification.ScenarioBuilder) {
+						b.WithThesis("c", func(b *specification.ThesisBuilder) {
+							b.WithStatement(specification.When, "useless")
+						})
+					})
+				})
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrUselessThesis)
+			},
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithStory("a", func(b *specification.StoryBuilder) {
+					b.WithScenario("b", func(b *specification.ScenarioBuilder) {
+						b.WithThesis("c", func(b *specification.ThesisBuilder) {
+							b.WithStatement(specification.Given, "oops")
+							b.WithDependency("undefined")
+						})
+					})
+				})
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				var target *specification.UndefinedDependencyError
+
+				return errors.As(err, &target)
+			},
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithStory("foo", func(b *specification.StoryBuilder) {
+					b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
+						b.WithThesis("baz", func(b *specification.ThesisBuilder) {
+							b.WithStatement(specification.Given, "none")
+							b.WithAssertion(func(b *specification.AssertionBuilder) {
+								b.WithMethod("unknown")
+							})
+						})
+					})
+				})
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				var target *specification.NotAllowedAssertionMethodError
+
+				return errors.As(err, &target)
+			},
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithStory("a", func(b *specification.StoryBuilder) {
+					b.WithScenario("b", func(b *specification.ScenarioBuilder) {
+						b.WithThesis("c", func(b *specification.ThesisBuilder) {
+							b.WithStatement(specification.Given, "some behavior")
+							b.WithHTTP(func(b *specification.HTTPBuilder) {
+								b.WithResponse(func(b *specification.HTTPResponseBuilder) {
+									b.WithAllowedContentType(specification.ApplicationJSON)
+								})
+							})
+						})
+					})
+				})
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				return errors.Is(err, specification.ErrNoHTTPRequest)
+			},
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithStory("a", func(b *specification.StoryBuilder) {
+					b.WithScenario("b", func(b *specification.ScenarioBuilder) {
+						b.WithThesis("c", func(b *specification.ThesisBuilder) {
+							b.WithStatement(specification.Then, "then")
+							b.WithHTTP(func(b *specification.HTTPBuilder) {
+								b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+									b.WithMethod("unknown")
+								})
+							})
+						})
+					})
+				})
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				var target *specification.NotAllowedHTTPMethodError
+
+				return errors.As(err, &target)
+			},
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithStory("a", func(b *specification.StoryBuilder) {
+					b.WithScenario("b", func(b *specification.ScenarioBuilder) {
+						b.WithThesis("c", func(b *specification.ThesisBuilder) {
+							b.WithStatement(specification.When, "when")
+							b.WithHTTP(func(b *specification.HTTPBuilder) {
+								b.WithRequest(func(b *specification.HTTPRequestBuilder) {
+									b.WithContentType("unknown/content")
+								})
+							})
+						})
+					})
+				})
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				var target *specification.NotAllowedContentTypeError
+
+				return errors.As(err, &target)
+			},
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithStory("foo", func(b *specification.StoryBuilder) {
+					b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
+						b.WithThesis("bad", func(b *specification.ThesisBuilder) {
+							b.WithStatement(specification.Given, "given")
+							b.WithHTTP(func(b *specification.HTTPBuilder) {
+								b.WithResponse(func(b *specification.HTTPResponseBuilder) {
+									b.WithAllowedContentType("bad/content")
+								})
+							})
+						})
+					})
+				})
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				var target *specification.NotAllowedContentTypeError
+
+				return errors.As(err, &target)
+			},
+		},
+		{
+			Prepare: func(b *specification.Builder) {
+				b.WithStory("story", func(b *specification.StoryBuilder) {
+					b.WithScenario("scenario", func(b *specification.ScenarioBuilder) {
+						b.WithThesis("thesis", func(b *specification.ThesisBuilder) {})
+					})
+				})
+			},
+			ShouldBeErr: true,
+			IsErr: func(err error) bool {
+				var target *specification.NotAllowedStageError
+
+				return errors.As(err, &target)
+			},
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var b specification.Builder
+
+			c.Prepare(&b)
+
+			_, err := b.Build()
+
+			if c.ShouldBeErr {
+				require.True(t, c.IsErr(err))
+
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestBuildSpecificationWithID(t *testing.T) {
 	t.Parallel()
 
