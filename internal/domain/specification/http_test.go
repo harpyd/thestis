@@ -20,10 +20,7 @@ func buildHTTP(
 
 	prepare(&b)
 
-	http, err := b.Build()
-	require.NoError(t, err)
-
-	return http
+	return b.Build()
 }
 
 func TestBuildHTTPWithRequest(t *testing.T) {
@@ -45,7 +42,7 @@ func TestBuildHTTPWithRequest(t *testing.T) {
 			},
 			ExpectedRequest: (&specification.HTTPRequestBuilder{}).
 				WithMethod("GET").
-				ErrlessBuild(),
+				Build(),
 		},
 	}
 
@@ -55,7 +52,9 @@ func TestBuildHTTPWithRequest(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.ExpectedRequest, buildHTTP(t, c.Prepare).Request())
+			actualRequest := buildHTTP(t, c.Prepare).Request()
+
+			require.Equal(t, c.ExpectedRequest, actualRequest)
 		})
 	}
 }
@@ -81,7 +80,7 @@ func TestBuildHTTPWithResponse(t *testing.T) {
 			ExpectedResponse: (&specification.HTTPResponseBuilder{}).
 				WithAllowedCodes([]int{200}).
 				WithAllowedContentType("application/json").
-				ErrlessBuild(),
+				Build(),
 		},
 	}
 
@@ -91,7 +90,9 @@ func TestBuildHTTPWithResponse(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.ExpectedResponse, buildHTTP(t, c.Prepare).Response())
+			actualResponse := buildHTTP(t, c.Prepare).Response()
+
+			require.Equal(t, c.ExpectedResponse, actualResponse)
 		})
 	}
 }
@@ -106,10 +107,7 @@ func buildHTTPRequest(
 
 	prepare(&b)
 
-	req, err := b.Build()
-	require.NoError(t, err)
-
-	return req
+	return b.Build()
 }
 
 func TestBuildHTTPRequestWithURL(t *testing.T) {
@@ -143,7 +141,9 @@ func TestBuildHTTPRequestWithURL(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.ExpectedURL, buildHTTPRequest(t, c.Prepare).URL())
+			actualURL := buildHTTPRequest(t, c.Prepare).URL()
+
+			require.Equal(t, c.ExpectedURL, actualURL)
 		})
 	}
 }
@@ -152,135 +152,90 @@ func TestBuildHTTPRequestWithMethod(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name        string
-		Method      specification.HTTPMethod
-		ShouldBeErr bool
+		Prepare        func(b *specification.HTTPRequestBuilder)
+		ExpectedMethod specification.HTTPMethod
 	}{
 		{
-			Name:        "allowed_empty",
-			Method:      specification.NoHTTPMethod,
-			ShouldBeErr: false,
+			Prepare:        func(b *specification.HTTPRequestBuilder) {},
+			ExpectedMethod: specification.NoHTTPMethod,
 		},
 		{
-			Name:        "allowed_GET",
-			Method:      specification.GET,
-			ShouldBeErr: false,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod(specification.NoHTTPMethod)
+			},
+			ExpectedMethod: specification.NoHTTPMethod,
 		},
 		{
-			Name:        "not_allowed_get",
-			Method:      "get",
-			ShouldBeErr: true,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod(specification.GET)
+			},
+			ExpectedMethod: specification.GET,
 		},
 		{
-			Name:        "allowed_POST",
-			Method:      specification.POST,
-			ShouldBeErr: false,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod(specification.POST)
+			},
+			ExpectedMethod: specification.POST,
 		},
 		{
-			Name:        "not_allowed_pOST",
-			Method:      "pOST",
-			ShouldBeErr: true,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod(specification.PUT)
+			},
+			ExpectedMethod: specification.PUT,
 		},
 		{
-			Name:        "allowed_PUT",
-			Method:      specification.PUT,
-			ShouldBeErr: false,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod(specification.PATCH)
+			},
+			ExpectedMethod: specification.PATCH,
 		},
 		{
-			Name:        "not_allowed_pUt",
-			Method:      "pUt",
-			ShouldBeErr: true,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod(specification.DELETE)
+			},
+			ExpectedMethod: specification.DELETE,
 		},
 		{
-			Name:        "allowed_PATCH",
-			Method:      specification.PATCH,
-			ShouldBeErr: false,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod(specification.OPTIONS)
+			},
+			ExpectedMethod: specification.OPTIONS,
 		},
 		{
-			Name:        "not_allowed_pAtCH",
-			Method:      "pAtCH",
-			ShouldBeErr: true,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod(specification.TRACE)
+			},
+			ExpectedMethod: specification.TRACE,
 		},
 		{
-			Name:        "allowed_DELETE",
-			Method:      specification.DELETE,
-			ShouldBeErr: false,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod(specification.CONNECT)
+			},
+			ExpectedMethod: specification.CONNECT,
 		},
 		{
-			Name:        "not_allowed_delete",
-			Method:      "delete",
-			ShouldBeErr: true,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod(specification.HEAD)
+			},
+			ExpectedMethod: specification.HEAD,
 		},
 		{
-			Name:        "allowed_OPTIONS",
-			Method:      specification.OPTIONS,
-			ShouldBeErr: false,
-		},
-		{
-			Name:        "not_allowed_OPtions",
-			Method:      "OPtions",
-			ShouldBeErr: true,
-		},
-		{
-			Name:        "allowed_TRACE",
-			Method:      specification.TRACE,
-			ShouldBeErr: false,
-		},
-		{
-			Name:        "not_allowed_tRACE",
-			Method:      "tRACE",
-			ShouldBeErr: true,
-		},
-		{
-			Name:        "allowed_CONNECT",
-			Method:      specification.CONNECT,
-			ShouldBeErr: false,
-		},
-		{
-			Name:        "not_allowed_connECT",
-			Method:      "connECT",
-			ShouldBeErr: true,
-		},
-		{
-			Name:        "allowed_HEAD",
-			Method:      specification.HEAD,
-			ShouldBeErr: false,
-		},
-		{
-			Name:        "not_allowed_head",
-			Method:      "head",
-			ShouldBeErr: true,
-		},
-		{
-			Name:        "not_allowed_PAST",
-			Method:      "PAST",
-			ShouldBeErr: true,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithMethod("UNKNOWN")
+			},
+			ExpectedMethod: "UNKNOWN",
 		},
 	}
 
-	for _, c := range testCases {
-		c := c
+	for i := range testCases {
+		c := testCases[i]
 
-		t.Run(c.Name, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var b specification.HTTPRequestBuilder
+			actualMethod := buildHTTPRequest(t, c.Prepare).Method()
 
-			b.WithMethod(c.Method)
-
-			request, err := b.Build()
-
-			if c.ShouldBeErr {
-				var target *specification.NotAllowedHTTPMethodError
-
-				require.ErrorAs(t, err, &target)
-
-				return
-			}
-
-			require.NoError(t, err)
-
-			require.Equal(t, c.Method, request.Method())
+			require.Equal(t, c.ExpectedMethod, actualMethod)
 		})
 	}
 }
@@ -289,55 +244,48 @@ func TestBuildHTTPRequestWithContentType(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name        string
-		ContentType specification.ContentType
-		ShouldBeErr bool
+		Prepare             func(b *specification.HTTPRequestBuilder)
+		ExpectedContentType specification.ContentType
 	}{
 		{
-			Name:        "allowed_empty",
-			ContentType: specification.NoContentType,
-			ShouldBeErr: false,
+			Prepare:             func(b *specification.HTTPRequestBuilder) {},
+			ExpectedContentType: specification.NoContentType,
 		},
 		{
-			Name:        "allowed_application/json",
-			ContentType: specification.ApplicationJSON,
-			ShouldBeErr: false,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithContentType(specification.NoContentType)
+			},
+			ExpectedContentType: specification.NoContentType,
 		},
 		{
-			Name:        "allowed_application/xml",
-			ContentType: specification.ApplicationXML,
-			ShouldBeErr: false,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithContentType(specification.ApplicationJSON)
+			},
+			ExpectedContentType: specification.ApplicationJSON,
 		},
 		{
-			Name:        "not_allowed_content/type",
-			ContentType: "content/type",
-			ShouldBeErr: true,
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithContentType(specification.ApplicationXML)
+			},
+			ExpectedContentType: specification.ApplicationXML,
+		},
+		{
+			Prepare: func(b *specification.HTTPRequestBuilder) {
+				b.WithContentType("content/type")
+			},
+			ExpectedContentType: "content/type",
 		},
 	}
 
-	for _, c := range testCases {
-		c := c
+	for i := range testCases {
+		c := testCases[i]
 
-		t.Run(c.Name, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var b specification.HTTPRequestBuilder
+			actualContentType := buildHTTPRequest(t, c.Prepare).ContentType()
 
-			b.WithContentType(c.ContentType)
-
-			request, err := b.Build()
-
-			if c.ShouldBeErr {
-				var target *specification.NotAllowedContentTypeError
-
-				require.ErrorAs(t, err, &target)
-
-				return
-			}
-
-			require.NoError(t, err)
-
-			require.Equal(t, c.ContentType, request.ContentType())
+			require.Equal(t, c.ExpectedContentType, actualContentType)
 		})
 	}
 }
@@ -379,7 +327,9 @@ func TestBuildHTTPRequestWithBody(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			require.Equal(t, c.ExpectedBody, buildHTTPRequest(t, c.Prepare).Body())
+			actualBody := buildHTTPRequest(t, c.Prepare).Body()
+
+			require.Equal(t, c.ExpectedBody, actualBody)
 		})
 	}
 }
@@ -416,10 +366,7 @@ func buildHTTPResponse(
 
 	prepare(&b)
 
-	resp, err := b.Build()
-	require.NoError(t, err)
-
-	return resp
+	return b.Build()
 }
 
 func TestBuildHTTPResponseWithAllowedCodes(t *testing.T) {
@@ -453,7 +400,9 @@ func TestBuildHTTPResponseWithAllowedCodes(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			require.ElementsMatch(t, c.ExpectedAllowedCodes, buildHTTPResponse(t, c.Prepare).AllowedCodes())
+			actualAllowedCodes := buildHTTPResponse(t, c.Prepare).AllowedCodes()
+
+			require.ElementsMatch(t, c.ExpectedAllowedCodes, actualAllowedCodes)
 		})
 	}
 }
@@ -462,55 +411,48 @@ func TestBuildHTTPResponseWithAllowedContentType(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name        string
-		ContentType specification.ContentType
-		ShouldBeErr bool
+		Prepare             func(b *specification.HTTPResponseBuilder)
+		ExpectedContentType specification.ContentType
 	}{
 		{
-			Name:        "allowed_empty",
-			ContentType: specification.NoContentType,
-			ShouldBeErr: false,
+			Prepare:             func(b *specification.HTTPResponseBuilder) {},
+			ExpectedContentType: specification.NoContentType,
 		},
 		{
-			Name:        "allowed_application/json",
-			ContentType: specification.ApplicationJSON,
-			ShouldBeErr: false,
+			Prepare: func(b *specification.HTTPResponseBuilder) {
+				b.WithAllowedContentType(specification.NoContentType)
+			},
+			ExpectedContentType: specification.NoContentType,
 		},
 		{
-			Name:        "allowed_application/xml",
-			ContentType: specification.ApplicationXML,
-			ShouldBeErr: false,
+			Prepare: func(b *specification.HTTPResponseBuilder) {
+				b.WithAllowedContentType(specification.ApplicationJSON)
+			},
+			ExpectedContentType: specification.ApplicationJSON,
 		},
 		{
-			Name:        "not_allowed_some/content",
-			ContentType: "some/content",
-			ShouldBeErr: true,
+			Prepare: func(b *specification.HTTPResponseBuilder) {
+				b.WithAllowedContentType(specification.ApplicationXML)
+			},
+			ExpectedContentType: specification.ApplicationXML,
+		},
+		{
+			Prepare: func(b *specification.HTTPResponseBuilder) {
+				b.WithAllowedContentType("some/type")
+			},
+			ExpectedContentType: "some/type",
 		},
 	}
 
-	for _, c := range testCases {
-		c := c
+	for i := range testCases {
+		c := testCases[i]
 
-		t.Run(c.Name, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var b specification.HTTPResponseBuilder
+			actualContentType := buildHTTPResponse(t, c.Prepare).AllowedContentType()
 
-			b.WithAllowedContentType(c.ContentType)
-
-			request, err := b.Build()
-
-			if c.ShouldBeErr {
-				var target *specification.NotAllowedContentTypeError
-
-				require.ErrorAs(t, err, &target)
-
-				return
-			}
-
-			require.NoError(t, err)
-
-			require.Equal(t, c.ContentType, request.AllowedContentType())
+			require.Equal(t, c.ExpectedContentType, actualContentType)
 		})
 	}
 }
@@ -519,112 +461,90 @@ func TestHTTPMethodIsValid(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name          string
 		Method        specification.HTTPMethod
 		ShouldBeValid bool
 	}{
 		{
-			Name:          "allowed_empty",
 			Method:        specification.NoHTTPMethod,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "allowed_GET",
 			Method:        specification.GET,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "not_allowed_get",
 			Method:        "get",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "allowed_POST",
 			Method:        specification.POST,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "not_allowed_post",
 			Method:        "post",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "allowed_PUT",
 			Method:        specification.PUT,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "not_allowed_put",
 			Method:        "put",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "allowed_PATCH",
 			Method:        specification.PATCH,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "not_allowed_patch",
 			Method:        "patch",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "allowed_DELETE",
 			Method:        specification.DELETE,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "not_allowed_delete",
 			Method:        "delete",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "allowed_OPTIONS",
 			Method:        specification.OPTIONS,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "not_allowed_options",
 			Method:        "options",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "allowed_TRACE",
 			Method:        specification.TRACE,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "not_allowed_trace",
 			Method:        "trace",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "allowed_CONNECT",
 			Method:        specification.CONNECT,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "not_allowed_connect",
 			Method:        "connect",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "allowed_HEAD",
 			Method:        specification.HEAD,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "not_allowed_head",
 			Method:        "head",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "not_allowed_PAST",
 			Method:        "PAST",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "unknown",
 			Method:        specification.UnknownHTTPMethod,
 			ShouldBeValid: false,
 		},
@@ -645,42 +565,34 @@ func TestContentTypeIsValid(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name          string
 		ContentType   specification.ContentType
 		ShouldBeValid bool
 	}{
 		{
-			Name:          "allowed_empty",
 			ContentType:   specification.NoContentType,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "allowed_application/json",
 			ContentType:   specification.ApplicationJSON,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "not_allowed_application/JSON",
 			ContentType:   "application/JSON",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "allowed_application/xml",
 			ContentType:   specification.ApplicationXML,
 			ShouldBeValid: true,
 		},
 		{
-			Name:          "not_allowed_application/XML",
 			ContentType:   "application/XML",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "not_allowed_some/content",
 			ContentType:   "some/content",
 			ShouldBeValid: false,
 		},
 		{
-			Name:          "unknown",
 			ContentType:   specification.UnknownContentType,
 			ShouldBeValid: false,
 		},

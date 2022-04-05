@@ -62,7 +62,7 @@ func SyncDependencies(scenario specification.Scenario) ScenarioSyncGroup {
 }
 
 func thesisBefore(scenario specification.Scenario, thesis specification.Thesis) []specification.Slug {
-	beforeStages := thesis.Statement().Stage().Before()
+	beforeStages := thesis.Stage().Before()
 
 	theses := scenario.ThesesByStages(beforeStages...)
 

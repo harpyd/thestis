@@ -20,7 +20,7 @@ type (
 		scenarioFns []scenarioFunc
 	}
 
-	scenarioFunc func(storySlug Slug) (Scenario, error)
+	scenarioFunc func(storySlug Slug) Scenario
 )
 
 func (s Story) Slug() Slug {
@@ -61,46 +61,49 @@ func (s Story) Scenario(slug string) (scenario Scenario, ok bool) {
 
 var ErrNoStoryScenarios = errors.New("no scenarios")
 
-func (b *StoryBuilder) Build(slug Slug) (Story, error) {
+func (s Story) validate() error {
+	var w BuildErrorWrapper
+
+	if len(s.scenarios) == 0 {
+		w.WithError(ErrNoStoryScenarios)
+	}
+
+	for _, scenario := range s.scenarios {
+		w.WithError(scenario.validate())
+	}
+
+	return w.SluggedWrap(s.slug)
+}
+
+func (b *StoryBuilder) Build(slug Slug) Story {
 	if err := slug.ShouldBeStoryKind(); err != nil {
 		panic(err)
 	}
 
-	story := Story{
+	return Story{
 		slug:        slug,
 		description: b.description,
 		asA:         b.asA,
 		inOrderTo:   b.inOrderTo,
 		wantTo:      b.wantTo,
-		scenarios:   make(map[string]Scenario),
+		scenarios:   scenariosOrNil(slug, b.scenarioFns),
 	}
-
-	var w BuildErrorWrapper
-
-	if len(b.scenarioFns) == 0 {
-		w.WithError(ErrNoStoryScenarios)
-	}
-
-	for _, fn := range b.scenarioFns {
-		scenario, err := fn(slug)
-		w.WithError(err)
-
-		if _, ok := story.scenarios[scenario.Slug().Scenario()]; ok {
-			w.WithError(NewDuplicatedError(scenario.Slug()))
-
-			continue
-		}
-
-		story.scenarios[scenario.Slug().Scenario()] = scenario
-	}
-
-	return story, w.SluggedWrap(slug)
 }
 
-func (b *StoryBuilder) ErrlessBuild(slug Slug) Story {
-	s, _ := b.Build(slug)
+func scenariosOrNil(storySlug Slug, fns []scenarioFunc) map[string]Scenario {
+	if len(fns) == 0 {
+		return nil
+	}
 
-	return s
+	scenarios := make(map[string]Scenario, len(fns))
+
+	for _, fn := range fns {
+		scenario := fn(storySlug)
+
+		scenarios[scenario.Slug().Scenario()] = scenario
+	}
+
+	return scenarios
 }
 
 func (b *StoryBuilder) Reset() {
@@ -140,7 +143,7 @@ func (b *StoryBuilder) WithScenario(slug string, buildFn func(b *ScenarioBuilder
 
 	buildFn(&sb)
 
-	b.scenarioFns = append(b.scenarioFns, func(storySlug Slug) (Scenario, error) {
+	b.scenarioFns = append(b.scenarioFns, func(storySlug Slug) Scenario {
 		return sb.Build(NewScenarioSlug(storySlug.Story(), slug))
 	})
 

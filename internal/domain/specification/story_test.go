@@ -1,7 +1,6 @@
 package specification_test
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
@@ -43,7 +42,7 @@ func TestBuildStorySlugging(t *testing.T) {
 			var story specification.Story
 
 			buildFn := func() {
-				story = b.ErrlessBuild(c.GivenSlug)
+				story = b.Build(c.GivenSlug)
 			}
 
 			if c.ShouldPanic {
@@ -59,7 +58,7 @@ func TestBuildStorySlugging(t *testing.T) {
 	}
 }
 
-func errlessBuildStory(
+func buildStory(
 	t *testing.T,
 	slug specification.Slug,
 	prepare func(b *specification.StoryBuilder),
@@ -70,7 +69,7 @@ func errlessBuildStory(
 
 	prepare(&b)
 
-	return b.ErrlessBuild(slug)
+	return b.Build(slug)
 }
 
 func TestBuildStoryWithDescription(t *testing.T) {
@@ -104,12 +103,11 @@ func TestBuildStoryWithDescription(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var (
-				slug        = specification.NewStorySlug("foo")
-				description = errlessBuildStory(t, slug, c.Prepare).Description()
-			)
+			slug := specification.NewStorySlug("foo")
 
-			require.Equal(t, c.ExpectedDescription, description)
+			actualDescription := buildStory(t, slug, c.Prepare).Description()
+
+			require.Equal(t, c.ExpectedDescription, actualDescription)
 		})
 	}
 }
@@ -145,12 +143,11 @@ func TestBuildStoryWithAsA(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var (
-				slug = specification.NewStorySlug("foo")
-				asA  = errlessBuildStory(t, slug, c.Prepare).AsA()
-			)
+			slug := specification.NewStorySlug("bar")
 
-			require.Equal(t, c.ExpectedAsA, asA)
+			actualAsA := buildStory(t, slug, c.Prepare).AsA()
+
+			require.Equal(t, c.ExpectedAsA, actualAsA)
 		})
 	}
 }
@@ -186,12 +183,11 @@ func TestBuildStoryWithInOrderTo(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var (
-				slug      = specification.NewStorySlug("foo")
-				inOrderTo = errlessBuildStory(t, slug, c.Prepare).InOrderTo()
-			)
+			slug := specification.NewStorySlug("aaa")
 
-			require.Equal(t, c.ExpectedInOrderTo, inOrderTo)
+			actualInOrderTo := buildStory(t, slug, c.Prepare).InOrderTo()
+
+			require.Equal(t, c.ExpectedInOrderTo, actualInOrderTo)
 		})
 	}
 }
@@ -227,12 +223,11 @@ func TestBuildStoryWithWantTo(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var (
-				slug   = specification.NewStorySlug("foo")
-				wantTo = errlessBuildStory(t, slug, c.Prepare).WantTo()
-			)
+			slug := specification.NewStorySlug("buf")
 
-			require.Equal(t, c.ExpectedWantTo, wantTo)
+			actualWantTo := buildStory(t, slug, c.Prepare).WantTo()
+
+			require.Equal(t, c.ExpectedWantTo, actualWantTo)
 		})
 	}
 }
@@ -240,61 +235,34 @@ func TestBuildStoryWithWantTo(t *testing.T) {
 func TestBuildStoryWithScenarios(t *testing.T) {
 	t.Parallel()
 
-	storySlug := specification.NewStorySlug("foo")
-
 	testCases := []struct {
-		Name              string
 		Prepare           func(b *specification.StoryBuilder)
 		ExpectedScenarios []specification.Scenario
-		WantThisErr       bool
-		IsErr             func(err error) bool
 	}{
 		{
-			Name:        "no_scenarios",
-			Prepare:     func(b *specification.StoryBuilder) {},
-			WantThisErr: true,
-			IsErr: func(err error) bool {
-				return errors.Is(err, specification.ErrNoStoryScenarios)
-			},
+			Prepare:           func(b *specification.StoryBuilder) {},
+			ExpectedScenarios: nil,
 		},
 		{
-			Name: "two_scenarios",
 			Prepare: func(b *specification.StoryBuilder) {
 				b.WithScenario("bar", func(b *specification.ScenarioBuilder) {})
 				b.WithScenario("baz", func(b *specification.ScenarioBuilder) {})
 			},
 			ExpectedScenarios: []specification.Scenario{
 				(&specification.ScenarioBuilder{}).
-					ErrlessBuild(specification.NewScenarioSlug("foo", "bar")),
+					Build(specification.NewScenarioSlug("a", "bar")),
 				(&specification.ScenarioBuilder{}).
-					ErrlessBuild(specification.NewScenarioSlug("foo", "baz")),
-			},
-			WantThisErr: false,
-			IsErr: func(err error) bool {
-				return errors.Is(err, specification.ErrNoStoryScenarios)
+					Build(specification.NewScenarioSlug("a", "baz")),
 			},
 		},
 		{
-			Name: "scenario_already_exists",
 			Prepare: func(b *specification.StoryBuilder) {
 				b.WithScenario("wow", func(b *specification.ScenarioBuilder) {})
 				b.WithScenario("wow", func(b *specification.ScenarioBuilder) {})
 			},
-			WantThisErr: true,
-			IsErr: func(err error) bool {
-				var target *specification.DuplicatedError
-
-				return errors.As(err, &target)
-			},
-		},
-		{
-			Name: "no_scenario_theses",
-			Prepare: func(b *specification.StoryBuilder) {
-				b.WithScenario("no", func(b *specification.ScenarioBuilder) {})
-			},
-			WantThisErr: true,
-			IsErr: func(err error) bool {
-				return errors.Is(err, specification.ErrNoScenarioTheses)
+			ExpectedScenarios: []specification.Scenario{
+				(&specification.ScenarioBuilder{}).
+					Build(specification.NewScenarioSlug("a", "wow")),
 			},
 		},
 	}
@@ -305,21 +273,11 @@ func TestBuildStoryWithScenarios(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var b specification.StoryBuilder
+			slug := specification.NewStorySlug("a")
 
-			c.Prepare(&b)
+			actualScenarios := buildStory(t, slug, c.Prepare).Scenarios()
 
-			story, err := b.Build(storySlug)
-
-			if c.WantThisErr {
-				require.True(t, c.IsErr(err))
-
-				return
-			}
-
-			require.False(t, c.IsErr(err))
-
-			require.ElementsMatch(t, c.ExpectedScenarios, story.Scenarios())
+			require.ElementsMatch(t, c.ExpectedScenarios, actualScenarios)
 		})
 	}
 }
@@ -327,13 +285,12 @@ func TestBuildStoryWithScenarios(t *testing.T) {
 func TestGetStoryScenarioBySlug(t *testing.T) {
 	t.Parallel()
 
-	var (
-		slug  = specification.NewStorySlug("foo")
-		story = errlessBuildStory(t, slug, func(b *specification.StoryBuilder) {
-			b.WithScenario("bad", func(b *specification.ScenarioBuilder) {})
-			b.WithScenario("baz", func(b *specification.ScenarioBuilder) {})
-		})
-	)
+	slug := specification.NewStorySlug("foo")
+
+	story := buildStory(t, slug, func(b *specification.StoryBuilder) {
+		b.WithScenario("bad", func(b *specification.ScenarioBuilder) {})
+		b.WithScenario("baz", func(b *specification.ScenarioBuilder) {})
+	})
 
 	var b specification.ScenarioBuilder
 
@@ -341,7 +298,7 @@ func TestGetStoryScenarioBySlug(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(
 		t,
-		b.ErrlessBuild(
+		b.Build(
 			specification.NewScenarioSlug("foo", "bad"),
 		),
 		bad,
@@ -353,7 +310,7 @@ func TestGetStoryScenarioBySlug(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(
 		t,
-		b.ErrlessBuild(
+		b.Build(
 			specification.NewScenarioSlug("foo", "baz"),
 		),
 		baz,

@@ -1,7 +1,6 @@
 package specification
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -197,26 +196,4 @@ func replaceSlugIfEmpty(s string) string {
 	}
 
 	return s
-}
-
-type DuplicatedError struct {
-	slug Slug
-}
-
-func NewDuplicatedError(slug Slug) error {
-	return errors.WithStack(&DuplicatedError{
-		slug: slug,
-	})
-}
-
-func (e *DuplicatedError) Slug() Slug {
-	return e.slug
-}
-
-func (e *DuplicatedError) Error() string {
-	if e == nil || e.slug.IsZero() {
-		return ""
-	}
-
-	return fmt.Sprintf("%q already exists", e.slug.Partial())
 }

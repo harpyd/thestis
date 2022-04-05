@@ -10,64 +10,65 @@ import (
 	"github.com/harpyd/thestis/internal/domain/specification"
 )
 
+func buildAssertion(
+	t *testing.T,
+	prepare func(b *specification.AssertionBuilder),
+) specification.Assertion {
+	t.Helper()
+
+	var b specification.AssertionBuilder
+
+	prepare(&b)
+
+	return b.Build()
+}
+
 func TestBuildAssertionWithMethod(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name        string
-		GivenMethod specification.AssertionMethod
-		ShouldBeErr bool
+		Prepare        func(b *specification.AssertionBuilder)
+		ExpectedMethod specification.AssertionMethod
 	}{
 		{
-			Name:        "allowed_empty",
-			GivenMethod: specification.NoAssertionMethod,
-			ShouldBeErr: false,
+			Prepare:        func(b *specification.AssertionBuilder) {},
+			ExpectedMethod: specification.NoAssertionMethod,
 		},
 		{
-			Name:        "allowed_JSONPATH",
-			GivenMethod: "JSONPATH",
-			ShouldBeErr: true,
+			Prepare: func(b *specification.AssertionBuilder) {
+				b.WithMethod(specification.NoAssertionMethod)
+			},
+			ExpectedMethod: specification.NoAssertionMethod,
 		},
 		{
-			Name:        "allowed_jsonpath",
-			GivenMethod: specification.JSONPath,
-			ShouldBeErr: false,
+			Prepare: func(b *specification.AssertionBuilder) {
+				b.WithMethod(specification.UnknownAssertionMethod)
+			},
+			ExpectedMethod: specification.UnknownAssertionMethod,
 		},
 		{
-			Name:        "allowed_jsonPATH",
-			GivenMethod: "jsonPATH",
-			ShouldBeErr: true,
+			Prepare: func(b *specification.AssertionBuilder) {
+				b.WithMethod(specification.JSONPath)
+			},
+			ExpectedMethod: specification.JSONPath,
 		},
 		{
-			Name:        "not_allowed_JAYZ",
-			GivenMethod: "JAYZ",
-			ShouldBeErr: true,
+			Prepare: func(b *specification.AssertionBuilder) {
+				b.WithMethod("JAYZ")
+			},
+			ExpectedMethod: "JAYZ",
 		},
 	}
 
-	for _, c := range testCases {
-		c := c
+	for i := range testCases {
+		c := testCases[i]
 
-		t.Run(c.Name, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var b specification.AssertionBuilder
+			actualMethod := buildAssertion(t, c.Prepare).Method()
 
-			b.WithMethod(c.GivenMethod)
-
-			assertion, err := b.Build()
-
-			if c.ShouldBeErr {
-				var target *specification.NotAllowedAssertionMethodError
-
-				require.ErrorAs(t, err, &target)
-
-				return
-			}
-
-			require.NoError(t, err)
-
-			require.Equal(t, c.GivenMethod, assertion.Method())
+			require.Equal(t, c.ExpectedMethod, actualMethod)
 		})
 	}
 }
@@ -112,16 +113,9 @@ func TestBuildAssertionWithAsserts(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var b specification.AssertionBuilder
+			actualAsserts := buildAssertion(t, c.Prepare).Asserts()
 
-			c.Prepare(&b)
-
-			assertion, err := b.Build()
-			require.NoError(t, err)
-
-			asserts := assertion.Asserts()
-
-			require.ElementsMatch(t, c.ExpectedAsserts, asserts)
+			require.ElementsMatch(t, c.ExpectedAsserts, actualAsserts)
 		})
 	}
 }

@@ -9,15 +9,11 @@ import (
 type (
 	Thesis struct {
 		slug         Slug
-		dependencies []Slug
-		statement    Statement
+		dependencies map[Slug]bool
+		stage        Stage
+		behavior     string
 		http         HTTP
 		assertion    Assertion
-	}
-
-	Statement struct {
-		stage    Stage
-		behavior string
 	}
 
 	ThesisBuilder struct {
@@ -44,11 +40,29 @@ func (t Thesis) Slug() Slug {
 }
 
 func (t Thesis) Dependencies() []Slug {
-	return t.dependencies
+	return copyDependencies(t.dependencies)
 }
 
-func (t Thesis) Statement() Statement {
-	return t.statement
+func copyDependencies(deps map[Slug]bool) []Slug {
+	if len(deps) == 0 {
+		return nil
+	}
+
+	result := make([]Slug, 0, len(deps))
+
+	for dep := range deps {
+		result = append(result, dep)
+	}
+
+	return result
+}
+
+func (t Thesis) Stage() Stage {
+	return t.stage
+}
+
+func (t Thesis) Behavior() string {
+	return t.behavior
 }
 
 func (t Thesis) HTTP() HTTP {
@@ -57,14 +71,6 @@ func (t Thesis) HTTP() HTTP {
 
 func (t Thesis) Assertion() Assertion {
 	return t.assertion
-}
-
-func (s Statement) Stage() Stage {
-	return s.stage
-}
-
-func (s Statement) Behavior() string {
-	return s.behavior
 }
 
 func (s Stage) Before() []Stage {
@@ -103,52 +109,63 @@ func (s Stage) String() string {
 
 var ErrUselessThesis = errors.New("useless thesis")
 
-func (b *ThesisBuilder) Build(slug Slug) (Thesis, error) {
+func (t Thesis) validate(ctxScenario Scenario) error {
+	var w BuildErrorWrapper
+
+	switch {
+	case !t.http.IsZero():
+		w.WithError(t.http.validate())
+	case !t.assertion.IsZero():
+		w.WithError(t.assertion.validate())
+	default:
+		w.WithError(ErrUselessThesis)
+	}
+
+	if !t.stage.IsValid() {
+		w.WithError(NewNotAllowedStageError(t.stage))
+	}
+
+	for dep := range t.dependencies {
+		if _, ok := ctxScenario.theses[dep.Thesis()]; !ok {
+			w.WithError(NewUndefinedDependencyError(dep))
+		}
+	}
+
+	return w.SluggedWrap(t.slug)
+}
+
+func (b *ThesisBuilder) Build(slug Slug) Thesis {
 	if err := slug.ShouldBeThesisKind(); err != nil {
 		panic(err)
 	}
 
-	var w BuildErrorWrapper
-
-	http, err := b.httpBuilder.Build()
-	w.WithError(err)
-
-	assertion, err := b.assertionBuilder.Build()
-	w.WithError(err)
-
-	if http.IsZero() && assertion.IsZero() {
-		w.WithError(ErrUselessThesis)
-	}
-
-	if !b.stage.IsValid() {
-		w.WithError(NewNotAllowedStageError(b.stage))
-	}
-
-	thesis := Thesis{
+	return Thesis{
 		slug:         slug,
-		dependencies: make([]Slug, 0, len(b.dependencies)),
-		statement: Statement{
-			stage:    b.stage,
-			behavior: b.behavior,
-		},
-		http:      http,
-		assertion: assertion,
+		dependencies: dependenciesOrNil(slug, b.dependencies),
+		stage:        b.stage,
+		behavior:     b.behavior,
+		http:         b.httpBuilder.Build(),
+		assertion:    b.assertionBuilder.Build(),
 	}
-
-	for _, dep := range b.dependencies {
-		thesis.dependencies = append(
-			thesis.dependencies,
-			NewThesisSlug(slug.Story(), slug.Scenario(), dep),
-		)
-	}
-
-	return thesis, w.SluggedWrap(slug)
 }
 
-func (b *ThesisBuilder) ErrlessBuild(slug Slug) Thesis {
-	t, _ := b.Build(slug)
+func dependenciesOrNil(thesisSlug Slug, deps []string) map[Slug]bool {
+	if len(deps) == 0 {
+		return nil
+	}
 
-	return t
+	theses := make(map[Slug]bool, len(deps))
+
+	for _, dep := range deps {
+		slug := NewThesisSlug(
+			thesisSlug.Story(),
+			thesisSlug.Scenario(),
+			dep,
+		)
+		theses[slug] = true
+	}
+
+	return theses
 }
 
 func (b *ThesisBuilder) Reset() {
