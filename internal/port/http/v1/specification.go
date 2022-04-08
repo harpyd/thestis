@@ -20,8 +20,8 @@ func (h handler) LoadSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request,
 
 	loadedSpecID, err := h.app.Commands.LoadSpecification.Handle(r.Context(), cmd)
 	if err == nil {
-		w.WriteHeader(stdhttp.StatusCreated)
 		w.Header().Set("Location", fmt.Sprintf("/specifications/%s", loadedSpecID))
+		w.WriteHeader(stdhttp.StatusCreated)
 
 		return
 	}
