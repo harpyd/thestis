@@ -36,16 +36,28 @@ func (a Assertion) Method() AssertionMethod {
 }
 
 func (a Assertion) Asserts() []Assert {
-	count := len(a.asserts)
+	return copyAsserts(a.asserts)
+}
 
-	if count == 0 {
+func (a Assertion) validate() error {
+	var w BuildErrorWrapper
+
+	if !a.method.IsValid() {
+		w.WithError(NewNotAllowedAssertionMethodError(a.method))
+	}
+
+	return w.Wrap("assertion")
+}
+
+func copyAsserts(asserts []Assert) []Assert {
+	if len(asserts) == 0 {
 		return nil
 	}
 
-	asserts := make([]Assert, count)
-	copy(asserts, a.asserts)
+	result := make([]Assert, len(asserts))
+	copy(result, asserts)
 
-	return asserts
+	return result
 }
 
 func (a Assertion) IsZero() bool {
@@ -84,27 +96,19 @@ func (am AssertionMethod) String() string {
 	return string(am)
 }
 
-func (b *AssertionBuilder) Build() (Assertion, error) {
-	var w BuildErrorWrapper
-
-	if !b.method.IsValid() {
-		w.WithError(NewNotAllowedAssertionMethodError(b.method))
-	}
-
-	assertion := Assertion{
+func (b *AssertionBuilder) Build() Assertion {
+	return Assertion{
 		method:  b.method,
-		asserts: make([]Assert, len(b.asserts)),
+		asserts: assertsOrNil(b.asserts),
 	}
-
-	copy(assertion.asserts, b.asserts)
-
-	return assertion, w.Wrap("assertion")
 }
 
-func (b *AssertionBuilder) ErrlessBuild() Assertion {
-	a, _ := b.Build()
+func assertsOrNil(asserts []Assert) []Assert {
+	if len(asserts) == 0 {
+		return nil
+	}
 
-	return a
+	return asserts
 }
 
 func (b *AssertionBuilder) Reset() {

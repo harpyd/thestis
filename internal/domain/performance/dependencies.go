@@ -42,7 +42,7 @@ func SyncDependencies(scenario specification.Scenario) ScenarioSyncGroup {
 	for _, thesis := range theses {
 		var (
 			deps   = thesis.Dependencies()
-			before = thesisBefore(scenario, thesis)
+			before = thesesBefore(scenario, thesis)
 		)
 
 		allDeps := make([]specification.Slug, 0, len(deps)+len(before))
@@ -61,8 +61,8 @@ func SyncDependencies(scenario specification.Scenario) ScenarioSyncGroup {
 	}
 }
 
-func thesisBefore(scenario specification.Scenario, thesis specification.Thesis) []specification.Slug {
-	beforeStages := thesis.Statement().Stage().Before()
+func thesesBefore(scenario specification.Scenario, thesis specification.Thesis) []specification.Slug {
+	beforeStages := thesis.Stage().Before()
 
 	theses := scenario.ThesesByStages(beforeStages...)
 

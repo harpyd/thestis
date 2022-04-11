@@ -10,11 +10,11 @@ type (
 	}
 
 	ScenarioBuilder struct {
-		description     string
-		thesisFactories []thesisFactory
+		description string
+		thesisFns   []thesisFunc
 	}
 
-	thesisFactory func(scenarioSlug Slug) (Thesis, error)
+	thesisFunc func(scenarioSlug Slug) Thesis
 )
 
 func (s Scenario) Slug() Slug {
@@ -50,7 +50,7 @@ func (s Scenario) ThesesByStages(stages ...Stage) []Thesis {
 	}
 
 	for _, thesis := range s.theses {
-		if staged[thesis.statement.stage] {
+		if staged[thesis.stage] {
 			theses = append(theses, thesis)
 		}
 	}
@@ -60,51 +60,51 @@ func (s Scenario) ThesesByStages(stages ...Stage) []Thesis {
 
 var ErrNoScenarioTheses = errors.New("no theses")
 
-func (b *ScenarioBuilder) Build(slug Slug) (Scenario, error) {
+func (s Scenario) validate() error {
+	var w BuildErrorWrapper
+
+	if len(s.theses) == 0 {
+		w.WithError(ErrNoScenarioTheses)
+	}
+
+	for _, thesis := range s.theses {
+		w.WithError(thesis.validate(s))
+	}
+
+	return w.SluggedWrap(s.slug)
+}
+
+func (b *ScenarioBuilder) Build(slug Slug) Scenario {
 	if err := slug.ShouldBeScenarioKind(); err != nil {
 		panic(err)
 	}
 
-	scenario := Scenario{
+	return Scenario{
 		slug:        slug,
 		description: b.description,
-		theses:      make(map[string]Thesis),
+		theses:      thesesOrNil(slug, b.thesisFns),
 	}
-
-	var w BuildErrorWrapper
-
-	if len(b.thesisFactories) == 0 {
-		w.WithError(ErrNoScenarioTheses)
-	}
-
-	for _, thesisFry := range b.thesisFactories {
-		thesis, err := thesisFry(slug)
-		w.WithError(err)
-
-		if _, ok := scenario.theses[thesis.Slug().Thesis()]; ok {
-			w.WithError(NewDuplicatedError(thesis.Slug()))
-
-			continue
-		}
-
-		scenario.theses[thesis.Slug().Thesis()] = thesis
-	}
-
-	checkThesesDependencies(&w, scenario.theses)
-	checkCycleDependencies(&w, scenario)
-
-	return scenario, w.SluggedWrap(slug)
 }
 
-func (b *ScenarioBuilder) ErrlessBuild(slug Slug) Scenario {
-	s, _ := b.Build(slug)
+func thesesOrNil(scenarioSlug Slug, fns []thesisFunc) map[string]Thesis {
+	if len(fns) == 0 {
+		return nil
+	}
 
-	return s
+	theses := make(map[string]Thesis, len(fns))
+
+	for _, fn := range fns {
+		thesis := fn(scenarioSlug)
+
+		theses[thesis.Slug().Thesis()] = thesis
+	}
+
+	return theses
 }
 
 func (b *ScenarioBuilder) Reset() {
 	b.description = ""
-	b.thesisFactories = nil
+	b.thesisFns = nil
 }
 
 func (b *ScenarioBuilder) WithDescription(description string) *ScenarioBuilder {
@@ -118,81 +118,9 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 
 	buildFn(&tb)
 
-	b.thesisFactories = append(b.thesisFactories, func(scenarioSlug Slug) (Thesis, error) {
+	b.thesisFns = append(b.thesisFns, func(scenarioSlug Slug) Thesis {
 		return tb.Build(NewThesisSlug(scenarioSlug.Story(), scenarioSlug.Scenario(), slug))
 	})
 
 	return b
-}
-
-func checkThesesDependencies(w *BuildErrorWrapper, theses map[string]Thesis) {
-	for _, thesis := range theses {
-		for _, dependency := range thesis.dependencies {
-			if _, ok := theses[dependency.Thesis()]; !ok {
-				w.WithError(NewUndefinedDependencyError(dependency))
-			}
-		}
-	}
-}
-
-func checkCycleDependencies(w *BuildErrorWrapper, scenario Scenario) {
-	g := NewGraph(scenario.theses)
-	if g.IsCyclic() {
-		w.WithError(NewCycleDependenciesError(scenario.Slug()))
-	}
-}
-
-type Graph struct {
-	adj map[string][]string
-}
-
-func NewGraph(theses map[string]Thesis) *Graph {
-	adj := make(map[string][]string)
-
-	for key, value := range theses {
-		for _, dependency := range value.dependencies {
-			adj[key] = append(adj[key], dependency.thesis)
-		}
-	}
-
-	return &Graph{
-		adj: adj,
-	}
-}
-
-func (g *Graph) isCyclicUtil(i string, visited map[string]bool, recStack map[string]bool) bool {
-	if recStack[i] {
-		return true
-	}
-
-	if visited[i] {
-		return false
-	}
-
-	visited[i] = true
-	recStack[i] = true
-	children := g.adj[i]
-
-	for _, c := range children {
-		if g.isCyclicUtil(c, visited, recStack) {
-			return true
-		}
-	}
-
-	recStack[i] = false
-
-	return false
-}
-
-func (g *Graph) IsCyclic() bool {
-	visited := make(map[string]bool)
-	recStack := make(map[string]bool)
-
-	for key := range g.adj {
-		if g.isCyclicUtil(key, visited, recStack) {
-			return true
-		}
-	}
-
-	return false
 }

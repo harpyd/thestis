@@ -43,7 +43,7 @@ func TestBuildThesisSlugging(t *testing.T) {
 			var thesis specification.Thesis
 
 			buildFn := func() {
-				thesis = b.ErrlessBuild(c.GivenSlug)
+				thesis = b.Build(c.GivenSlug)
 			}
 
 			if c.ShouldPanic {
@@ -59,9 +59,8 @@ func TestBuildThesisSlugging(t *testing.T) {
 	}
 }
 
-func errlessBuildThesis(
+func buildThesis(
 	t *testing.T,
-	slug specification.Slug,
 	prepare func(b *specification.ThesisBuilder),
 ) specification.Thesis {
 	t.Helper()
@@ -70,7 +69,7 @@ func errlessBuildThesis(
 
 	prepare(&b)
 
-	return b.ErrlessBuild(slug)
+	return b.Build(specification.NewThesisSlug("a", "b", "c"))
 }
 
 func TestBuildThesisWithDependencies(t *testing.T) {
@@ -89,7 +88,7 @@ func TestBuildThesisWithDependencies(t *testing.T) {
 				b.WithDependency("")
 			},
 			ExpectedDependencies: []specification.Slug{
-				specification.NewThesisSlug("foo", "bar", ""),
+				specification.NewThesisSlug("a", "b", ""),
 			},
 		},
 		{
@@ -98,8 +97,7 @@ func TestBuildThesisWithDependencies(t *testing.T) {
 				b.WithDependency("copy")
 			},
 			ExpectedDependencies: []specification.Slug{
-				specification.NewThesisSlug("foo", "bar", "copy"),
-				specification.NewThesisSlug("foo", "bar", "copy"),
+				specification.NewThesisSlug("a", "b", "copy"),
 			},
 		},
 		{
@@ -108,8 +106,8 @@ func TestBuildThesisWithDependencies(t *testing.T) {
 				b.WithDependency("coo")
 			},
 			ExpectedDependencies: []specification.Slug{
-				specification.NewThesisSlug("foo", "bar", "pop"),
-				specification.NewThesisSlug("foo", "bar", "coo"),
+				specification.NewThesisSlug("a", "b", "pop"),
+				specification.NewThesisSlug("a", "b", "coo"),
 			},
 		},
 	}
@@ -120,12 +118,9 @@ func TestBuildThesisWithDependencies(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var (
-				slug = specification.NewThesisSlug("foo", "bar", "qaz")
-				deps = errlessBuildThesis(t, slug, c.Prepare).Dependencies()
-			)
+			actualDeps := buildThesis(t, c.Prepare).Dependencies()
 
-			require.ElementsMatch(t, c.ExpectedDependencies, deps)
+			require.ElementsMatch(t, c.ExpectedDependencies, actualDeps)
 		})
 	}
 }
@@ -134,65 +129,70 @@ func TestBuildThesisWithStatement(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Name        string
-		Keyword     specification.Stage
-		Behavior    string
-		ShouldBeErr bool
+		Prepare          func(b *specification.ThesisBuilder)
+		ExpectedStage    specification.Stage
+		ExpectedBehavior string
 	}{
 		{
-			Name:        "allowed_given",
-			Keyword:     specification.Given,
-			Behavior:    "hooves delivered to the warehouse",
-			ShouldBeErr: false,
+			Prepare:          func(b *specification.ThesisBuilder) {},
+			ExpectedStage:    specification.NoStage,
+			ExpectedBehavior: "",
 		},
 		{
-			Name:        "allowed_when",
-			Keyword:     specification.When,
-			Behavior:    "selling hooves",
-			ShouldBeErr: false,
+			Prepare: func(b *specification.ThesisBuilder) {
+				b.WithStatement(specification.NoStage, "")
+			},
+			ExpectedStage:    specification.NoStage,
+			ExpectedBehavior: "",
 		},
 		{
-			Name:        "allowed_then",
-			Keyword:     specification.Then,
-			Behavior:    "check that hooves are sold",
-			ShouldBeErr: false,
+			Prepare: func(b *specification.ThesisBuilder) {
+				b.WithStatement(specification.Given, "")
+			},
+			ExpectedStage:    specification.Given,
+			ExpectedBehavior: "",
 		},
 		{
-			Name:        "not_allowed_zen",
-			Keyword:     "zen",
-			Behavior:    "zen du dust",
-			ShouldBeErr: true,
+			Prepare: func(b *specification.ThesisBuilder) {
+				b.WithStatement(specification.When, "foo")
+			},
+			ExpectedStage:    specification.When,
+			ExpectedBehavior: "foo",
+		},
+		{
+			Prepare: func(b *specification.ThesisBuilder) {
+				b.WithStatement(specification.Then, "bar")
+			},
+			ExpectedStage:    specification.Then,
+			ExpectedBehavior: "bar",
+		},
+		{
+			Prepare: func(b *specification.ThesisBuilder) {
+				b.WithStatement("unknown", "hm")
+			},
+			ExpectedStage:    "unknown",
+			ExpectedBehavior: "hm",
 		},
 	}
 
-	for _, c := range testCases {
-		c := c
+	for i := range testCases {
+		c := testCases[i]
 
-		t.Run(c.Name, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var b specification.ThesisBuilder
-
-			thesis, err := b.
-				WithStatement(c.Keyword, c.Behavior).
-				Build(specification.NewThesisSlug("foo", "bar", "baz"))
-
-			var target *specification.NotAllowedStageError
-
-			if c.ShouldBeErr {
-				require.ErrorAs(t, err, &target)
-
-				return
-			}
-
-			require.False(t, errors.As(err, &target))
+			thesis := buildThesis(t, c.Prepare)
 
 			t.Run("stage", func(t *testing.T) {
-				require.Equal(t, c.Keyword, thesis.Statement().Stage())
+				actualStage := thesis.Stage()
+
+				require.Equal(t, c.ExpectedStage, actualStage)
 			})
 
 			t.Run("behavior", func(t *testing.T) {
-				require.Equal(t, c.Behavior, thesis.Statement().Behavior())
+				actualBehavior := thesis.Behavior()
+
+				require.Equal(t, c.ExpectedBehavior, actualBehavior)
 			})
 		})
 	}
@@ -204,17 +204,16 @@ func TestBuildThesisWithAssertion(t *testing.T) {
 	testCases := []struct {
 		Prepare           func(b *specification.ThesisBuilder)
 		ExpectedAssertion specification.Assertion
-		ShouldBeErr       bool
 	}{
 		{
-			Prepare:     func(b *specification.ThesisBuilder) {},
-			ShouldBeErr: true,
+			Prepare:           func(b *specification.ThesisBuilder) {},
+			ExpectedAssertion: (&specification.AssertionBuilder{}).Build(),
 		},
 		{
 			Prepare: func(b *specification.ThesisBuilder) {
 				b.WithAssertion(func(b *specification.AssertionBuilder) {})
 			},
-			ShouldBeErr: true,
+			ExpectedAssertion: (&specification.AssertionBuilder{}).Build(),
 		},
 		{
 			Prepare: func(b *specification.ThesisBuilder) {
@@ -224,8 +223,7 @@ func TestBuildThesisWithAssertion(t *testing.T) {
 			},
 			ExpectedAssertion: (&specification.AssertionBuilder{}).
 				WithMethod("JSONPATH").
-				ErrlessBuild(),
-			ShouldBeErr: false,
+				Build(),
 		},
 	}
 
@@ -235,21 +233,9 @@ func TestBuildThesisWithAssertion(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var b specification.ThesisBuilder
+			actualAssertion := buildThesis(t, c.Prepare).Assertion()
 
-			c.Prepare(&b)
-
-			thesis, err := b.Build(specification.NewThesisSlug("a", "b", "c"))
-
-			if c.ShouldBeErr {
-				require.ErrorIs(t, err, specification.ErrUselessThesis)
-
-				return
-			}
-
-			require.NotErrorIs(t, err, specification.ErrUselessThesis)
-
-			require.Equal(t, c.ExpectedAssertion, thesis.Assertion())
+			require.Equal(t, c.ExpectedAssertion, actualAssertion)
 		})
 	}
 }
@@ -260,17 +246,16 @@ func TestBuildThesisWithHTTP(t *testing.T) {
 	testCases := []struct {
 		Prepare      func(b *specification.ThesisBuilder)
 		ExpectedHTTP specification.HTTP
-		ShouldBeErr  bool
 	}{
 		{
-			Prepare:     func(b *specification.ThesisBuilder) {},
-			ShouldBeErr: true,
+			Prepare:      func(b *specification.ThesisBuilder) {},
+			ExpectedHTTP: (&specification.HTTPBuilder{}).Build(),
 		},
 		{
 			Prepare: func(b *specification.ThesisBuilder) {
 				b.WithHTTP(func(b *specification.HTTPBuilder) {})
 			},
-			ShouldBeErr: true,
+			ExpectedHTTP: (&specification.HTTPBuilder{}).Build(),
 		},
 		{
 			Prepare: func(b *specification.ThesisBuilder) {
@@ -294,8 +279,7 @@ func TestBuildThesisWithHTTP(t *testing.T) {
 					b.WithAllowedCodes([]int{200})
 					b.WithAllowedContentType("application/json")
 				}).
-				ErrlessBuild(),
-			ShouldBeErr: false,
+				Build(),
 		},
 	}
 
@@ -305,21 +289,9 @@ func TestBuildThesisWithHTTP(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var b specification.ThesisBuilder
+			actualHTTP := buildThesis(t, c.Prepare).HTTP()
 
-			c.Prepare(&b)
-
-			thesis, err := b.Build(specification.NewThesisSlug("a", "b", "c"))
-
-			if c.ShouldBeErr {
-				require.ErrorIs(t, err, specification.ErrUselessThesis)
-
-				return
-			}
-
-			require.NotErrorIs(t, err, specification.ErrUselessThesis)
-
-			require.Equal(t, c.ExpectedHTTP, thesis.HTTP())
+			require.Equal(t, c.ExpectedHTTP, actualHTTP)
 		})
 	}
 }

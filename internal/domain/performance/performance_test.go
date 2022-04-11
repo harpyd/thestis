@@ -75,7 +75,7 @@ func TestPerformance(t *testing.T) {
 			ExpectedWorkingScenarios: []specification.Scenario{
 				(&specification.ScenarioBuilder{}).
 					WithThesis("too", func(b *specification.ThesisBuilder) {}).
-					ErrlessBuild(specification.NewScenarioSlug("moo", "koo")),
+					Build(specification.NewScenarioSlug("moo", "koo")),
 			},
 		},
 		{
@@ -102,10 +102,10 @@ func TestPerformance(t *testing.T) {
 			ExpectedWorkingScenarios: []specification.Scenario{
 				(&specification.ScenarioBuilder{}).
 					WithThesis("doo", func(b *specification.ThesisBuilder) {}).
-					ErrlessBuild(specification.NewScenarioSlug("boo", "zoo")),
+					Build(specification.NewScenarioSlug("boo", "zoo")),
 				(&specification.ScenarioBuilder{}).
 					WithThesis("poo", func(b *specification.ThesisBuilder) {}).
-					ErrlessBuild(specification.NewScenarioSlug("boo", "koo")),
+					Build(specification.NewScenarioSlug("boo", "koo")),
 			},
 		},
 	}

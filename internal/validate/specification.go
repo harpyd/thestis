@@ -29,7 +29,7 @@ func Specification(specPath string) {
 }
 
 const (
-	contextColor = color.FgLightMagenta
+	contextColor = color.FgGreen
 	errorColor   = color.FgRed
 )
 
