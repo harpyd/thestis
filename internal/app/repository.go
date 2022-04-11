@@ -65,6 +65,10 @@ type (
 	SpecificationGetter interface {
 		GetSpecification(ctx context.Context, specID string) (*specification.Specification, error)
 	}
+
+	SpecificPerformanceReadModel interface {
+		FindPerformance(ctx context.Context, qry SpecificPerformanceQuery) (SpecificPerformance, error)
+	}
 )
 
 func AvailableSpecification(spec *specification.Specification) SpecificationGetter {

@@ -12,9 +12,22 @@ type (
 		SpecificationID string
 		UserID          string
 	}
+
+	SpecificPerformanceQuery struct {
+		PerformanceID string
+		UserID        string
+	}
 )
 
 type (
+	SpecificPerformance struct {
+		ID      string
+		OwnerID string
+		Flows   []Flow
+	}
+
+	Flow struct{}
+
 	// SpecificTestCampaign is most detailed application layer
 	// representation of testcampaign.TestCampaign.
 	SpecificTestCampaign struct {
