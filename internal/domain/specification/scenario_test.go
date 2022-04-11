@@ -2,6 +2,7 @@ package specification_test
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -364,125 +365,94 @@ func TestGetScenarioThesisBySlug(t *testing.T) {
 	require.False(t, ok)
 }
 
-func TestCheckCycleInThesesDependencies(t *testing.T) {
+func TestFormatCycleDependenciesError(t *testing.T) {
 	t.Parallel()
 
-	scenarioSlug := specification.NewScenarioSlug("foo", "bar")
-
 	testCases := []struct {
-		Name        string
-		Prepare     func(b *specification.ScenarioBuilder)
-		WantThisErr bool
-		IsErr       func(err error) bool
+		GivenError          error
+		ExpectedErrorString string
 	}{
 		{
-			Name: "thesis_has_cycle_dependencies",
-			Prepare: func(b *specification.ScenarioBuilder) {
-				b.WithThesis("t1", func(b *specification.ThesisBuilder) {
-					b.WithDependency("t2")
-				})
-				b.WithThesis("t2", func(b *specification.ThesisBuilder) {
-					b.WithDependency("t3")
-				})
-				b.WithThesis("t3", func(b *specification.ThesisBuilder) {
-					b.WithDependency("t1")
-				})
-			},
-			WantThisErr: true,
-			IsErr: func(err error) bool {
-				var target *specification.CycleDependenciesError
-
-				return errors.As(err, &target)
-			},
+			GivenError:          &specification.CycleDependenciesError{},
+			ExpectedErrorString: "cycle dependencies in scenario: \"\" path:\"\"",
 		},
 		{
-			Name: "thesis_without_cycle_dependencies",
-			Prepare: func(b *specification.ScenarioBuilder) {
-				b.WithThesis("t1", func(b *specification.ThesisBuilder) {
-					b.WithDependency("t2")
-				})
-				b.WithThesis("t2", func(b *specification.ThesisBuilder) {
-					b.WithDependency("t3")
-				})
-			},
-			WantThisErr: false,
-			IsErr: func(err error) bool {
-				var target *specification.CycleDependenciesError
-
-				return errors.As(err, &target)
-			},
+			GivenError:          specification.NewCycleDependenciesError(specification.Slug{}, "t1->t2"),
+			ExpectedErrorString: "cycle dependencies in scenario: \"\" path:\"t1->t2\"",
 		},
 		{
-			Name: "thesis_void_dependencies",
-			Prepare: func(b *specification.ScenarioBuilder) {
-				b.WithThesis("t1", func(b *specification.ThesisBuilder) {})
-				b.WithThesis("t2", func(b *specification.ThesisBuilder) {})
-			},
-			WantThisErr: false,
-			IsErr: func(err error) bool {
-				var target *specification.CycleDependenciesError
-
-				return errors.As(err, &target)
-			},
-		},
-		{
-			Name:        "void_thesis",
-			Prepare:     func(b *specification.ScenarioBuilder) {},
-			WantThisErr: false,
-			IsErr: func(err error) bool {
-				var target *specification.CycleDependenciesError
-
-				return errors.As(err, &target)
-			},
-		},
-
-		{
-			Name: "thesis_has_hard_cycle_dependencies",
-			Prepare: func(b *specification.ScenarioBuilder) {
-				b.WithThesis("t1", func(b *specification.ThesisBuilder) {
-					b.WithDependency("t2")
-					b.WithDependency("t3")
-					b.WithDependency("t4")
-				})
-				b.WithThesis("t2", func(b *specification.ThesisBuilder) {
-					b.WithDependency("t5")
-				})
-				b.WithThesis("t3", func(b *specification.ThesisBuilder) {
-					b.WithDependency("t2")
-				})
-				b.WithThesis("t4", func(b *specification.ThesisBuilder) {})
-				b.WithThesis("t5", func(b *specification.ThesisBuilder) {
-					b.WithDependency("t3")
-				})
-			},
-			WantThisErr: true,
-			IsErr: func(err error) bool {
-				var target *specification.CycleDependenciesError
-
-				return errors.As(err, &target)
-			},
+			GivenError: specification.NewCycleDependenciesError(
+				specification.NewThesisSlug("story", "scenario", "test"), "t1->t2"),
+			ExpectedErrorString: "cycle dependencies in scenario: \"story.scenario.test\" path:\"t1->t2\"",
 		},
 	}
 
-	for _, c := range testCases {
-		c := c
+	for i := range testCases {
+		c := testCases[i]
 
-		t.Run(c.Name, func(t *testing.T) {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var b specification.ScenarioBuilder
+			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
+		})
+	}
+}
 
-			c.Prepare(&b)
+func TestAsCycleDependenciesError(t *testing.T) {
+	t.Parallel()
 
-			_, err := b.Build(scenarioSlug)
+	testCases := []struct {
+		GivenError      error
+		ShouldBeWrapped bool
+		ExpectedSlug    specification.Slug
+	}{
+		{
+			GivenError:      nil,
+			ShouldBeWrapped: false,
+		},
+		{
+			GivenError:      &specification.CycleDependenciesError{},
+			ShouldBeWrapped: true,
+			ExpectedSlug:    specification.Slug{},
+		},
+		{
+			GivenError:      specification.NewCycleDependenciesError(specification.Slug{}, ""),
+			ShouldBeWrapped: true,
+			ExpectedSlug:    specification.Slug{},
+		},
+		{
+			GivenError: specification.NewCycleDependenciesError(
+				specification.NewThesisSlug("a", "b", "c"),
+				"",
+			),
+			ShouldBeWrapped: true,
+			ExpectedSlug:    specification.NewThesisSlug("a", "b", "c"),
+		},
+	}
 
-			if c.WantThisErr {
-				require.True(t, c.IsErr(err))
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var target *specification.CycleDependenciesError
+
+			if !c.ShouldBeWrapped {
+				t.Run("not", func(t *testing.T) {
+					require.False(t, errors.As(c.GivenError, &target))
+				})
 
 				return
 			}
 
-			require.False(t, c.IsErr(err))
+			t.Run("as", func(t *testing.T) {
+				require.ErrorAs(t, c.GivenError, &target)
+
+				t.Run("slug", func(t *testing.T) {
+					require.Equal(t, c.ExpectedSlug, target.Slug())
+				})
+			})
 		})
 	}
 }

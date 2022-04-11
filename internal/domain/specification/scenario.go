@@ -1,6 +1,10 @@
 package specification
 
-import "github.com/pkg/errors"
+import (
+	"fmt"
+	"github.com/pkg/errors"
+	"strings"
+)
 
 type (
 	Scenario struct {
@@ -71,6 +75,8 @@ func (s Scenario) validate() error {
 		w.WithError(thesis.validate(s))
 	}
 
+	w.WithError(checkCycleDependencies(s))
+
 	return w.SluggedWrap(s.slug)
 }
 
@@ -123,4 +129,70 @@ func (b *ScenarioBuilder) WithThesis(slug string, buildFn func(b *ThesisBuilder)
 	})
 
 	return b
+}
+
+func checkCycleDependencies(scenario Scenario) error {
+	var w BuildErrorWrapper
+
+	stackTheses := make([]string, 0)
+	res := ""
+
+	visited := make(map[string]bool)
+	recStack := make(map[string]bool)
+
+	for key := range scenario.theses {
+		if isCyclic(scenario.theses, key, visited, recStack, stackTheses, &res) {
+			w.WithError(NewCycleDependenciesError(scenario.Slug(), res))
+			break
+		}
+	}
+
+	return w.SluggedWrap(scenario.Slug())
+}
+
+func isCyclic(theses map[string]Thesis, i string, visited map[string]bool, recStack map[string]bool, path []string, res *string) bool {
+	path = append(path, i)
+
+	if recStack[i] {
+		*res = strings.Join(path, "->")
+		return true
+	}
+
+	if visited[i] {
+		return false
+	}
+
+	visited[i] = true
+	recStack[i] = true
+	children := theses[i]
+
+	for slug := range children.dependencies {
+		if isCyclic(theses, slug.thesis, visited, recStack, path, res) {
+			return true
+		}
+	}
+
+	recStack[i] = false
+
+	return false
+}
+
+type CycleDependenciesError struct {
+	slug Slug
+	path string
+}
+
+func NewCycleDependenciesError(slug Slug, path string) error {
+	return errors.WithStack(&CycleDependenciesError{
+		slug: slug,
+		path: path,
+	})
+}
+
+func (e *CycleDependenciesError) Slug() Slug {
+	return e.slug
+}
+
+func (e *CycleDependenciesError) Error() string {
+	return fmt.Sprintf("cycle dependencies in scenario: %q path:%q", e.slug, e.path)
 }

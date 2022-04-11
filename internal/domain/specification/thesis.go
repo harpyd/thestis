@@ -2,7 +2,6 @@ package specification
 
 import (
 	"fmt"
-
 	"github.com/pkg/errors"
 )
 
@@ -241,22 +240,4 @@ func (e *UndefinedDependencyError) Slug() Slug {
 
 func (e *UndefinedDependencyError) Error() string {
 	return fmt.Sprintf("undefined %q dependency", e.slug.Partial())
-}
-
-type CycleDependenciesError struct {
-	slug Slug
-}
-
-func NewCycleDependenciesError(slug Slug) error {
-	return errors.WithStack(&CycleDependenciesError{
-		slug: slug,
-	})
-}
-
-func (e *CycleDependenciesError) Slug() Slug {
-	return e.slug
-}
-
-func (e *CycleDependenciesError) Error() string {
-	return fmt.Sprintf("`%s` cycle dependencies", e.slug)
 }
