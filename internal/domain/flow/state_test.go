@@ -25,10 +25,10 @@ func TestNextState(t *testing.T) {
 			ExpectedState: flow.NoState,
 		},
 		{
-			Name:          "performing-(no_event)->no_state",
+			Name:          "performing-(no_event)->performing",
 			GivenState:    flow.Performing,
 			GivenEvent:    performance.NoEvent,
-			ExpectedState: flow.NoState,
+			ExpectedState: flow.Performing,
 		},
 		{
 			Name:          "not_performed-(perform)->performing",

@@ -26,39 +26,19 @@ func rules() stateTransitionRules {
 			performance.FiredCancel:  Canceled,
 		},
 		Performing: {
-			performance.FiredPerform: Performing,
 			performance.FiredPass:    Passed,
 			performance.FiredFail:    Failed,
 			performance.FiredCrash:   Crashed,
 			performance.FiredCancel:  Canceled,
 		},
 		Passed: {
-			performance.FiredPerform: Passed,
-			performance.FiredPass:    Passed,
 			performance.FiredFail:    Failed,
 			performance.FiredCrash:   Crashed,
 			performance.FiredCancel:  Passed,
 		},
 		Failed: {
-			performance.FiredPerform: Failed,
-			performance.FiredPass:    Failed,
-			performance.FiredFail:    Failed,
 			performance.FiredCrash:   Crashed,
 			performance.FiredCancel:  Failed,
-		},
-		Crashed: {
-			performance.FiredPerform: Crashed,
-			performance.FiredPass:    Crashed,
-			performance.FiredFail:    Crashed,
-			performance.FiredCrash:   Crashed,
-			performance.FiredCancel:  Crashed,
-		},
-		Canceled: {
-			performance.FiredPerform: Canceled,
-			performance.FiredPass:    Canceled,
-			performance.FiredFail:    Canceled,
-			performance.FiredCrash:   Canceled,
-			performance.FiredCancel:  Canceled,
 		},
 	}
 }
@@ -66,21 +46,18 @@ func rules() stateTransitionRules {
 // Next returns the next state depending on the
 // received performance.Event.
 //
-// if Next is called for an unknown state or with
-// an unknown event, it will return NoState.
-//
 // State transition rules are defined for a finite
 // automaton, then this function is a transition
 // function for this automaton.
 func (s State) Next(with performance.Event) State {
 	ss, ok := rules()[s]
 	if !ok {
-		return NoState
+		return s
 	}
 
 	res, ok := ss[with]
 	if !ok {
-		return NoState
+		return s
 	}
 
 	return res
