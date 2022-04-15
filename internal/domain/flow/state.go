@@ -26,19 +26,19 @@ func rules() stateTransitionRules {
 			performance.FiredCancel:  Canceled,
 		},
 		Performing: {
-			performance.FiredPass:    Passed,
-			performance.FiredFail:    Failed,
-			performance.FiredCrash:   Crashed,
-			performance.FiredCancel:  Canceled,
+			performance.FiredPass:   Passed,
+			performance.FiredFail:   Failed,
+			performance.FiredCrash:  Crashed,
+			performance.FiredCancel: Canceled,
 		},
 		Passed: {
-			performance.FiredFail:    Failed,
-			performance.FiredCrash:   Crashed,
-			performance.FiredCancel:  Passed,
+			performance.FiredFail:   Failed,
+			performance.FiredCrash:  Crashed,
+			performance.FiredCancel: Passed,
 		},
 		Failed: {
-			performance.FiredCrash:   Crashed,
-			performance.FiredCancel:  Failed,
+			performance.FiredCrash:  Crashed,
+			performance.FiredCancel: Failed,
 		},
 	}
 }
