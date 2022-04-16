@@ -63,6 +63,34 @@ func (s State) Next(with performance.Event) State {
 	return res
 }
 
+// Precedence indicates the priority in which
+// the overall state will be selected from the
+// entire scenario states.
+//
+// The larger the number, the more likely it
+// is that this state will be selected as an
+// overall one.
+func (s State) Precedence() int {
+	switch s {
+	case NoState:
+		return 0
+	case Passed:
+		return 1
+	case Canceled:
+		return 2
+	case Failed:
+		return 3
+	case Crashed:
+		return 4
+	case NotPerformed:
+		return 5
+	case Performing:
+		return 6
+	default:
+		return 0
+	}
+}
+
 func (s State) String() string {
 	return string(s)
 }

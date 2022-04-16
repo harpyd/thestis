@@ -1,6 +1,7 @@
 package flow_test
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -222,4 +223,46 @@ func TestNextState(t *testing.T) {
 			require.Equal(t, c.ExpectedState, actual)
 		})
 	}
+}
+
+type states []flow.State
+
+func (s states) Len() int {
+	return len(s)
+}
+
+func (s states) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s states) Less(i, j int) bool {
+	return s[i].Precedence() < s[j].Precedence()
+}
+
+func TestStatePrecedenceOrder(t *testing.T) {
+	t.Parallel()
+
+	sortedStates := states{
+		flow.NoState,
+		flow.Performing,
+		flow.Passed,
+		flow.Failed,
+		flow.Crashed,
+		flow.Canceled,
+		flow.NotPerformed,
+	}
+
+	sort.Sort(sortedStates)
+
+	expectedStates := states{
+		flow.NoState,
+		flow.Passed,
+		flow.Canceled,
+		flow.Failed,
+		flow.Crashed,
+		flow.NotPerformed,
+		flow.Performing,
+	}
+
+	require.Equal(t, expectedStates, sortedStates)
 }

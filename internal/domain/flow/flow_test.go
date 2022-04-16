@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/domain/flow"
 	"github.com/harpyd/thestis/internal/domain/performance"
@@ -15,26 +15,165 @@ import (
 func TestNewStatus(t *testing.T) {
 	t.Parallel()
 
+	type params struct {
+		Slug           specification.Slug
+		State          flow.State
+		ThesisStatuses []*flow.ThesisStatus
+	}
+
 	testCases := []struct {
-		Slug         specification.Slug
-		State        flow.State
-		OccurredErrs []string
+		Given       params
+		Expected    params
+		ShouldPanic bool
 	}{
 		{
-			Slug:  specification.Slug{},
-			State: flow.NoState,
+			Given: params{
+				Slug:  specification.Slug{},
+				State: flow.NoState,
+			},
+			ShouldPanic: true,
 		},
 		{
-			Slug:  specification.NewThesisSlug("foo", "bar", "zar"),
-			State: flow.Canceled,
+			Given: params{
+				Slug:  specification.NewThesisSlug("a", "b", "c"),
+				State: flow.Crashed,
+			},
+			ShouldPanic: true,
 		},
 		{
-			Slug:  specification.NewThesisSlug("foo", "pam", "par"),
-			State: flow.Failed,
-			OccurredErrs: []string{
-				"some error",
-				"other error",
-				"another error",
+			Given: params{
+				Slug:  specification.NewScenarioSlug("foo", "bar"),
+				State: flow.Canceled,
+				ThesisStatuses: []*flow.ThesisStatus{
+					flow.NewThesisStatus("baz", flow.Passed),
+					flow.NewThesisStatus("bam", flow.Canceled),
+				},
+			},
+			Expected: params{
+				Slug:  specification.NewScenarioSlug("foo", "bar"),
+				State: flow.Canceled,
+				ThesisStatuses: []*flow.ThesisStatus{
+					flow.NewThesisStatus("baz", flow.Passed),
+					flow.NewThesisStatus("bam", flow.Canceled),
+				},
+			},
+			ShouldPanic: false,
+		},
+		{
+			Given: params{
+				Slug:  specification.NewScenarioSlug("foo", "pam"),
+				State: flow.Failed,
+				ThesisStatuses: []*flow.ThesisStatus{
+					nil,
+					flow.NewThesisStatus("tam", flow.Crashed),
+					nil,
+					flow.NewThesisStatus("ram", flow.Failed),
+				},
+			},
+			Expected: params{
+				Slug:  specification.NewScenarioSlug("foo", "pam"),
+				State: flow.Failed,
+				ThesisStatuses: []*flow.ThesisStatus{
+					flow.NewThesisStatus("tam", flow.Crashed),
+					flow.NewThesisStatus("ram", flow.Failed),
+				},
+			},
+			ShouldPanic: false,
+		},
+	}
+
+	for i := range testCases {
+		c := testCases[i]
+
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+
+			var s *flow.Status
+
+			newFn := func() {
+				s = flow.NewStatus(c.Given.Slug, c.Given.State, c.Given.ThesisStatuses...)
+			}
+
+			if c.ShouldPanic {
+				t.Run("panics", func(t *testing.T) {
+					require.PanicsWithValue(t, specification.ErrNotScenarioSlug, newFn)
+				})
+
+				return
+			}
+
+			t.Run("not_panics", func(t *testing.T) {
+				require.NotPanics(t, newFn)
+			})
+
+			t.Run("slug", func(t *testing.T) {
+				require.Equal(t, c.Expected.Slug, s.Slug())
+			})
+
+			t.Run("state", func(t *testing.T) {
+				require.Equal(t, c.Expected.State, s.State())
+			})
+
+			t.Run("thesis_statuses", func(t *testing.T) {
+				require.ElementsMatch(t, c.Expected.ThesisStatuses, s.ThesisStatuses())
+			})
+		})
+	}
+}
+
+func TestNewThesisStatus(t *testing.T) {
+	t.Parallel()
+
+	type params struct {
+		ThesisSlug   string
+		State        flow.State
+		OccurredErrs []string
+	}
+
+	testCases := []struct {
+		Given    params
+		Expected params
+	}{
+		{
+			Given: params{
+				ThesisSlug: "",
+				State:      flow.NoState,
+			},
+			Expected: params{
+				ThesisSlug: "",
+				State:      flow.NoState,
+			},
+		},
+		{
+			Given: params{
+				ThesisSlug:   "c",
+				State:        flow.Failed,
+				OccurredErrs: []string{"some err"},
+			},
+			Expected: params{
+				ThesisSlug:   "c",
+				State:        flow.Failed,
+				OccurredErrs: []string{"some err"},
+			},
+		},
+		{
+			Given: params{
+				ThesisSlug: "qyp",
+				State:      flow.Crashed,
+				OccurredErrs: []string{
+					"",
+					"bar",
+					"foo",
+				},
+			},
+			Expected: params{
+				ThesisSlug: "qyp",
+				State:      flow.Crashed,
+				OccurredErrs: []string{
+					"",
+					"bar",
+					"foo",
+				},
 			},
 		},
 	}
@@ -45,18 +184,18 @@ func TestNewStatus(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			s := flow.NewStatus(c.Slug, c.State, c.OccurredErrs...)
+			s := flow.NewThesisStatus(c.Given.ThesisSlug, c.Given.State, c.Given.OccurredErrs...)
 
-			t.Run("slug", func(t *testing.T) {
-				assert.Equal(t, c.Slug, s.Slug())
+			t.Run("thesis_slug", func(t *testing.T) {
+				require.Equal(t, c.Expected.ThesisSlug, s.ThesisSlug())
 			})
 
 			t.Run("state", func(t *testing.T) {
-				assert.Equal(t, c.State, s.State())
+				require.Equal(t, c.Expected.State, s.State())
 			})
 
 			t.Run("occurred_errs", func(t *testing.T) {
-				assert.ElementsMatch(t, c.OccurredErrs, s.OccurredErrs())
+				require.Equal(t, c.Expected.OccurredErrs, s.OccurredErrs())
 			})
 		})
 	}
@@ -69,7 +208,8 @@ func TestReduceFlow(t *testing.T) {
 		FlowReducer           func() *flow.Reducer
 		ExpectedFlowID        string
 		ExpectedPerformanceID string
-		ExpectedStatuses      []flow.Status
+		ExpectedStatuses      []*flow.Status
+		ExpectedOverallState  flow.State
 	}{
 		{
 			FlowReducer: func() *flow.Reducer {
@@ -78,6 +218,7 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedFlowID:        "",
 			ExpectedPerformanceID: "",
 			ExpectedStatuses:      nil,
+			ExpectedOverallState:  flow.NoState,
 		},
 		{
 			FlowReducer: func() *flow.Reducer {
@@ -86,6 +227,7 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedFlowID:        "foo",
 			ExpectedPerformanceID: "",
 			ExpectedStatuses:      nil,
+			ExpectedOverallState:  flow.NoState,
 		},
 		{
 			FlowReducer: func() *flow.Reducer {
@@ -96,6 +238,7 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedFlowID:        "bar",
 			ExpectedPerformanceID: "doo",
 			ExpectedStatuses:      nil,
+			ExpectedOverallState:  flow.NoState,
 		},
 		{
 			FlowReducer: func() *flow.Reducer {
@@ -111,16 +254,14 @@ func TestReduceFlow(t *testing.T) {
 			},
 			ExpectedFlowID:        "rar",
 			ExpectedPerformanceID: "kra",
-			ExpectedStatuses: []flow.Status{
+			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("foo", "koo"),
 					flow.NotPerformed,
-				),
-				flow.NewStatus(
-					specification.NewThesisSlug("foo", "koo", "too"),
-					flow.NotPerformed,
+					flow.NewThesisStatus("too", flow.NotPerformed),
 				),
 			},
+			ExpectedOverallState: flow.NotPerformed,
 		},
 		{
 			FlowReducer: func() *flow.Reducer {
@@ -132,25 +273,24 @@ func TestReduceFlow(t *testing.T) {
 					}).
 					ErrlessBuild()
 
-				return flow.FromPerformance("dar", performance.FromSpecification("fla", spec)).
-					WithStep(performance.NewThesisStep(
-						specification.NewThesisSlug("foo", "bar", "baz"),
-						performance.HTTPPerformer,
-						performance.FiredPass,
-					))
+				f := flow.FromPerformance("dar", performance.FromSpecification("fla", spec))
+
+				return f.WithStep(performance.NewThesisStep(
+					specification.NewThesisSlug("foo", "bar", "baz"),
+					performance.HTTPPerformer,
+					performance.FiredPass,
+				))
 			},
 			ExpectedFlowID:        "dar",
 			ExpectedPerformanceID: "fla",
-			ExpectedStatuses: []flow.Status{
-				flow.NewStatus(
-					specification.NewThesisSlug("foo", "bar", "baz"),
-					flow.Passed,
-				),
+			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("foo", "bar"),
 					flow.NotPerformed,
+					flow.NewThesisStatus("baz", flow.Passed),
 				),
 			},
+			ExpectedOverallState: flow.NotPerformed,
 		},
 		{
 			FlowReducer: func() *flow.Reducer {
@@ -171,17 +311,14 @@ func TestReduceFlow(t *testing.T) {
 			},
 			ExpectedFlowID:        "sds",
 			ExpectedPerformanceID: "coo",
-			ExpectedStatuses: []flow.Status{
-				flow.NewStatus(
-					specification.NewThesisSlug("doo", "zoo", "moo"),
-					flow.NotPerformed,
-				),
+			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("doo", "zoo"),
 					flow.Crashed,
-					"something wrong",
+					flow.NewThesisStatus("moo", flow.NotPerformed),
 				),
 			},
+			ExpectedOverallState: flow.Crashed,
 		},
 		{
 			FlowReducer: func() *flow.Reducer {
@@ -189,8 +326,10 @@ func TestReduceFlow(t *testing.T) {
 					"aba",
 					"oba",
 					flow.NewStatus(
-						specification.NewThesisSlug("foo", "bar", "baz"),
-						flow.NotPerformed,
+						specification.NewScenarioSlug("foo", "bar"),
+						flow.Performing,
+						flow.NewThesisStatus("baz", flow.Passed),
+						flow.NewThesisStatus("ban", flow.Performing),
 					),
 				).WithStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "NOP"),
@@ -200,12 +339,89 @@ func TestReduceFlow(t *testing.T) {
 			},
 			ExpectedFlowID:        "aba",
 			ExpectedPerformanceID: "oba",
-			ExpectedStatuses: []flow.Status{
+			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
-					specification.NewThesisSlug("foo", "bar", "baz"),
-					flow.NotPerformed,
+					specification.NewScenarioSlug("foo", "bar"),
+					flow.Performing,
+					flow.NewThesisStatus("baz", flow.Passed),
+					flow.NewThesisStatus("ban", flow.Performing),
 				),
 			},
+			ExpectedOverallState: flow.Performing,
+		},
+		{
+			FlowReducer: func() *flow.Reducer {
+				return flow.FromStatuses(
+					"flow-id",
+					"some-perf-id",
+					flow.NewStatus(
+						specification.NewScenarioSlug("foo", "bar"),
+						flow.Passed,
+					),
+					flow.NewStatus(
+						specification.NewScenarioSlug("foo", "baz"),
+						flow.Passed,
+					),
+				)
+			},
+			ExpectedFlowID:        "flow-id",
+			ExpectedPerformanceID: "some-perf-id",
+			ExpectedStatuses: []*flow.Status{
+				flow.NewStatus(
+					specification.NewScenarioSlug("foo", "bar"),
+					flow.Passed,
+				),
+				flow.NewStatus(
+					specification.NewScenarioSlug("foo", "baz"),
+					flow.Passed,
+				),
+			},
+			ExpectedOverallState: flow.Passed,
+		},
+		{
+			FlowReducer: func() *flow.Reducer {
+				return flow.FromStatuses(
+					"id",
+					"perf-id",
+					flow.NewStatus(
+						specification.NewScenarioSlug("a", "b"),
+						flow.Performing,
+					),
+					flow.NewStatus(
+						specification.NewScenarioSlug("a", "d"),
+						flow.Passed,
+					),
+					flow.NewStatus(
+						specification.NewScenarioSlug("b", "c"),
+						flow.Failed,
+					),
+					flow.NewStatus(
+						specification.NewScenarioSlug("b", "d"),
+						flow.Crashed,
+					),
+				)
+			},
+			ExpectedFlowID:        "id",
+			ExpectedPerformanceID: "perf-id",
+			ExpectedStatuses: []*flow.Status{
+				flow.NewStatus(
+					specification.NewScenarioSlug("a", "b"),
+					flow.Performing,
+				),
+				flow.NewStatus(
+					specification.NewScenarioSlug("a", "d"),
+					flow.Passed,
+				),
+				flow.NewStatus(
+					specification.NewScenarioSlug("b", "c"),
+					flow.Failed,
+				),
+				flow.NewStatus(
+					specification.NewScenarioSlug("b", "d"),
+					flow.Crashed,
+				),
+			},
+			ExpectedOverallState: flow.Performing,
 		},
 	}
 
@@ -218,15 +434,19 @@ func TestReduceFlow(t *testing.T) {
 			f := c.FlowReducer().Reduce()
 
 			t.Run("id", func(t *testing.T) {
-				assert.Equal(t, c.ExpectedFlowID, f.ID())
+				require.Equal(t, c.ExpectedFlowID, f.ID())
 			})
 
 			t.Run("performance_id", func(t *testing.T) {
-				assert.Equal(t, c.ExpectedPerformanceID, f.PerformanceID())
+				require.Equal(t, c.ExpectedPerformanceID, f.PerformanceID())
 			})
 
 			t.Run("statuses", func(t *testing.T) {
-				assert.ElementsMatch(t, c.ExpectedStatuses, f.Statuses())
+				require.ElementsMatch(t, c.ExpectedStatuses, f.Statuses())
+			})
+
+			t.Run("overall_state", func(t *testing.T) {
+				require.Equal(t, c.ExpectedOverallState, f.OverallState())
 			})
 		})
 	}
@@ -253,10 +473,14 @@ func TestUnmarshalFlow(t *testing.T) {
 		},
 		{
 			FlowParams: flow.Params{
-				Statuses: []flow.Status{
+				Statuses: []*flow.Status{
 					flow.NewStatus(
 						specification.NewScenarioSlug("foo", "bar"),
 						flow.NotPerformed,
+					),
+					flow.NewStatus(
+						specification.NewScenarioSlug("foo", "dar"),
+						flow.Performing,
 					),
 				},
 			},
@@ -265,10 +489,17 @@ func TestUnmarshalFlow(t *testing.T) {
 			FlowParams: flow.Params{
 				ID:            "flow-id",
 				PerformanceID: "perf-id",
-				Statuses: []flow.Status{
+				Statuses: []*flow.Status{
 					flow.NewStatus(
 						specification.NewScenarioSlug("foo", "doo"),
 						flow.Performing,
+						flow.NewThesisStatus("boo", flow.Performing),
+					),
+					nil,
+					flow.NewStatus(
+						specification.NewScenarioSlug("foo", "doo"),
+						flow.Failed,
+						flow.NewThesisStatus("zoo", flow.Failed),
 					),
 				},
 			},
@@ -284,15 +515,15 @@ func TestUnmarshalFlow(t *testing.T) {
 			f := flow.Unmarshal(c.FlowParams)
 
 			t.Run("id", func(t *testing.T) {
-				assert.Equal(t, c.FlowParams.ID, f.ID())
+				require.Equal(t, c.FlowParams.ID, f.ID())
 			})
 
 			t.Run("performance_id", func(t *testing.T) {
-				assert.Equal(t, c.FlowParams.PerformanceID, f.PerformanceID())
+				require.Equal(t, c.FlowParams.PerformanceID, f.PerformanceID())
 			})
 
 			t.Run("statuses", func(t *testing.T) {
-				assert.ElementsMatch(t, c.FlowParams.Statuses, f.Statuses())
+				require.ElementsMatch(t, c.FlowParams.Statuses, f.Statuses())
 			})
 		})
 	}
