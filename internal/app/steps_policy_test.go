@@ -65,21 +65,18 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 	testCases := []struct {
 		Name              string
 		CancelContext     bool
-		GivenInitStatuses []flow.Status
+		GivenInitStatuses []*flow.Status
 		GivenSteps        []performance.Step
 		ExpectedMessages  []app.Message
-		ExpectedStatuses  []flow.Status
+		ExpectedStatuses  []*flow.Status
 	}{
 		{
 			Name: "successful_handling_not_performed_to_passed",
-			GivenInitStatuses: []flow.Status{
-				flow.NewStatus(
-					specification.NewThesisSlug("foo", "bar", "dar"),
-					flow.NotPerformed,
-				),
+			GivenInitStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("foo", "bar"),
 					flow.NotPerformed,
+					flow.NewThesisStatus("dar", flow.NotPerformed),
 				),
 			},
 			GivenSteps: []performance.Step{
@@ -108,27 +105,21 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 					),
 				),
 			},
-			ExpectedStatuses: []flow.Status{
-				flow.NewStatus(
-					specification.NewThesisSlug("foo", "bar", "dar"),
-					flow.Passed,
-				),
+			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("foo", "bar"),
 					flow.Passed,
+					flow.NewThesisStatus("dar", flow.Passed),
 				),
 			},
 		},
 		{
 			Name: "context_canceled",
-			GivenInitStatuses: []flow.Status{
-				flow.NewStatus(
-					specification.NewThesisSlug("a", "b", "c"),
-					flow.NotPerformed,
-				),
+			GivenInitStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("a", "b"),
 					flow.NotPerformed,
+					flow.NewThesisStatus("c", flow.NotPerformed),
 				),
 			},
 			CancelContext: true,
@@ -149,14 +140,11 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 					app.WrapWithDatabaseError(context.Canceled),
 				),
 			},
-			ExpectedStatuses: []flow.Status{
-				flow.NewStatus(
-					specification.NewThesisSlug("a", "b", "c"),
-					flow.NotPerformed,
-				),
+			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("a", "b"),
 					flow.NotPerformed,
+					flow.NewThesisStatus("c", flow.NotPerformed),
 				),
 			},
 		},

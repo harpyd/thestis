@@ -21,15 +21,6 @@ func marshalToPerformanceDocument(perf *performance.Performance) performanceDocu
 	}
 }
 
-func marshalToSlugDocument(slug specification.Slug) slugDocument {
-	return slugDocument{
-		Kind:     slug.Kind(),
-		Story:    slug.Story(),
-		Scenario: slug.Scenario(),
-		Thesis:   slug.Thesis(),
-	}
-}
-
 func (d performanceDocument) unmarshalToPerformance(
 	spec *specification.Specification,
 	opts []performance.Option,
