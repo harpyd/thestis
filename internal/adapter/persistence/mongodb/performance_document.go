@@ -12,7 +12,7 @@ type performanceDocument struct {
 	Started         bool   `bson:"started"`
 }
 
-func marshalToPerformanceDocument(perf *performance.Performance) performanceDocument {
+func newPerformanceDocument(perf *performance.Performance) performanceDocument {
 	return performanceDocument{
 		ID:              perf.ID(),
 		OwnerID:         perf.OwnerID(),
@@ -21,7 +21,7 @@ func marshalToPerformanceDocument(perf *performance.Performance) performanceDocu
 	}
 }
 
-func (d performanceDocument) unmarshalToPerformance(
+func (d performanceDocument) toPerformance(
 	spec *specification.Specification,
 	opts []performance.Option,
 ) *performance.Performance {

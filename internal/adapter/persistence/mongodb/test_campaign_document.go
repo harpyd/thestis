@@ -17,7 +17,7 @@ type (
 	}
 )
 
-func marshalToTestCampaignDocument(tc *testcampaign.TestCampaign) testCampaignDocument {
+func newTestCampaignDocument(tc *testcampaign.TestCampaign) testCampaignDocument {
 	return testCampaignDocument{
 		ID:        tc.ID(),
 		ViewName:  tc.ViewName(),
@@ -27,7 +27,7 @@ func marshalToTestCampaignDocument(tc *testcampaign.TestCampaign) testCampaignDo
 	}
 }
 
-func (d testCampaignDocument) unmarshalToTestCampaign() *testcampaign.TestCampaign {
+func (d testCampaignDocument) toTestCampaign() *testcampaign.TestCampaign {
 	tc, _ := testcampaign.New(testcampaign.Params{
 		ID:        d.ID,
 		ViewName:  d.ViewName,
@@ -39,7 +39,7 @@ func (d testCampaignDocument) unmarshalToTestCampaign() *testcampaign.TestCampai
 	return tc
 }
 
-func (d testCampaignDocument) unmarshalToSpecificTestCampaign() app.SpecificTestCampaign {
+func (d testCampaignDocument) toSpecificTestCampaign() app.SpecificTestCampaign {
 	return app.SpecificTestCampaign{
 		ID:        d.ID,
 		ViewName:  d.ViewName,

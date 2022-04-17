@@ -30,7 +30,7 @@ func (r *FlowRepository) GetFlow(ctx context.Context, flowID string) (flow.Flow,
 		return flow.Flow{}, err
 	}
 
-	return document.unmarshalToFlow(), err
+	return document.toFlow(), err
 }
 
 func (r *FlowRepository) getFlowDocument(ctx context.Context, filter bson.M) (flowDocument, error) {
@@ -47,7 +47,7 @@ func (r *FlowRepository) getFlowDocument(ctx context.Context, filter bson.M) (fl
 }
 
 func (r *FlowRepository) UpsertFlow(ctx context.Context, flow flow.Flow) error {
-	document := marshalToFlowDocument(flow)
+	document := newFlowDocument(flow)
 
 	opt := options.Replace().SetUpsert(true)
 	_, err := r.flows.ReplaceOne(ctx, bson.M{"_id": flow.ID()}, document, opt)

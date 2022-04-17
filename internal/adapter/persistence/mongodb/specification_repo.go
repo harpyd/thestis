@@ -43,7 +43,7 @@ func (r *SpecificationRepository) GetSpecification(
 		return nil, err
 	}
 
-	return document.unmarshalToSpecification(), nil
+	return document.toSpecification(), nil
 }
 
 func (r *SpecificationRepository) GetActiveSpecificationByTestCampaignID(
@@ -60,7 +60,7 @@ func (r *SpecificationRepository) GetActiveSpecificationByTestCampaignID(
 		return nil, err
 	}
 
-	return document.unmarshalToSpecification(), nil
+	return document.toSpecification(), nil
 }
 
 func (r *SpecificationRepository) FindSpecification(
@@ -77,7 +77,7 @@ func (r *SpecificationRepository) FindSpecification(
 		return app.SpecificSpecification{}, err
 	}
 
-	return document.unmarshalToSpecificSpecification(), nil
+	return document.toSpecificSpecification(), nil
 }
 
 func (r *SpecificationRepository) getSpecificationDocument(
@@ -100,7 +100,7 @@ func (r *SpecificationRepository) getSpecificationDocument(
 }
 
 func (r *SpecificationRepository) AddSpecification(ctx context.Context, spec *specification.Specification) error {
-	_, err := r.specifications.InsertOne(ctx, marshalToSpecificationDocument(spec))
+	_, err := r.specifications.InsertOne(ctx, newSpecificationDocument(spec))
 
 	return app.WrapWithDatabaseError(err)
 }

@@ -33,7 +33,7 @@ func (r *TestCampaignRepository) GetTestCampaign(
 		return nil, err
 	}
 
-	return document.unmarshalToTestCampaign(), nil
+	return document.toTestCampaign(), nil
 }
 
 func (r *TestCampaignRepository) FindTestCampaign(
@@ -48,7 +48,7 @@ func (r *TestCampaignRepository) FindTestCampaign(
 		return app.SpecificTestCampaign{}, err
 	}
 
-	return document.unmarshalToSpecificTestCampaign(), nil
+	return document.toSpecificTestCampaign(), nil
 }
 
 func (r *TestCampaignRepository) getTestCampaignDocument(
@@ -68,7 +68,7 @@ func (r *TestCampaignRepository) getTestCampaignDocument(
 }
 
 func (r *TestCampaignRepository) AddTestCampaign(ctx context.Context, tc *testcampaign.TestCampaign) error {
-	_, err := r.testCampaigns.InsertOne(ctx, marshalToTestCampaignDocument(tc))
+	_, err := r.testCampaigns.InsertOne(ctx, newTestCampaignDocument(tc))
 
 	return app.WrapWithDatabaseError(err)
 }
@@ -95,13 +95,13 @@ func (r *TestCampaignRepository) UpdateTestCampaign(
 			return nil, app.WrapWithDatabaseError(err)
 		}
 
-		tc := document.unmarshalToTestCampaign()
+		tc := document.toTestCampaign()
 		updatedTestCampaign, err := updateFn(ctx, tc)
 		if err != nil {
 			return nil, err
 		}
 
-		updatedDocument := marshalToTestCampaignDocument(updatedTestCampaign)
+		updatedDocument := newTestCampaignDocument(updatedTestCampaign)
 
 		replaceOpt := options.Replace().SetUpsert(true)
 		filter := bson.M{"_id": updatedDocument.ID}
