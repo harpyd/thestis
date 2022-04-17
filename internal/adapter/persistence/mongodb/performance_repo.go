@@ -41,7 +41,7 @@ func (r *PerformanceRepository) GetPerformance(
 		return nil, err
 	}
 
-	return document.unmarshalToPerformance(spec, opts), nil
+	return document.toPerformance(spec, opts), nil
 }
 
 func (r *PerformanceRepository) getPerformanceDocument(
@@ -61,7 +61,7 @@ func (r *PerformanceRepository) getPerformanceDocument(
 }
 
 func (r *PerformanceRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
-	_, err := r.performances.InsertOne(ctx, marshalToPerformanceDocument(perf))
+	_, err := r.performances.InsertOne(ctx, newPerformanceDocument(perf))
 
 	return app.WrapWithDatabaseError(err)
 }

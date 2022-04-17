@@ -35,48 +35,48 @@ type (
 	}
 )
 
-func marshalToFlowDocument(flow flow.Flow) flowDocument {
+func newFlowDocument(flow flow.Flow) flowDocument {
 	return flowDocument{
 		ID:            flow.ID(),
 		PerformanceID: flow.PerformanceID(),
-		Statuses:      marshalToStatusDocuments(flow.Statuses()),
+		Statuses:      newStatusDocuments(flow.Statuses()),
 	}
 }
 
-func marshalToStatusDocuments(statuses []*flow.Status) []statusDocument {
+func newStatusDocuments(statuses []*flow.Status) []statusDocument {
 	documents := make([]statusDocument, 0, len(statuses))
 	for _, s := range statuses {
-		documents = append(documents, marshalToStatusDocument(s))
+		documents = append(documents, newStatusDocument(s))
 	}
 
 	return documents
 }
 
-func marshalToStatusDocument(status *flow.Status) statusDocument {
+func newStatusDocument(status *flow.Status) statusDocument {
 	return statusDocument{
-		Slug:           marshalToScenarioSlugDocument(status.Slug()),
+		Slug:           newScenarioSlugDocument(status.Slug()),
 		State:          status.State(),
-		ThesisStatuses: marshalToThesisStatusDocuments(status.ThesisStatuses()),
+		ThesisStatuses: newThesisStatusDocuments(status.ThesisStatuses()),
 	}
 }
 
-func marshalToScenarioSlugDocument(slug specification.Slug) scenarioSlugDocument {
+func newScenarioSlugDocument(slug specification.Slug) scenarioSlugDocument {
 	return scenarioSlugDocument{
 		Story:    slug.Story(),
 		Scenario: slug.Scenario(),
 	}
 }
 
-func marshalToThesisStatusDocuments(statuses []*flow.ThesisStatus) []thesisStatusDocument {
+func newThesisStatusDocuments(statuses []*flow.ThesisStatus) []thesisStatusDocument {
 	documents := make([]thesisStatusDocument, 0, len(statuses))
 	for _, s := range statuses {
-		documents = append(documents, marshalToThesisStatusDocument(s))
+		documents = append(documents, newThesisStatusDocument(s))
 	}
 
 	return documents
 }
 
-func marshalToThesisStatusDocument(status *flow.ThesisStatus) thesisStatusDocument {
+func newThesisStatusDocument(status *flow.ThesisStatus) thesisStatusDocument {
 	return thesisStatusDocument{
 		ThesisSlug:   status.ThesisSlug(),
 		State:        status.State(),
@@ -84,45 +84,45 @@ func marshalToThesisStatusDocument(status *flow.ThesisStatus) thesisStatusDocume
 	}
 }
 
-func (d flowDocument) unmarshalToFlow() flow.Flow {
+func (d flowDocument) toFlow() flow.Flow {
 	return flow.Unmarshal(flow.Params{
 		ID:            d.ID,
 		PerformanceID: d.PerformanceID,
-		Statuses:      d.Statuses.unmarshalToStatuses(),
+		Statuses:      d.Statuses.toStatuses(),
 	})
 }
 
-func (ds statusDocuments) unmarshalToStatuses() []*flow.Status {
+func (ds statusDocuments) toStatuses() []*flow.Status {
 	transitions := make([]*flow.Status, 0, len(ds))
 	for _, d := range ds {
-		transitions = append(transitions, d.unmarshalToStatus())
+		transitions = append(transitions, d.toStatus())
 	}
 
 	return transitions
 }
 
-func (d statusDocument) unmarshalToStatus() *flow.Status {
+func (d statusDocument) toStatus() *flow.Status {
 	return flow.NewStatus(
-		d.Slug.unmarshalToSlug(),
+		d.Slug.toSlug(),
 		d.State,
-		d.ThesisStatuses.unmarshalToThesisStatuses()...,
+		d.ThesisStatuses.toThesisStatuses()...,
 	)
 }
 
-func (d scenarioSlugDocument) unmarshalToSlug() specification.Slug {
+func (d scenarioSlugDocument) toSlug() specification.Slug {
 	return specification.NewScenarioSlug(d.Story, d.Scenario)
 }
 
-func (ds thesisStatusDocuments) unmarshalToThesisStatuses() []*flow.ThesisStatus {
+func (ds thesisStatusDocuments) toThesisStatuses() []*flow.ThesisStatus {
 	statuses := make([]*flow.ThesisStatus, 0, len(ds))
 	for _, d := range ds {
-		statuses = append(statuses, d.unmarshalToThesisStatus())
+		statuses = append(statuses, d.toThesisStatus())
 	}
 
 	return statuses
 }
 
-func (d thesisStatusDocument) unmarshalToThesisStatus() *flow.ThesisStatus {
+func (d thesisStatusDocument) toThesisStatus() *flow.ThesisStatus {
 	return flow.NewThesisStatus(
 		d.ThesisSlug,
 		d.State,
