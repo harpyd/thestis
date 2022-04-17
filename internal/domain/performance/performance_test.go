@@ -841,7 +841,7 @@ func TestFormatTerminatedError(t *testing.T) {
 				errors.New("bar"),
 				performance.FiredCrash,
 			),
-			ExpectedErrorString: "performance has terminated due to `crash` event: bar",
+			ExpectedErrorString: `performance has terminated due to "crash" event: bar`,
 		},
 	}
 
