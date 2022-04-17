@@ -383,14 +383,11 @@ func (e *TerminatedError) Error() string {
 	b.WriteString("performance has terminated")
 
 	if e.event != NoEvent {
-		b.WriteString(" due to `")
-		b.WriteString(e.event.String())
-		b.WriteString("` event")
+		_, _ = fmt.Fprintf(&b, " due to %q event", e.event)
 	}
 
 	if e.err != nil {
-		b.WriteString(": ")
-		b.WriteString(e.err.Error())
+		_, _ = fmt.Fprintf(&b, ": %s", e.err)
 	}
 
 	return b.String()
