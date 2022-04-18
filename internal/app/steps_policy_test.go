@@ -125,14 +125,14 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 			CancelContext: true,
 			GivenSteps: []performance.Step{
 				performance.NewScenarioStep(
-					specification.AnyScenarioSlug(),
+					specification.NewScenarioSlug("a", "b"),
 					performance.FiredCancel,
 				),
 			},
 			ExpectedMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStep(
-						specification.AnyScenarioSlug(),
+						specification.NewScenarioSlug("a", "b"),
 						performance.FiredCancel,
 					),
 				),
@@ -143,7 +143,7 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("a", "b"),
-					flow.NotPerformed,
+					flow.Canceled,
 					flow.NewThesisStatus("c", flow.NotPerformed),
 				),
 			},
