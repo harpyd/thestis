@@ -599,7 +599,7 @@ func TestCancelPerformanceContext(t *testing.T) {
 						context.Canceled,
 						performance.FiredCancel,
 					),
-					specification.AnyScenarioSlug(),
+					specification.NewScenarioSlug("foo", "bar"),
 					performance.FiredCancel,
 				),
 			},
@@ -1009,23 +1009,23 @@ func requireStepsContain(
 }
 
 func mapStepsSliceToStrings(steps []performance.Step) []string {
-	strs := make([]string, 0, len(steps))
+	result := make([]string, 0, len(steps))
 
 	for _, step := range steps {
-		strs = append(strs, step.String())
+		result = append(result, step.String())
 	}
 
-	return strs
+	return result
 }
 
 func mapStepsChanToStrings(steps <-chan performance.Step, capacity int) []string {
-	strs := make([]string, 0, capacity)
+	result := make([]string, 0, capacity)
 
 	for step := range steps {
-		strs = append(strs, step.String())
+		result = append(result, step.String())
 	}
 
-	return strs
+	return result
 }
 
 type testError struct{}

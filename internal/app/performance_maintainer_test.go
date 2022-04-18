@@ -409,7 +409,7 @@ func TestMaintainPerformance(t *testing.T) {
 			t.Run("messages", func(t *testing.T) {
 				require.NoError(t, err)
 
-				requireMessagesEqual(t, c.ExpectedMessages, messages)
+				requireMessagesMatch(t, c.ExpectedMessages, messages)
 			})
 
 			t.Run("release_performance", func(t *testing.T) {
@@ -447,28 +447,18 @@ func TestCancelMaintainPerformance(t *testing.T) {
 		ErrlessBuild()
 
 	testCases := []struct {
-		Name                  string
-		CancelContext         bool
-		FlowTimeout           time.Duration
-		PublishCancel         bool
-		ExpectedOneOfMessages []app.Message
+		Name                     string
+		CancelContext            bool
+		FlowTimeout              time.Duration
+		PublishCancel            bool
+		ExpectedIncludedMessages []app.Message
 	}{
 		{
 			Name:          "context_canceled",
 			CancelContext: true,
 			FlowTimeout:   1 * time.Second,
 			PublishCancel: false,
-			ExpectedOneOfMessages: []app.Message{
-				app.NewMessageFromStep(
-					performance.NewScenarioStepWithErr(
-						performance.WrapWithTerminatedError(
-							context.Canceled,
-							performance.FiredCancel,
-						),
-						specification.AnyScenarioSlug(),
-						performance.FiredCancel,
-					),
-				),
+			ExpectedIncludedMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
 						performance.WrapWithTerminatedError(
@@ -486,7 +476,7 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			CancelContext: false,
 			FlowTimeout:   5 * time.Millisecond,
 			PublishCancel: false,
-			ExpectedOneOfMessages: []app.Message{
+			ExpectedIncludedMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
 						performance.WrapWithTerminatedError(
@@ -504,17 +494,7 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			CancelContext: false,
 			FlowTimeout:   1 * time.Second,
 			PublishCancel: true,
-			ExpectedOneOfMessages: []app.Message{
-				app.NewMessageFromStep(
-					performance.NewScenarioStepWithErr(
-						performance.WrapWithTerminatedError(
-							context.Canceled,
-							performance.FiredCancel,
-						),
-						specification.AnyScenarioSlug(),
-						performance.FiredCancel,
-					),
-				),
+			ExpectedIncludedMessages: []app.Message{
 				app.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
 						performance.WrapWithTerminatedError(
@@ -575,7 +555,7 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			}
 
 			t.Run("cancel_messages", func(t *testing.T) {
-				requireMessagesContainOneOf(t, messages, c.ExpectedOneOfMessages...)
+				requireMessagesContain(t, messages, c.ExpectedIncludedMessages...)
 			})
 
 			t.Run("release_performance", func(t *testing.T) {
@@ -787,53 +767,40 @@ func errlessPerformanceGuard(t *testing.T) *mock.PerformanceGuard {
 	return mock.NewPerformanceGuard(nil, nil)
 }
 
-func requireMessagesEqual(t *testing.T, expected []app.Message, actual <-chan app.Message) {
+func requireMessagesMatch(t *testing.T, expected []app.Message, actual <-chan app.Message) {
 	t.Helper()
 
-	expectedMessages := make([]string, 0, len(expected))
-	for _, msg := range expected {
-		expectedMessages = append(expectedMessages, msg.String())
-	}
-
-	actualMessages := readMessages(actual)
-
-	require.ElementsMatch(t, expectedMessages, actualMessages)
-}
-
-func requireMessagesContainOneOf(t *testing.T, messages <-chan app.Message, target ...app.Message) {
-	t.Helper()
-
-	read := readMessages(messages)
-
-	for _, msg := range target {
-		if contains(read, msg.String()) {
-			return
-		}
-	}
-
-	require.Failf(
+	require.ElementsMatch(
 		t,
-		"Messages do not contain any target message",
-		"read messages: %s\ntarget messages: %s",
-		read, target,
+		mapMessagesSliceToStrings(expected),
+		mapMessagesChanToStrings(actual, len(expected)),
 	)
 }
 
-func contains(s []string, elem string) bool {
-	for _, x := range s {
-		if x == elem {
-			return true
-		}
-	}
+func requireMessagesContain(t *testing.T, messages <-chan app.Message, contain ...app.Message) {
+	t.Helper()
 
-	return false
+	require.Subset(
+		t,
+		mapMessagesChanToStrings(messages, len(contain)),
+		mapMessagesSliceToStrings(contain),
+	)
 }
 
-func readMessages(messages <-chan app.Message) []string {
-	read := make([]string, 0, len(messages))
-	for msg := range messages {
-		read = append(read, msg.String())
+func mapMessagesSliceToStrings(messages []app.Message) []string {
+	result := make([]string, 0, len(messages))
+	for _, msg := range messages {
+		result = append(result, msg.String())
 	}
 
-	return read
+	return result
+}
+
+func mapMessagesChanToStrings(messages <-chan app.Message, capacity int) []string {
+	result := make([]string, 0, capacity)
+	for msg := range messages {
+		result = append(result, msg.String())
+	}
+
+	return result
 }
