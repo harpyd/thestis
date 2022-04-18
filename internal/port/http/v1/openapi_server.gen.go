@@ -13,7 +13,7 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Returns peformance with such ID.
+	// Returns performance with such ID.
 	// (GET /performances/{performanceId})
 	GetPerformance(w http.ResponseWriter, r *http.Request, performanceId string)
 	// Restart performance with such ID.
