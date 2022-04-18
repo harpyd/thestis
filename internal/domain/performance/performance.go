@@ -229,16 +229,6 @@ func (p *Performance) run(ctx context.Context, steps chan<- Step) {
 }
 
 func (p *Performance) runScenarios(ctx context.Context, steps chan<- Step) {
-	if ctx.Err() != nil {
-		steps <- NewScenarioStepWithErr(
-			WrapWithTerminatedError(ctx.Err(), FiredCancel),
-			specification.AnyScenarioSlug(),
-			FiredCancel,
-		)
-
-		return
-	}
-
 	var wg sync.WaitGroup
 
 	for _, scenario := range p.WorkingScenarios() {

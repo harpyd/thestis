@@ -190,7 +190,7 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 				policy.HandleSteps(ctx, fr, steps, messages)
 			}()
 
-			requireMessagesEqual(t, c.ExpectedMessages, messages)
+			requireMessagesMatch(t, c.ExpectedMessages, messages)
 
 			f := fr.Reduce()
 

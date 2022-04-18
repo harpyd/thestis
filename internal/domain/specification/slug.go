@@ -16,11 +16,10 @@ const (
 )
 
 type Slug struct {
+	kind     SlugKind
 	story    string
 	scenario string
 	thesis   string
-
-	kind SlugKind
 }
 
 var (
