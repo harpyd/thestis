@@ -8,8 +8,8 @@ import (
 type (
 	flowDocument struct {
 		ID            string          `bson:"_id"`
-		OverallState  flow.State      `bson:"overallState"`
 		PerformanceID string          `bson:"performanceId"`
+		OverallState  flow.State      `bson:"overallState"`
 		Statuses      statusDocuments `bson:"statuses"`
 	}
 
@@ -39,6 +39,7 @@ func newFlowDocument(flow flow.Flow) flowDocument {
 	return flowDocument{
 		ID:            flow.ID(),
 		PerformanceID: flow.PerformanceID(),
+		OverallState:  flow.OverallState(),
 		Statuses:      newStatusDocuments(flow.Statuses()),
 	}
 }
@@ -88,6 +89,7 @@ func (d flowDocument) toFlow() flow.Flow {
 	return flow.Unmarshal(flow.Params{
 		ID:            d.ID,
 		PerformanceID: d.PerformanceID,
+		OverallState:  d.OverallState,
 		Statuses:      d.Statuses.toStatuses(),
 	})
 }
