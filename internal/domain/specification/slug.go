@@ -28,19 +28,11 @@ var (
 	ErrNotThesisSlug   = errors.New("not thesis slug")
 )
 
-func AnyStorySlug() Slug {
-	return NewStorySlug("")
-}
-
 func NewStorySlug(slug string) Slug {
 	return Slug{
 		story: slug,
 		kind:  StorySlug,
 	}
-}
-
-func AnyScenarioSlug() Slug {
-	return NewScenarioSlug("", "")
 }
 
 func NewScenarioSlug(storySlug, scenarioSlug string) Slug {
@@ -49,10 +41,6 @@ func NewScenarioSlug(storySlug, scenarioSlug string) Slug {
 		scenario: scenarioSlug,
 		kind:     ScenarioSlug,
 	}
-}
-
-func AnyThesisSlug() Slug {
-	return NewThesisSlug("", "", "")
 }
 
 func NewThesisSlug(storySlug, scenarioSlug, thesisSlug string) Slug {
@@ -133,11 +121,11 @@ func (s Slug) Kind() SlugKind {
 func (s Slug) Partial() string {
 	switch s.kind {
 	case StorySlug:
-		return replaceSlugIfEmpty(s.story)
+		return s.story
 	case ScenarioSlug:
-		return replaceSlugIfEmpty(s.scenario)
+		return s.scenario
 	case ThesisSlug:
-		return replaceSlugIfEmpty(s.thesis)
+		return s.thesis
 	case NoSlug:
 		return ""
 	}
@@ -155,28 +143,19 @@ const (
 )
 
 func (s Slug) String() string {
+	var slugs []string
+
 	switch s.kind {
 	case StorySlug:
-		return replaceSlugIfEmpty(s.story)
+		slugs = []string{s.story}
 	case ScenarioSlug:
-		slugs := mapSlugs([]string{
-			s.story,
-			s.scenario,
-		}, replaceSlugIfEmpty)
-
-		return strings.Join(slugs, slugsSeparator)
+		slugs = []string{s.story, s.scenario}
 	case ThesisSlug:
-		slugs := mapSlugs([]string{
-			s.story,
-			s.scenario,
-			s.thesis,
-		}, replaceSlugIfEmpty)
-
-		return strings.Join(slugs, slugsSeparator)
+		slugs = []string{s.story, s.scenario, s.thesis}
 	case NoSlug:
 	}
 
-	return ""
+	return strings.Join(mapSlugs(slugs, replaceSlugIfEmpty), slugsSeparator)
 }
 
 func mapSlugs(slugs []string, fn func(string) string) []string {

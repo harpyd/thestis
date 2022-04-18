@@ -853,10 +853,10 @@ func TestAsBuildError(t *testing.T) {
 				WithError(errors.New("foo")).
 				WithError(nil).
 				WithError(errors.New("bar")).
-				SluggedWrap(specification.AnyThesisSlug()),
+				SluggedWrap(specification.NewStorySlug("story")),
 			ShouldBeWrapped: true,
 			ExpectedSlugContext: slugContext{
-				Value: specification.AnyThesisSlug(),
+				Value: specification.NewStorySlug("story"),
 				Ok:    true,
 			},
 			ExpectedErrors: []error{

@@ -71,16 +71,16 @@ func TestStep(t *testing.T) {
 			StepFactory: func() performance.Step {
 				return performance.NewScenarioStepWithErr(
 					errors.New("something wrong"),
-					specification.AnyScenarioSlug(),
+					specification.NewScenarioSlug("a", "b"),
 					performance.FiredCancel,
 				)
 			},
-			ExpectedSlug:          specification.AnyScenarioSlug(),
+			ExpectedSlug:          specification.NewScenarioSlug("a", "b"),
 			ExpectedPerformerType: performance.NoPerformer,
 			ExpectedEvent:         performance.FiredCancel,
 			ExpectedErr:           errors.New("something wrong"),
 			ExpectedIsZero:        false,
-			ExpectedString:        "*.*: event = cancel, err = something wrong",
+			ExpectedString:        "a.b: event = cancel, err = something wrong",
 		},
 		{
 			StepFactory: func() performance.Step {
