@@ -114,9 +114,3 @@ func (r *TestCampaignRepository) UpdateTestCampaign(
 
 	return err
 }
-
-func (r *TestCampaignRepository) RemoveAllTestCampaigns(ctx context.Context) error {
-	_, err := r.testCampaigns.DeleteMany(ctx, bson.D{})
-
-	return app.WrapWithDatabaseError(err)
-}

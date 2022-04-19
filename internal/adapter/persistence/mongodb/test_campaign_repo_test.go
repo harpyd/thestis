@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
@@ -26,7 +27,9 @@ func (s *TestCampaignRepositoryTestSuite) SetupTest() {
 }
 
 func (s *TestCampaignRepositoryTestSuite) TearDownTest() {
-	err := s.repo.RemoveAllTestCampaigns(context.Background())
+	_, err := s.db.
+		Collection("testCampaigns").
+		DeleteMany(context.Background(), bson.D{})
 	s.Require().NoError(err)
 }
 
