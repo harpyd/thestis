@@ -24,7 +24,9 @@ func (s *FlowRepositoryTestSuite) SetupTest() {
 }
 
 func (s *FlowRepositoryTestSuite) TearDownTest() {
-	err := s.repo.RemoveAllFlows(context.Background())
+	_, err := s.db.
+		Collection("flows").
+		DeleteOne(context.Background(), bson.D{})
 	s.Require().NoError(err)
 }
 

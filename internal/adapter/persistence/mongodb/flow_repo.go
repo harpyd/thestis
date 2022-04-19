@@ -54,9 +54,3 @@ func (r *FlowRepository) UpsertFlow(ctx context.Context, flow *flow.Flow) error 
 
 	return app.WrapWithDatabaseError(err)
 }
-
-func (r *FlowRepository) RemoveAllFlows(ctx context.Context) error {
-	_, err := r.flows.DeleteOne(ctx, bson.D{})
-
-	return app.WrapWithDatabaseError(err)
-}
