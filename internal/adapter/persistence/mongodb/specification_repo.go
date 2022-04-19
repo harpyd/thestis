@@ -104,9 +104,3 @@ func (r *SpecificationRepository) AddSpecification(ctx context.Context, spec *sp
 
 	return app.WrapWithDatabaseError(err)
 }
-
-func (r *SpecificationRepository) RemoveAllSpecifications(ctx context.Context) error {
-	_, err := r.specifications.DeleteMany(ctx, bson.D{})
-
-	return app.WrapWithDatabaseError(err)
-}
