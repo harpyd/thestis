@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
-	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/performance"
 )
 
@@ -18,26 +18,28 @@ type PerformanceGuardTestSuite struct {
 	MongoTestFixtures
 
 	guard *mongodb.PerformanceGuard
-	repo  *mongodb.PerformanceRepository
 
 	perfID string
 }
 
 func (s *PerformanceGuardTestSuite) SetupTest() {
 	s.guard = mongodb.NewPerformanceGuard(s.db)
-	s.repo = mongodb.NewPerformanceRepository(s.db)
 
 	s.perfID = "2db44433-7142-4080-bada-844afccfedbf"
 
-	err := s.repo.AddPerformance(context.Background(), performance.Unmarshal(performance.Params{
-		ID:      s.perfID,
-		OwnerID: "b4a232b3-d853-4022-9b4d-f2aefb24d82c",
-	}))
+	_, err := s.db.
+		Collection("performances").
+		InsertOne(context.Background(), bson.M{
+			"_id":     s.perfID,
+			"started": false,
+		})
 	s.Require().NoError(err)
 }
 
 func (s *PerformanceGuardTestSuite) TearDownTest() {
-	err := s.repo.RemoveAllPerformances(context.Background())
+	_, err := s.db.
+		Collection("performances").
+		DeleteMany(context.Background(), bson.D{})
 	s.Require().NoError(err)
 }
 
@@ -52,20 +54,15 @@ func TestPerformanceGuard(t *testing.T) {
 }
 
 func (s *PerformanceGuardTestSuite) TestAcquirePerformance() {
-	err := s.guard.AcquirePerformance(context.Background(), s.perfID)
+	ctx := context.Background()
+
+	err := s.guard.AcquirePerformance(ctx, s.perfID)
 	s.Require().NoError(err)
 
-	err = s.guard.AcquirePerformance(context.Background(), s.perfID)
+	err = s.guard.AcquirePerformance(ctx, s.perfID)
 	s.Require().ErrorIs(err, performance.ErrAlreadyStarted)
 
-	persistedPerf, err := s.repo.GetPerformance(
-		context.Background(),
-		s.perfID,
-		app.DontGetSpecification(),
-	)
-	s.Require().NoError(err)
-
-	s.Require().True(persistedPerf.Started())
+	s.Require().True(s.getPerformanceStarted())
 }
 
 func (s *PerformanceGuardTestSuite) TestAcquirePerformanceConcurrently() {
@@ -99,24 +96,23 @@ func (s *PerformanceGuardTestSuite) TestReleasePerformance() {
 	err := s.guard.AcquirePerformance(context.Background(), s.perfID)
 	s.Require().NoError(err)
 
-	persistedPerf, err := s.repo.GetPerformance(
-		context.Background(),
-		s.perfID,
-		app.DontGetSpecification(),
-	)
-	s.Require().NoError(err)
-
-	s.Require().True(persistedPerf.Started())
+	s.Require().True(s.getPerformanceStarted())
 
 	err = s.guard.ReleasePerformance(context.Background(), s.perfID)
 	s.Require().NoError(err)
 
-	persistedPerf, err = s.repo.GetPerformance(
-		context.Background(),
-		s.perfID,
-		app.DontGetSpecification(),
-	)
+	s.Require().False(s.getPerformanceStarted())
+}
+
+func (s *PerformanceGuardTestSuite) getPerformanceStarted() bool {
+	var document struct {
+		Started bool `bson:"started"`
+	}
+
+	err := s.db.Collection("performances").
+		FindOne(context.Background(), bson.M{"_id": s.perfID}).
+		Decode(&document)
 	s.Require().NoError(err)
 
-	s.Require().False(persistedPerf.Started())
+	return document.Started
 }
