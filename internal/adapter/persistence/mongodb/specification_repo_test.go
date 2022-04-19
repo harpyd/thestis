@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
@@ -25,7 +26,9 @@ func (s *SpecificationRepositoryTestSuite) SetupTest() {
 }
 
 func (s *SpecificationRepositoryTestSuite) TearDownTest() {
-	err := s.repo.RemoveAllSpecifications(context.Background())
+	_, err := s.db.
+		Collection("specifications").
+		DeleteMany(context.Background(), bson.D{})
 	s.Require().NoError(err)
 }
 
