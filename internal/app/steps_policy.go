@@ -59,7 +59,7 @@ func (p *everyStepSavingPolicy) HandleSteps(
 	}
 }
 
-func (p *everyStepSavingPolicy) upsertFlowWithTimeout(ctx context.Context, flow flow.Flow) error {
+func (p *everyStepSavingPolicy) upsertFlowWithTimeout(ctx context.Context, flow *flow.Flow) error {
 	ctx, cancel := context.WithTimeout(ctx, p.timeout)
 	defer cancel()
 
