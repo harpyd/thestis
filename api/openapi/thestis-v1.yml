@@ -258,7 +258,7 @@ paths:
       tags:
         - performance
       operationId: getPerformance
-      summary: Returns peformance with such ID.
+      summary: Returns performance with such ID.
       parameters:
         - in: path
           name: performanceId

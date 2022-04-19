@@ -172,6 +172,7 @@ func (s *ThesisStatus) OccurredErrs() []string {
 type Params struct {
 	ID            string
 	PerformanceID string
+	OverallState  State
 	Statuses      []*Status
 }
 
@@ -186,6 +187,7 @@ func Unmarshal(params Params) *Flow {
 	f := &Flow{
 		id:            params.ID,
 		performanceID: params.PerformanceID,
+		overallState:  params.OverallState,
 		statuses:      make([]*Status, len(params.Statuses)),
 	}
 
