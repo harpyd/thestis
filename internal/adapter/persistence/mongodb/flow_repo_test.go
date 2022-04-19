@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/domain/flow"
@@ -39,18 +40,15 @@ func TestFlowRepository(t *testing.T) {
 
 func (s *FlowRepositoryTestSuite) TestUpsertFlow() {
 	testCases := []struct {
-		Name        string
-		Before      func()
-		Flow        *flow.Flow
-		ShouldBeErr bool
-		IsErr       func(err error) bool
+		Name               string
+		InsertedBeforeFlow interface{}
+		GivenFlow          *flow.Flow
+		ShouldBeErr        bool
+		IsErr              func(err error) bool
 	}{
 		{
 			Name: "success_inserting_flow",
-			Before: func() {
-				// do not insert before
-			},
-			Flow: flow.Unmarshal(flow.Params{
+			GivenFlow: flow.Unmarshal(flow.Params{
 				ID:            "60b7b0eb-eb62-49bc-bf76-d4fca3ad48b8",
 				PerformanceID: "b1728f29-c897-4258-bad8-dd824b8f84cf",
 				Statuses: []*flow.Status{
@@ -65,23 +63,11 @@ func (s *FlowRepositoryTestSuite) TestUpsertFlow() {
 		},
 		{
 			Name: "success_updating_flow",
-			Before: func() {
-				f := flow.Unmarshal(flow.Params{
-					ID:            "07e3468b-a195-4b30-81df-8e3e8d389da9",
-					PerformanceID: "37a5f844-25db-4aad-a3e2-628674e7e1e5",
-					Statuses: []*flow.Status{
-						flow.NewStatus(
-							specification.NewScenarioSlug("foo", "bar"),
-							flow.Performing,
-							flow.NewThesisStatus("baz", flow.Passed),
-							flow.NewThesisStatus("bad", flow.Failed),
-						),
-					},
-				})
-
-				s.addFlows(f)
+			InsertedBeforeFlow: bson.M{
+				"_id":           "07e3468b-a195-4b30-81df-8e3e8d389da9",
+				"performanceId": "37a5f844-25db-4aad-a3e2-628674e7e1e5",
 			},
-			Flow: flow.Unmarshal(flow.Params{
+			GivenFlow: flow.Unmarshal(flow.Params{
 				ID:            "07e3468b-a195-4b30-81df-8e3e8d389da9",
 				PerformanceID: "407b3e37-a4b2-4fa1-aa47-4d75e658e455",
 				Statuses: []*flow.Status{
@@ -99,9 +85,11 @@ func (s *FlowRepositoryTestSuite) TestUpsertFlow() {
 
 	for _, c := range testCases {
 		s.Run(c.Name, func() {
-			c.Before()
+			if c.InsertedBeforeFlow != nil {
+				s.addFlows(c.InsertedBeforeFlow)
+			}
 
-			err := s.repo.UpsertFlow(context.Background(), c.Flow)
+			err := s.repo.UpsertFlow(context.Background(), c.GivenFlow)
 
 			if c.ShouldBeErr {
 				s.Require().True(c.IsErr(err))
@@ -111,8 +99,8 @@ func (s *FlowRepositoryTestSuite) TestUpsertFlow() {
 
 			s.Require().NoError(err)
 
-			persistedFlow := s.getFlow(c.Flow.ID())
-			s.Require().Equal(c.Flow, persistedFlow)
+			persistedFlow := s.getFlow(c.GivenFlow.ID())
+			s.Require().Equal(c.GivenFlow, persistedFlow)
 		})
 	}
 }
@@ -126,13 +114,13 @@ func (s *FlowRepositoryTestSuite) getFlow(flowID string) *flow.Flow {
 	return f
 }
 
-func (s *FlowRepositoryTestSuite) addFlows(flows ...*flow.Flow) {
+func (s *FlowRepositoryTestSuite) addFlows(flows ...interface{}) {
 	s.T().Helper()
 
 	ctx := context.Background()
 
 	for _, f := range flows {
-		err := s.repo.UpsertFlow(ctx, f)
+		_, err := s.db.Collection("flows").InsertOne(ctx, f)
 		s.Require().NoError(err)
 	}
 }
