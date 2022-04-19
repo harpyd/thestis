@@ -115,12 +115,7 @@ func (s *TestCampaignRepositoryTestSuite) TestFindTestCampaign() {
 
 			s.Require().NoError(err)
 
-			s.Require().Equal(storedTestCampaign["_id"], tc.ID)
-			s.Require().Equal(storedTestCampaign["viewName"], tc.ViewName)
-			s.Require().Equal(storedTestCampaign["summary"], tc.Summary)
-			expectedCreatedAt, ok := storedTestCampaign["createdAt"].(time.Time)
-			s.Require().True(ok)
-			s.Require().WithinDuration(expectedCreatedAt, tc.CreatedAt, 1*time.Second)
+			s.requireAppTestCampaignsEqual(storedTestCampaign, tc)
 		})
 	}
 }
@@ -305,6 +300,18 @@ func (s *TestCampaignRepositoryTestSuite) getTestCampaign(tcID string) *testcamp
 	s.Require().NoError(err)
 
 	return tc
+}
+
+func (s *TestCampaignRepositoryTestSuite) requireAppTestCampaignsEqual(
+	expected bson.M,
+	actual app.SpecificTestCampaign,
+) {
+	s.Require().Equal(expected["_id"], actual.ID)
+	s.Require().Equal(expected["viewName"], actual.ViewName)
+	s.Require().Equal(expected["summary"], actual.Summary)
+	expectedCreatedAt, ok := expected["createdAt"].(time.Time)
+	s.Require().True(ok)
+	s.Require().WithinDuration(expectedCreatedAt, actual.CreatedAt, 1*time.Second)
 }
 
 func (s *TestCampaignRepositoryTestSuite) requireTestCampaignsEqual(expected, actual *testcampaign.TestCampaign) {
