@@ -119,7 +119,7 @@ func (s *TestCampaignRepositoryTestSuite) TestFindTestCampaign() {
 			s.Require().Equal(testCampaignToFind.ID(), tc.ID)
 			s.Require().Equal(testCampaignToFind.Summary(), tc.Summary)
 			s.Require().Equal(testCampaignToFind.ViewName(), tc.ViewName)
-			s.requireTimesEqualWithRounding(testCampaignToFind.CreatedAt(), tc.CreatedAt)
+			s.Require().WithinDuration(testCampaignToFind.CreatedAt(), tc.CreatedAt, 1*time.Second)
 		})
 	}
 }
@@ -319,15 +319,5 @@ func (s *TestCampaignRepositoryTestSuite) requireTestCampaignsEqual(expected, ac
 	s.Require().Equal(expected.OwnerID(), actual.OwnerID())
 	s.Require().Equal(expected.Summary(), actual.Summary())
 	s.Require().Equal(expected.ViewName(), actual.ViewName())
-	s.requireTimesEqualWithRounding(expected.CreatedAt(), actual.CreatedAt())
-}
-
-func (s *TestCampaignRepositoryTestSuite) requireTimesEqualWithRounding(expected, actual time.Time) {
-	s.T().Helper()
-
-	s.Require().True(round(expected).Equal(round(actual)))
-}
-
-func round(t time.Time) time.Time {
-	return t.Round(1 * time.Second)
+	s.Require().WithinDuration(expected.CreatedAt(), actual.CreatedAt(), 1*time.Second)
 }
