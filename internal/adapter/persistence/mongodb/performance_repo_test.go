@@ -27,7 +27,9 @@ func (s *PerformanceRepositoryTestSuite) SetupTest() {
 }
 
 func (s *PerformanceRepositoryTestSuite) TearDownTest() {
-	err := s.repo.RemoveAllPerformances(context.Background())
+	_, err := s.db.
+		Collection("performances").
+		DeleteMany(context.Background(), bson.D{})
 	s.Require().NoError(err)
 }
 

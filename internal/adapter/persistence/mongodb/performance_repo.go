@@ -65,9 +65,3 @@ func (r *PerformanceRepository) AddPerformance(ctx context.Context, perf *perfor
 
 	return app.WrapWithDatabaseError(err)
 }
-
-func (r *PerformanceRepository) RemoveAllPerformances(ctx context.Context) error {
-	_, err := r.performances.DeleteMany(ctx, bson.D{})
-
-	return app.WrapWithDatabaseError(err)
-}
