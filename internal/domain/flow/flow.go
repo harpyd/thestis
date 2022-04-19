@@ -228,10 +228,7 @@ func fromTheses(theses []specification.Thesis) map[string]*ThesisStatus {
 	for _, thesis := range theses {
 		slug := thesis.Slug().Partial()
 
-		statuses[slug] = &ThesisStatus{
-			thesisSlug: slug,
-			state:      NotPerformed,
-		}
+		statuses[slug] = NewThesisStatus(slug, NotPerformed)
 	}
 
 	return statuses
