@@ -35,7 +35,7 @@ type (
 	}
 )
 
-func newFlowDocument(flow flow.Flow) flowDocument {
+func newFlowDocument(flow *flow.Flow) flowDocument {
 	return flowDocument{
 		ID:            flow.ID(),
 		PerformanceID: flow.PerformanceID(),
@@ -85,7 +85,7 @@ func newThesisStatusDocument(status *flow.ThesisStatus) thesisStatusDocument {
 	}
 }
 
-func (d flowDocument) toFlow() flow.Flow {
+func (d flowDocument) toFlow() *flow.Flow {
 	return flow.Unmarshal(flow.Params{
 		ID:            d.ID,
 		PerformanceID: d.PerformanceID,

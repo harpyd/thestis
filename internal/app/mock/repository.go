@@ -263,9 +263,9 @@ func NewFlowRepository(flows ...flow.Flow) *FlowRepository {
 	return m
 }
 
-func (m *FlowRepository) GetFlow(ctx context.Context, flowID string) (flow.Flow, error) {
+func (m *FlowRepository) GetFlow(ctx context.Context, flowID string) (*flow.Flow, error) {
 	if ctx.Err() != nil {
-		return flow.Flow{}, app.WrapWithDatabaseError(ctx.Err())
+		return nil, app.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.RLock()
@@ -273,13 +273,13 @@ func (m *FlowRepository) GetFlow(ctx context.Context, flowID string) (flow.Flow,
 
 	f, ok := m.flows[flowID]
 	if !ok {
-		return flow.Flow{}, app.ErrFlowNotFound
+		return nil, app.ErrFlowNotFound
 	}
 
-	return f, nil
+	return &f, nil
 }
 
-func (m *FlowRepository) UpsertFlow(ctx context.Context, flow flow.Flow) error {
+func (m *FlowRepository) UpsertFlow(ctx context.Context, flow *flow.Flow) error {
 	if ctx.Err() != nil {
 		return app.WrapWithDatabaseError(ctx.Err())
 	}
@@ -287,7 +287,7 @@ func (m *FlowRepository) UpsertFlow(ctx context.Context, flow flow.Flow) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.flows[flow.ID()] = flow
+	m.flows[flow.ID()] = *flow
 
 	return nil
 }

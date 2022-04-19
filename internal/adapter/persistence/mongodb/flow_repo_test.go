@@ -41,7 +41,7 @@ func (s *FlowRepositoryTestSuite) TestUpsertFlow() {
 	testCases := []struct {
 		Name        string
 		Before      func()
-		Flow        flow.Flow
+		Flow        *flow.Flow
 		ShouldBeErr bool
 		IsErr       func(err error) bool
 	}{
@@ -117,7 +117,7 @@ func (s *FlowRepositoryTestSuite) TestUpsertFlow() {
 	}
 }
 
-func (s *FlowRepositoryTestSuite) getFlow(flowID string) flow.Flow {
+func (s *FlowRepositoryTestSuite) getFlow(flowID string) *flow.Flow {
 	s.T().Helper()
 
 	f, err := s.repo.GetFlow(context.Background(), flowID)
@@ -126,7 +126,7 @@ func (s *FlowRepositoryTestSuite) getFlow(flowID string) flow.Flow {
 	return f
 }
 
-func (s *FlowRepositoryTestSuite) addFlows(flows ...flow.Flow) {
+func (s *FlowRepositoryTestSuite) addFlows(flows ...*flow.Flow) {
 	s.T().Helper()
 
 	ctx := context.Background()

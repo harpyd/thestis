@@ -90,8 +90,8 @@ func (f getSpecificationFunc) GetSpecification(_ context.Context, _ string) (*sp
 }
 
 type FlowRepository interface {
-	GetFlow(ctx context.Context, flowID string) (flow.Flow, error)
-	UpsertFlow(ctx context.Context, flow flow.Flow) error
+	GetFlow(ctx context.Context, flowID string) (*flow.Flow, error)
+	UpsertFlow(ctx context.Context, flow *flow.Flow) error
 }
 
 type DatabaseError struct {

@@ -183,8 +183,8 @@ type Params struct {
 //
 // You must not use this method in
 // business code of domain and app layers.
-func Unmarshal(params Params) Flow {
-	f := Flow{
+func Unmarshal(params Params) *Flow {
+	f := &Flow{
 		id:            params.ID,
 		performanceID: params.PerformanceID,
 		overallState:  params.OverallState,
@@ -270,8 +270,8 @@ func FromStatuses(id, performanceID string, statuses ...*Status) *Reducer {
 //   fr.WithStep(s)
 //   save(ctx, fr.Reduce())
 //  }
-func (r *Reducer) Reduce() Flow {
-	return Flow{
+func (r *Reducer) Reduce() *Flow {
+	return &Flow{
 		id:            r.id,
 		performanceID: r.performanceID,
 		overallState:  r.selectOverallState(),

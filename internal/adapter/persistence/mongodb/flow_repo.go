@@ -24,10 +24,10 @@ func NewFlowRepository(db *mongo.Database) *FlowRepository {
 	}
 }
 
-func (r *FlowRepository) GetFlow(ctx context.Context, flowID string) (flow.Flow, error) {
+func (r *FlowRepository) GetFlow(ctx context.Context, flowID string) (*flow.Flow, error) {
 	document, err := r.getFlowDocument(ctx, bson.M{"_id": flowID})
 	if err != nil {
-		return flow.Flow{}, err
+		return nil, err
 	}
 
 	return document.toFlow(), err
@@ -46,7 +46,7 @@ func (r *FlowRepository) getFlowDocument(ctx context.Context, filter bson.M) (fl
 	return document, nil
 }
 
-func (r *FlowRepository) UpsertFlow(ctx context.Context, flow flow.Flow) error {
+func (r *FlowRepository) UpsertFlow(ctx context.Context, flow *flow.Flow) error {
 	document := newFlowDocument(flow)
 
 	opt := options.Replace().SetUpsert(true)
