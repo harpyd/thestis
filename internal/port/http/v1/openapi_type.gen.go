@@ -66,15 +66,21 @@ const (
 
 // Defines values for PerformanceState.
 const (
+	PerformanceStateCANCELED PerformanceState = "CANCELED"
+
+	PerformanceStateCRASHED PerformanceState = "CRASHED"
+
+	PerformanceStateFAILED PerformanceState = "FAILED"
+
+	PerformanceStateNOSTATE PerformanceState = "NO_STATE"
+
 	PerformanceStateNOTPERFORMED PerformanceState = "NOT_PERFORMED"
+
+	PerformanceStatePASSED PerformanceState = "PASSED"
 
 	PerformanceStatePERFORMING PerformanceState = "PERFORMING"
 
-	PerformanceStatePERFORMINGERROR PerformanceState = "PERFORMING_ERROR"
-
-	PerformanceStatePERFORMINGFAILED PerformanceState = "PERFORMING_FAILED"
-
-	PerformanceStatePERFORMINGPASSED PerformanceState = "PERFORMING_PASSED"
+	PerformanceStateQUEUED PerformanceState = "QUEUED"
 )
 
 // Assert defines model for Assert.
@@ -107,6 +113,20 @@ type Error struct {
 // ErrorSlug defines model for ErrorSlug.
 type ErrorSlug string
 
+// Flow defines model for Flow.
+type Flow struct {
+	OverallState PerformanceState `json:"overallState"`
+	Statuses     []Status         `json:"statuses"`
+}
+
+// GeneralPerformanceResponse defines model for GeneralPerformanceResponse.
+type GeneralPerformanceResponse struct {
+	Id              string           `json:"id"`
+	LastState       PerformanceState `json:"lastState"`
+	SpecificationId string           `json:"specificationId"`
+	StartedAt       time.Time        `json:"startedAt"`
+}
+
 // Http defines model for Http.
 type Http struct {
 	Request  *HttpRequest  `json:"request,omitempty"`
@@ -130,12 +150,6 @@ type HttpResponse struct {
 	AllowedContentType *string `json:"allowedContentType,omitempty"`
 }
 
-// PerformanceResponse defines model for PerformanceResponse.
-type PerformanceResponse struct {
-	State              *PerformanceState   `json:"state,omitempty"`
-	StoriesPerformance *[]StoryPerformance `json:"storiesPerformance,omitempty"`
-}
-
 // PerformanceState defines model for PerformanceState.
 type PerformanceState string
 
@@ -146,11 +160,11 @@ type Scenario struct {
 	Theses      []Thesis `json:"theses"`
 }
 
-// ScenarioPerformance defines model for ScenarioPerformance.
-type ScenarioPerformance struct {
-	Slug              string               `json:"slug"`
-	State             PerformanceState     `json:"state"`
-	ThesesPerformance *[]ThesisPerformance `json:"thesesPerformance,omitempty"`
+// SpecificPerformanceResponse defines model for SpecificPerformanceResponse.
+type SpecificPerformanceResponse struct {
+	Flows           interface{} `json:"flows"`
+	Id              string      `json:"id"`
+	SpecificationId string      `json:"specificationId"`
 }
 
 // Specification defines model for Specification.
@@ -170,13 +184,32 @@ type SpecificationResponse struct {
 	Specification Specification `json:"specification"`
 }
 
+// SpecificationSlug defines model for SpecificationSlug.
+type SpecificationSlug struct {
+	Scenario *string `json:"scenario,omitempty"`
+	Story    *string `json:"story,omitempty"`
+	Thesis   *string `json:"thesis,omitempty"`
+}
+
 // SpecificationSource defines model for SpecificationSource.
 type SpecificationSource string
+
+// StartPerformanceRequest defines model for StartPerformanceRequest.
+type StartPerformanceRequest struct {
+	ScenarioSlugs *interface{} `json:"scenarioSlugs,omitempty"`
+}
 
 // Statement defines model for Statement.
 type Statement struct {
 	Behavior string `json:"behavior"`
-	Keyword  string `json:"keyword"`
+	Stage    string `json:"stage"`
+}
+
+// Status defines model for Status.
+type Status struct {
+	Slug           SpecificationSlug `json:"slug"`
+	State          PerformanceState  `json:"state"`
+	ThesisStatuses interface{}       `json:"thesisStatuses"`
 }
 
 // Story defines model for Story.
@@ -187,13 +220,6 @@ type Story struct {
 	Scenarios   []Scenario `json:"scenarios"`
 	Slug        string     `json:"slug"`
 	WantTo      *string    `json:"wantTo,omitempty"`
-}
-
-// StoryPerformance defines model for StoryPerformance.
-type StoryPerformance struct {
-	ScenariosPerformance *[]ScenarioPerformance `json:"scenariosPerformance,omitempty"`
-	Slug                 string                 `json:"slug"`
-	State                PerformanceState       `json:"state"`
 }
 
 // TestCampaignResponse defines model for TestCampaignResponse.
@@ -214,16 +240,21 @@ type Thesis struct {
 	Statement Statement  `json:"statement"`
 }
 
-// ThesisPerformance defines model for ThesisPerformance.
-type ThesisPerformance struct {
-	ErrorDetails *string          `json:"errorDetails,omitempty"`
-	FailDetails  *string          `json:"failDetails,omitempty"`
-	Slug         string           `json:"slug"`
-	State        PerformanceState `json:"state"`
+// ThesisStatus defines model for ThesisStatus.
+type ThesisStatus struct {
+	OccurredErrors interface{}      `json:"occurredErrors"`
+	State          PerformanceState `json:"state"`
+	ThesisSlug     string           `json:"thesisSlug"`
 }
 
 // CreateTestCampaignJSONBody defines parameters for CreateTestCampaign.
 type CreateTestCampaignJSONBody CreateTestCampaignRequest
 
+// StartPerformanceJSONBody defines parameters for StartPerformance.
+type StartPerformanceJSONBody StartPerformanceRequest
+
 // CreateTestCampaignJSONRequestBody defines body for CreateTestCampaign for application/json ContentType.
 type CreateTestCampaignJSONRequestBody CreateTestCampaignJSONBody
+
+// StartPerformanceJSONRequestBody defines body for StartPerformance for application/json ContentType.
+type StartPerformanceJSONRequestBody StartPerformanceJSONBody

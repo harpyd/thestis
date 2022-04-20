@@ -121,7 +121,7 @@ func newThesis(thesis app.Thesis) Thesis {
 
 func newStatement(statement app.Statement) Statement {
 	return Statement{
-		Keyword:  statement.Stage,
+		Stage:    statement.Stage,
 		Behavior: statement.Behavior,
 	}
 }
