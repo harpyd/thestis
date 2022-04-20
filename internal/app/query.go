@@ -21,12 +21,33 @@ type (
 
 type (
 	SpecificPerformance struct {
-		ID      string
-		OwnerID string
-		Flows   []Flow
+		ID              string
+		SpecificationID string
+		StartedAt       time.Time
+		Flows           []Flow
 	}
 
-	Flow struct{}
+	Flow struct {
+		OverallState string
+		Statuses     []Status
+	}
+
+	Status struct {
+		Slug           ScenarioSlug
+		State          string
+		ThesisStatuses []ThesisStatus
+	}
+
+	ScenarioSlug struct {
+		Story    string
+		Scenario string
+	}
+
+	ThesisStatus struct {
+		ThesisSlug   string
+		State        string
+		OccurredErrs []string
+	}
 
 	// SpecificTestCampaign is most detailed application layer
 	// representation of testcampaign.TestCampaign.
