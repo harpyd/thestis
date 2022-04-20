@@ -257,10 +257,10 @@ func TestStatePrecedenceOrder(t *testing.T) {
 	expectedStates := states{
 		flow.NoState,
 		flow.Passed,
+		flow.NotPerformed,
 		flow.Canceled,
 		flow.Failed,
 		flow.Crashed,
-		flow.NotPerformed,
 		flow.Performing,
 	}
 

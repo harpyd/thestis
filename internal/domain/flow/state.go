@@ -76,13 +76,13 @@ func (s State) Precedence() int {
 		return 0
 	case Passed:
 		return 1
-	case Canceled:
-		return 2
-	case Failed:
-		return 3
-	case Crashed:
-		return 4
 	case NotPerformed:
+		return 2
+	case Canceled:
+		return 3
+	case Failed:
+		return 4
+	case Crashed:
 		return 5
 	case Performing:
 		return 6
