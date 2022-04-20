@@ -16,8 +16,7 @@ import (
 )
 
 type PerformanceRepositoryTestSuite struct {
-	suite.Suite
-	MongoTestFixtures
+	MongoSuite
 
 	repo *mongodb.PerformanceRepository
 }
@@ -38,9 +37,7 @@ func TestPerformanceRepository(t *testing.T) {
 		t.Skip("Integration tests are skipped")
 	}
 
-	suite.Run(t, &PerformanceRepositoryTestSuite{
-		MongoTestFixtures: MongoTestFixtures{t: t},
-	})
+	suite.Run(t, &PerformanceRepositoryTestSuite{})
 }
 
 func (s *PerformanceRepositoryTestSuite) TestAddPerformance() {
@@ -90,7 +87,7 @@ func (s *PerformanceRepositoryTestSuite) TestAddPerformance() {
 	for _, c := range testCases {
 		s.Run(c.Name, func() {
 			if c.InsertedBeforePerformance != nil {
-				s.addPerformances(c.InsertedBeforePerformance)
+				s.insertPerformances(c.InsertedBeforePerformance)
 			}
 
 			err := s.repo.AddPerformance(context.Background(), c.GivenPerformance)
@@ -112,16 +109,5 @@ func (s *PerformanceRepositoryTestSuite) TestAddPerformance() {
 
 			s.Require().Equal(c.GivenPerformance, persistedPerf)
 		})
-	}
-}
-
-func (s *PerformanceRepositoryTestSuite) addPerformances(perfs ...interface{}) {
-	s.T().Helper()
-
-	ctx := context.Background()
-
-	for _, perf := range perfs {
-		_, err := s.db.Collection("performances").InsertOne(ctx, perf)
-		s.Require().NoError(err)
 	}
 }

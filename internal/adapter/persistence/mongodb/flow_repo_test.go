@@ -13,8 +13,7 @@ import (
 )
 
 type FlowRepositoryTestSuite struct {
-	suite.Suite
-	MongoTestFixtures
+	MongoSuite
 
 	repo *mongodb.FlowRepository
 }
@@ -35,9 +34,7 @@ func TestFlowRepository(t *testing.T) {
 		t.Skip("Integration tests are skipped")
 	}
 
-	suite.Run(t, &FlowRepositoryTestSuite{
-		MongoTestFixtures: MongoTestFixtures{t: t},
-	})
+	suite.Run(t, &FlowRepositoryTestSuite{})
 }
 
 func (s *FlowRepositoryTestSuite) TestUpsertFlow() {
@@ -88,7 +85,7 @@ func (s *FlowRepositoryTestSuite) TestUpsertFlow() {
 	for _, c := range testCases {
 		s.Run(c.Name, func() {
 			if c.InsertedBeforeFlow != nil {
-				s.addFlows(c.InsertedBeforeFlow)
+				s.insertFlows(c.InsertedBeforeFlow)
 			}
 
 			err := s.repo.UpsertFlow(context.Background(), c.GivenFlow)
@@ -114,15 +111,4 @@ func (s *FlowRepositoryTestSuite) getFlow(flowID string) *flow.Flow {
 	s.Require().NoError(err)
 
 	return f
-}
-
-func (s *FlowRepositoryTestSuite) addFlows(flows ...interface{}) {
-	s.T().Helper()
-
-	ctx := context.Background()
-
-	for _, f := range flows {
-		_, err := s.db.Collection("flows").InsertOne(ctx, f)
-		s.Require().NoError(err)
-	}
 }

@@ -17,8 +17,7 @@ import (
 )
 
 type SpecificationRepositoryTestSuite struct {
-	suite.Suite
-	MongoTestFixtures
+	MongoSuite
 
 	repo *mongodb.SpecificationRepository
 }
@@ -39,15 +38,13 @@ func TestSpecificationRepository(t *testing.T) {
 		t.Skip("Integration tests are skipped")
 	}
 
-	suite.Run(t, &SpecificationRepositoryTestSuite{
-		MongoTestFixtures: MongoTestFixtures{t: t},
-	})
+	suite.Run(t, &SpecificationRepositoryTestSuite{})
 }
 
 func (s *SpecificationRepositoryTestSuite) TestFindSpecification() {
 	insertedSpec := s.rawSpecification()
 
-	s.insertSpecification(insertedSpec)
+	s.insertSpecifications(insertedSpec)
 
 	testCases := []struct {
 		Name        string
@@ -203,7 +200,7 @@ func (s *SpecificationRepositoryTestSuite) TestGetActiveSpecificationByTestCampa
 		}
 	)
 
-	s.insertSpecification(firstSpec, secondSpec, lastSpec)
+	s.insertSpecifications(firstSpec, secondSpec, lastSpec)
 
 	testCases := []struct {
 		Name           string
@@ -296,7 +293,7 @@ func (s *SpecificationRepositoryTestSuite) TestAddSpecification() {
 	for _, c := range testCases {
 		s.Run(c.Name, func() {
 			if c.InsertedBeforeSpecification != nil {
-				s.insertSpecification(c.InsertedBeforeSpecification)
+				s.insertSpecifications(c.InsertedBeforeSpecification)
 			}
 
 			err := s.repo.AddSpecification(context.Background(), c.Specification)
@@ -322,17 +319,6 @@ func (s *SpecificationRepositoryTestSuite) getSpecification(specID string) *spec
 	s.Require().NoError(err)
 
 	return spec
-}
-
-func (s *SpecificationRepositoryTestSuite) insertSpecification(specs ...interface{}) {
-	s.T().Helper()
-
-	ctx := context.Background()
-
-	for _, spec := range specs {
-		_, err := s.db.Collection("specifications").InsertOne(ctx, spec)
-		s.Require().NoError(err)
-	}
 }
 
 func (s *SpecificationRepositoryTestSuite) requireAppSpecificationEqualRaw(
