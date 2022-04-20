@@ -11,12 +11,12 @@ import (
 	"github.com/harpyd/thestis/internal/port/http"
 )
 
-func unmarshalToSpecificationSourceCommand(
+func decodeSpecificationSourceCommand(
 	w stdhttp.ResponseWriter,
 	r *stdhttp.Request,
 	testCampaignID string,
 ) (cmd app.LoadSpecificationCommand, ok bool) {
-	user, ok := unmarshalUser(w, r)
+	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
@@ -35,12 +35,12 @@ func unmarshalToSpecificationSourceCommand(
 	}, true
 }
 
-func unmarshalToSpecificSpecificationQuery(
+func decodeSpecificSpecificationQuery(
 	w stdhttp.ResponseWriter,
 	r *stdhttp.Request,
 	specificationID string,
 ) (qry app.SpecificSpecificationQuery, ok bool) {
-	user, ok := unmarshalUser(w, r)
+	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
@@ -51,16 +51,16 @@ func unmarshalToSpecificSpecificationQuery(
 	}, true
 }
 
-func marshalToSpecificationResponse(w stdhttp.ResponseWriter, r *stdhttp.Request, spec app.SpecificSpecification) {
+func renderSpecificationResponse(w stdhttp.ResponseWriter, r *stdhttp.Request, spec app.SpecificSpecification) {
 	response := SpecificationResponse{
-		Specification: marshalToSpecification(spec),
+		Specification: newSpecification(spec),
 		SourceUri:     "",
 	}
 
 	render.Respond(w, r, response)
 }
 
-func marshalToSpecification(spec app.SpecificSpecification) Specification {
+func newSpecification(spec app.SpecificSpecification) Specification {
 	res := Specification{
 		Id:             spec.ID,
 		TestCampaignId: spec.TestCampaignID,
@@ -72,13 +72,13 @@ func marshalToSpecification(spec app.SpecificSpecification) Specification {
 	}
 
 	for _, s := range spec.Stories {
-		res.Stories = append(res.Stories, marshalToStory(s))
+		res.Stories = append(res.Stories, newStory(s))
 	}
 
 	return res
 }
 
-func marshalToStory(story app.Story) Story {
+func newStory(story app.Story) Story {
 	res := Story{
 		Slug:        story.Slug,
 		Description: &story.Description,
@@ -89,13 +89,13 @@ func marshalToStory(story app.Story) Story {
 	}
 
 	for _, s := range story.Scenarios {
-		res.Scenarios = append(res.Scenarios, marshalToScenario(s))
+		res.Scenarios = append(res.Scenarios, newScenario(s))
 	}
 
 	return res
 }
 
-func marshalToScenario(scenario app.Scenario) Scenario {
+func newScenario(scenario app.Scenario) Scenario {
 	res := Scenario{
 		Slug:        scenario.Slug,
 		Description: &scenario.Description,
@@ -103,41 +103,41 @@ func marshalToScenario(scenario app.Scenario) Scenario {
 	}
 
 	for _, t := range scenario.Theses {
-		res.Theses = append(res.Theses, marshalToThesis(t))
+		res.Theses = append(res.Theses, newThesis(t))
 	}
 
 	return res
 }
 
-func marshalToThesis(thesis app.Thesis) Thesis {
+func newThesis(thesis app.Thesis) Thesis {
 	return Thesis{
 		Slug:      thesis.Slug,
 		After:     thesis.After,
-		Statement: marshalToStatement(thesis.Statement),
-		Http:      marshalToHTTP(thesis.HTTP),
-		Assertion: marshalToAssertion(thesis.Assertion),
+		Statement: newStatement(thesis.Statement),
+		Http:      newHTTP(thesis.HTTP),
+		Assertion: newAssertion(thesis.Assertion),
 	}
 }
 
-func marshalToStatement(statement app.Statement) Statement {
+func newStatement(statement app.Statement) Statement {
 	return Statement{
 		Keyword:  statement.Stage,
 		Behavior: statement.Behavior,
 	}
 }
 
-func marshalToHTTP(http app.HTTP) *Http {
+func newHTTP(http app.HTTP) *Http {
 	if http.IsZero() {
 		return nil
 	}
 
 	return &Http{
-		Request:  marshalToHTTPRequest(http.Request),
-		Response: marshalToHTTPResponse(http.Response),
+		Request:  newHTTPRequest(http.Request),
+		Response: newHTTPResponse(http.Response),
 	}
 }
 
-func marshalToHTTPRequest(request app.HTTPRequest) *HttpRequest {
+func newHTTPRequest(request app.HTTPRequest) *HttpRequest {
 	if request.IsZero() {
 		return nil
 	}
@@ -146,11 +146,11 @@ func marshalToHTTPRequest(request app.HTTPRequest) *HttpRequest {
 		Method:      HttpMethod(request.Method),
 		Url:         request.URL,
 		ContentType: &request.ContentType,
-		Body:        unmarshalBody(request.Body),
+		Body:        newBody(request.Body),
 	}
 }
 
-func unmarshalBody(body map[string]interface{}) *map[string]interface{} {
+func newBody(body map[string]interface{}) *map[string]interface{} {
 	if len(body) == 0 {
 		return nil
 	}
@@ -158,7 +158,7 @@ func unmarshalBody(body map[string]interface{}) *map[string]interface{} {
 	return &body
 }
 
-func marshalToHTTPResponse(response app.HTTPResponse) *HttpResponse {
+func newHTTPResponse(response app.HTTPResponse) *HttpResponse {
 	if response.IsZero() {
 		return nil
 	}
@@ -169,18 +169,18 @@ func marshalToHTTPResponse(response app.HTTPResponse) *HttpResponse {
 	}
 }
 
-func marshalToAssertion(assertion app.Assertion) *Assertion {
+func newAssertion(assertion app.Assertion) *Assertion {
 	if assertion.IsZero() {
 		return nil
 	}
 
 	return &Assertion{
 		With:   AssertionMethod(assertion.Method),
-		Assert: marshalToAsserts(assertion.Asserts),
+		Assert: newAsserts(assertion.Asserts),
 	}
 }
 
-func marshalToAsserts(asserts []app.Assert) []Assert {
+func newAsserts(asserts []app.Assert) []Assert {
 	res := make([]Assert, 0, len(asserts))
 
 	for _, a := range asserts {

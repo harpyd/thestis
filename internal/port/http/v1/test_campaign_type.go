@@ -8,11 +8,11 @@ import (
 	"github.com/harpyd/thestis/internal/app"
 )
 
-func unmarshalToCreateTestCampaignCommand(
+func decodeCreateTestCampaignCommand(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (cmd app.CreateTestCampaignCommand, ok bool) {
-	user, ok := unmarshalUser(w, r)
+	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
@@ -35,12 +35,12 @@ func unmarshalToCreateTestCampaignCommand(
 	}, true
 }
 
-func unmarshalToSpecificTestCampaignQuery(
+func decodeSpecificTestCampaignQuery(
 	w http.ResponseWriter,
 	r *http.Request,
 	testCampaignID string,
 ) (qry app.SpecificTestCampaignQuery, ok bool) {
-	user, ok := unmarshalUser(w, r)
+	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
@@ -51,7 +51,7 @@ func unmarshalToSpecificTestCampaignQuery(
 	}, true
 }
 
-func marshalToTestCampaignResponse(w http.ResponseWriter, r *http.Request, tc app.SpecificTestCampaign) {
+func renderTestCampaignResponse(w http.ResponseWriter, r *http.Request, tc app.SpecificTestCampaign) {
 	response := TestCampaignResponse{
 		Id:        tc.ID,
 		ViewName:  tc.ViewName,

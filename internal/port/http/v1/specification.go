@@ -13,7 +13,7 @@ import (
 )
 
 func (h handler) LoadSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request, testCampaignID string) {
-	cmd, ok := unmarshalToSpecificationSourceCommand(w, r, testCampaignID)
+	cmd, ok := decodeSpecificationSourceCommand(w, r, testCampaignID)
 	if !ok {
 		return
 	}
@@ -52,14 +52,14 @@ func (h handler) LoadSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request,
 }
 
 func (h handler) GetSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request, specificationID string) {
-	qry, ok := unmarshalToSpecificSpecificationQuery(w, r, specificationID)
+	qry, ok := decodeSpecificSpecificationQuery(w, r, specificationID)
 	if !ok {
 		return
 	}
 
 	spec, err := h.app.Queries.SpecificSpecification.Handle(r.Context(), qry)
 	if err == nil {
-		marshalToSpecificationResponse(w, r, spec)
+		renderSpecificationResponse(w, r, spec)
 
 		return
 	}

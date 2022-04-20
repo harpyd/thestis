@@ -14,7 +14,7 @@ import (
 )
 
 func (h handler) StartPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request, testCampaignID string) {
-	cmd, ok := unmarshalStartPerformanceCommand(w, r, testCampaignID)
+	cmd, ok := decodeStartPerformanceCommand(w, r, testCampaignID)
 	if !ok {
 		return
 	}
@@ -52,7 +52,7 @@ func (h handler) StartPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request, 
 }
 
 func (h handler) RestartPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request, performanceID string) {
-	cmd, ok := unmarshalRestartPerformanceCommand(w, r, performanceID)
+	cmd, ok := decodeRestartPerformanceCommand(w, r, performanceID)
 	if !ok {
 		return
 	}
@@ -90,7 +90,7 @@ func (h handler) RestartPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request
 }
 
 func (h handler) CancelPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request, performanceID string) {
-	cmd, ok := unmarshalCancelPerformanceCommand(w, r, performanceID)
+	cmd, ok := decodeCancelPerformanceCommand(w, r, performanceID)
 	if !ok {
 		return
 	}
