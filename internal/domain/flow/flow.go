@@ -157,7 +157,7 @@ func (s *ThesisStatus) State() State {
 }
 
 // OccurredErrs returns errors that occurred
-// during performing of slugged objects.
+// during performing of theses.
 func (s *ThesisStatus) OccurredErrs() []string {
 	if len(s.occurredErrs) == 0 {
 		return nil
