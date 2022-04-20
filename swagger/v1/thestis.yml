@@ -197,6 +197,14 @@ paths:
             format: uuid
           required: true
           description: Test campaign ID to start performance.
+      requestBody:
+        description: >
+          Scenario slugs of performance to start.
+          Only the passed scenarios will be performed.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartPerformanceRequest"
       responses:
         202:
           description: Performance of active test campaign active specification is created.
@@ -245,7 +253,7 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: "#/components/schemas/PerformanceResponse"
+                  $ref: "#/components/schemas/GeneralPerformanceResponse"
         404:
           description: Test campaign with such ID not found.
           content:
@@ -273,7 +281,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PerformanceResponse"
+                $ref: "#/components/schemas/SpecificPerformanceResponse"
         404:
           description: Performance with such ID not found.
           content:
@@ -518,24 +526,17 @@ components:
     StartPerformanceRequest:
       type: object
       properties:
-        stories:
-          type: array
+        scenarioSlugs:
           items:
-            type: object
-            required:
-              - slug
-            properties:
-              slug:
-                type: string
-              scenarios:
-                type: array
-                items:
-                  type: object
-                  required:
-                    - slug
-                  properties:
-                    slug:
-                      type: string
+            $ref: "#/components/schemas/SpecificationSlug"
+      example:
+        scenarioSlugs:
+          - story: a
+            scenario: b
+          - story: a
+            scenario: c
+          - story: f
+            scenario: a
 
     Specification:
       type: object
@@ -624,10 +625,10 @@ components:
     Statement:
       type: object
       required:
-        - keyword
+        - stage
         - behavior
       properties:
-        keyword:
+        stage:
           type: string
         behavior:
           type: string
@@ -709,86 +710,138 @@ components:
         expected:
           type: string
 
-    PerformanceResponse:
+    GeneralPerformanceResponse:
       type: object
+      required:
+        - id
+        - specificationId
+        - startedAt
+        - lastState
       properties:
-        state:
+        id:
+          type: string
+          format: uuid
+        specificationId:
+          type: string
+          format: uuid
+        startedAt:
+          type: string
+          format: date-time
+        lastState:
           $ref: "#/components/schemas/PerformanceState"
-        storiesPerformance:
-          type: array
-          items:
-            $ref: "#/components/schemas/StoryPerformance"
       example:
-        state: PERFORMING_FAILED
-        storiesPerformance:
-          - slug: sellHornsAndHooves
-            state: PERFORMING_FAILED
-            scenariosPerformance:
-              - slug: sellExistingHornsAndHooves
-                state: PERFORMING_FAILED
-                thesesPerformance:
-                  - slug: deliverHorns
-                    state: PERFORMING_PASSED
-                  - slug: deliverHooves
-                    state: PERFORMING_PASSED
-                  - slug: sellHornsAndHooves
-                    state: PERFORMING_PASSED
-                  - slug: getSoldProducts
-                    state: PERFORMING_PASSED
-                  - slug: checkSoldProducts
-                    state: PERFORMING_FAILED
-                    failDetails: expected=[103, 21] is not equal to actual=[103, 20]
+        specificationId: 43dc4b25-1be1-49eb-a58b-77bfed79cd4c
+        startedAt: 2021-11-12T00:00:00
+        lastState: CRASHED
 
-    StoryPerformance:
+    SpecificPerformanceResponse:
       type: object
       required:
-        - slug
-        - state
+        - id
+        - specificationId
+        - startedAt
+        - flows
       properties:
-        slug:
+        id:
           type: string
-        state:
+          format: uuid
+        specificationId:
+          type: string
+          format: uuid
+        flows:
+          items:
+            $ref: "#/components/schemas/Flow"
+      example:
+        specificationId: 9fccd444-c0b2-11ec-9d64-0242ac120002
+        startedAt: 2021-11-12T00:00:00
+        flows:
+          - overallState: PASSED
+            statuses:
+              - slug:
+                  story: foo
+                  scenario: bar
+                state: PASSED
+                thesisStatuses:
+                  - thesisSlug: ban
+                    state: PASSED
+                  - thesisSlug: baz
+                    state: PASSED
+          - overallState: FAILED
+            statuses:
+              - slug:
+                  story: foo
+                  scenario: bar
+                state: FAILED
+                thesisStatuses:
+                  - thesisSlug: ban
+                    state: PASSED
+                  - thesisSlug: baz
+                    state: FAILED
+                    occurredErrors:
+                      - something wrong
+                      - something else wrong
+
+    Flow:
+      type: object
+      required:
+        - overallState
+        - statuses
+      properties:
+        overallState:
           $ref: "#/components/schemas/PerformanceState"
-        scenariosPerformance:
+        statuses:
           type: array
           items:
-            $ref: "#/components/schemas/ScenarioPerformance"
+            $ref: "#/components/schemas/Status"
 
-    ScenarioPerformance:
+    Status:
       type: object
       required:
         - slug
         - state
+        - thesisStatuses
       properties:
         slug:
-          type: string
+          $ref: "#/components/schemas/SpecificationSlug"
         state:
           $ref: "#/components/schemas/PerformanceState"
-        thesesPerformance:
-          type: array
+        thesisStatuses:
           items:
-            $ref: "#/components/schemas/ThesisPerformance"
+            $ref: "#/components/schemas/ThesisStatus"
 
-    ThesisPerformance:
+    ThesisStatus:
       type: object
       required:
-        - slug
+        - thesisSlug
         - state
+        - occurredErrors
       properties:
-        slug:
+        thesisSlug:
           type: string
         state:
           $ref: "#/components/schemas/PerformanceState"
-        errorDetails:
+        occurredErrors:
+          items:
+            type: string
+
+    SpecificationSlug:
+      type: object
+      properties:
+        story:
           type: string
-        failDetails:
+        scenario:
+          type: string
+        thesis:
           type: string
 
     PerformanceState:
       type: string
       enum:
+        - NO_STATE
+        - QUEUED
         - NOT_PERFORMED
         - PERFORMING
-        - PERFORMING_ERROR
-        - PERFORMING_PASSED
-        - PERFORMING_FAILED
+        - PASSED
+        - FAILED
+        - CRASHED
+        - CANCELED
