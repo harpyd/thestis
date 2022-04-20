@@ -11,7 +11,7 @@ import (
 )
 
 func (h handler) CreateTestCampaign(w stdhttp.ResponseWriter, r *stdhttp.Request) {
-	cmd, ok := unmarshalToCreateTestCampaignCommand(w, r)
+	cmd, ok := decodeCreateTestCampaignCommand(w, r)
 	if !ok {
 		return
 	}
@@ -32,14 +32,14 @@ func (h handler) GetTestCampaigns(w stdhttp.ResponseWriter, _ *stdhttp.Request) 
 }
 
 func (h handler) GetTestCampaign(w stdhttp.ResponseWriter, r *stdhttp.Request, testCampaignID string) {
-	qry, ok := unmarshalToSpecificTestCampaignQuery(w, r, testCampaignID)
+	qry, ok := decodeSpecificTestCampaignQuery(w, r, testCampaignID)
 	if !ok {
 		return
 	}
 
 	tc, err := h.app.Queries.SpecificTestCampaign.Handle(r.Context(), qry)
 	if err == nil {
-		marshalToTestCampaignResponse(w, r, tc)
+		renderTestCampaignResponse(w, r, tc)
 
 		return
 	}

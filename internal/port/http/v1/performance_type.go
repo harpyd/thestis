@@ -6,11 +6,11 @@ import (
 	"github.com/harpyd/thestis/internal/app"
 )
 
-func unmarshalStartPerformanceCommand(
+func decodeStartPerformanceCommand(
 	w http.ResponseWriter, r *http.Request,
 	testCampaignID string,
 ) (cmd app.StartPerformanceCommand, ok bool) {
-	user, ok := unmarshalUser(w, r)
+	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
@@ -21,12 +21,12 @@ func unmarshalStartPerformanceCommand(
 	}, true
 }
 
-func unmarshalRestartPerformanceCommand(
+func decodeRestartPerformanceCommand(
 	w http.ResponseWriter,
 	r *http.Request,
 	performanceID string,
 ) (cmd app.RestartPerformanceCommand, ok bool) {
-	user, ok := unmarshalUser(w, r)
+	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
@@ -37,12 +37,12 @@ func unmarshalRestartPerformanceCommand(
 	}, true
 }
 
-func unmarshalCancelPerformanceCommand(
+func decodeCancelPerformanceCommand(
 	w http.ResponseWriter,
 	r *http.Request,
 	performanceID string,
 ) (cmd app.CancelPerformanceCommand, ok bool) {
-	user, ok := unmarshalUser(w, r)
+	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
