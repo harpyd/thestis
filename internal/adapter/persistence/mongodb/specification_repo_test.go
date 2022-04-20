@@ -3,7 +3,9 @@ package mongodb_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"go.mongodb.org/mongo-driver/bson"
@@ -43,14 +45,9 @@ func TestSpecificationRepository(t *testing.T) {
 }
 
 func (s *SpecificationRepositoryTestSuite) TestFindSpecification() {
-	specificationToFind := (&specification.Builder{}).
-		WithID("64825e35-7fa7-44a4-9ca2-81cfc7b0f0d8").
-		WithOwnerID("52d9af60-26be-46ea-90a6-efec5fbb4ccd").
-		WithAuthor("Djerys").
-		WithTitle("test").
-		ErrlessBuild()
+	insertedSpec := s.rawSpecification()
 
-	s.addSpecifications(specificationToFind)
+	s.insertSpecification(insertedSpec)
 
 	testCases := []struct {
 		Name        string
@@ -113,39 +110,100 @@ func (s *SpecificationRepositoryTestSuite) TestFindSpecification() {
 
 			s.Require().NoError(err)
 
-			s.Require().Equal(specificationToFind.ID(), spec.ID)
+			s.requireAppSpecificationEqualRaw(insertedSpec, spec)
 		})
 	}
 }
 
-func (s *SpecificationRepositoryTestSuite) TestGetActiveSpecificationByTestCampaignID() {
-	var b specification.Builder
+func (s *SpecificationRepositoryTestSuite) rawSpecification() bson.M {
+	s.T().Helper()
 
+	return bson.M{
+		"id":             "64825e35-7fa7-44a4-9ca2-81cfc7b0f0d8",
+		"ownerId":        "52d9af60-26be-46ea-90a6-efec5fbb4ccd",
+		"testCampaignId": "1896c290-1dde-42f5-8449-e197f49daad2",
+		"loadedAt":       time.Now().UTC(),
+		"author":         "Djerys",
+		"title":          "test",
+		"description":    "desc",
+		"stories": []bson.M{
+			{
+				"slug":        "story",
+				"description": "desc",
+				"asA":         "some",
+				"inOrderTo":   "some",
+				"wantTo":      "want some",
+				"scenarios": []bson.M{
+					{
+						"slug":        "scenario",
+						"description": "desc",
+						"theses": []bson.M{
+							{
+								"slug": "a",
+								"statement": bson.M{
+									"stage":    specification.Given,
+									"behavior": "a",
+								},
+								"http": bson.M{
+									"request": bson.M{
+										"method":      specification.POST,
+										"url":         "https://some-domain.com",
+										"contentType": specification.ApplicationJSON,
+										"body": map[string]interface{}{
+											"bar": "baz",
+											"bad": "foo",
+										},
+									},
+									"response": bson.M{
+										"allowedCodes":       []int{201},
+										"allowedContentType": specification.ApplicationJSON,
+									},
+								},
+							},
+							{
+								"slug":  "b",
+								"after": []string{"a"},
+								"statement": bson.M{
+									"stage":    specification.Given,
+									"behavior": "b",
+								},
+								"assertion": bson.M{
+									"method": specification.JSONPath,
+									"asserts": []bson.M{
+										{
+											"actual":   "some.field",
+											"expected": "foo",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (s *SpecificationRepositoryTestSuite) TestGetActiveSpecificationByTestCampaignID() {
 	testCampaignID := "d0832b59-6e8a-46f6-9b57-92e8bf656e93"
 
-	firstSpec := b.
-		WithID("358a938f-8191-4264-8070-4ac5914bc130").
-		WithAuthor("Djerys").
-		WithTestCampaignID(testCampaignID).
-		ErrlessBuild()
+	var (
+		firstSpec = bson.M{
+			"id":             "358a938f-8191-4264-8070-4ac5914bc130",
+			"testCampaignId": testCampaignID,
+		}
+		secondSpec = bson.M{
+			"id":             "8c1058aa-295a-47a0-83e9-a128c2bd22af",
+			"testCampaignId": testCampaignID,
+		}
+		lastSpec = bson.M{
+			"id":             "aa056dc5-b0e7-4695-a209-1d46805373c6",
+			"testCampaignId": testCampaignID,
+		}
+	)
 
-	b.Reset()
-
-	secondSpec := b.
-		WithID("8c1058aa-295a-47a0-83e9-a128c2bd22af").
-		WithAuthor("John").
-		WithTestCampaignID(testCampaignID).
-		ErrlessBuild()
-
-	b.Reset()
-
-	lastSpec := b.
-		WithID("aa056dc5-b0e7-4695-a209-1d46805373c6").
-		WithAuthor("Leo").
-		WithTestCampaignID(testCampaignID).
-		ErrlessBuild()
-
-	s.addSpecifications(firstSpec, secondSpec, lastSpec)
+	s.insertSpecification(firstSpec, secondSpec, lastSpec)
 
 	testCases := []struct {
 		Name           string
@@ -170,7 +228,10 @@ func (s *SpecificationRepositoryTestSuite) TestGetActiveSpecificationByTestCampa
 
 	for _, c := range testCases {
 		s.Run(c.Name, func() {
-			spec, err := s.repo.GetActiveSpecificationByTestCampaignID(context.Background(), c.TestCampaignID)
+			spec, err := s.repo.GetActiveSpecificationByTestCampaignID(
+				context.Background(),
+				c.TestCampaignID,
+			)
 
 			if c.ShouldBeErr {
 				s.Require().True(c.IsErr(err))
@@ -180,27 +241,30 @@ func (s *SpecificationRepositoryTestSuite) TestGetActiveSpecificationByTestCampa
 
 			s.Require().NoError(err)
 
-			s.Require().Equal(lastSpec, spec)
+			var b specification.Builder
+
+			lastBuiltSpec := b.
+				WithID("aa056dc5-b0e7-4695-a209-1d46805373c6").
+				WithTestCampaignID(testCampaignID).
+				ErrlessBuild()
+
+			s.Require().Equal(lastBuiltSpec, spec)
 		})
 	}
 }
 
 func (s *SpecificationRepositoryTestSuite) TestAddSpecification() {
 	testCases := []struct {
-		Name          string
-		Before        func()
-		Specification *specification.Specification
-		ShouldBeErr   bool
-		IsErr         func(err error) bool
+		Name                        string
+		InsertedBeforeSpecification interface{}
+		Specification               *specification.Specification
+		ShouldBeErr                 bool
+		IsErr                       func(err error) bool
 	}{
 		{
 			Name: "failed_adding_one_specification_twice",
-			Before: func() {
-				spec := (&specification.Builder{}).
-					WithID("62a4e06b-c00f-49a5-a1c1-5906e5e2e1d5").
-					ErrlessBuild()
-
-				s.addSpecifications(spec)
+			InsertedBeforeSpecification: bson.M{
+				"id": "62a4e06b-c00f-49a5-a1c1-5906e5e2e1d5",
 			},
 			Specification: (&specification.Builder{}).
 				WithID("62a4e06b-c00f-49a5-a1c1-5906e5e2e1d5").
@@ -231,8 +295,8 @@ func (s *SpecificationRepositoryTestSuite) TestAddSpecification() {
 
 	for _, c := range testCases {
 		s.Run(c.Name, func() {
-			if c.Before != nil {
-				c.Before()
+			if c.InsertedBeforeSpecification != nil {
+				s.insertSpecification(c.InsertedBeforeSpecification)
 			}
 
 			err := s.repo.AddSpecification(context.Background(), c.Specification)
@@ -260,13 +324,182 @@ func (s *SpecificationRepositoryTestSuite) getSpecification(specID string) *spec
 	return spec
 }
 
-func (s *SpecificationRepositoryTestSuite) addSpecifications(specs ...*specification.Specification) {
+func (s *SpecificationRepositoryTestSuite) insertSpecification(specs ...interface{}) {
 	s.T().Helper()
 
 	ctx := context.Background()
 
 	for _, spec := range specs {
-		err := s.repo.AddSpecification(ctx, spec)
+		_, err := s.db.Collection("specifications").InsertOne(ctx, spec)
 		s.Require().NoError(err)
 	}
+}
+
+func (s *SpecificationRepositoryTestSuite) requireAppSpecificationEqualRaw(
+	expected bson.M,
+	actual app.SpecificSpecification,
+) {
+	s.T().Helper()
+
+	s.Require().Equal(expected["id"], actual.ID)
+	s.Require().Equal(expected["testCampaignId"], actual.TestCampaignID)
+	expectedLoadedAt, ok := expected["loadedAt"].(time.Time)
+	s.Require().True(ok)
+	s.Require().WithinDuration(expectedLoadedAt, actual.LoadedAt, 1*time.Second)
+	s.Require().Equal(expected["author"], actual.Author)
+	s.Require().Equal(expected["title"], actual.Title)
+	s.Require().Equal(expected["description"], actual.Description)
+	expectedStories, ok := expected["stories"].([]bson.M)
+	s.Require().True(ok)
+	s.Require().Equal(len(expectedStories), len(actual.Stories))
+
+	for i := range expectedStories {
+		s.requireAppStoryEqualRaw(expectedStories[i], actual.Stories[i])
+	}
+}
+
+func (s *SpecificationRepositoryTestSuite) requireAppStoryEqualRaw(expected bson.M, actual app.Story) {
+	s.T().Helper()
+
+	s.Require().Equal(expected["slug"], actual.Slug)
+	s.Require().Equal(expected["description"], actual.Description)
+	s.Require().Equal(expected["asA"], actual.AsA)
+	s.Require().Equal(expected["inOrderTo"], actual.InOrderTo)
+	s.Require().Equal(expected["wantTo"], actual.WantTo)
+	expectedScenarios, ok := expected["scenarios"].([]bson.M)
+	s.Require().True(ok)
+	s.Require().Equal(len(expectedScenarios), len(actual.Scenarios))
+
+	for i := range expectedScenarios {
+		s.requireAppScenarioEqualRaw(expectedScenarios[i], actual.Scenarios[i])
+	}
+}
+
+func (s *SpecificationRepositoryTestSuite) requireAppScenarioEqualRaw(expected bson.M, actual app.Scenario) {
+	s.T().Helper()
+
+	s.Require().Equal(expected["slug"], actual.Slug)
+	s.Require().Equal(expected["description"], actual.Description)
+	expectedTheses, ok := expected["theses"].([]bson.M)
+	s.Require().True(ok)
+	s.Require().Equal(len(expectedTheses), len(actual.Theses))
+
+	for i := range expectedTheses {
+		s.requireAppThesisEqualRaw(expectedTheses[i], actual.Theses[i])
+	}
+}
+
+func (s *SpecificationRepositoryTestSuite) requireAppThesisEqualRaw(expected bson.M, actual app.Thesis) {
+	s.T().Helper()
+
+	s.Require().Equal(expected["slug"], actual.Slug)
+
+	expectedAfter, ok := expected["after"].([]string)
+	if ok {
+		s.Require().ElementsMatch(expectedAfter, actual.After)
+	} else {
+		s.Require().Empty(actual.After)
+	}
+
+	expectedStatement, ok := expected["statement"].(bson.M)
+	s.Require().True(ok)
+	s.requireAppStatementEqualRaw(expectedStatement, actual.Statement)
+
+	expectedHTTP, ok := expected["http"].(bson.M)
+	actualHTTP := actual.HTTP
+
+	s.Require().Equal(ok, !actualHTTP.IsZero())
+
+	if ok {
+		s.requireAppHTTPEqualRaw(expectedHTTP, actualHTTP)
+	}
+
+	expectedAssertion, ok := expected["assertion"].(bson.M)
+	actualAssertion := actual.Assertion
+
+	s.Require().Equal(ok, !actualAssertion.IsZero())
+
+	if ok {
+		s.requireAppAssertionEqualRaw(expectedAssertion, actualAssertion)
+	}
+}
+
+func (s *SpecificationRepositoryTestSuite) requireAppStatementEqualRaw(expected bson.M, actual app.Statement) {
+	s.T().Helper()
+
+	s.Require().Equal(fmt.Sprintf("%s", expected["stage"]), actual.Stage)
+	s.Require().Equal(expected["behavior"], actual.Behavior)
+}
+
+func (s *SpecificationRepositoryTestSuite) requireAppHTTPEqualRaw(expected bson.M, actual app.HTTP) {
+	s.T().Helper()
+
+	expectedHTTPReq, ok := expected["request"].(bson.M)
+	actualHTTPReq := actual.Request
+
+	s.Require().Equal(ok, !actualHTTPReq.IsZero())
+
+	if ok {
+		s.requireAppHTTPRequestEqualRaw(expectedHTTPReq, actualHTTPReq)
+	}
+
+	expectedHTTPRes, ok := expected["response"].(bson.M)
+	actualHTTPRes := actual.Response
+
+	s.Require().Equal(ok, !actualHTTPRes.IsZero())
+
+	if ok {
+		s.requireAppHTTPResponseEqualRaw(expectedHTTPRes, actualHTTPRes)
+	}
+}
+
+func (s *SpecificationRepositoryTestSuite) requireAppHTTPRequestEqualRaw(
+	expected bson.M,
+	actual app.HTTPRequest,
+) {
+	s.T().Helper()
+
+	s.Require().Equal(fmt.Sprintf("%s", expected["method"]), actual.Method)
+	s.Require().Equal(expected["url"], actual.URL)
+	s.Require().Equal(fmt.Sprintf("%s", expected["contentType"]), actual.ContentType)
+	s.Require().Equal(expected["body"], actual.Body)
+}
+
+func (s *SpecificationRepositoryTestSuite) requireAppHTTPResponseEqualRaw(
+	expected bson.M,
+	actual app.HTTPResponse,
+) {
+	s.T().Helper()
+
+	s.Require().Equal(expected["allowedCodes"], actual.AllowedCodes)
+	s.Require().Equal(
+		fmt.Sprintf("%s", expected["allowedContentType"]),
+		actual.AllowedContentType,
+	)
+}
+
+func (s *SpecificationRepositoryTestSuite) requireAppAssertionEqualRaw(expected bson.M, actual app.Assertion) {
+	s.T().Helper()
+
+	s.Require().Equal(
+		fmt.Sprintf("%s", expected["method"]),
+		actual.Method,
+	)
+
+	expectedAsserts, ok := expected["asserts"].([]bson.M)
+	actualAsserts := actual.Asserts
+
+	s.Require().True(ok)
+	s.Require().Equal(len(expectedAsserts), len(actualAsserts))
+
+	for i := range expectedAsserts {
+		s.requireAppAssertEqualRaw(expectedAsserts[i], actualAsserts[i])
+	}
+}
+
+func (s *SpecificationRepositoryTestSuite) requireAppAssertEqualRaw(expected bson.M, actual app.Assert) {
+	s.T().Helper()
+
+	s.Require().Equal(expected["actual"], actual.Actual)
+	s.Require().Equal(expected["expected"], actual.Expected)
 }
