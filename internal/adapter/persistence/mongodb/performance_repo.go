@@ -41,7 +41,7 @@ func (r *PerformanceRepository) GetPerformance(
 		return nil, err
 	}
 
-	return document.toPerformance(spec, opts), nil
+	return newPerformance(document, spec, opts), nil
 }
 
 func (r *PerformanceRepository) getPerformanceDocument(

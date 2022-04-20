@@ -33,7 +33,7 @@ func (r *TestCampaignRepository) GetTestCampaign(
 		return nil, err
 	}
 
-	return document.toTestCampaign(), nil
+	return newTestCampaign(document), nil
 }
 
 func (r *TestCampaignRepository) FindTestCampaign(
@@ -48,7 +48,7 @@ func (r *TestCampaignRepository) FindTestCampaign(
 		return app.SpecificTestCampaign{}, err
 	}
 
-	return document.toSpecificTestCampaign(), nil
+	return newAppSpecificTestCampaign(document), nil
 }
 
 func (r *TestCampaignRepository) getTestCampaignDocument(
@@ -95,7 +95,7 @@ func (r *TestCampaignRepository) UpdateTestCampaign(
 			return nil, app.WrapWithDatabaseError(err)
 		}
 
-		tc := document.toTestCampaign()
+		tc := newTestCampaign(document)
 		updatedTestCampaign, err := updateFn(ctx, tc)
 		if err != nil {
 			return nil, err

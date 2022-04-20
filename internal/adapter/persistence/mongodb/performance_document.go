@@ -21,7 +21,8 @@ func newPerformanceDocument(perf *performance.Performance) performanceDocument {
 	}
 }
 
-func (d performanceDocument) toPerformance(
+func newPerformance(
+	d performanceDocument,
 	spec *specification.Specification,
 	opts []performance.Option,
 ) *performance.Performance {
