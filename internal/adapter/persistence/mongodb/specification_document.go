@@ -188,7 +188,7 @@ func newAssertDocuments(asserts []specification.Assert) []assertDocument {
 	return documents
 }
 
-func (d specificationDocument) toSpecification() *specification.Specification {
+func newSpecification(d specificationDocument) *specification.Specification {
 	var b specification.Builder
 
 	b.
@@ -201,13 +201,13 @@ func (d specificationDocument) toSpecification() *specification.Specification {
 		WithDescription(d.Description)
 
 	for _, story := range d.Stories {
-		b.WithStory(story.Slug, story.toStoryBuildFn())
+		b.WithStory(story.Slug, newStoryBuildFn(story))
 	}
 
 	return b.ErrlessBuild()
 }
 
-func (d storyDocument) toStoryBuildFn() func(builder *specification.StoryBuilder) {
+func newStoryBuildFn(d storyDocument) func(builder *specification.StoryBuilder) {
 	return func(builder *specification.StoryBuilder) {
 		builder.
 			WithDescription(d.Description).
@@ -216,27 +216,27 @@ func (d storyDocument) toStoryBuildFn() func(builder *specification.StoryBuilder
 			WithWantTo(d.WantTo)
 
 		for _, scenario := range d.Scenarios {
-			builder.WithScenario(scenario.Slug, scenario.toScenarioBuildFn())
+			builder.WithScenario(scenario.Slug, newScenarioBuildFn(scenario))
 		}
 	}
 }
 
-func (d scenarioDocument) toScenarioBuildFn() func(builder *specification.ScenarioBuilder) {
+func newScenarioBuildFn(d scenarioDocument) func(builder *specification.ScenarioBuilder) {
 	return func(builder *specification.ScenarioBuilder) {
 		builder.WithDescription(d.Description)
 
 		for _, thesis := range d.Theses {
-			builder.WithThesis(thesis.Slug, thesis.toThesisBuildFn())
+			builder.WithThesis(thesis.Slug, newThesisBuildFn(thesis))
 		}
 	}
 }
 
-func (d thesisDocument) toThesisBuildFn() func(builder *specification.ThesisBuilder) {
+func newThesisBuildFn(d thesisDocument) func(builder *specification.ThesisBuilder) {
 	return func(builder *specification.ThesisBuilder) {
 		builder.
 			WithStatement(d.Statement.Stage, d.Statement.Behavior).
-			WithHTTP(d.HTTP.toHTTPBuildFn()).
-			WithAssertion(d.Assertion.toAssertionBuildFn())
+			WithHTTP(newHTTPBuildFn(d.HTTP)).
+			WithAssertion(newAssertionBuildFn(d.Assertion))
 
 		for _, after := range d.After {
 			builder.WithDependency(after)
@@ -244,15 +244,15 @@ func (d thesisDocument) toThesisBuildFn() func(builder *specification.ThesisBuil
 	}
 }
 
-func (d httpDocument) toHTTPBuildFn() func(builder *specification.HTTPBuilder) {
+func newHTTPBuildFn(d httpDocument) func(builder *specification.HTTPBuilder) {
 	return func(builder *specification.HTTPBuilder) {
 		builder.
-			WithRequest(d.Request.toHTTPRequestBuildFn()).
-			WithResponse(d.Response.toHTTPResponseBuildFn())
+			WithRequest(newHTTPRequestBuildFn(d.Request)).
+			WithResponse(newHTTPResponseBuildFn(d.Response))
 	}
 }
 
-func (d httpRequestDocument) toHTTPRequestBuildFn() func(builder *specification.HTTPRequestBuilder) {
+func newHTTPRequestBuildFn(d httpRequestDocument) func(builder *specification.HTTPRequestBuilder) {
 	return func(builder *specification.HTTPRequestBuilder) {
 		builder.
 			WithMethod(d.Method).
@@ -262,7 +262,7 @@ func (d httpRequestDocument) toHTTPRequestBuildFn() func(builder *specification.
 	}
 }
 
-func (d httpResponseDocument) toHTTPResponseBuildFn() func(builder *specification.HTTPResponseBuilder) {
+func newHTTPResponseBuildFn(d httpResponseDocument) func(builder *specification.HTTPResponseBuilder) {
 	return func(builder *specification.HTTPResponseBuilder) {
 		builder.
 			WithAllowedCodes(d.AllowedCodes).
@@ -270,7 +270,7 @@ func (d httpResponseDocument) toHTTPResponseBuildFn() func(builder *specificatio
 	}
 }
 
-func (d assertionDocument) toAssertionBuildFn() func(builder *specification.AssertionBuilder) {
+func newAssertionBuildFn(d assertionDocument) func(builder *specification.AssertionBuilder) {
 	return func(builder *specification.AssertionBuilder) {
 		builder.WithMethod(d.Method)
 
@@ -280,7 +280,7 @@ func (d assertionDocument) toAssertionBuildFn() func(builder *specification.Asse
 	}
 }
 
-func (d specificationDocument) toSpecificSpecification() app.SpecificSpecification {
+func newAppSpecificSpecification(d specificationDocument) app.SpecificSpecification {
 	spec := app.SpecificSpecification{
 		ID:             d.ID,
 		TestCampaignID: d.TestCampaignID,
@@ -292,13 +292,13 @@ func (d specificationDocument) toSpecificSpecification() app.SpecificSpecificati
 	}
 
 	for _, s := range d.Stories {
-		spec.Stories = append(spec.Stories, s.toStory())
+		spec.Stories = append(spec.Stories, newAppStory(s))
 	}
 
 	return spec
 }
 
-func (d storyDocument) toStory() app.Story {
+func newAppStory(d storyDocument) app.Story {
 	story := app.Story{
 		Slug:        d.Slug,
 		Description: d.Description,
@@ -309,13 +309,13 @@ func (d storyDocument) toStory() app.Story {
 	}
 
 	for _, s := range d.Scenarios {
-		story.Scenarios = append(story.Scenarios, s.toScenario())
+		story.Scenarios = append(story.Scenarios, newAppScenario(s))
 	}
 
 	return story
 }
 
-func (d scenarioDocument) toScenario() app.Scenario {
+func newAppScenario(d scenarioDocument) app.Scenario {
 	scenario := app.Scenario{
 		Slug:        d.Slug,
 		Description: d.Description,
@@ -323,37 +323,37 @@ func (d scenarioDocument) toScenario() app.Scenario {
 	}
 
 	for _, t := range d.Theses {
-		scenario.Theses = append(scenario.Theses, t.toThesis())
+		scenario.Theses = append(scenario.Theses, newAppThesis(t))
 	}
 
 	return scenario
 }
 
-func (d thesisDocument) toThesis() app.Thesis {
+func newAppThesis(d thesisDocument) app.Thesis {
 	return app.Thesis{
 		Slug:      d.Slug,
 		After:     d.After,
-		Statement: d.Statement.toStatement(),
-		HTTP:      d.HTTP.toHTTP(),
-		Assertion: d.Assertion.toAssertion(),
+		Statement: newAppStatement(d.Statement),
+		HTTP:      newAppHTTP(d.HTTP),
+		Assertion: newAppAssertion(d.Assertion),
 	}
 }
 
-func (d statementDocument) toStatement() app.Statement {
+func newAppStatement(d statementDocument) app.Statement {
 	return app.Statement{
 		Stage:    d.Stage.String(),
 		Behavior: d.Behavior,
 	}
 }
 
-func (d httpDocument) toHTTP() app.HTTP {
+func newAppHTTP(d httpDocument) app.HTTP {
 	return app.HTTP{
-		Request:  d.Request.toHTTPRequest(),
-		Response: d.Response.toHTTPResponse(),
+		Request:  newAppHTTPRequest(d.Request),
+		Response: newAppHTTPResponse(d.Response),
 	}
 }
 
-func (d httpRequestDocument) toHTTPRequest() app.HTTPRequest {
+func newAppHTTPRequest(d httpRequestDocument) app.HTTPRequest {
 	return app.HTTPRequest{
 		Method:      d.Method.String(),
 		URL:         d.URL,
@@ -362,27 +362,27 @@ func (d httpRequestDocument) toHTTPRequest() app.HTTPRequest {
 	}
 }
 
-func (d httpResponseDocument) toHTTPResponse() app.HTTPResponse {
+func newAppHTTPResponse(d httpResponseDocument) app.HTTPResponse {
 	return app.HTTPResponse{
 		AllowedCodes:       d.AllowedCodes,
 		AllowedContentType: d.AllowedContentType.String(),
 	}
 }
 
-func (d assertionDocument) toAssertion() app.Assertion {
-	assert := app.Assertion{
+func newAppAssertion(d assertionDocument) app.Assertion {
+	assertion := app.Assertion{
 		Method:  d.Method.String(),
 		Asserts: make([]app.Assert, 0, len(d.Asserts)),
 	}
 
 	for _, a := range d.Asserts {
-		assert.Asserts = append(assert.Asserts, a.toAssert())
+		assertion.Asserts = append(assertion.Asserts, newAppAssert(a))
 	}
 
-	return assert
+	return assertion
 }
 
-func (d assertDocument) toAssert() app.Assert {
+func newAppAssert(d assertDocument) app.Assert {
 	return app.Assert{
 		Actual:   d.Actual,
 		Expected: d.Expected,

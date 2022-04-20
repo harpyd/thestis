@@ -7,15 +7,13 @@ import (
 	"github.com/harpyd/thestis/internal/domain/testcampaign"
 )
 
-type (
-	testCampaignDocument struct {
-		ID        string    `bson:"_id,omitempty"`
-		ViewName  string    `bson:"viewName"`
-		Summary   string    `bson:"summary"`
-		OwnerID   string    `bson:"ownerId"`
-		CreatedAt time.Time `bson:"createdAt"`
-	}
-)
+type testCampaignDocument struct {
+	ID        string    `bson:"_id,omitempty"`
+	ViewName  string    `bson:"viewName"`
+	Summary   string    `bson:"summary"`
+	OwnerID   string    `bson:"ownerId"`
+	CreatedAt time.Time `bson:"createdAt"`
+}
 
 func newTestCampaignDocument(tc *testcampaign.TestCampaign) testCampaignDocument {
 	return testCampaignDocument{
@@ -27,7 +25,7 @@ func newTestCampaignDocument(tc *testcampaign.TestCampaign) testCampaignDocument
 	}
 }
 
-func (d testCampaignDocument) toTestCampaign() *testcampaign.TestCampaign {
+func newTestCampaign(d testCampaignDocument) *testcampaign.TestCampaign {
 	tc, _ := testcampaign.New(testcampaign.Params{
 		ID:        d.ID,
 		ViewName:  d.ViewName,
@@ -39,7 +37,7 @@ func (d testCampaignDocument) toTestCampaign() *testcampaign.TestCampaign {
 	return tc
 }
 
-func (d testCampaignDocument) toSpecificTestCampaign() app.SpecificTestCampaign {
+func newAppSpecificTestCampaign(d testCampaignDocument) app.SpecificTestCampaign {
 	return app.SpecificTestCampaign{
 		ID:        d.ID,
 		ViewName:  d.ViewName,

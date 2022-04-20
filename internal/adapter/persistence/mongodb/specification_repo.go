@@ -43,7 +43,7 @@ func (r *SpecificationRepository) GetSpecification(
 		return nil, err
 	}
 
-	return document.toSpecification(), nil
+	return newSpecification(document), nil
 }
 
 func (r *SpecificationRepository) GetActiveSpecificationByTestCampaignID(
@@ -60,7 +60,7 @@ func (r *SpecificationRepository) GetActiveSpecificationByTestCampaignID(
 		return nil, err
 	}
 
-	return document.toSpecification(), nil
+	return newSpecification(document), nil
 }
 
 func (r *SpecificationRepository) FindSpecification(
@@ -77,7 +77,7 @@ func (r *SpecificationRepository) FindSpecification(
 		return app.SpecificSpecification{}, err
 	}
 
-	return document.toSpecificSpecification(), nil
+	return newAppSpecificSpecification(document), nil
 }
 
 func (r *SpecificationRepository) getSpecificationDocument(

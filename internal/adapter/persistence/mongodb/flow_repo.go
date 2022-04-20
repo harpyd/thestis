@@ -30,7 +30,7 @@ func (r *FlowRepository) GetFlow(ctx context.Context, flowID string) (*flow.Flow
 		return nil, err
 	}
 
-	return document.toFlow(), err
+	return newFlow(document), err
 }
 
 func (r *FlowRepository) getFlowDocument(ctx context.Context, filter bson.M) (flowDocument, error) {
