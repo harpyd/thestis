@@ -28,6 +28,7 @@ type (
 	}
 
 	Flow struct {
+		StartedAt    time.Time
 		OverallState string
 		Statuses     []Status
 	}
