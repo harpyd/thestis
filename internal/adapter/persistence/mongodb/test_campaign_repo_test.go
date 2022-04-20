@@ -16,8 +16,7 @@ import (
 )
 
 type TestCampaignRepositoryTestSuite struct {
-	suite.Suite
-	MongoTestFixtures
+	MongoSuite
 
 	repo *mongodb.TestCampaignRepository
 }
@@ -38,9 +37,7 @@ func TestCampaignRepository(t *testing.T) {
 		t.Skip("Integration tests are skipped")
 	}
 
-	suite.Run(t, &TestCampaignRepositoryTestSuite{
-		MongoTestFixtures: MongoTestFixtures{t: t},
-	})
+	suite.Run(t, &TestCampaignRepositoryTestSuite{})
 }
 
 func (s *TestCampaignRepositoryTestSuite) TestFindTestCampaign() {
@@ -52,7 +49,7 @@ func (s *TestCampaignRepositoryTestSuite) TestFindTestCampaign() {
 		"createdAt": time.Now().UTC(),
 	}
 
-	s.addTestCampaigns(storedTestCampaign)
+	s.insertTestCampaigns(storedTestCampaign)
 
 	testCases := []struct {
 		Name        string
@@ -187,7 +184,7 @@ func (s *TestCampaignRepositoryTestSuite) TestAddTestCampaign() {
 	for _, c := range testCases {
 		s.Run(c.Name, func() {
 			if c.InsertedTestCampaign != nil {
-				s.addTestCampaigns(c.InsertedTestCampaign)
+				s.insertTestCampaigns(c.InsertedTestCampaign)
 			}
 
 			err := s.repo.AddTestCampaign(context.Background(), c.GivenTestCampaign)
@@ -207,7 +204,7 @@ func (s *TestCampaignRepositoryTestSuite) TestAddTestCampaign() {
 }
 
 func (s *TestCampaignRepositoryTestSuite) TestUpdateTestCampaign() {
-	s.addTestCampaigns(bson.M{
+	s.insertTestCampaigns(bson.M{
 		"_id":       "0b723635-4691-4eae-aca8-79b230989f9d",
 		"ownerId":   "3dd1ee11-2520-4de1-859a-b8d6fbb003e9",
 		"viewName":  "some name",
@@ -279,17 +276,6 @@ func (s *TestCampaignRepositoryTestSuite) TestUpdateTestCampaign() {
 			tc := s.getTestCampaign(c.TestCampaignIDToUpdate)
 			s.Require().True(c.TestCampaignUpdated(tc))
 		})
-	}
-}
-
-func (s *TestCampaignRepositoryTestSuite) addTestCampaigns(tcs ...interface{}) {
-	s.T().Helper()
-
-	ctx := context.Background()
-
-	for _, tc := range tcs {
-		_, err := s.db.Collection("testCampaigns").InsertOne(ctx, tc)
-		s.Require().NoError(err)
 	}
 }
 

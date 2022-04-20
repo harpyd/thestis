@@ -14,11 +14,9 @@ import (
 )
 
 type PerformanceGuardTestSuite struct {
-	suite.Suite
-	MongoTestFixtures
+	MongoSuite
 
-	guard *mongodb.PerformanceGuard
-
+	guard  *mongodb.PerformanceGuard
 	perfID string
 }
 
@@ -27,13 +25,10 @@ func (s *PerformanceGuardTestSuite) SetupTest() {
 
 	s.perfID = "2db44433-7142-4080-bada-844afccfedbf"
 
-	_, err := s.db.
-		Collection("performances").
-		InsertOne(context.Background(), bson.M{
-			"_id":     s.perfID,
-			"started": false,
-		})
-	s.Require().NoError(err)
+	s.insertPerformances(bson.M{
+		"_id":     s.perfID,
+		"started": false,
+	})
 }
 
 func (s *PerformanceGuardTestSuite) TearDownTest() {
@@ -48,9 +43,7 @@ func TestPerformanceGuard(t *testing.T) {
 		t.Skip("Integration tests are skipped")
 	}
 
-	suite.Run(t, &PerformanceGuardTestSuite{
-		MongoTestFixtures: MongoTestFixtures{t: t},
-	})
+	suite.Run(t, &PerformanceGuardTestSuite{})
 }
 
 func (s *PerformanceGuardTestSuite) TestAcquirePerformance() {
