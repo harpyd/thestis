@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/domain/performance"
+	"github.com/harpyd/thestis/internal/infrastructure/persistence/mongodb"
 )
 
 type PerformanceGuardTestSuite struct {

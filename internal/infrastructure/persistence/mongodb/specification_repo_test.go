@@ -11,9 +11,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/specification"
+	"github.com/harpyd/thestis/internal/infrastructure/persistence/mongodb"
 )
 
 type SpecificationRepositoryTestSuite struct {

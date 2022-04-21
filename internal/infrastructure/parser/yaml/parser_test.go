@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/adapter/parser/yaml"
 	"github.com/harpyd/thestis/internal/domain/specification"
+	"github.com/harpyd/thestis/internal/infrastructure/parser/yaml"
 )
 
 const (

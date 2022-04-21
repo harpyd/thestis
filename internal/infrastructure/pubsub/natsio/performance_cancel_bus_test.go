@@ -6,7 +6,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/adapter/pubsub/natsio"
+	"github.com/harpyd/thestis/internal/infrastructure/pubsub/natsio"
 )
 
 func TestPerformanceCancelSignalBus(t *testing.T) {

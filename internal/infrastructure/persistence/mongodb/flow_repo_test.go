@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/harpyd/thestis/internal/adapter/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/domain/flow"
 	"github.com/harpyd/thestis/internal/domain/specification"
+	"github.com/harpyd/thestis/internal/infrastructure/persistence/mongodb"
 )
 
 type FlowRepositoryTestSuite struct {
