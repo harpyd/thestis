@@ -151,7 +151,10 @@ func copyAllowedCodes(codes []int) []int {
 		return nil
 	}
 
-	return deepcopy.IntSlice(codes)
+	result := make([]int, len(codes))
+	copy(result, codes)
+
+	return result
 }
 
 func (r HTTPResponse) AllowedContentType() ContentType {

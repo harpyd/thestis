@@ -1,12 +1,5 @@
 package deepcopy
 
-func IntSlice(s []int) []int {
-	copied := make([]int, len(s))
-	copy(copied, s)
-
-	return copied
-}
-
 func InterfaceSlice(s []interface{}) []interface{} {
 	copied := make([]interface{}, 0, len(s))
 
