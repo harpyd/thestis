@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/port/http"
+	"github.com/harpyd/thestis/internal/interface/http"
 )
 
 func (h handler) CreateTestCampaign(w stdhttp.ResponseWriter, r *stdhttp.Request) {

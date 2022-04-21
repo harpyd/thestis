@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-chi/render"
 
-	"github.com/harpyd/thestis/internal/port/http"
+	"github.com/harpyd/thestis/internal/interface/http"
 )
 
 func decode(w stdhttp.ResponseWriter, r *stdhttp.Request, v interface{}) bool {

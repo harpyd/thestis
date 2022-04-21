@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/port/http"
+	"github.com/harpyd/thestis/internal/interface/http"
 )
 
 func decodeSpecificationSourceCommand(

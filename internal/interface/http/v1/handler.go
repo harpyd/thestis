@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/harpyd/thestis/internal/app"
-	"github.com/harpyd/thestis/internal/port/http"
+	"github.com/harpyd/thestis/internal/interface/http"
 )
 
 type handler struct {

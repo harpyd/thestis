@@ -9,7 +9,7 @@ import (
 	"github.com/harpyd/thestis/internal/app"
 	"github.com/harpyd/thestis/internal/domain/specification"
 	"github.com/harpyd/thestis/internal/domain/user"
-	"github.com/harpyd/thestis/internal/port/http"
+	"github.com/harpyd/thestis/internal/interface/http"
 )
 
 func (h handler) LoadSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request, testCampaignID string) {

@@ -3,7 +3,7 @@ package v1
 import (
 	stdhttp "net/http"
 
-	"github.com/harpyd/thestis/internal/port/http"
+	"github.com/harpyd/thestis/internal/interface/http"
 )
 
 func authorize(w stdhttp.ResponseWriter, r *stdhttp.Request) (http.User, bool) {

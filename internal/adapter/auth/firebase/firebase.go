@@ -8,7 +8,7 @@ import (
 	"firebase.google.com/go/auth"
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/port/http"
+	"github.com/harpyd/thestis/internal/interface/http"
 )
 
 type Provider struct {
