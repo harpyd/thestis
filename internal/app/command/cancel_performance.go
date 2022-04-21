@@ -37,7 +37,7 @@ func (h CancelPerformanceHandler) Handle(ctx context.Context, cmd app.CancelPerf
 		err = errors.Wrap(err, "performance cancellation")
 	}()
 
-	perf, err := h.perfRepo.GetPerformance(ctx, cmd.PerformanceID, app.DontGetSpecification())
+	perf, err := h.perfRepo.GetPerformance(ctx, cmd.PerformanceID, app.WithoutSpecification())
 	if err != nil {
 		return err
 	}

@@ -77,7 +77,7 @@ func AvailableSpecification(spec *specification.Specification) SpecificationGett
 	})
 }
 
-func DontGetSpecification() SpecificationGetter {
+func WithoutSpecification() SpecificationGetter {
 	return getSpecificationFunc(func() *specification.Specification {
 		return nil
 	})

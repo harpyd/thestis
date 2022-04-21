@@ -28,14 +28,14 @@ func TestPanickingNewRestartPerformanceHandler(t *testing.T) {
 		{
 			Name:            "all_dependencies_are_not_nil",
 			GivenPerfRepo:   mock.NewPerformanceRepository(),
-			GivenSpecGetter: app.DontGetSpecification(),
+			GivenSpecGetter: app.WithoutSpecification(),
 			GivenMaintainer: mock.NewPerformanceMaintainer(false),
 			ShouldPanic:     false,
 		},
 		{
 			Name:            "performance_repository_is_nil",
 			GivenPerfRepo:   nil,
-			GivenSpecGetter: app.DontGetSpecification(),
+			GivenSpecGetter: app.WithoutSpecification(),
 			GivenMaintainer: mock.NewPerformanceMaintainer(false),
 			ShouldPanic:     true,
 			PanicMessage:    "performance repository is nil",
@@ -51,7 +51,7 @@ func TestPanickingNewRestartPerformanceHandler(t *testing.T) {
 		{
 			Name:            "performance_maintainer_is_nil",
 			GivenPerfRepo:   mock.NewPerformanceRepository(),
-			GivenSpecGetter: app.DontGetSpecification(),
+			GivenSpecGetter: app.WithoutSpecification(),
 			GivenMaintainer: nil,
 			ShouldPanic:     true,
 			PanicMessage:    "performance maintainer is nil",
@@ -59,7 +59,7 @@ func TestPanickingNewRestartPerformanceHandler(t *testing.T) {
 		{
 			Name:            "all_dependencies_are_nil",
 			GivenPerfRepo:   nil,
-			GivenSpecGetter: app.DontGetSpecification(),
+			GivenSpecGetter: app.WithoutSpecification(),
 			GivenMaintainer: mock.NewPerformanceMaintainer(false),
 			ShouldPanic:     true,
 			PanicMessage:    "performance repository is nil",
@@ -175,7 +175,7 @@ func TestHandleRestartPerformance(t *testing.T) {
 				maintainer = mock.NewPerformanceMaintainer(c.PerformanceAlreadyStarted)
 				handler    = command.NewRestartPerformanceHandler(
 					perfRepo,
-					app.DontGetSpecification(),
+					app.WithoutSpecification(),
 					maintainer,
 					performance.WithHTTP(performance.PassingPerformer()),
 					performance.WithAssertion(performance.FailingPerformer()),
