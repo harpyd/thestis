@@ -205,9 +205,9 @@ The __application__ has everything you need for the overall operation of the app
 * _interfaces_ (parsers, metrics, logging, etc.) — all sorts of interfaces, by implementing which you can choose the technology that the application will use in its work
 * _policies_ — application level policies interfaces and internal implementations.
 
-The __adapter__ code contains implementations for application-level interfaces. In runner, the application context is assembled from a configuration file with the necessary environment settings. On this layer, you can find the code associated with the database in _persistence_, implementation of _pubsub_ with _NATS_, and so on.
+The __infrastructure__ code contains implementations for application-level interfaces. In runner, the application context is assembled from a configuration file with the necessary environment settings. On this layer, you can find the code associated with the database in _persistence_, implementation of _pubsub_ with _NATS_, and so on.
 
-The __port__ layer contains the code that controls the application. A good example is an HTTP server that invokes a specific Application method on an endpoint call. Or a scheduler.
+The __interface__ layer contains the code that controls the application. A good example is an HTTP server that invokes a specific Application method on an endpoint call. Or a scheduler.
 
 ## Project structure
 
@@ -223,7 +223,7 @@ The __port__ layer contains the code that controls the application. A good examp
 * `deployments` — container orchestration deployment configurations and template
 * `examples` — specification, code and other stuff example snippets
 * `internal` — private **Thestis** application code
-    * `adapter` — application level interface adapters
+    * `infrastructure` — application level interface adapters with infrastructure implementation
         * `auth` — implementations of authentication methods
             * `fake` — fake authentication with hardcoded mock secret (only for development)
             * `firebase` — authentication with _Firebase_
@@ -249,7 +249,7 @@ The __port__ layer contains the code that controls the application. A good examp
         * `testcampaign` — data about testing project, loaded specifications history and active specification
         * `user` — access rights differentiation
     * `format` — **Thestis** application format utils
-    * `port` — application control logic
+    * `interface` — application interface implementations
         * `http` — implementation of HTTP level
             * `auth` — authentication
             * `httperr` — mapping errors to HTTP codes
