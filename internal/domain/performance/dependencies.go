@@ -16,13 +16,13 @@ type (
 	// performing. Then each thesis goroutine calls ThesisDone
 	// when finished.
 	ScenarioSyncGroup struct {
-		slug   specification.Slug
-		theses map[specification.Slug]thesisSync
+		scenarioSlug specification.Slug
+		theses       map[string]thesisSync
 	}
 
 	thesisSync struct {
 		done chan struct{}
-		deps []specification.Slug
+		deps []string
 	}
 )
 
@@ -37,27 +37,27 @@ type (
 func SyncDependencies(scenario specification.Scenario) ScenarioSyncGroup {
 	theses := scenario.Theses()
 
-	syncs := make(map[specification.Slug]thesisSync, len(theses))
+	syncs := make(map[string]thesisSync, len(theses))
 
 	for _, thesis := range theses {
 		var (
-			deps   = thesis.Dependencies()
-			before = thesesBefore(scenario, thesis)
+			deps   = thesisSlugs(thesis.Dependencies())
+			before = thesisSlugs(thesesBefore(scenario, thesis))
 		)
 
-		allDeps := make([]specification.Slug, 0, len(deps)+len(before))
+		allDeps := make([]string, 0, len(deps)+len(before))
 		allDeps = append(allDeps, deps...)
 		allDeps = append(allDeps, before...)
 
-		syncs[thesis.Slug()] = thesisSync{
+		syncs[thesis.Slug().Partial()] = thesisSync{
 			done: make(chan struct{}),
 			deps: allDeps,
 		}
 	}
 
 	return ScenarioSyncGroup{
-		slug:   scenario.Slug(),
-		theses: syncs,
+		scenarioSlug: scenario.Slug(),
+		theses:       syncs,
 	}
 }
 
@@ -72,6 +72,16 @@ func thesesBefore(scenario specification.Scenario, thesis specification.Thesis) 
 	}
 
 	return slugs
+}
+
+func thesisSlugs(slugs []specification.Slug) []string {
+	result := make([]string, 0, len(slugs))
+
+	for _, slug := range slugs {
+		result = append(result, slug.Thesis())
+	}
+
+	return result
 }
 
 type DependenciesSnapshot map[specification.Slug][]specification.Slug
@@ -125,24 +135,39 @@ func (g ScenarioSyncGroup) Snapshot() DependenciesSnapshot {
 		return nil
 	}
 
-	snp := make(DependenciesSnapshot, len(g.theses))
+	snapshot := make(DependenciesSnapshot, len(g.theses))
 
 	for slug, sync := range g.theses {
 		if len(sync.deps) == 0 {
 			continue
 		}
 
-		snp[slug] = make([]specification.Slug, len(sync.deps))
-		copy(snp[slug], sync.deps)
+		thesisSlug := specification.NewThesisSlug(
+			g.scenarioSlug.Story(),
+			g.scenarioSlug.Scenario(),
+			slug,
+		)
+
+		snapshot[thesisSlug] = make([]specification.Slug, 0, len(sync.deps))
+
+		for _, dep := range sync.deps {
+			depThesisSlug := specification.NewThesisSlug(
+				g.scenarioSlug.Story(),
+				g.scenarioSlug.Scenario(),
+				dep,
+			)
+
+			snapshot[thesisSlug] = append(snapshot[thesisSlug], depThesisSlug)
+		}
 	}
 
-	return snp
+	return snapshot
 }
 
-// Slug returns the slug of the scenario for which
+// ScenarioSlug returns the slug of the scenario for which
 // dependencies are collected.
-func (g ScenarioSyncGroup) Slug() specification.Slug {
-	return g.slug
+func (g ScenarioSyncGroup) ScenarioSlug() specification.Slug {
+	return g.scenarioSlug
 }
 
 // WaitThesisDependencies blocks goroutine until all
@@ -154,7 +179,7 @@ func (g ScenarioSyncGroup) WaitThesisDependencies(
 	ctx context.Context,
 	slug specification.Slug,
 ) error {
-	for _, dep := range g.theses[slug].deps {
+	for _, dep := range g.theses[slug.Partial()].deps {
 		thesis, ok := g.theses[dep]
 		if !ok {
 			continue
@@ -172,8 +197,10 @@ func (g ScenarioSyncGroup) WaitThesisDependencies(
 
 // ThesisDone notifies all pending theses that the thesis
 // with the passed slug are finished.
+//
+// If the slug is missing in the group, it will have no effect.
 func (g ScenarioSyncGroup) ThesisDone(slug specification.Slug) {
-	if thesis, ok := g.theses[slug]; ok {
+	if thesis, ok := g.theses[slug.Partial()]; ok {
 		close(thesis.done)
 	}
 }

@@ -268,7 +268,7 @@ func TestCollectDependencies(t *testing.T) {
 			})
 
 			t.Run("slug", func(t *testing.T) {
-				require.Equal(t, c.ExpectedSlug, deps.Slug())
+				require.Equal(t, c.ExpectedSlug, deps.ScenarioSlug())
 			})
 		})
 	}
