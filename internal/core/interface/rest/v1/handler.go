@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/harpyd/thestis/internal/core/app"
-	"github.com/harpyd/thestis/internal/core/interface/http"
+	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
 type handler struct {
@@ -17,7 +17,7 @@ type handler struct {
 func NewHandler(
 	application *app.Application,
 	logger app.Logger,
-	middlewares ...http.Middleware,
+	middlewares ...rest.Middleware,
 ) stdhttp.Handler {
 	r := chi.NewRouter()
 	for _, m := range middlewares {

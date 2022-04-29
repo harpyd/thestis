@@ -29,8 +29,8 @@ import (
 	"github.com/harpyd/thestis/internal/core/infrastructure/parser/yaml"
 	mongoAdapter "github.com/harpyd/thestis/internal/core/infrastructure/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/core/infrastructure/pubsub/natsio"
-	"github.com/harpyd/thestis/internal/core/interface/http"
-	v1 "github.com/harpyd/thestis/internal/core/interface/http/v1"
+	"github.com/harpyd/thestis/internal/core/interface/rest"
+	v1 "github.com/harpyd/thestis/internal/core/interface/rest/v1"
 	"github.com/harpyd/thestis/internal/server"
 	"github.com/harpyd/thestis/pkg/auth/firebase"
 	"github.com/harpyd/thestis/pkg/database/mongodb"
@@ -51,7 +51,7 @@ type Context struct {
 	performance  performanceContext
 	signalBus    signalBusContext
 	app          *app.Application
-	authProvider http.AuthProvider
+	authProvider rest.AuthProvider
 	server       *server.Server
 }
 
@@ -102,7 +102,7 @@ type signalBusContext struct {
 }
 
 type metricsContext struct {
-	httpMetric http.MetricCollector
+	httpMetric rest.MetricCollector
 }
 
 func New(configsPath string) *Context {
@@ -443,20 +443,20 @@ func (c *Context) initAuthenticationProvider() {
 }
 
 func (c *Context) initServer() {
-	c.server = server.New(c.config.HTTP, http.NewHandler(http.Params{
-		Middlewares: []http.Middleware{
+	c.server = server.New(c.config.HTTP, rest.NewHandler(rest.Params{
+		Middlewares: []rest.Middleware{
 			middleware.RequestID,
 			middleware.RealIP,
-			http.LoggingMiddleware(c.logger),
+			rest.LoggingMiddleware(c.logger),
 			middleware.Recoverer,
-			http.CORSMiddleware(c.config.HTTP.AllowedOrigins),
+			rest.CORSMiddleware(c.config.HTTP.AllowedOrigins),
 			middleware.NoCache,
-			http.MetricsMiddleware(c.metrics.httpMetric),
+			rest.MetricsMiddleware(c.metrics.httpMetric),
 		},
-		Routes: []http.Route{
+		Routes: []rest.Route{
 			{
 				Pattern: "/v1",
-				Handler: v1.NewHandler(c.app, c.logger, http.AuthMiddleware(c.authProvider)),
+				Handler: v1.NewHandler(c.app, c.logger, rest.AuthMiddleware(c.authProvider)),
 			},
 			{
 				Pattern: "/swagger",

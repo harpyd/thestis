@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/app"
-	"github.com/harpyd/thestis/internal/core/interface/http"
+	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
 func (h handler) CreateTestCampaign(w stdhttp.ResponseWriter, r *stdhttp.Request) {
@@ -24,7 +24,7 @@ func (h handler) CreateTestCampaign(w stdhttp.ResponseWriter, r *stdhttp.Request
 		return
 	}
 
-	http.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
+	rest.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
 func (h handler) GetTestCampaigns(w stdhttp.ResponseWriter, _ *stdhttp.Request) {
@@ -45,12 +45,12 @@ func (h handler) GetTestCampaign(w stdhttp.ResponseWriter, r *stdhttp.Request, t
 	}
 
 	if errors.Is(err, app.ErrTestCampaignNotFound) {
-		http.NotFound(string(ErrorSlugTestCampaignNotFound), err, w, r)
+		rest.NotFound(string(ErrorSlugTestCampaignNotFound), err, w, r)
 
 		return
 	}
 
-	http.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
+	rest.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
 func (h handler) RemoveTestCampaign(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ string) {

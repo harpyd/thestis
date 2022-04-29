@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/harpyd/thestis/internal/core/app"
-	"github.com/harpyd/thestis/internal/core/interface/http"
+	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
 func decodeSpecificationSourceCommand(
@@ -23,7 +23,7 @@ func decodeSpecificationSourceCommand(
 
 	content, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.BadRequest(string(ErrorSlugBadRequest), err, w, r)
+		rest.BadRequest(string(ErrorSlugBadRequest), err, w, r)
 
 		return
 	}

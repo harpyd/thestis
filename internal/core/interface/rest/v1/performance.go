@@ -10,7 +10,7 @@ import (
 	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/domain/performance"
 	"github.com/harpyd/thestis/internal/core/domain/user"
-	"github.com/harpyd/thestis/internal/core/interface/http"
+	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
 func (h handler) StartPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request, testCampaignID string) {
@@ -37,18 +37,18 @@ func (h handler) StartPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request, 
 	var aerr *user.AccessError
 
 	if errors.As(err, &aerr) {
-		http.Forbidden(string(ErrorSlugUserCantSeeTestCampaign), err, w, r)
+		rest.Forbidden(string(ErrorSlugUserCantSeeTestCampaign), err, w, r)
 
 		return
 	}
 
 	if errors.Is(err, app.ErrSpecificationNotFound) {
-		http.NotFound(string(ErrorSlugSpecificationNotFound), err, w, r)
+		rest.NotFound(string(ErrorSlugSpecificationNotFound), err, w, r)
 
 		return
 	}
 
-	http.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
+	rest.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
 func (h handler) RestartPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request, performanceID string) {
@@ -69,24 +69,24 @@ func (h handler) RestartPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request
 	var aerr *user.AccessError
 
 	if errors.As(err, &aerr) {
-		http.Forbidden(string(ErrorSlugUserCantSeePerformance), err, w, r)
+		rest.Forbidden(string(ErrorSlugUserCantSeePerformance), err, w, r)
 
 		return
 	}
 
 	if errors.Is(err, app.ErrPerformanceNotFound) {
-		http.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
+		rest.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
 
 		return
 	}
 
 	if errors.Is(err, performance.ErrAlreadyStarted) {
-		http.Conflict(string(ErrorSlugPerformanceAlreadyStarted), err, w, r)
+		rest.Conflict(string(ErrorSlugPerformanceAlreadyStarted), err, w, r)
 
 		return
 	}
 
-	http.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
+	rest.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
 func (h handler) CancelPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request, performanceID string) {
@@ -105,24 +105,24 @@ func (h handler) CancelPerformance(w stdhttp.ResponseWriter, r *stdhttp.Request,
 	var aerr *user.AccessError
 
 	if errors.As(err, &aerr) {
-		http.Forbidden(string(ErrorSlugUserCantSeePerformance), err, w, r)
+		rest.Forbidden(string(ErrorSlugUserCantSeePerformance), err, w, r)
 
 		return
 	}
 
 	if errors.Is(err, app.ErrPerformanceNotFound) {
-		http.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
+		rest.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
 
 		return
 	}
 
 	if errors.Is(err, performance.ErrNotStarted) {
-		http.Conflict(string(ErrorSlugPerformanceNotStarted), err, w, r)
+		rest.Conflict(string(ErrorSlugPerformanceNotStarted), err, w, r)
 
 		return
 	}
 
-	http.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
+	rest.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
 func (h handler) GetPerformanceHistory(w stdhttp.ResponseWriter, _ *stdhttp.Request, _ string) {

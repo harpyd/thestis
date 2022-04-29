@@ -9,7 +9,7 @@ import (
 	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/domain/specification"
 	"github.com/harpyd/thestis/internal/core/domain/user"
-	"github.com/harpyd/thestis/internal/core/interface/http"
+	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
 func (h handler) LoadSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request, testCampaignID string) {
@@ -27,7 +27,7 @@ func (h handler) LoadSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request,
 	}
 
 	if errors.Is(err, app.ErrTestCampaignNotFound) {
-		http.NotFound(string(ErrorSlugTestCampaignNotFound), err, w, r)
+		rest.NotFound(string(ErrorSlugTestCampaignNotFound), err, w, r)
 
 		return
 	}
@@ -35,7 +35,7 @@ func (h handler) LoadSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request,
 	var berr *specification.BuildError
 
 	if errors.As(err, &berr) {
-		http.UnprocessableEntity(string(ErrorSlugInvalidSpecificationSource), err, w, r)
+		rest.UnprocessableEntity(string(ErrorSlugInvalidSpecificationSource), err, w, r)
 
 		return
 	}
@@ -43,12 +43,12 @@ func (h handler) LoadSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request,
 	var aerr *user.AccessError
 
 	if errors.As(err, &aerr) {
-		http.Forbidden(string(ErrorSlugUserCantSeeTestCampaign), err, w, r)
+		rest.Forbidden(string(ErrorSlugUserCantSeeTestCampaign), err, w, r)
 
 		return
 	}
 
-	http.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
+	rest.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
 func (h handler) GetSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request, specificationID string) {
@@ -65,10 +65,10 @@ func (h handler) GetSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request, 
 	}
 
 	if errors.Is(err, app.ErrSpecificationNotFound) {
-		http.NotFound(string(ErrorSlugSpecificationNotFound), err, w, r)
+		rest.NotFound(string(ErrorSlugSpecificationNotFound), err, w, r)
 
 		return
 	}
 
-	http.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
+	rest.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }

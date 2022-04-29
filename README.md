@@ -303,11 +303,7 @@ specific Application method on an endpoint call. Or a scheduler.
             * `testcampaign` — data about testing project, loaded specifications history and active specification
             * `user` — access rights differentiation
         * `interface` — application interface implementations
-            * `http` — implementation of HTTP level
-                * `auth` — authentication
-                * `httperr` — mapping errors to HTTP codes
-                * `logging` — HTTP level logging
-                * `metrics` — metrics collecting
+            * `rest` — implementation of RESTful API
                 * `v1` — implementation of `api/openapi/thestis-v1.yml` _OpenAPI_ specification
     * `runner` — **Thestis** backend application code for running from `cmd/thestis/main.go`
     * `server` — **Thestis** server for running from application config

@@ -8,7 +8,7 @@ import (
 	"firebase.google.com/go/auth"
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/core/interface/http"
+	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
 type Provider struct {
@@ -27,24 +27,24 @@ var (
 	errInvalidClaimType  = errors.New("invalid claim type")
 )
 
-func (p Provider) AuthenticateUser(ctx context.Context, r *stdhttp.Request) (http.User, error) {
+func (p Provider) AuthenticateUser(ctx context.Context, r *stdhttp.Request) (rest.User, error) {
 	bearerToken := tokenFromHeader(r)
 
 	if bearerToken == "" {
-		return http.User{}, errEmptyBearerToken
+		return rest.User{}, errEmptyBearerToken
 	}
 
 	token, err := p.authClient.VerifyIDToken(ctx, bearerToken)
 	if err != nil {
-		return http.User{}, errUnableToVerifyJWT
+		return rest.User{}, errUnableToVerifyJWT
 	}
 
 	displayName, ok := token.Claims["name"].(string)
 	if !ok {
-		return http.User{}, errInvalidClaimType
+		return rest.User{}, errInvalidClaimType
 	}
 
-	return http.User{
+	return rest.User{
 		UUID:        token.UID,
 		DisplayName: displayName,
 	}, nil
