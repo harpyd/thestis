@@ -1,8 +1,8 @@
 package flow
 
 import (
-	performance2 "github.com/harpyd/thestis/internal/core/domain/performance"
-	specification2 "github.com/harpyd/thestis/internal/core/domain/specification"
+	"github.com/harpyd/thestis/internal/core/domain/performance"
+	"github.com/harpyd/thestis/internal/core/domain/specification"
 )
 
 type (
@@ -19,7 +19,7 @@ type (
 
 	// Status represents progress of the specification.Scenario.
 	Status struct {
-		slug           specification2.Slug
+		slug           specification.Slug
 		state          State
 		thesisStatuses map[string]*ThesisStatus
 	}
@@ -38,7 +38,7 @@ type (
 		id            string
 		performanceID string
 
-		statuses map[specification2.Slug]*Status
+		statuses map[specification.Slug]*Status
 	}
 )
 
@@ -76,7 +76,7 @@ func (f *Flow) Statuses() []*Status {
 //
 // If the slug is not specification.ScenarioSlug, it panics with
 // specification.ErrNotScenarioSlug.
-func NewStatus(slug specification2.Slug, state State, thesisStatuses ...*ThesisStatus) *Status {
+func NewStatus(slug specification.Slug, state State, thesisStatuses ...*ThesisStatus) *Status {
 	if err := slug.ShouldBeScenarioKind(); err != nil {
 		panic(err)
 	}
@@ -105,7 +105,7 @@ func thesisStatusesOrNil(statuses []*ThesisStatus) map[string]*ThesisStatus {
 }
 
 // Slug returns associated with Status scenario slug.
-func (s *Status) Slug() specification2.Slug {
+func (s *Status) Slug() specification.Slug {
 	return s.slug
 }
 
@@ -204,10 +204,10 @@ func Unmarshal(params Params) *Flow {
 // performance, including performance.Event. The states of
 // statuses change under the action of events. The transition
 // rules for the event are described in the State.Next method.
-func FromPerformance(id string, perf *performance2.Performance) *Reducer {
+func FromPerformance(id string, perf *performance.Performance) *Reducer {
 	scenarios := perf.WorkingScenarios()
 
-	statuses := make(map[specification2.Slug]*Status, len(scenarios))
+	statuses := make(map[specification.Slug]*Status, len(scenarios))
 
 	for _, scenario := range scenarios {
 		statuses[scenario.Slug()] = &Status{
@@ -224,7 +224,7 @@ func FromPerformance(id string, perf *performance2.Performance) *Reducer {
 	}
 }
 
-func fromTheses(theses []specification2.Thesis) map[string]*ThesisStatus {
+func fromTheses(theses []specification.Thesis) map[string]*ThesisStatus {
 	statuses := make(map[string]*ThesisStatus, len(theses))
 
 	for _, thesis := range theses {
@@ -241,7 +241,7 @@ func fromTheses(theses []specification2.Thesis) map[string]*ThesisStatus {
 // This method is similar to the other, but this method is
 // intended solely for testing purposes.
 func FromStatuses(id, performanceID string, statuses ...*Status) *Reducer {
-	nonNilStatuses := make(map[specification2.Slug]*Status, len(statuses))
+	nonNilStatuses := make(map[specification.Slug]*Status, len(statuses))
 
 	for _, status := range statuses {
 		if status != nil {
@@ -288,7 +288,7 @@ func (r *Reducer) selectOverallState() State {
 	return overallState
 }
 
-func statusesOrNil(statuses map[specification2.Slug]*Status) []*Status {
+func statusesOrNil(statuses map[specification.Slug]*Status) []*Status {
 	if len(statuses) == 0 {
 		return nil
 	}
@@ -308,7 +308,7 @@ func statusesOrNil(statuses map[specification2.Slug]*Status) []*Status {
 //
 // Flow state changes from call to call relying on the
 // state transition rules in State.Next method.
-func (r *Reducer) WithStep(step performance2.Step) *Reducer {
+func (r *Reducer) WithStep(step performance.Step) *Reducer {
 	slug := step.Slug()
 
 	status, ok := r.statuses[slug.ToScenarioKind()]
@@ -316,11 +316,11 @@ func (r *Reducer) WithStep(step performance2.Step) *Reducer {
 		return r
 	}
 
-	if slug.Kind() == specification2.ScenarioSlug {
+	if slug.Kind() == specification.ScenarioSlug {
 		status.state = status.state.Next(step.Event())
 	}
 
-	if slug.Kind() == specification2.ThesisSlug {
+	if slug.Kind() == specification.ThesisSlug {
 		thesisStatus, ok := status.thesisStatuses[slug.Partial()]
 		if !ok {
 			return r

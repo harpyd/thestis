@@ -1,8 +1,6 @@
 package yaml
 
-import (
-	specification2 "github.com/harpyd/thestis/internal/core/domain/specification"
-)
+import "github.com/harpyd/thestis/internal/core/domain/specification"
 
 type (
 	specificationSchema struct {
@@ -40,20 +38,20 @@ type (
 	}
 
 	httpRequestSchema struct {
-		Method      specification2.HTTPMethod  `yaml:"method"`
-		URL         string                     `yaml:"url"`
-		ContentType specification2.ContentType `yaml:"contentType"`
-		Body        map[string]interface{}     `yaml:"body"`
+		Method      specification.HTTPMethod  `yaml:"method"`
+		URL         string                    `yaml:"url"`
+		ContentType specification.ContentType `yaml:"contentType"`
+		Body        map[string]interface{}    `yaml:"body"`
 	}
 
 	httpResponseSchema struct {
-		AllowedCodes       []int                      `yaml:"allowedCodes"`
-		AllowedContentType specification2.ContentType `yaml:"allowedContentType"`
+		AllowedCodes       []int                     `yaml:"allowedCodes"`
+		AllowedContentType specification.ContentType `yaml:"allowedContentType"`
 	}
 
 	assertionSchema struct {
-		Method specification2.AssertionMethod `yaml:"with"`
-		Assert []assertSchema                 `yaml:"assert"`
+		Method specification.AssertionMethod `yaml:"with"`
+		Assert []assertSchema                `yaml:"assert"`
 	}
 
 	assertSchema struct {

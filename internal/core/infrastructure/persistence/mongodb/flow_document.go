@@ -1,7 +1,7 @@
 package mongodb
 
 import (
-	flow2 "github.com/harpyd/thestis/internal/core/domain/flow"
+	"github.com/harpyd/thestis/internal/core/domain/flow"
 	"github.com/harpyd/thestis/internal/core/domain/specification"
 )
 
@@ -9,22 +9,22 @@ type (
 	flowDocument struct {
 		ID            string           `bson:"_id"`
 		PerformanceID string           `bson:"performanceId"`
-		OverallState  flow2.State      `bson:"overallState"`
+		OverallState  flow.State       `bson:"overallState"`
 		Statuses      []statusDocument `bson:"statuses"`
 	}
 
 	statusDocument struct {
 		Slug           scenarioSlugDocument  `bson:"slug"`
-		State          flow2.State           `bson:"state"`
+		State          flow.State            `bson:"state"`
 		ThesisStatuses thesisStatusDocuments `bson:"thesisStatuses"`
 	}
 
 	thesisStatusDocuments []thesisStatusDocument
 
 	thesisStatusDocument struct {
-		ThesisSlug   string      `bson:"thesisSlug"`
-		State        flow2.State `bson:"state"`
-		OccurredErrs []string    `bson:"occurredErrs"`
+		ThesisSlug   string     `bson:"thesisSlug"`
+		State        flow.State `bson:"state"`
+		OccurredErrs []string   `bson:"occurredErrs"`
 	}
 
 	scenarioSlugDocument struct {
@@ -33,7 +33,7 @@ type (
 	}
 )
 
-func newFlowDocument(flow *flow2.Flow) flowDocument {
+func newFlowDocument(flow *flow.Flow) flowDocument {
 	return flowDocument{
 		ID:            flow.ID(),
 		PerformanceID: flow.PerformanceID(),
@@ -42,7 +42,7 @@ func newFlowDocument(flow *flow2.Flow) flowDocument {
 	}
 }
 
-func newStatusDocuments(statuses []*flow2.Status) []statusDocument {
+func newStatusDocuments(statuses []*flow.Status) []statusDocument {
 	documents := make([]statusDocument, 0, len(statuses))
 	for _, s := range statuses {
 		documents = append(documents, newStatusDocument(s))
@@ -51,7 +51,7 @@ func newStatusDocuments(statuses []*flow2.Status) []statusDocument {
 	return documents
 }
 
-func newStatusDocument(status *flow2.Status) statusDocument {
+func newStatusDocument(status *flow.Status) statusDocument {
 	return statusDocument{
 		Slug:           newScenarioSlugDocument(status.Slug()),
 		State:          status.State(),
@@ -66,7 +66,7 @@ func newScenarioSlugDocument(slug specification.Slug) scenarioSlugDocument {
 	}
 }
 
-func newThesisStatusDocuments(statuses []*flow2.ThesisStatus) []thesisStatusDocument {
+func newThesisStatusDocuments(statuses []*flow.ThesisStatus) []thesisStatusDocument {
 	documents := make([]thesisStatusDocument, 0, len(statuses))
 	for _, s := range statuses {
 		documents = append(documents, newThesisStatusDocument(s))
@@ -75,7 +75,7 @@ func newThesisStatusDocuments(statuses []*flow2.ThesisStatus) []thesisStatusDocu
 	return documents
 }
 
-func newThesisStatusDocument(status *flow2.ThesisStatus) thesisStatusDocument {
+func newThesisStatusDocument(status *flow.ThesisStatus) thesisStatusDocument {
 	return thesisStatusDocument{
 		ThesisSlug:   status.ThesisSlug(),
 		State:        status.State(),
@@ -83,8 +83,8 @@ func newThesisStatusDocument(status *flow2.ThesisStatus) thesisStatusDocument {
 	}
 }
 
-func newFlow(d flowDocument) *flow2.Flow {
-	return flow2.Unmarshal(flow2.Params{
+func newFlow(d flowDocument) *flow.Flow {
+	return flow.Unmarshal(flow.Params{
 		ID:            d.ID,
 		PerformanceID: d.PerformanceID,
 		OverallState:  d.OverallState,
@@ -92,8 +92,8 @@ func newFlow(d flowDocument) *flow2.Flow {
 	})
 }
 
-func newStatuses(ds []statusDocument) []*flow2.Status {
-	statuses := make([]*flow2.Status, 0, len(ds))
+func newStatuses(ds []statusDocument) []*flow.Status {
+	statuses := make([]*flow.Status, 0, len(ds))
 	for _, d := range ds {
 		statuses = append(statuses, newStatus(d))
 	}
@@ -101,8 +101,8 @@ func newStatuses(ds []statusDocument) []*flow2.Status {
 	return statuses
 }
 
-func newStatus(d statusDocument) *flow2.Status {
-	return flow2.NewStatus(
+func newStatus(d statusDocument) *flow.Status {
+	return flow.NewStatus(
 		newScenarioSlug(d.Slug),
 		d.State,
 		newThesisStatuses(d.ThesisStatuses)...,
@@ -113,10 +113,10 @@ func newScenarioSlug(d scenarioSlugDocument) specification.Slug {
 	return specification.NewScenarioSlug(d.Story, d.Scenario)
 }
 
-func newThesisStatuses(ds []thesisStatusDocument) []*flow2.ThesisStatus {
-	statuses := make([]*flow2.ThesisStatus, 0, len(ds))
+func newThesisStatuses(ds []thesisStatusDocument) []*flow.ThesisStatus {
+	statuses := make([]*flow.ThesisStatus, 0, len(ds))
 	for _, d := range ds {
-		statuses = append(statuses, flow2.NewThesisStatus(
+		statuses = append(statuses, flow.NewThesisStatus(
 			d.ThesisSlug,
 			d.State,
 			d.OccurredErrs...,
