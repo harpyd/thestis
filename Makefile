@@ -4,8 +4,8 @@
 export API_V1 = api/openapi/thestis-v1.yml
 
 gen-api-v1:
-	oapi-codegen -generate types -o internal/port/http/v1/openapi_type.gen.go -package v1 $$API_V1
-	oapi-codegen -generate chi-server -o internal/port/http/v1/openapi_server.gen.go -package v1 $$API_V1
+	oapi-codegen -generate types -o internal/core/interface/http/v1/openapi_type.gen.go -package v1 $$API_V1
+	oapi-codegen -generate chi-server -o internal/core/interface/http/v1/openapi_server.gen.go -package v1 $$API_V1
 
 api-v1:
 	make gen-api-v1

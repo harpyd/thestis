@@ -9,8 +9,8 @@ import (
 
 	"github.com/gookit/color"
 
-	"github.com/harpyd/thestis/internal/domain/specification"
-	"github.com/harpyd/thestis/internal/infrastructure/parser/yaml"
+	"github.com/harpyd/thestis/internal/core/domain/specification"
+	"github.com/harpyd/thestis/internal/core/infrastructure/parser/yaml"
 )
 
 const errorIndent = "  "
