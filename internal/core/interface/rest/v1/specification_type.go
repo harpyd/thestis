@@ -3,7 +3,7 @@ package v1
 import (
 	"fmt"
 	"io"
-	stdhttp "net/http"
+	"net/http"
 
 	"github.com/go-chi/render"
 
@@ -12,8 +12,8 @@ import (
 )
 
 func decodeSpecificationSourceCommand(
-	w stdhttp.ResponseWriter,
-	r *stdhttp.Request,
+	w http.ResponseWriter,
+	r *http.Request,
 	testCampaignID string,
 ) (cmd app.LoadSpecificationCommand, ok bool) {
 	user, ok := authorize(w, r)
@@ -36,8 +36,8 @@ func decodeSpecificationSourceCommand(
 }
 
 func decodeSpecificSpecificationQuery(
-	w stdhttp.ResponseWriter,
-	r *stdhttp.Request,
+	w http.ResponseWriter,
+	r *http.Request,
 	specificationID string,
 ) (qry app.SpecificSpecificationQuery, ok bool) {
 	user, ok := authorize(w, r)
@@ -51,7 +51,7 @@ func decodeSpecificSpecificationQuery(
 	}, true
 }
 
-func renderSpecificationResponse(w stdhttp.ResponseWriter, r *stdhttp.Request, spec app.SpecificSpecification) {
+func renderSpecificationResponse(w http.ResponseWriter, r *http.Request, spec app.SpecificSpecification) {
 	response := SpecificationResponse{
 		Specification: newSpecification(spec),
 		SourceUri:     "",

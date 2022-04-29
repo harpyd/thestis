@@ -2,7 +2,7 @@ package fake
 
 import (
 	"context"
-	stdhttp "net/http"
+	"net/http"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/golang-jwt/jwt/request"
@@ -23,7 +23,7 @@ var (
 	errInvalidClaimType = errors.New("invalid claim type")
 )
 
-func (p Provider) AuthenticateUser(_ context.Context, r *stdhttp.Request) (rest.User, error) {
+func (p Provider) AuthenticateUser(_ context.Context, r *http.Request) (rest.User, error) {
 	var claims jwt.MapClaims
 
 	token, err := request.ParseFromRequest(

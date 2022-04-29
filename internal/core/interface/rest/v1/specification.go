@@ -2,7 +2,7 @@ package v1
 
 import (
 	"fmt"
-	stdhttp "net/http"
+	"net/http"
 
 	"github.com/pkg/errors"
 
@@ -12,7 +12,7 @@ import (
 	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
-func (h handler) LoadSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request, testCampaignID string) {
+func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testCampaignID string) {
 	cmd, ok := decodeSpecificationSourceCommand(w, r, testCampaignID)
 	if !ok {
 		return
@@ -21,7 +21,7 @@ func (h handler) LoadSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request,
 	loadedSpecID, err := h.app.Commands.LoadSpecification.Handle(r.Context(), cmd)
 	if err == nil {
 		w.Header().Set("Location", fmt.Sprintf("/specifications/%s", loadedSpecID))
-		w.WriteHeader(stdhttp.StatusCreated)
+		w.WriteHeader(http.StatusCreated)
 
 		return
 	}
@@ -51,7 +51,7 @@ func (h handler) LoadSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request,
 	rest.InternalServerError(string(ErrorSlugUnexpectedError), err, w, r)
 }
 
-func (h handler) GetSpecification(w stdhttp.ResponseWriter, r *stdhttp.Request, specificationID string) {
+func (h handler) GetSpecification(w http.ResponseWriter, r *http.Request, specificationID string) {
 	qry, ok := decodeSpecificSpecificationQuery(w, r, specificationID)
 	if !ok {
 		return

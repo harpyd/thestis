@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	stdhttp "net/http"
+	"net/http"
 	"strings"
 	"sync"
 
@@ -130,7 +130,7 @@ func (c *Context) Start() {
 		app.StringLogField("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
 	)
 
-	if err := c.server.Start(); !errors.Is(err, stdhttp.ErrServerClosed) {
+	if err := c.server.Start(); !errors.Is(err, http.ErrServerClosed) {
 		c.logger.Fatal("HTTP server stopped unexpectedly", err)
 	}
 }
@@ -460,7 +460,7 @@ func (c *Context) initServer() {
 			},
 			{
 				Pattern: "/swagger",
-				Handler: stdhttp.StripPrefix("/swagger/", stdhttp.FileServer(stdhttp.Dir("./swagger"))),
+				Handler: http.StripPrefix("/swagger/", http.FileServer(http.Dir("./swagger"))),
 			},
 			{
 				Pattern: "/metrics",

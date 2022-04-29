@@ -1,14 +1,14 @@
 package v1
 
 import (
-	stdhttp "net/http"
+	"net/http"
 
 	"github.com/go-chi/render"
 
 	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
-func decode(w stdhttp.ResponseWriter, r *stdhttp.Request, v interface{}) bool {
+func decode(w http.ResponseWriter, r *http.Request, v interface{}) bool {
 	if err := render.Decode(r, v); err != nil {
 		rest.BadRequest(string(ErrorSlugBadRequest), err, w, r)
 

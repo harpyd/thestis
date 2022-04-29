@@ -1,7 +1,7 @@
 package v1
 
 import (
-	stdhttp "net/http"
+	"net/http"
 
 	"github.com/go-chi/chi/v5"
 
@@ -18,7 +18,7 @@ func NewHandler(
 	application *app.Application,
 	logger app.Logger,
 	middlewares ...rest.Middleware,
-) stdhttp.Handler {
+) http.Handler {
 	r := chi.NewRouter()
 	for _, m := range middlewares {
 		r.Use(m)

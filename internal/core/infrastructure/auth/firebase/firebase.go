@@ -2,7 +2,7 @@ package firebase
 
 import (
 	"context"
-	stdhttp "net/http"
+	"net/http"
 	"strings"
 
 	"firebase.google.com/go/auth"
@@ -27,7 +27,7 @@ var (
 	errInvalidClaimType  = errors.New("invalid claim type")
 )
 
-func (p Provider) AuthenticateUser(ctx context.Context, r *stdhttp.Request) (rest.User, error) {
+func (p Provider) AuthenticateUser(ctx context.Context, r *http.Request) (rest.User, error) {
 	bearerToken := tokenFromHeader(r)
 
 	if bearerToken == "" {
@@ -50,7 +50,7 @@ func (p Provider) AuthenticateUser(ctx context.Context, r *stdhttp.Request) (res
 	}, nil
 }
 
-func tokenFromHeader(r *stdhttp.Request) string {
+func tokenFromHeader(r *http.Request) string {
 	headerValue := r.Header.Get("Authorization")
 
 	if len(headerValue) > 7 && strings.ToLower(headerValue[0:6]) == "bearer" {
