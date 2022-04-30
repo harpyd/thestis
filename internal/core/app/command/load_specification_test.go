@@ -10,9 +10,9 @@ import (
 	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/command"
 	"github.com/harpyd/thestis/internal/core/app/mock"
-	"github.com/harpyd/thestis/internal/core/domain/specification"
-	"github.com/harpyd/thestis/internal/core/domain/testcampaign"
-	"github.com/harpyd/thestis/internal/core/domain/user"
+	"github.com/harpyd/thestis/internal/core/entity/specification"
+	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
+	"github.com/harpyd/thestis/internal/core/entity/user"
 )
 
 func TestPanickingNewLoadSpecificationHandler(t *testing.T) {

@@ -1,8 +1,8 @@
 package mongodb
 
 import (
-	"github.com/harpyd/thestis/internal/core/domain/flow"
-	"github.com/harpyd/thestis/internal/core/domain/specification"
+	"github.com/harpyd/thestis/internal/core/entity/flow"
+	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
 
 type (

@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/core/domain/testcampaign"
+	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 )
 
 func TestTestCampaign(t *testing.T) {

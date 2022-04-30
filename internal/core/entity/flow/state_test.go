@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/core/domain/flow"
-	"github.com/harpyd/thestis/internal/core/domain/performance"
+	"github.com/harpyd/thestis/internal/core/entity/flow"
+	"github.com/harpyd/thestis/internal/core/entity/performance"
 )
 
 func TestNextState(t *testing.T) {

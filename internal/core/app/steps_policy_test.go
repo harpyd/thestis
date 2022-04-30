@@ -9,9 +9,9 @@ import (
 
 	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/mock"
-	"github.com/harpyd/thestis/internal/core/domain/flow"
-	"github.com/harpyd/thestis/internal/core/domain/performance"
-	"github.com/harpyd/thestis/internal/core/domain/specification"
+	"github.com/harpyd/thestis/internal/core/entity/flow"
+	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
 
 func TestPanickingNewEveryStepSavingPolicy(t *testing.T) {

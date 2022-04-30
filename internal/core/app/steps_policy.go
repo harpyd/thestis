@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/harpyd/thestis/internal/core/domain/flow"
-	"github.com/harpyd/thestis/internal/core/domain/performance"
+	"github.com/harpyd/thestis/internal/core/entity/flow"
+	"github.com/harpyd/thestis/internal/core/entity/performance"
 )
 
 type StepsPolicy interface {

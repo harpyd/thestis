@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/core/domain/flow"
-	"github.com/harpyd/thestis/internal/core/domain/performance"
+	"github.com/harpyd/thestis/internal/core/entity/flow"
+	"github.com/harpyd/thestis/internal/core/entity/performance"
 )
 
 type PerformanceGuard interface {

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/harpyd/thestis/internal/core/app"
-	"github.com/harpyd/thestis/internal/core/domain/testcampaign"
+	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 )
 
 type testCampaignDocument struct {

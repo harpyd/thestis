@@ -3,7 +3,7 @@ package performance
 import (
 	"context"
 
-	"github.com/harpyd/thestis/internal/core/domain/specification"
+	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
 
 type (

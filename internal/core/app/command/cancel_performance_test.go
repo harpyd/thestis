@@ -10,8 +10,8 @@ import (
 	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/command"
 	"github.com/harpyd/thestis/internal/core/app/mock"
-	"github.com/harpyd/thestis/internal/core/domain/performance"
-	"github.com/harpyd/thestis/internal/core/domain/user"
+	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/user"
 )
 
 func TestPanickingNewCancelPerformanceHandler(t *testing.T) {

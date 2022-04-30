@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/harpyd/thestis/internal/core/domain/specification"
+	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
 
 type (

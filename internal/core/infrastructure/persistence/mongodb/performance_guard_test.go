@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/harpyd/thestis/internal/core/domain/performance"
+	"github.com/harpyd/thestis/internal/core/entity/performance"
 	"github.com/harpyd/thestis/internal/core/infrastructure/persistence/mongodb"
 )
 

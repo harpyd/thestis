@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/app"
-	"github.com/harpyd/thestis/internal/core/domain/performance"
-	"github.com/harpyd/thestis/internal/core/domain/user"
+	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/user"
 	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 

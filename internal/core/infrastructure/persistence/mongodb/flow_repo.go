@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/harpyd/thestis/internal/core/app"
-	"github.com/harpyd/thestis/internal/core/domain/flow"
+	"github.com/harpyd/thestis/internal/core/entity/flow"
 )
 
 type FlowRepository struct {

@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/harpyd/thestis/internal/core/app"
-	"github.com/harpyd/thestis/internal/core/domain/testcampaign"
+	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 	"github.com/harpyd/thestis/internal/core/infrastructure/persistence/mongodb"
 )
 

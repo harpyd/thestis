@@ -6,10 +6,10 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/core/domain/flow"
-	"github.com/harpyd/thestis/internal/core/domain/performance"
-	"github.com/harpyd/thestis/internal/core/domain/specification"
-	"github.com/harpyd/thestis/internal/core/domain/testcampaign"
+	"github.com/harpyd/thestis/internal/core/entity/flow"
+	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/specification"
+	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 )
 
 var (

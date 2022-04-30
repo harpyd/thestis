@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/core/domain/performance"
-	"github.com/harpyd/thestis/internal/core/domain/specification"
-	"github.com/harpyd/thestis/internal/core/domain/testcampaign"
-	"github.com/harpyd/thestis/internal/core/domain/user"
+	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/specification"
+	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
+	"github.com/harpyd/thestis/internal/core/entity/user"
 )
 
 func TestCanAccessTestCampaign(t *testing.T) {

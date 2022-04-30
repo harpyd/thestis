@@ -239,10 +239,9 @@ stateDiagram-v2
 
 ## Architecture
 
-This project is written using the approaches described in Robert Martin's Pure Architecture and using a number of
-patterns from DDD.
+This project is written using the approaches described in Clean Architecture of Uncle Bob.
 
-The __domain__ contains entities for working with tests: `TestCampaign`, `Specification`, `Performance`, `Flow`, `User`,
+The __entity__ contains entities for creating tests, loading specification, creating and starting pipeline with access rights differentiation: `TestCampaign`, `Specification`, `Performance`, `Flow`, `User`,
 etc.
 
 The __application__ has everything you need for the overall operation of the application. In this level you can find:
@@ -296,7 +295,7 @@ specific Application method on an endpoint call. Or a scheduler.
             * `command` — write operation use cases
             * `mock` — application level interfaces mocks
             * `query` — read operation use cases
-        * `domain` — domain logic of **Thestis** bounded by context
+        * `entity` — domain logic of **Thestis** divided by main entities
             * `flow` - flow, state and reducer from performance's steps
             * `performance` — pipeline that can run tests flow from specification using concurrent running goroutines
             * `specification` — tests description in declarative BDD style

@@ -1,8 +1,9 @@
 package zap
 
 import (
-	"github.com/harpyd/thestis/internal/core/app"
 	"go.uber.org/zap"
+
+	"github.com/harpyd/thestis/internal/core/app"
 )
 
 type Logger struct {

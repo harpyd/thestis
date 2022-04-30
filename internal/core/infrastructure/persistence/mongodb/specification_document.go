@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/harpyd/thestis/internal/core/app"
-	"github.com/harpyd/thestis/internal/core/domain/specification"
+	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
 
 type (

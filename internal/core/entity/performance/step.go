@@ -3,7 +3,7 @@ package performance
 import (
 	"strings"
 
-	"github.com/harpyd/thestis/internal/core/domain/specification"
+	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
 
 // Step stores information about the performing

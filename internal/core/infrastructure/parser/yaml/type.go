@@ -1,6 +1,6 @@
 package yaml
 
-import "github.com/harpyd/thestis/internal/core/domain/specification"
+import "github.com/harpyd/thestis/internal/core/entity/specification"
 
 type (
 	specificationSchema struct {

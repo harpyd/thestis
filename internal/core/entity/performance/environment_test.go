@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/core/domain/performance"
+	"github.com/harpyd/thestis/internal/core/entity/performance"
 )
 
 func TestConcurrentRWOperationsOnEnvironment(t *testing.T) {

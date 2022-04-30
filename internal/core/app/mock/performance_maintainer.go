@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/harpyd/thestis/internal/core/app"
-	"github.com/harpyd/thestis/internal/core/domain/performance"
+	"github.com/harpyd/thestis/internal/core/entity/performance"
 )
 
 type PerformanceMaintainer struct {
