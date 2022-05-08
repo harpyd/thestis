@@ -11,7 +11,7 @@ import (
 type StepsPolicy interface {
 	HandleSteps(
 		ctx context.Context,
-		fr *flow.Reducer,
+		fr *flow.Flow,
 		steps <-chan performance.Step,
 		messages chan<- Message,
 	)
@@ -35,15 +35,12 @@ func NewEveryStepSavingPolicy(flowRepo FlowRepository, saveTimeout time.Duration
 
 func (p *everyStepSavingPolicy) HandleSteps(
 	ctx context.Context,
-	fr *flow.Reducer,
+	f *flow.Flow,
 	steps <-chan performance.Step,
 	messages chan<- Message,
 ) {
 	defer func() {
-		if err := p.flowRepo.UpsertFlow(
-			context.Background(),
-			fr.Reduce(),
-		); err != nil {
+		if err := p.flowRepo.UpsertFlow(context.Background(), f); err != nil {
 			messages <- NewMessageFromError(err)
 		}
 	}()
@@ -51,9 +48,7 @@ func (p *everyStepSavingPolicy) HandleSteps(
 	for s := range steps {
 		messages <- NewMessageFromStep(s)
 
-		fr.WithStep(s)
-
-		if err := p.upsertFlowWithTimeout(ctx, fr.Reduce()); err != nil {
+		if err := p.upsertFlowWithTimeout(ctx, f.ApplyStep(s)); err != nil {
 			messages <- NewMessageFromError(err)
 		}
 	}

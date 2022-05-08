@@ -201,18 +201,18 @@ func TestNewThesisStatus(t *testing.T) {
 	}
 }
 
-func TestReduceFlow(t *testing.T) {
+func TestFulfilledFlow(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		FlowReducer           func() *flow.Reducer
+		FlowFactory           func() *flow.Flow
 		ExpectedFlowID        string
 		ExpectedPerformanceID string
 		ExpectedStatuses      []*flow.Status
 		ExpectedOverallState  flow.State
 	}{
 		{
-			FlowReducer: func() *flow.Reducer {
+			FlowFactory: func() *flow.Flow {
 				return flow.FromPerformance("", &performance.Performance{})
 			},
 			ExpectedFlowID:        "",
@@ -221,7 +221,7 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedOverallState:  flow.NoState,
 		},
 		{
-			FlowReducer: func() *flow.Reducer {
+			FlowFactory: func() *flow.Flow {
 				return flow.FromPerformance("foo", &performance.Performance{})
 			},
 			ExpectedFlowID:        "foo",
@@ -230,7 +230,7 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedOverallState:  flow.NoState,
 		},
 		{
-			FlowReducer: func() *flow.Reducer {
+			FlowFactory: func() *flow.Flow {
 				return flow.FromPerformance("bar", performance.Unmarshal(performance.Params{
 					ID: "doo",
 				}))
@@ -241,7 +241,7 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedOverallState:  flow.NoState,
 		},
 		{
-			FlowReducer: func() *flow.Reducer {
+			FlowFactory: func() *flow.Flow {
 				spec := (&specification.Builder{}).
 					WithStory("foo", func(b *specification.StoryBuilder) {
 						b.WithScenario("koo", func(b *specification.ScenarioBuilder) {
@@ -264,7 +264,7 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedOverallState: flow.NotPerformed,
 		},
 		{
-			FlowReducer: func() *flow.Reducer {
+			FlowFactory: func() *flow.Flow {
 				spec := (&specification.Builder{}).
 					WithStory("foo", func(b *specification.StoryBuilder) {
 						b.WithScenario("bar", func(b *specification.ScenarioBuilder) {
@@ -275,7 +275,7 @@ func TestReduceFlow(t *testing.T) {
 
 				f := flow.FromPerformance("dar", performance.FromSpecification("fla", spec))
 
-				return f.WithStep(performance.NewThesisStep(
+				return f.ApplyStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "baz"),
 					performance.HTTPPerformer,
 					performance.FiredPass,
@@ -293,7 +293,7 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedOverallState: flow.NotPerformed,
 		},
 		{
-			FlowReducer: func() *flow.Reducer {
+			FlowFactory: func() *flow.Flow {
 				spec := (&specification.Builder{}).
 					WithStory("doo", func(b *specification.StoryBuilder) {
 						b.WithScenario("zoo", func(b *specification.ScenarioBuilder) {
@@ -303,7 +303,7 @@ func TestReduceFlow(t *testing.T) {
 					ErrlessBuild()
 
 				return flow.FromPerformance("sds", performance.FromSpecification("coo", spec)).
-					WithStep(performance.NewScenarioStepWithErr(
+					ApplyStep(performance.NewScenarioStepWithErr(
 						errors.New("something wrong"),
 						specification.NewScenarioSlug("doo", "zoo"),
 						performance.FiredCrash,
@@ -321,7 +321,7 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedOverallState: flow.Crashed,
 		},
 		{
-			FlowReducer: func() *flow.Reducer {
+			FlowFactory: func() *flow.Flow {
 				return flow.FromStatuses(
 					"aba",
 					"oba",
@@ -331,7 +331,7 @@ func TestReduceFlow(t *testing.T) {
 						flow.NewThesisStatus("baz", flow.Passed),
 						flow.NewThesisStatus("ban", flow.Performing),
 					),
-				).WithStep(performance.NewThesisStep(
+				).ApplyStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "NOP"),
 					performance.HTTPPerformer,
 					performance.FiredFail,
@@ -350,7 +350,7 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedOverallState: flow.Performing,
 		},
 		{
-			FlowReducer: func() *flow.Reducer {
+			FlowFactory: func() *flow.Flow {
 				return flow.FromStatuses(
 					"flow-id",
 					"some-perf-id",
@@ -379,7 +379,7 @@ func TestReduceFlow(t *testing.T) {
 			ExpectedOverallState: flow.Passed,
 		},
 		{
-			FlowReducer: func() *flow.Reducer {
+			FlowFactory: func() *flow.Flow {
 				return flow.FromStatuses(
 					"id",
 					"perf-id",
@@ -431,7 +431,7 @@ func TestReduceFlow(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			f := c.FlowReducer().Reduce()
+			f := c.FlowFactory()
 
 			t.Run("id", func(t *testing.T) {
 				require.Equal(t, c.ExpectedFlowID, f.ID())
@@ -447,83 +447,6 @@ func TestReduceFlow(t *testing.T) {
 
 			t.Run("overall_state", func(t *testing.T) {
 				require.Equal(t, c.ExpectedOverallState, f.OverallState())
-			})
-		})
-	}
-}
-
-func TestUnmarshalFlow(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		FlowParams flow.Params
-	}{
-		{
-			FlowParams: flow.Params{},
-		},
-		{
-			FlowParams: flow.Params{
-				ID: "flow-id",
-			},
-		},
-		{
-			FlowParams: flow.Params{
-				PerformanceID: "perf-id",
-			},
-		},
-		{
-			FlowParams: flow.Params{
-				Statuses: []*flow.Status{
-					flow.NewStatus(
-						specification.NewScenarioSlug("foo", "bar"),
-						flow.NotPerformed,
-					),
-					flow.NewStatus(
-						specification.NewScenarioSlug("foo", "dar"),
-						flow.Performing,
-					),
-				},
-			},
-		},
-		{
-			FlowParams: flow.Params{
-				ID:            "flow-id",
-				PerformanceID: "perf-id",
-				Statuses: []*flow.Status{
-					flow.NewStatus(
-						specification.NewScenarioSlug("foo", "doo"),
-						flow.Performing,
-						flow.NewThesisStatus("boo", flow.Performing),
-					),
-					nil,
-					flow.NewStatus(
-						specification.NewScenarioSlug("foo", "doo"),
-						flow.Failed,
-						flow.NewThesisStatus("zoo", flow.Failed),
-					),
-				},
-			},
-		},
-	}
-
-	for i := range testCases {
-		c := testCases[i]
-
-		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			t.Parallel()
-
-			f := flow.Unmarshal(c.FlowParams)
-
-			t.Run("id", func(t *testing.T) {
-				require.Equal(t, c.FlowParams.ID, f.ID())
-			})
-
-			t.Run("performance_id", func(t *testing.T) {
-				require.Equal(t, c.FlowParams.PerformanceID, f.PerformanceID())
-			})
-
-			t.Run("statuses", func(t *testing.T) {
-				require.ElementsMatch(t, c.FlowParams.Statuses, f.Statuses())
 			})
 		})
 	}

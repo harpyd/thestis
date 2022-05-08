@@ -122,9 +122,9 @@ func (m *performanceMaintainer) MaintainPerformance(
 
 		steps := perf.MustStart(ctx)
 
-		fr := flow.FromPerformance(uuid.New().String(), perf)
+		f := flow.FromPerformance(uuid.New().String(), perf)
 
-		m.stepsPolicy.HandleSteps(ctx, fr, steps, messages)
+		m.stepsPolicy.HandleSteps(ctx, f, steps, messages)
 	})
 
 	return messages, nil
