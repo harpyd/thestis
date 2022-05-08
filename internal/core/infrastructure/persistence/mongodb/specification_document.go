@@ -3,7 +3,7 @@ package mongodb
 import (
 	"time"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/query"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
 
@@ -280,81 +280,81 @@ func newAssertionBuildFn(d assertionDocument) func(builder *specification.Assert
 	}
 }
 
-func newAppSpecificSpecification(d specificationDocument) app.SpecificSpecification {
-	spec := app.SpecificSpecification{
+func newSpecificSpecificationView(d specificationDocument) query.SpecificSpecificationView {
+	spec := query.SpecificSpecificationView{
 		ID:             d.ID,
 		TestCampaignID: d.TestCampaignID,
 		LoadedAt:       d.LoadedAt,
 		Author:         d.Author,
 		Title:          d.Title,
 		Description:    d.Description,
-		Stories:        make([]app.Story, 0, len(d.Stories)),
+		Stories:        make([]query.StoryView, 0, len(d.Stories)),
 	}
 
 	for _, s := range d.Stories {
-		spec.Stories = append(spec.Stories, newAppStory(s))
+		spec.Stories = append(spec.Stories, newStoryView(s))
 	}
 
 	return spec
 }
 
-func newAppStory(d storyDocument) app.Story {
-	story := app.Story{
+func newStoryView(d storyDocument) query.StoryView {
+	story := query.StoryView{
 		Slug:        d.Slug,
 		Description: d.Description,
 		AsA:         d.AsA,
 		InOrderTo:   d.InOrderTo,
 		WantTo:      d.WantTo,
-		Scenarios:   make([]app.Scenario, 0, len(d.Scenarios)),
+		Scenarios:   make([]query.ScenarioView, 0, len(d.Scenarios)),
 	}
 
 	for _, s := range d.Scenarios {
-		story.Scenarios = append(story.Scenarios, newAppScenario(s))
+		story.Scenarios = append(story.Scenarios, newScenarioView(s))
 	}
 
 	return story
 }
 
-func newAppScenario(d scenarioDocument) app.Scenario {
-	scenario := app.Scenario{
+func newScenarioView(d scenarioDocument) query.ScenarioView {
+	scenario := query.ScenarioView{
 		Slug:        d.Slug,
 		Description: d.Description,
-		Theses:      make([]app.Thesis, 0, len(d.Theses)),
+		Theses:      make([]query.ThesisView, 0, len(d.Theses)),
 	}
 
 	for _, t := range d.Theses {
-		scenario.Theses = append(scenario.Theses, newAppThesis(t))
+		scenario.Theses = append(scenario.Theses, newThesisView(t))
 	}
 
 	return scenario
 }
 
-func newAppThesis(d thesisDocument) app.Thesis {
-	return app.Thesis{
+func newThesisView(d thesisDocument) query.ThesisView {
+	return query.ThesisView{
 		Slug:      d.Slug,
 		After:     d.After,
-		Statement: newAppStatement(d.Statement),
-		HTTP:      newAppHTTP(d.HTTP),
-		Assertion: newAppAssertion(d.Assertion),
+		Statement: newStatementView(d.Statement),
+		HTTP:      newHTTPView(d.HTTP),
+		Assertion: newAssertionView(d.Assertion),
 	}
 }
 
-func newAppStatement(d statementDocument) app.Statement {
-	return app.Statement{
+func newStatementView(d statementDocument) query.StatementView {
+	return query.StatementView{
 		Stage:    d.Stage.String(),
 		Behavior: d.Behavior,
 	}
 }
 
-func newAppHTTP(d httpDocument) app.HTTP {
-	return app.HTTP{
-		Request:  newAppHTTPRequest(d.Request),
-		Response: newAppHTTPResponse(d.Response),
+func newHTTPView(d httpDocument) query.HTTPView {
+	return query.HTTPView{
+		Request:  newHTTPRequestView(d.Request),
+		Response: newHTTPResponseView(d.Response),
 	}
 }
 
-func newAppHTTPRequest(d httpRequestDocument) app.HTTPRequest {
-	return app.HTTPRequest{
+func newHTTPRequestView(d httpRequestDocument) query.HTTPRequestView {
+	return query.HTTPRequestView{
 		Method:      d.Method.String(),
 		URL:         d.URL,
 		ContentType: d.ContentType.String(),
@@ -362,28 +362,28 @@ func newAppHTTPRequest(d httpRequestDocument) app.HTTPRequest {
 	}
 }
 
-func newAppHTTPResponse(d httpResponseDocument) app.HTTPResponse {
-	return app.HTTPResponse{
+func newHTTPResponseView(d httpResponseDocument) query.HTTPResponseView {
+	return query.HTTPResponseView{
 		AllowedCodes:       d.AllowedCodes,
 		AllowedContentType: d.AllowedContentType.String(),
 	}
 }
 
-func newAppAssertion(d assertionDocument) app.Assertion {
-	assertion := app.Assertion{
+func newAssertionView(d assertionDocument) query.AssertionView {
+	assertion := query.AssertionView{
 		Method:  d.Method.String(),
-		Asserts: make([]app.Assert, 0, len(d.Asserts)),
+		Asserts: make([]query.AssertView, 0, len(d.Asserts)),
 	}
 
 	for _, a := range d.Asserts {
-		assertion.Asserts = append(assertion.Asserts, newAppAssert(a))
+		assertion.Asserts = append(assertion.Asserts, newAssertView(a))
 	}
 
 	return assertion
 }
 
-func newAppAssert(d assertDocument) app.Assert {
-	return app.Assert{
+func newAssertView(d assertDocument) query.AssertView {
+	return query.AssertView{
 		Actual:   d.Actual,
 		Expected: d.Expected,
 	}

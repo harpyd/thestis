@@ -4,15 +4,22 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-
-	"github.com/harpyd/thestis/internal/core/app"
 )
 
-type SpecificPerformanceReadModel interface {
-	FindPerformance(ctx context.Context, qry app.SpecificPerformanceQuery) (app.SpecificPerformance, error)
+type SpecificPerformance struct {
+	PerformanceID string
+	UserID        string
 }
 
-type SpecificPerformanceHandler struct {
+type SpecificPerformanceHandler interface {
+	Handle(ctx context.Context, qry SpecificPerformance) (SpecificPerformanceView, error)
+}
+
+type SpecificPerformanceReadModel interface {
+	FindPerformance(ctx context.Context, qry SpecificPerformance) (SpecificPerformanceView, error)
+}
+
+type specificPerformanceHandler struct {
 	readModel SpecificPerformanceReadModel
 }
 
@@ -21,15 +28,15 @@ func NewSpecificPerformanceHandler(readModel SpecificPerformanceReadModel) Speci
 		panic("specific performance read model is nil")
 	}
 
-	return SpecificPerformanceHandler{
+	return specificPerformanceHandler{
 		readModel: readModel,
 	}
 }
 
-func (h SpecificPerformanceHandler) Handle(
+func (h specificPerformanceHandler) Handle(
 	ctx context.Context,
-	qry app.SpecificPerformanceQuery,
-) (app.SpecificPerformance, error) {
+	qry SpecificPerformance,
+) (SpecificPerformanceView, error) {
 	perf, err := h.readModel.FindPerformance(ctx, qry)
 
 	return perf, errors.Wrap(err, "getting performance")

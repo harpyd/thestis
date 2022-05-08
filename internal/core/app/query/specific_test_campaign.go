@@ -4,15 +4,22 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-
-	"github.com/harpyd/thestis/internal/core/app"
 )
 
-type SpecificTestCampaignReadModel interface {
-	FindTestCampaign(ctx context.Context, qry app.SpecificTestCampaignQuery) (app.SpecificTestCampaign, error)
+type SpecificTestCampaign struct {
+	TestCampaignID string
+	UserID         string
 }
 
-type SpecificTestCampaignHandler struct {
+type SpecificTestCampaignHandler interface {
+	Handle(ctx context.Context, qry SpecificTestCampaign) (SpecificTestCampaignView, error)
+}
+
+type SpecificTestCampaignReadModel interface {
+	FindTestCampaign(ctx context.Context, qry SpecificTestCampaign) (SpecificTestCampaignView, error)
+}
+
+type specificTestCampaignHandler struct {
 	readModel SpecificTestCampaignReadModel
 }
 
@@ -21,15 +28,15 @@ func NewSpecificTestCampaignHandler(readModel SpecificTestCampaignReadModel) Spe
 		panic("specific test campaign read model is nil")
 	}
 
-	return SpecificTestCampaignHandler{
+	return specificTestCampaignHandler{
 		readModel: readModel,
 	}
 }
 
-func (h SpecificTestCampaignHandler) Handle(
+func (h specificTestCampaignHandler) Handle(
 	ctx context.Context,
-	qry app.SpecificTestCampaignQuery,
-) (app.SpecificTestCampaign, error) {
+	qry SpecificTestCampaign,
+) (SpecificTestCampaignView, error) {
 	tc, err := h.readModel.FindTestCampaign(ctx, qry)
 
 	return tc, errors.Wrap(err, "getting test campaign")

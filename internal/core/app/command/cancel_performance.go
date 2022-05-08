@@ -5,12 +5,20 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/user"
 )
 
-type CancelPerformanceHandler struct {
+type CancelPerformance struct {
+	PerformanceID string
+	CanceledByID  string
+}
+
+type CancelPerformanceHandler interface {
+	Handle(ctx context.Context, cmd CancelPerformance) error
+}
+
+type cancelPerformanceHandler struct {
 	perfRepo  service.PerformanceRepository
 	publisher service.PerformanceCancelPublisher
 }
@@ -27,13 +35,13 @@ func NewCancelPerformanceHandler(
 		panic("performance cancel publisher is nil")
 	}
 
-	return CancelPerformanceHandler{
+	return cancelPerformanceHandler{
 		perfRepo:  perfRepo,
 		publisher: cancelPub,
 	}
 }
 
-func (h CancelPerformanceHandler) Handle(ctx context.Context, cmd app.CancelPerformanceCommand) (err error) {
+func (h cancelPerformanceHandler) Handle(ctx context.Context, cmd CancelPerformance) (err error) {
 	defer func() {
 		err = errors.Wrap(err, "performance cancellation")
 	}()

@@ -6,13 +6,21 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 	"github.com/harpyd/thestis/internal/core/entity/user"
 )
 
-type StartPerformanceHandler struct {
+type StartPerformance struct {
+	TestCampaignID string
+	StartedByID    string
+}
+
+type StartPerformanceHandler interface {
+	Handle(ctx context.Context, cmd StartPerformance) (string, <-chan service.Message, error)
+}
+
+type startPerformanceHandler struct {
 	specRepo      service.SpecificationRepository
 	perfRepo      service.PerformanceRepository
 	maintainer    service.PerformanceMaintainer
@@ -37,7 +45,7 @@ func NewStartPerformanceHandler(
 		panic("performance maintainer is nil")
 	}
 
-	return StartPerformanceHandler{
+	return startPerformanceHandler{
 		specRepo:      specRepo,
 		perfRepo:      perfRepo,
 		maintainer:    maintainer,
@@ -45,9 +53,9 @@ func NewStartPerformanceHandler(
 	}
 }
 
-func (h StartPerformanceHandler) Handle(
+func (h startPerformanceHandler) Handle(
 	ctx context.Context,
-	cmd app.StartPerformanceCommand,
+	cmd StartPerformance,
 ) (perfID string, messages <-chan service.Message, err error) {
 	defer func() {
 		err = errors.Wrap(err, "new performance starting")

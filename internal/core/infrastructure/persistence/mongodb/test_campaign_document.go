@@ -3,7 +3,7 @@ package mongodb
 import (
 	"time"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/query"
 	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 )
 
@@ -37,8 +37,8 @@ func newTestCampaign(d testCampaignDocument) *testcampaign.TestCampaign {
 	return tc
 }
 
-func newAppSpecificTestCampaign(d testCampaignDocument) app.SpecificTestCampaign {
-	return app.SpecificTestCampaign{
+func newSpecificTestCampaignView(d testCampaignDocument) query.SpecificTestCampaignView {
+	return query.SpecificTestCampaignView{
 		ID:        d.ID,
 		ViewName:  d.ViewName,
 		Summary:   d.Summary,

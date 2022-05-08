@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/command"
 	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/app/service/mock"
@@ -83,7 +82,7 @@ func TestHandleCancelPerformance(t *testing.T) {
 
 	testCases := []struct {
 		Name                 string
-		Command              app.CancelPerformanceCommand
+		Command              command.CancelPerformance
 		Performance          *performance.Performance
 		ExpectedPublishCalls int
 		ShouldBeErr          bool
@@ -91,7 +90,7 @@ func TestHandleCancelPerformance(t *testing.T) {
 	}{
 		{
 			Name: "performance_not_found",
-			Command: app.CancelPerformanceCommand{
+			Command: command.CancelPerformance{
 				PerformanceID: "a64d83e5-4128-4c8b-b5ab-43b77df352ea",
 				CanceledByID:  "c89ba386-0976-4671-913d-9252ba29aca4",
 			},
@@ -108,7 +107,7 @@ func TestHandleCancelPerformance(t *testing.T) {
 		},
 		{
 			Name: "user_cannot_see_performance",
-			Command: app.CancelPerformanceCommand{
+			Command: command.CancelPerformance{
 				PerformanceID: "1ada8d28-dbdc-425b-b829-dbb45cdae2b3",
 				CanceledByID:  "5e1484b4-90ea-4684-bf20-d597446d3eb4",
 			},
@@ -127,7 +126,7 @@ func TestHandleCancelPerformance(t *testing.T) {
 		},
 		{
 			Name: "performance_not_started",
-			Command: app.CancelPerformanceCommand{
+			Command: command.CancelPerformance{
 				PerformanceID: "b4e252a1-7b94-46b0-84f0-40f92a6d2ee5",
 				CanceledByID:  "93a6224c-3788-49db-a673-ca8683a469ce",
 			},
@@ -144,7 +143,7 @@ func TestHandleCancelPerformance(t *testing.T) {
 		},
 		{
 			Name: "success_performance_cancelation",
-			Command: app.CancelPerformanceCommand{
+			Command: command.CancelPerformance{
 				PerformanceID: "e0c2e511-fc31-4fc4-804b-ceb91de4179f",
 				CanceledByID:  "c73e888a-21f2-42c7-84f7-111c4b155be8",
 			},

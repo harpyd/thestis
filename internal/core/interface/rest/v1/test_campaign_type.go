@@ -5,13 +5,14 @@ import (
 
 	"github.com/go-chi/render"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/command"
+	"github.com/harpyd/thestis/internal/core/app/query"
 )
 
 func decodeCreateTestCampaignCommand(
 	w http.ResponseWriter,
 	r *http.Request,
-) (cmd app.CreateTestCampaignCommand, ok bool) {
+) (cmd command.CreateTestCampaign, ok bool) {
 	user, ok := authorize(w, r)
 	if !ok {
 		return
@@ -28,7 +29,7 @@ func decodeCreateTestCampaignCommand(
 		summary = *rb.Summary
 	}
 
-	return app.CreateTestCampaignCommand{
+	return command.CreateTestCampaign{
 		ViewName: rb.ViewName,
 		Summary:  summary,
 		OwnerID:  user.UUID,
@@ -39,19 +40,23 @@ func decodeSpecificTestCampaignQuery(
 	w http.ResponseWriter,
 	r *http.Request,
 	testCampaignID string,
-) (qry app.SpecificTestCampaignQuery, ok bool) {
+) (qry query.SpecificTestCampaign, ok bool) {
 	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
 
-	return app.SpecificTestCampaignQuery{
+	return query.SpecificTestCampaign{
 		TestCampaignID: testCampaignID,
 		UserID:         user.UUID,
 	}, true
 }
 
-func renderTestCampaignResponse(w http.ResponseWriter, r *http.Request, tc app.SpecificTestCampaign) {
+func renderTestCampaignResponse(
+	w http.ResponseWriter,
+	r *http.Request,
+	tc query.SpecificTestCampaignView,
+) {
 	response := TestCampaignResponse{
 		Id:        tc.ID,
 		ViewName:  tc.ViewName,

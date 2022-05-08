@@ -8,12 +8,21 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/user"
 )
 
-type LoadSpecificationHandler struct {
+type LoadSpecification struct {
+	TestCampaignID string
+	LoadedByID     string
+	Content        []byte
+}
+
+type LoadSpecificationHandler interface {
+	Handle(ctx context.Context, cmd LoadSpecification) (string, error)
+}
+
+type loadSpecificationHandler struct {
 	specRepo          service.SpecificationRepository
 	testCampaignRepo  service.TestCampaignRepository
 	specParserService service.SpecificationParser
@@ -36,16 +45,16 @@ func NewLoadSpecificationHandler(
 		panic("specification parser is nil")
 	}
 
-	return LoadSpecificationHandler{
+	return loadSpecificationHandler{
 		specRepo:          specRepo,
 		testCampaignRepo:  testCampaignRepo,
 		specParserService: specParser,
 	}
 }
 
-func (h LoadSpecificationHandler) Handle(
+func (h loadSpecificationHandler) Handle(
 	ctx context.Context,
-	cmd app.LoadSpecificationCommand,
+	cmd LoadSpecification,
 ) (specID string, err error) {
 	defer func() {
 		err = errors.Wrap(err, "specification loading")

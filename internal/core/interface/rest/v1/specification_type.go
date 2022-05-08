@@ -7,7 +7,8 @@ import (
 
 	"github.com/go-chi/render"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/command"
+	"github.com/harpyd/thestis/internal/core/app/query"
 	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
@@ -15,7 +16,7 @@ func decodeSpecificationSourceCommand(
 	w http.ResponseWriter,
 	r *http.Request,
 	testCampaignID string,
-) (cmd app.LoadSpecificationCommand, ok bool) {
+) (cmd command.LoadSpecification, ok bool) {
 	user, ok := authorize(w, r)
 	if !ok {
 		return
@@ -28,7 +29,7 @@ func decodeSpecificationSourceCommand(
 		return
 	}
 
-	return app.LoadSpecificationCommand{
+	return command.LoadSpecification{
 		Content:        content,
 		TestCampaignID: testCampaignID,
 		LoadedByID:     user.UUID,
@@ -39,19 +40,23 @@ func decodeSpecificSpecificationQuery(
 	w http.ResponseWriter,
 	r *http.Request,
 	specificationID string,
-) (qry app.SpecificSpecificationQuery, ok bool) {
+) (qry query.SpecificSpecification, ok bool) {
 	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
 
-	return app.SpecificSpecificationQuery{
+	return query.SpecificSpecification{
 		SpecificationID: specificationID,
 		UserID:          user.UUID,
 	}, true
 }
 
-func renderSpecificationResponse(w http.ResponseWriter, r *http.Request, spec app.SpecificSpecification) {
+func renderSpecificationResponse(
+	w http.ResponseWriter,
+	r *http.Request,
+	spec query.SpecificSpecificationView,
+) {
 	response := SpecificationResponse{
 		Specification: newSpecification(spec),
 		SourceUri:     "",
@@ -60,7 +65,7 @@ func renderSpecificationResponse(w http.ResponseWriter, r *http.Request, spec ap
 	render.Respond(w, r, response)
 }
 
-func newSpecification(spec app.SpecificSpecification) Specification {
+func newSpecification(spec query.SpecificSpecificationView) Specification {
 	res := Specification{
 		Id:             spec.ID,
 		TestCampaignId: spec.TestCampaignID,
@@ -78,7 +83,7 @@ func newSpecification(spec app.SpecificSpecification) Specification {
 	return res
 }
 
-func newStory(story app.Story) Story {
+func newStory(story query.StoryView) Story {
 	res := Story{
 		Slug:        story.Slug,
 		Description: &story.Description,
@@ -95,7 +100,7 @@ func newStory(story app.Story) Story {
 	return res
 }
 
-func newScenario(scenario app.Scenario) Scenario {
+func newScenario(scenario query.ScenarioView) Scenario {
 	res := Scenario{
 		Slug:        scenario.Slug,
 		Description: &scenario.Description,
@@ -109,7 +114,7 @@ func newScenario(scenario app.Scenario) Scenario {
 	return res
 }
 
-func newThesis(thesis app.Thesis) Thesis {
+func newThesis(thesis query.ThesisView) Thesis {
 	return Thesis{
 		Slug:      thesis.Slug,
 		After:     thesis.After,
@@ -119,14 +124,14 @@ func newThesis(thesis app.Thesis) Thesis {
 	}
 }
 
-func newStatement(statement app.Statement) Statement {
+func newStatement(statement query.StatementView) Statement {
 	return Statement{
 		Stage:    statement.Stage,
 		Behavior: statement.Behavior,
 	}
 }
 
-func newHTTP(http app.HTTP) *Http {
+func newHTTP(http query.HTTPView) *Http {
 	if http.IsZero() {
 		return nil
 	}
@@ -137,7 +142,7 @@ func newHTTP(http app.HTTP) *Http {
 	}
 }
 
-func newHTTPRequest(request app.HTTPRequest) *HttpRequest {
+func newHTTPRequest(request query.HTTPRequestView) *HttpRequest {
 	if request.IsZero() {
 		return nil
 	}
@@ -158,7 +163,7 @@ func newBody(body map[string]interface{}) *map[string]interface{} {
 	return &body
 }
 
-func newHTTPResponse(response app.HTTPResponse) *HttpResponse {
+func newHTTPResponse(response query.HTTPResponseView) *HttpResponse {
 	if response.IsZero() {
 		return nil
 	}
@@ -169,7 +174,7 @@ func newHTTPResponse(response app.HTTPResponse) *HttpResponse {
 	}
 }
 
-func newAssertion(assertion app.Assertion) *Assertion {
+func newAssertion(assertion query.AssertionView) *Assertion {
 	if assertion.IsZero() {
 		return nil
 	}
@@ -180,7 +185,7 @@ func newAssertion(assertion app.Assertion) *Assertion {
 	}
 }
 
-func newAsserts(asserts []app.Assert) []Assert {
+func newAsserts(asserts []query.AssertView) []Assert {
 	res := make([]Assert, 0, len(asserts))
 
 	for _, a := range asserts {

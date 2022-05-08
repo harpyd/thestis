@@ -4,15 +4,22 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-
-	"github.com/harpyd/thestis/internal/core/app"
 )
 
-type SpecificSpecificationReadModel interface {
-	FindSpecification(ctx context.Context, qry app.SpecificSpecificationQuery) (app.SpecificSpecification, error)
+type SpecificSpecification struct {
+	SpecificationID string
+	UserID          string
 }
 
-type SpecificSpecificationHandler struct {
+type SpecificSpecificationHandler interface {
+	Handle(ctx context.Context, qry SpecificSpecification) (SpecificSpecificationView, error)
+}
+
+type SpecificSpecificationReadModel interface {
+	FindSpecification(ctx context.Context, qry SpecificSpecification) (SpecificSpecificationView, error)
+}
+
+type specificSpecificationHandler struct {
 	readModel SpecificSpecificationReadModel
 }
 
@@ -21,15 +28,15 @@ func NewSpecificSpecificationHandler(readModel SpecificSpecificationReadModel) S
 		panic("specific specification read model is nil")
 	}
 
-	return SpecificSpecificationHandler{
+	return specificSpecificationHandler{
 		readModel: readModel,
 	}
 }
 
-func (h SpecificSpecificationHandler) Handle(
+func (h specificSpecificationHandler) Handle(
 	ctx context.Context,
-	qry app.SpecificSpecificationQuery,
-) (app.SpecificSpecification, error) {
+	qry SpecificSpecification,
+) (SpecificSpecificationView, error) {
 	specs, err := h.readModel.FindSpecification(ctx, qry)
 
 	return specs, errors.Wrap(err, "getting specification")

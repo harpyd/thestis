@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/command"
 	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/app/service/mock"
@@ -60,13 +59,13 @@ func TestHandleCreateTestCampaign(t *testing.T) {
 
 	testCases := []struct {
 		Name        string
-		Command     app.CreateTestCampaignCommand
+		Command     command.CreateTestCampaign
 		ShouldBeErr bool
 		IsErr       func(err error) bool
 	}{
 		{
 			Name: "create_test_campaign",
-			Command: app.CreateTestCampaignCommand{
+			Command: command.CreateTestCampaign{
 				OwnerID:  "61fcde9c-b729-4ae1-9c86-a80d706eda6c",
 				ViewName: "test campaign",
 			},

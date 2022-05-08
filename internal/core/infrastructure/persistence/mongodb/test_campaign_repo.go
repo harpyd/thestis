@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/query"
 	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 )
@@ -39,17 +39,17 @@ func (r *TestCampaignRepository) GetTestCampaign(
 
 func (r *TestCampaignRepository) FindTestCampaign(
 	ctx context.Context,
-	qry app.SpecificTestCampaignQuery,
-) (app.SpecificTestCampaign, error) {
+	qry query.SpecificTestCampaign,
+) (query.SpecificTestCampaignView, error) {
 	document, err := r.getTestCampaignDocument(ctx, bson.M{
 		"_id":     qry.TestCampaignID,
 		"ownerId": qry.UserID,
 	})
 	if err != nil {
-		return app.SpecificTestCampaign{}, err
+		return query.SpecificTestCampaignView{}, err
 	}
 
-	return newAppSpecificTestCampaign(document), nil
+	return newSpecificTestCampaignView(document), nil
 }
 
 func (r *TestCampaignRepository) getTestCampaignDocument(

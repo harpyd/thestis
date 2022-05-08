@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/query"
 	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
@@ -66,8 +66,8 @@ func (r *SpecificationRepository) GetActiveSpecificationByTestCampaignID(
 
 func (r *SpecificationRepository) FindSpecification(
 	ctx context.Context,
-	qry app.SpecificSpecificationQuery,
-) (app.SpecificSpecification, error) {
+	qry query.SpecificSpecification,
+) (query.SpecificSpecificationView, error) {
 	filter := bson.M{
 		"id":      qry.SpecificationID,
 		"ownerId": qry.UserID,
@@ -75,10 +75,10 @@ func (r *SpecificationRepository) FindSpecification(
 
 	document, err := r.getSpecificationDocument(ctx, filter, nil)
 	if err != nil {
-		return app.SpecificSpecification{}, err
+		return query.SpecificSpecificationView{}, err
 	}
 
-	return newAppSpecificSpecification(document), nil
+	return newSpecificSpecificationView(document), nil
 }
 
 func (r *SpecificationRepository) getSpecificationDocument(

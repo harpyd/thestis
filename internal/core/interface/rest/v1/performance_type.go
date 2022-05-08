@@ -3,19 +3,19 @@ package v1
 import (
 	"net/http"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/command"
 )
 
 func decodeStartPerformanceCommand(
 	w http.ResponseWriter, r *http.Request,
 	testCampaignID string,
-) (cmd app.StartPerformanceCommand, ok bool) {
+) (cmd command.StartPerformance, ok bool) {
 	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
 
-	return app.StartPerformanceCommand{
+	return command.StartPerformance{
 		TestCampaignID: testCampaignID,
 		StartedByID:    user.UUID,
 	}, true
@@ -25,13 +25,13 @@ func decodeRestartPerformanceCommand(
 	w http.ResponseWriter,
 	r *http.Request,
 	performanceID string,
-) (cmd app.RestartPerformanceCommand, ok bool) {
+) (cmd command.RestartPerformance, ok bool) {
 	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
 
-	return app.RestartPerformanceCommand{
+	return command.RestartPerformance{
 		PerformanceID: performanceID,
 		StartedByID:   user.UUID,
 	}, true
@@ -41,13 +41,13 @@ func decodeCancelPerformanceCommand(
 	w http.ResponseWriter,
 	r *http.Request,
 	performanceID string,
-) (cmd app.CancelPerformanceCommand, ok bool) {
+) (cmd command.CancelPerformance, ok bool) {
 	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
 
-	return app.CancelPerformanceCommand{
+	return command.CancelPerformance{
 		PerformanceID: performanceID,
 		CanceledByID:  user.UUID,
 	}, true

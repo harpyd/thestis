@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/command"
 	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/app/service/mock"
@@ -107,7 +106,7 @@ func TestHandleLoadSpecification(t *testing.T) {
 
 	testCases := []struct {
 		Name         string
-		Command      app.LoadSpecificationCommand
+		Command      command.LoadSpecification
 		TestCampaign *testcampaign.TestCampaign
 		ParseWithErr bool
 		ShouldBeErr  bool
@@ -115,7 +114,7 @@ func TestHandleLoadSpecification(t *testing.T) {
 	}{
 		{
 			Name: "load_valid_specification",
-			Command: app.LoadSpecificationCommand{
+			Command: command.LoadSpecification{
 				TestCampaignID: "35474763-28f4-43a6-a184-e8894f50cba8",
 				LoadedByID:     "cb39a8e2-8f79-484b-bc48-51f83a8e8c33",
 				Content:        []byte(spec),
@@ -131,7 +130,7 @@ func TestHandleLoadSpecification(t *testing.T) {
 		},
 		{
 			Name: "load_invalid_specification",
-			Command: app.LoadSpecificationCommand{
+			Command: command.LoadSpecification{
 				TestCampaignID: "f18fdd19-d69c-4afe-a639-8bcefd6c4af9",
 				LoadedByID:     "dc0479de-33ed-4631-b9a4-2834c3efb7b1",
 				Content:        []byte(spec),
@@ -152,7 +151,7 @@ func TestHandleLoadSpecification(t *testing.T) {
 		},
 		{
 			Name: "user_cant_see_test_campaign",
-			Command: app.LoadSpecificationCommand{
+			Command: command.LoadSpecification{
 				TestCampaignID: "e7c57ccf-3bff-402b-ada5-71990e3ab0cd",
 				LoadedByID:     "1dccc358-2f91-427b-b2a8-f46169fc3a04",
 				Content:        []byte(spec),

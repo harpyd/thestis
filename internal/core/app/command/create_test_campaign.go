@@ -7,12 +7,21 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 )
 
-type CreateTestCampaignHandler struct {
+type CreateTestCampaign struct {
+	OwnerID  string
+	ViewName string
+	Summary  string
+}
+
+type CreateTestCampaignHandler interface {
+	Handle(ctx context.Context, cmd CreateTestCampaign) (string, error)
+}
+
+type createTestCampaignHandler struct {
 	testCampaignRepo service.TestCampaignRepository
 }
 
@@ -21,12 +30,12 @@ func NewCreateTestCampaignHandler(repo service.TestCampaignRepository) CreateTes
 		panic("test campaign repository is nil")
 	}
 
-	return CreateTestCampaignHandler{testCampaignRepo: repo}
+	return createTestCampaignHandler{testCampaignRepo: repo}
 }
 
-func (h CreateTestCampaignHandler) Handle(
+func (h createTestCampaignHandler) Handle(
 	ctx context.Context,
-	cmd app.CreateTestCampaignCommand,
+	cmd CreateTestCampaign,
 ) (testCampaignID string, err error) {
 	defer func() {
 		err = errors.Wrap(err, "test campaign creation")
