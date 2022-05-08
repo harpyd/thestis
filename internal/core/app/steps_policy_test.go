@@ -164,7 +164,7 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 			)
 
 			var (
-				fr       = flow.FromStatuses("flow-id", "perf-id", c.GivenInitStatuses...)
+				f        = flow.FromStatuses("flow-id", "perf-id", c.GivenInitStatuses...)
 				steps    = make(chan performance.Step)
 				messages = make(chan app.Message)
 			)
@@ -187,12 +187,10 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 					cancel()
 				}
 
-				policy.HandleSteps(ctx, fr, steps, messages)
+				policy.HandleSteps(ctx, f, steps, messages)
 			}()
 
 			requireMessagesMatch(t, c.ExpectedMessages, messages)
-
-			f := fr.Reduce()
 
 			require.ElementsMatch(t, c.ExpectedStatuses, f.Statuses())
 		})

@@ -84,12 +84,7 @@ func newThesisStatusDocument(status *flow.ThesisStatus) thesisStatusDocument {
 }
 
 func newFlow(d flowDocument) *flow.Flow {
-	return flow.Unmarshal(flow.Params{
-		ID:            d.ID,
-		PerformanceID: d.PerformanceID,
-		OverallState:  d.OverallState,
-		Statuses:      newStatuses(d.Statuses),
-	})
+	return flow.FromStatuses(d.ID, d.PerformanceID, newStatuses(d.Statuses)...)
 }
 
 func newStatuses(ds []statusDocument) []*flow.Status {

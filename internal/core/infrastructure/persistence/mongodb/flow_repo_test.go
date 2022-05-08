@@ -47,17 +47,15 @@ func (s *FlowRepositoryTestSuite) TestUpsertFlow() {
 	}{
 		{
 			Name: "success_inserting_flow",
-			GivenFlow: flow.Unmarshal(flow.Params{
-				ID:            "60b7b0eb-eb62-49bc-bf76-d4fca3ad48b8",
-				PerformanceID: "b1728f29-c897-4258-bad8-dd824b8f84cf",
-				Statuses: []*flow.Status{
-					flow.NewStatus(
-						specification.NewScenarioSlug("foo", "bar"),
-						flow.Canceled,
-						flow.NewThesisStatus("baz", flow.Canceled),
-					),
-				},
-			}),
+			GivenFlow: flow.FromStatuses(
+				"60b7b0eb-eb62-49bc-bf76-d4fca3ad48b8",
+				"b1728f29-c897-4258-bad8-dd824b8f84cf",
+				flow.NewStatus(
+					specification.NewScenarioSlug("foo", "bar"),
+					flow.Canceled,
+					flow.NewThesisStatus("baz", flow.Canceled),
+				),
+			),
 			ShouldBeErr: false,
 		},
 		{
@@ -66,18 +64,16 @@ func (s *FlowRepositoryTestSuite) TestUpsertFlow() {
 				"_id":           "07e3468b-a195-4b30-81df-8e3e8d389da9",
 				"performanceId": "37a5f844-25db-4aad-a3e2-628674e7e1e5",
 			},
-			GivenFlow: flow.Unmarshal(flow.Params{
-				ID:            "07e3468b-a195-4b30-81df-8e3e8d389da9",
-				PerformanceID: "407b3e37-a4b2-4fa1-aa47-4d75e658e455",
-				Statuses: []*flow.Status{
-					flow.NewStatus(
-						specification.NewScenarioSlug("foo", "bar"),
-						flow.Failed,
-						flow.NewThesisStatus("baz", flow.Passed),
-						flow.NewThesisStatus("bad", flow.Failed),
-					),
-				},
-			}),
+			GivenFlow: flow.FromStatuses(
+				"07e3468b-a195-4b30-81df-8e3e8d389da9",
+				"407b3e37-a4b2-4fa1-aa47-4d75e658e455",
+				flow.NewStatus(
+					specification.NewScenarioSlug("foo", "bar"),
+					flow.Failed,
+					flow.NewThesisStatus("baz", flow.Passed),
+					flow.NewThesisStatus("bad", flow.Failed),
+				),
+			),
 			ShouldBeErr: false,
 		},
 	}

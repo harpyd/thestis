@@ -16,7 +16,7 @@ func NewStepsPolicy() StepsPolicy {
 
 func (p StepsPolicy) HandleSteps(
 	_ context.Context,
-	_ *flow.Reducer,
+	_ *flow.Flow,
 	steps <-chan performance.Step,
 	messages chan<- app.Message,
 ) {

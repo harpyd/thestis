@@ -8,13 +8,13 @@ import (
 type (
 	// Flow represents the progress of a single performance.Performance
 	// run. The flow consists of working specification.Scenario and
-	// specification.Thesis statuses.
+	// specification.Thesis statuses. Each ApplyStep call moves the
+	// progress forward.
 	Flow struct {
 		id            string
 		performanceID string
 
-		overallState State
-		statuses     []*Status
+		statuses map[specification.Slug]*Status
 	}
 
 	// Status represents progress of the specification.Scenario.
@@ -30,15 +30,6 @@ type (
 		thesisSlug   string
 		state        State
 		occurredErrs []string
-	}
-
-	// Reducer builds Flow instance using WithStep
-	// and Reduce methods.
-	Reducer struct {
-		id            string
-		performanceID string
-
-		statuses map[specification.Slug]*Status
 	}
 )
 
@@ -57,19 +48,66 @@ func (f *Flow) PerformanceID() string {
 // selected from all specification.Scenario
 // states according to State.Precedence.
 func (f *Flow) OverallState() State {
-	return f.overallState
+	var overallState State
+
+	for _, status := range f.statuses {
+		if status.state.Precedence() > overallState.Precedence() {
+			overallState = status.state
+		}
+	}
+
+	return overallState
 }
 
-// Statuses returns copy of slugged object statuses.
+// Statuses returns copy of scenario statuses.
 func (f *Flow) Statuses() []*Status {
 	if len(f.statuses) == 0 {
 		return nil
 	}
 
-	statuses := make([]*Status, len(f.statuses))
-	copy(statuses, f.statuses)
+	statuses := make([]*Status, 0, len(f.statuses))
+	for _, status := range f.statuses {
+		statuses = append(statuses, status)
+	}
 
 	return statuses
+}
+
+// ApplyStep is method for step by step collecting
+// performance.Performance steps to move the progress
+// of the performance by changing status states.
+//
+// Flow state changes from call to call relying on the
+// state transition rules in State.Next method.
+func (f *Flow) ApplyStep(step performance.Step) *Flow {
+	slug := step.Slug()
+
+	status, ok := f.statuses[slug.ToScenarioKind()]
+	if !ok {
+		return f
+	}
+
+	if slug.Kind() == specification.ScenarioSlug {
+		status.state = status.state.Next(step.Event())
+	}
+
+	if slug.Kind() == specification.ThesisSlug {
+		thesisStatus, ok := status.thesisStatuses[slug.Partial()]
+		if !ok {
+			return f
+		}
+
+		thesisStatus.state = thesisStatus.state.Next(step.Event())
+
+		if step.Err() != nil {
+			thesisStatus.occurredErrs = append(
+				thesisStatus.occurredErrs,
+				step.Err().Error(),
+			)
+		}
+	}
+
+	return f
 }
 
 // NewStatus creates a progress representation of specification.Scenario.
@@ -169,45 +207,19 @@ func (s *ThesisStatus) OccurredErrs() []string {
 	return occurredErrs
 }
 
-type Params struct {
-	ID            string
-	PerformanceID string
-	OverallState  State
-	Statuses      []*Status
-}
-
-// Unmarshal transforms Params to Flow.
-//
-// This function is great for converting
-// from a database or using in tests.
-//
-// You must not use this method in
-// business code of domain and app layers.
-func Unmarshal(params Params) *Flow {
-	f := &Flow{
-		id:            params.ID,
-		performanceID: params.PerformanceID,
-		overallState:  params.OverallState,
-		statuses:      make([]*Status, len(params.Statuses)),
-	}
-
-	copy(f.statuses, params.Statuses)
-
-	return f
-}
-
 // FromPerformance starts a new flow from performance.Performance.
-// The result of the function is a Reducer, with which you can
+// The result of the function is a Flow, with which you can
 // collect the steps coming from the performance during its execution.
 //
 // Each step contains information about the progress of the
 // performance, including performance.Event. The states of
 // statuses change under the action of events. The transition
 // rules for the event are described in the State.Next method.
-func FromPerformance(id string, perf *performance.Performance) *Reducer {
-	scenarios := perf.WorkingScenarios()
-
-	statuses := make(map[specification.Slug]*Status, len(scenarios))
+func FromPerformance(id string, perf *performance.Performance) *Flow {
+	var (
+		scenarios = perf.WorkingScenarios()
+		statuses  = make(map[specification.Slug]*Status, len(scenarios))
+	)
 
 	for _, scenario := range scenarios {
 		statuses[scenario.Slug()] = &Status{
@@ -217,7 +229,7 @@ func FromPerformance(id string, perf *performance.Performance) *Reducer {
 		}
 	}
 
-	return &Reducer{
+	return &Flow{
 		id:            id,
 		performanceID: perf.ID(),
 		statuses:      statuses,
@@ -240,7 +252,19 @@ func fromTheses(theses []specification.Thesis) map[string]*ThesisStatus {
 //
 // This method is similar to the other, but this method is
 // intended solely for testing purposes.
-func FromStatuses(id, performanceID string, statuses ...*Status) *Reducer {
+func FromStatuses(id, performanceID string, statuses ...*Status) *Flow {
+	return &Flow{
+		id:            id,
+		performanceID: performanceID,
+		statuses:      statusesOrNil(statuses),
+	}
+}
+
+func statusesOrNil(statuses []*Status) map[specification.Slug]*Status {
+	if len(statuses) == 0 {
+		return nil
+	}
+
 	nonNilStatuses := make(map[specification.Slug]*Status, len(statuses))
 
 	for _, status := range statuses {
@@ -249,92 +273,5 @@ func FromStatuses(id, performanceID string, statuses ...*Status) *Reducer {
 		}
 	}
 
-	return &Reducer{
-		id:            id,
-		performanceID: performanceID,
-		statuses:      nonNilStatuses,
-	}
-}
-
-// Reduce creates current version of Flow from Reducer.
-// This is useful for accumulating performance.Performance
-// steps and storing the state of performance's Flow.
-//
-// For example:
-//  fr := performance.FlowFromPerformance("id", perf)
-//
-//  for s := range steps {
-//   fr.WithStep(s)
-//   save(ctx, fr.Reduce())
-//  }
-func (r *Reducer) Reduce() *Flow {
-	return &Flow{
-		id:            r.id,
-		performanceID: r.performanceID,
-		overallState:  r.selectOverallState(),
-		statuses:      statusesOrNil(r.statuses),
-	}
-}
-
-func (r *Reducer) selectOverallState() State {
-	var overallState State
-
-	for _, status := range r.statuses {
-		if status.state.Precedence() > overallState.Precedence() {
-			overallState = status.state
-		}
-	}
-
-	return overallState
-}
-
-func statusesOrNil(statuses map[specification.Slug]*Status) []*Status {
-	if len(statuses) == 0 {
-		return nil
-	}
-
-	result := make([]*Status, 0, len(statuses))
-
-	for _, status := range statuses {
-		result = append(result, status)
-	}
-
-	return result
-}
-
-// WithStep is method for step by step collecting
-// performance.Performance steps for their further
-// reduction with Reducer's Reduce.
-//
-// Flow state changes from call to call relying on the
-// state transition rules in State.Next method.
-func (r *Reducer) WithStep(step performance.Step) *Reducer {
-	slug := step.Slug()
-
-	status, ok := r.statuses[slug.ToScenarioKind()]
-	if !ok {
-		return r
-	}
-
-	if slug.Kind() == specification.ScenarioSlug {
-		status.state = status.state.Next(step.Event())
-	}
-
-	if slug.Kind() == specification.ThesisSlug {
-		thesisStatus, ok := status.thesisStatuses[slug.Partial()]
-		if !ok {
-			return r
-		}
-
-		thesisStatus.state = thesisStatus.state.Next(step.Event())
-
-		if step.Err() != nil {
-			thesisStatus.occurredErrs = append(
-				thesisStatus.occurredErrs,
-				step.Err().Error(),
-			)
-		}
-	}
-
-	return r
+	return nonNilStatuses
 }
