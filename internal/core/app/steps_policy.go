@@ -11,7 +11,7 @@ import (
 type StepsPolicy interface {
 	HandleSteps(
 		ctx context.Context,
-		fr *flow.Flow,
+		f *flow.Flow,
 		steps <-chan performance.Step,
 		messages chan<- Message,
 	)
