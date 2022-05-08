@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 	"github.com/harpyd/thestis/internal/core/infrastructure/persistence/mongodb"
 )
@@ -60,7 +61,7 @@ func (s *SpecificationRepositoryTestSuite) TestFindSpecification() {
 			},
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return errors.Is(err, app.ErrSpecificationNotFound)
+				return errors.Is(err, service.ErrSpecificationNotFound)
 			},
 		},
 		{
@@ -71,7 +72,7 @@ func (s *SpecificationRepositoryTestSuite) TestFindSpecification() {
 			},
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return errors.Is(err, app.ErrSpecificationNotFound)
+				return errors.Is(err, service.ErrSpecificationNotFound)
 			},
 		},
 		{
@@ -82,7 +83,7 @@ func (s *SpecificationRepositoryTestSuite) TestFindSpecification() {
 			},
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return errors.Is(err, app.ErrSpecificationNotFound)
+				return errors.Is(err, service.ErrSpecificationNotFound)
 			},
 		},
 		{
@@ -213,7 +214,7 @@ func (s *SpecificationRepositoryTestSuite) TestGetActiveSpecificationByTestCampa
 			TestCampaignID: "1ba42415-588b-4a11-ab06-76b4a298658e",
 			ShouldBeErr:    true,
 			IsErr: func(err error) bool {
-				return errors.Is(err, app.ErrSpecificationNotFound)
+				return errors.Is(err, service.ErrSpecificationNotFound)
 			},
 		},
 		{
@@ -270,7 +271,7 @@ func (s *SpecificationRepositoryTestSuite) TestAddSpecification() {
 				ErrlessBuild(),
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				var target *app.DatabaseError
+				var target *service.DatabaseError
 
 				return errors.As(err, &target) &&
 					mongo.IsDuplicateKeyError(err)

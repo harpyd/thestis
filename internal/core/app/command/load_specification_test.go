@@ -9,7 +9,8 @@ import (
 
 	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/command"
-	"github.com/harpyd/thestis/internal/core/app/mock"
+	"github.com/harpyd/thestis/internal/core/app/service"
+	"github.com/harpyd/thestis/internal/core/app/service/mock"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 	"github.com/harpyd/thestis/internal/core/entity/user"
@@ -20,9 +21,9 @@ func TestPanickingNewLoadSpecificationHandler(t *testing.T) {
 
 	testCases := []struct {
 		Name                  string
-		GivenSpecRepo         app.SpecificationRepository
-		GivenTestCampaignRepo app.TestCampaignRepository
-		GivenSpecParser       app.SpecificationParser
+		GivenSpecRepo         service.SpecificationRepository
+		GivenTestCampaignRepo service.TestCampaignRepository
+		GivenSpecParser       service.SpecificationParser
 		ShouldPanic           bool
 		PanicMessage          string
 	}{

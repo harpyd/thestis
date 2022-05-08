@@ -1,4 +1,4 @@
-package app
+package service
 
 import (
 	"context"
@@ -30,10 +30,6 @@ type (
 		ctx context.Context,
 		tc *testcampaign.TestCampaign,
 	) (*testcampaign.TestCampaign, error)
-
-	SpecificTestCampaignReadModel interface {
-		FindTestCampaign(ctx context.Context, qry SpecificTestCampaignQuery) (SpecificTestCampaign, error)
-	}
 )
 
 type (
@@ -44,10 +40,6 @@ type (
 			testCampaignID string,
 		) (*specification.Specification, error)
 		AddSpecification(ctx context.Context, spec *specification.Specification) error
-	}
-
-	SpecificSpecificationReadModel interface {
-		FindSpecification(ctx context.Context, qry SpecificSpecificationQuery) (SpecificSpecification, error)
 	}
 )
 
@@ -64,10 +56,6 @@ type (
 
 	SpecificationGetter interface {
 		GetSpecification(ctx context.Context, specID string) (*specification.Specification, error)
-	}
-
-	SpecificPerformanceReadModel interface {
-		FindPerformance(ctx context.Context, qry SpecificPerformanceQuery) (SpecificPerformance, error)
 	}
 )
 

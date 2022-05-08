@@ -1,4 +1,4 @@
-package app_test
+package service_test
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 )
 
 func TestAsParseError(t *testing.T) {
@@ -23,16 +23,16 @@ func TestAsParseError(t *testing.T) {
 			ShouldBeWrapped: false,
 		},
 		{
-			GivenError:      app.WrapWithParseError(nil),
+			GivenError:      service.WrapWithParseError(nil),
 			ShouldBeWrapped: false,
 		},
 		{
-			GivenError:        &app.ParseError{},
+			GivenError:        &service.ParseError{},
 			ShouldBeWrapped:   true,
 			ExpectedUnwrapped: nil,
 		},
 		{
-			GivenError:        app.WrapWithParseError(errors.New("foo")),
+			GivenError:        service.WrapWithParseError(errors.New("foo")),
 			ShouldBeWrapped:   true,
 			ExpectedUnwrapped: errors.New("foo"),
 		},
@@ -44,7 +44,7 @@ func TestAsParseError(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var target *app.ParseError
+			var target *service.ParseError
 
 			if !c.ShouldBeWrapped {
 				t.Run("not", func(t *testing.T) {
@@ -79,11 +79,11 @@ func TestFormatParseError(t *testing.T) {
 		ExpectedErrorString string
 	}{
 		{
-			GivenError:          &app.ParseError{},
+			GivenError:          &service.ParseError{},
 			ExpectedErrorString: "",
 		},
 		{
-			GivenError:          app.WrapWithParseError(errors.New("foo")),
+			GivenError:          service.WrapWithParseError(errors.New("foo")),
 			ExpectedErrorString: "parsing specification: foo",
 		},
 	}

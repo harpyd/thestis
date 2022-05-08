@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/flow"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
@@ -34,7 +34,7 @@ func NewTestCampaignRepository(tcs ...*testcampaign.TestCampaign) *TestCampaignR
 
 func (m *TestCampaignRepository) GetTestCampaign(ctx context.Context, tcID string) (*testcampaign.TestCampaign, error) {
 	if ctx.Err() != nil {
-		return nil, app.WrapWithDatabaseError(ctx.Err())
+		return nil, service.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.RLock()
@@ -42,7 +42,7 @@ func (m *TestCampaignRepository) GetTestCampaign(ctx context.Context, tcID strin
 
 	tc, ok := m.campaigns[tcID]
 	if !ok {
-		return nil, app.ErrTestCampaignNotFound
+		return nil, service.ErrTestCampaignNotFound
 	}
 
 	return &tc, nil
@@ -50,14 +50,14 @@ func (m *TestCampaignRepository) GetTestCampaign(ctx context.Context, tcID strin
 
 func (m *TestCampaignRepository) AddTestCampaign(ctx context.Context, tc *testcampaign.TestCampaign) error {
 	if ctx.Err() != nil {
-		return app.WrapWithDatabaseError(ctx.Err())
+		return service.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if _, ok := m.campaigns[tc.ID()]; ok {
-		return app.WrapWithDatabaseError(errDuplicateID)
+		return service.WrapWithDatabaseError(errDuplicateID)
 	}
 
 	m.campaigns[tc.ID()] = *tc
@@ -68,10 +68,10 @@ func (m *TestCampaignRepository) AddTestCampaign(ctx context.Context, tc *testca
 func (m *TestCampaignRepository) UpdateTestCampaign(
 	ctx context.Context,
 	tcID string,
-	updateFn app.TestCampaignUpdater,
+	updateFn service.TestCampaignUpdater,
 ) error {
 	if ctx.Err() != nil {
-		return app.WrapWithDatabaseError(ctx.Err())
+		return service.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.Lock()
@@ -79,7 +79,7 @@ func (m *TestCampaignRepository) UpdateTestCampaign(
 
 	tc, ok := m.campaigns[tcID]
 	if !ok {
-		return app.ErrTestCampaignNotFound
+		return service.ErrTestCampaignNotFound
 	}
 
 	updatedTC, err := updateFn(ctx, &tc)
@@ -121,7 +121,7 @@ func (m *SpecificationRepository) GetSpecification(
 	specID string,
 ) (*specification.Specification, error) {
 	if ctx.Err() != nil {
-		return nil, app.WrapWithDatabaseError(ctx.Err())
+		return nil, service.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.RLock()
@@ -129,7 +129,7 @@ func (m *SpecificationRepository) GetSpecification(
 
 	spec, ok := m.specifications[specID]
 	if !ok {
-		return nil, app.ErrSpecificationNotFound
+		return nil, service.ErrSpecificationNotFound
 	}
 
 	return &spec, nil
@@ -140,7 +140,7 @@ func (m *SpecificationRepository) GetActiveSpecificationByTestCampaignID(
 	tcID string,
 ) (*specification.Specification, error) {
 	if ctx.Err() != nil {
-		return nil, app.WrapWithDatabaseError(ctx.Err())
+		return nil, service.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.RLock()
@@ -152,7 +152,7 @@ func (m *SpecificationRepository) GetActiveSpecificationByTestCampaignID(
 		}
 	}
 
-	return nil, app.ErrSpecificationNotFound
+	return nil, service.ErrSpecificationNotFound
 }
 
 func (m *SpecificationRepository) AddSpecification(
@@ -160,14 +160,14 @@ func (m *SpecificationRepository) AddSpecification(
 	spec *specification.Specification,
 ) error {
 	if ctx.Err() != nil {
-		return app.WrapWithDatabaseError(ctx.Err())
+		return service.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if _, ok := m.specifications[spec.ID()]; ok {
-		return app.WrapWithDatabaseError(errDuplicateID)
+		return service.WrapWithDatabaseError(errDuplicateID)
 	}
 
 	m.specifications[spec.ID()] = *spec
@@ -204,11 +204,11 @@ func NewPerformanceRepository(perfs ...*performance.Performance) *PerformanceRep
 func (m *PerformanceRepository) GetPerformance(
 	ctx context.Context,
 	perfID string,
-	_ app.SpecificationGetter,
+	_ service.SpecificationGetter,
 	_ ...performance.Option,
 ) (*performance.Performance, error) {
 	if ctx.Err() != nil {
-		return nil, app.WrapWithDatabaseError(ctx.Err())
+		return nil, service.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.RLock()
@@ -216,7 +216,7 @@ func (m *PerformanceRepository) GetPerformance(
 
 	perf, ok := m.performances[perfID]
 	if !ok {
-		return nil, app.ErrPerformanceNotFound
+		return nil, service.ErrPerformanceNotFound
 	}
 
 	return &perf, nil
@@ -224,14 +224,14 @@ func (m *PerformanceRepository) GetPerformance(
 
 func (m *PerformanceRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
 	if ctx.Err() != nil {
-		return app.WrapWithDatabaseError(ctx.Err())
+		return service.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if _, ok := m.performances[perf.ID()]; ok {
-		return app.WrapWithDatabaseError(errDuplicateID)
+		return service.WrapWithDatabaseError(errDuplicateID)
 	}
 
 	m.performances[perf.ID()] = *perf
@@ -265,7 +265,7 @@ func NewFlowRepository(flows ...flow.Flow) *FlowRepository {
 
 func (m *FlowRepository) GetFlow(ctx context.Context, flowID string) (*flow.Flow, error) {
 	if ctx.Err() != nil {
-		return nil, app.WrapWithDatabaseError(ctx.Err())
+		return nil, service.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.RLock()
@@ -273,7 +273,7 @@ func (m *FlowRepository) GetFlow(ctx context.Context, flowID string) (*flow.Flow
 
 	f, ok := m.flows[flowID]
 	if !ok {
-		return nil, app.ErrFlowNotFound
+		return nil, service.ErrFlowNotFound
 	}
 
 	return &f, nil
@@ -281,7 +281,7 @@ func (m *FlowRepository) GetFlow(ctx context.Context, flowID string) (*flow.Flow
 
 func (m *FlowRepository) UpsertFlow(ctx context.Context, flow *flow.Flow) error {
 	if ctx.Err() != nil {
-		return app.WrapWithDatabaseError(ctx.Err())
+		return service.WrapWithDatabaseError(ctx.Err())
 	}
 
 	m.mu.Lock()

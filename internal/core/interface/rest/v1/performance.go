@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 	"github.com/harpyd/thestis/internal/core/entity/user"
 	"github.com/harpyd/thestis/internal/core/interface/rest"
@@ -27,8 +27,8 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 		go h.logMessages(
 			r,
 			messages,
-			app.StringLogField("performanceId", perfID),
-			app.BoolLogField("restarted", false),
+			service.StringLogField("performanceId", perfID),
+			service.BoolLogField("restarted", false),
 		)
 
 		return
@@ -42,7 +42,7 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 		return
 	}
 
-	if errors.Is(err, app.ErrSpecificationNotFound) {
+	if errors.Is(err, service.ErrSpecificationNotFound) {
 		rest.NotFound(string(ErrorSlugSpecificationNotFound), err, w, r)
 
 		return
@@ -61,7 +61,7 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 	if err == nil {
 		w.WriteHeader(http.StatusNoContent)
 
-		go h.logMessages(r, messages, app.BoolLogField("restarted", true))
+		go h.logMessages(r, messages, service.BoolLogField("restarted", true))
 
 		return
 	}
@@ -74,7 +74,7 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 		return
 	}
 
-	if errors.Is(err, app.ErrPerformanceNotFound) {
+	if errors.Is(err, service.ErrPerformanceNotFound) {
 		rest.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
 
 		return
@@ -110,7 +110,7 @@ func (h handler) CancelPerformance(w http.ResponseWriter, r *http.Request, perfo
 		return
 	}
 
-	if errors.Is(err, app.ErrPerformanceNotFound) {
+	if errors.Is(err, service.ErrPerformanceNotFound) {
 		rest.NotFound(string(ErrorSlugPerformanceNotFound), err, w, r)
 
 		return
@@ -133,8 +133,8 @@ func (h handler) GetPerformance(w http.ResponseWriter, _ *http.Request, _ string
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-func (h handler) logMessages(r *http.Request, messages <-chan app.Message, extraFields ...app.LogField) {
-	extraFields = append(extraFields, app.StringLogField("requestId", middleware.GetReqID(r.Context())))
+func (h handler) logMessages(r *http.Request, messages <-chan service.Message, extraFields ...service.LogField) {
+	extraFields = append(extraFields, service.StringLogField("requestId", middleware.GetReqID(r.Context())))
 
 	for msg := range messages {
 		if msg.Err() == nil || msg.Event() == performance.FiredFail {

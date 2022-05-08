@@ -3,12 +3,12 @@ package mock
 import (
 	"sync"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 )
 
 type PerformanceCancelPubsub struct {
 	mu          sync.RWMutex
-	subscribers map[string][]chan app.CancelSignal
+	subscribers map[string][]chan service.CancelSignal
 
 	pubCalls int
 	subCalls int
@@ -16,7 +16,7 @@ type PerformanceCancelPubsub struct {
 
 func NewPerformanceCancelPubsub() *PerformanceCancelPubsub {
 	return &PerformanceCancelPubsub{
-		subscribers: make(map[string][]chan app.CancelSignal),
+		subscribers: make(map[string][]chan service.CancelSignal),
 	}
 }
 
@@ -29,7 +29,7 @@ func (ps *PerformanceCancelPubsub) PublishPerformanceCancel(perfID string) error
 	channels := ps.subscribers[perfID]
 
 	for _, ch := range channels {
-		go func(ch chan<- app.CancelSignal) {
+		go func(ch chan<- service.CancelSignal) {
 			close(ch)
 		}(ch)
 	}
@@ -39,13 +39,13 @@ func (ps *PerformanceCancelPubsub) PublishPerformanceCancel(perfID string) error
 	return nil
 }
 
-func (ps *PerformanceCancelPubsub) SubscribePerformanceCancel(perfID string) (<-chan app.CancelSignal, error) {
+func (ps *PerformanceCancelPubsub) SubscribePerformanceCancel(perfID string) (<-chan service.CancelSignal, error) {
 	ps.mu.Lock()
 	defer ps.mu.Unlock()
 
 	ps.subCalls++
 
-	ch := make(chan app.CancelSignal, 1)
+	ch := make(chan service.CancelSignal, 1)
 	ps.subscribers[perfID] = append(ps.subscribers[perfID], ch)
 
 	return ch, nil

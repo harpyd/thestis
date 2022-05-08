@@ -3,7 +3,7 @@ package mock
 import (
 	"io"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
 
@@ -17,7 +17,7 @@ func NewSpecificationParserService(withErr bool) SpecificationParserService {
 
 func (m SpecificationParserService) ParseSpecification(
 	_ io.Reader,
-	opts ...app.ParserOption,
+	opts ...service.ParserOption,
 ) (*specification.Specification, error) {
 	var b specification.Builder
 

@@ -3,7 +3,7 @@ package mock
 import (
 	"context"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 )
 
@@ -18,12 +18,12 @@ func NewPerformanceMaintainer(withErr bool) PerformanceMaintainer {
 func (m PerformanceMaintainer) MaintainPerformance(
 	_ context.Context,
 	_ *performance.Performance,
-) (<-chan app.Message, error) {
+) (<-chan service.Message, error) {
 	if m.withErr {
 		return nil, performance.ErrAlreadyStarted
 	}
 
-	messages := make(chan app.Message)
+	messages := make(chan service.Message)
 	close(messages)
 
 	return messages, nil

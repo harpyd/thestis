@@ -9,11 +9,11 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 )
 
 type Formatter struct {
-	logging app.Logger
+	logging service.Logger
 }
 
 func (l *Formatter) NewLogEntry(r *http.Request) middleware.LogEntry {
@@ -21,11 +21,11 @@ func (l *Formatter) NewLogEntry(r *http.Request) middleware.LogEntry {
 
 	l.logging.Info(
 		"Request started",
-		app.StringLogField("requestId", requestID),
-		app.StringLogField("httpMethod", r.Method),
-		app.StringLogField("removeAddress", r.RemoteAddr),
-		app.StringLogField("uri", r.RequestURI),
-		app.StringLogField("requestBody", copyRequestBody(r)),
+		service.StringLogField("requestId", requestID),
+		service.StringLogField("httpMethod", r.Method),
+		service.StringLogField("removeAddress", r.RemoteAddr),
+		service.StringLogField("uri", r.RequestURI),
+		service.StringLogField("requestBody", copyRequestBody(r)),
 	)
 
 	return &logEntry{
@@ -44,7 +44,7 @@ func copyRequestBody(r *http.Request) string {
 }
 
 type logEntry struct {
-	logging   app.Logger
+	logging   service.Logger
 	uri       string
 	requestID string
 }
@@ -54,23 +54,23 @@ const responseRounding = 100
 func (e *logEntry) Write(status, bytes int, _ http.Header, elapsed time.Duration, _ interface{}) {
 	e.logging.Info(
 		"Request completed",
-		app.StringLogField("uri", e.uri),
-		app.StringLogField("requestId", e.requestID),
-		app.IntLogField("responseStatus", status),
-		app.IntLogField("responseBytesLength", bytes),
-		app.DurationLogField("responseElapsed", elapsed.Round(time.Millisecond/responseRounding)),
-		app.DurationLogField("responseElapsed", elapsed.Round(time.Millisecond/responseRounding)),
+		service.StringLogField("uri", e.uri),
+		service.StringLogField("requestId", e.requestID),
+		service.IntLogField("responseStatus", status),
+		service.IntLogField("responseBytesLength", bytes),
+		service.DurationLogField("responseElapsed", elapsed.Round(time.Millisecond/responseRounding)),
+		service.DurationLogField("responseElapsed", elapsed.Round(time.Millisecond/responseRounding)),
 	)
 }
 
 func (e *logEntry) Panic(v interface{}, stack []byte) {
 	e.logging = e.logging.With(
-		app.BytesLogField("stack", stack),
-		app.StringLogField("panic", fmt.Sprintf("%+v", v)),
+		service.BytesLogField("stack", stack),
+		service.StringLogField("panic", fmt.Sprintf("%+v", v)),
 	)
 }
 
-func logger(r *http.Request) app.Logger {
+func logger(r *http.Request) service.Logger {
 	entry, ok := middleware.GetLogEntry(r).(*logEntry)
 	if !ok {
 		panic("LogEntry isn't *logEntry")
@@ -79,6 +79,6 @@ func logger(r *http.Request) app.Logger {
 	return entry.logging
 }
 
-func LoggingMiddleware(loggingService app.Logger) Middleware {
+func LoggingMiddleware(loggingService service.Logger) Middleware {
 	return middleware.RequestLogger(&Formatter{logging: loggingService})
 }

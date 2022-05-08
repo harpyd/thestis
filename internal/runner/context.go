@@ -22,6 +22,7 @@ import (
 	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/command"
 	"github.com/harpyd/thestis/internal/core/app/query"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	fakeAdapter "github.com/harpyd/thestis/internal/core/infrastructure/auth/fake"
 	firebaseAdapter "github.com/harpyd/thestis/internal/core/infrastructure/auth/firebase"
 	zapAdapter "github.com/harpyd/thestis/internal/core/infrastructure/logger/zap"
@@ -43,10 +44,10 @@ type Context struct {
 	firebaseSingleton
 	performanceWPSingleton
 
-	logger       app.Logger
+	logger       service.Logger
 	config       *config.Config
 	persistent   persistentContext
-	specParser   app.SpecificationParser
+	specParser   service.SpecificationParser
 	metrics      metricsContext
 	performance  performanceContext
 	signalBus    signalBusContext
@@ -81,24 +82,24 @@ type performanceWPSingleton struct {
 }
 
 type performanceContext struct {
-	guard       app.PerformanceGuard
-	stepsPolicy app.StepsPolicy
-	maintainer  app.PerformanceMaintainer
-	enqueuer    app.Enqueuer
+	guard       service.PerformanceGuard
+	stepsPolicy service.StepsPolicy
+	maintainer  service.PerformanceMaintainer
+	enqueuer    service.Enqueuer
 }
 
 type persistentContext struct {
-	testCampaignRepo       app.TestCampaignRepository
-	specRepo               app.SpecificationRepository
-	perfRepo               app.PerformanceRepository
-	flowRepo               app.FlowRepository
-	specificTestCampaignRM app.SpecificTestCampaignReadModel
-	specificSpecRM         app.SpecificSpecificationReadModel
+	testCampaignRepo       service.TestCampaignRepository
+	specRepo               service.SpecificationRepository
+	perfRepo               service.PerformanceRepository
+	flowRepo               service.FlowRepository
+	specificTestCampaignRM query.SpecificTestCampaignReadModel
+	specificSpecRM         query.SpecificSpecificationReadModel
 }
 
 type signalBusContext struct {
-	publisher  app.PerformanceCancelPublisher
-	subscriber app.PerformanceCancelSubscriber
+	publisher  service.PerformanceCancelPublisher
+	subscriber service.PerformanceCancelSubscriber
 }
 
 type metricsContext struct {
@@ -127,7 +128,7 @@ func (c *Context) Start() {
 
 	c.logger.Info(
 		"HTTP server started",
-		app.StringLogField("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
+		service.StringLogField("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
 	)
 
 	if err := c.server.Start(); !errors.Is(err, http.ErrServerClosed) {
@@ -242,7 +243,7 @@ func (c *Context) performanceWorkerPool() *workerpool.WorkerPool {
 
 		c.logger.Info(
 			"Performance worker pool initialization completed",
-			app.IntLogField("workers", c.config.Performance.Workers),
+			service.IntLogField("workers", c.config.Performance.Workers),
 		)
 	})
 
@@ -285,7 +286,7 @@ func (c *Context) initConfig(configsPath string) {
 
 func (c *Context) initPersistent() {
 	db := c.mongo()
-	logField := app.StringLogField("db", "mongo")
+	logField := service.StringLogField("db", "mongo")
 
 	var (
 		testCampaignRepo = mongoAdapter.NewTestCampaignRepository(db)
@@ -315,7 +316,7 @@ func (c *Context) initPersistent() {
 
 func (c *Context) initSpecificationParser() {
 	c.specParser = yaml.NewSpecificationParser()
-	c.logger.Info("Specification parser service initialization completed", app.StringLogField("type", "yaml"))
+	c.logger.Info("Specification parser service initialization completed", service.StringLogField("type", "yaml"))
 }
 
 func (c *Context) initApplication() {
@@ -356,7 +357,7 @@ func (c *Context) initMetrics() {
 
 	c.metrics.httpMetric = mrs
 
-	c.logger.Info("Metrics registration completed", app.StringLogField("db", "prometheus"))
+	c.logger.Info("Metrics registration completed", service.StringLogField("db", "prometheus"))
 }
 
 func (c *Context) initSignalBus() {
@@ -369,13 +370,13 @@ func (c *Context) initSignalBus() {
 		c.logger.Fatal(
 			"Invalid performance signal bus",
 			errors.Errorf("%s is not valid signal bus", c.config.Performance.SignalBus),
-			app.StringLogField("allowed", config.Nats),
+			service.StringLogField("allowed", config.Nats),
 		)
 	}
 
 	c.logger.Info(
 		"Signal bus initialization completed",
-		app.StringLogField("signalBus", c.config.Performance.SignalBus),
+		service.StringLogField("signalBus", c.config.Performance.SignalBus),
 	)
 }
 
@@ -384,7 +385,7 @@ func (c *Context) initPerformance() {
 	c.initStepsPolicy()
 	c.initEnqueuer()
 
-	c.performance.maintainer = app.NewPerformanceMaintainer(
+	c.performance.maintainer = service.NewPerformanceMaintainer(
 		c.performance.guard,
 		c.signalBus.subscriber,
 		c.performance.stepsPolicy,
@@ -394,7 +395,7 @@ func (c *Context) initPerformance() {
 
 	c.logger.Info(
 		"Performance maintainer initialized",
-		app.StringLogField("stepsPolicy", c.config.Performance.Policy),
+		service.StringLogField("stepsPolicy", c.config.Performance.Policy),
 	)
 }
 
@@ -404,7 +405,7 @@ func (c *Context) initPerformanceGuard() {
 
 func (c *Context) initStepsPolicy() {
 	if c.config.Performance.Policy == config.EveryStepSavingPolicy {
-		c.performance.stepsPolicy = app.NewEveryStepSavingPolicy(
+		c.performance.stepsPolicy = service.NewEveryStepSavingPolicy(
 			c.persistent.flowRepo,
 			c.config.EveryStepSaving.SaveTimeout,
 		)
@@ -415,12 +416,12 @@ func (c *Context) initStepsPolicy() {
 	c.logger.Fatal(
 		"Invalid performance steps policy",
 		errors.Errorf("%s is not valid steps policy", c.config.Performance.Policy),
-		app.StringLogField("allowed", config.EveryStepSavingPolicy),
+		service.StringLogField("allowed", config.EveryStepSavingPolicy),
 	)
 }
 
 func (c *Context) initEnqueuer() {
-	c.performance.enqueuer = app.EnqueueFunc(c.performanceWorkerPool().Submit)
+	c.performance.enqueuer = service.EnqueueFunc(c.performanceWorkerPool().Submit)
 }
 
 func (c *Context) initAuthenticationProvider() {
@@ -435,11 +436,11 @@ func (c *Context) initAuthenticationProvider() {
 		c.logger.Fatal(
 			"Invalid auth type",
 			errors.Errorf("%s is not valid auth type", authType),
-			app.StringLogField("allowed", strings.Join([]string{config.FakeAuth, config.FirebaseAuth}, ", ")),
+			service.StringLogField("allowed", strings.Join([]string{config.FakeAuth, config.FirebaseAuth}, ", ")),
 		)
 	}
 
-	c.logger.Info("Authentication provider initialization completed", app.StringLogField("auth", authType))
+	c.logger.Info("Authentication provider initialization completed", service.StringLogField("auth", authType))
 }
 
 func (c *Context) initServer() {

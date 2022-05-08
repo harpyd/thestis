@@ -1,6 +1,10 @@
 package app
 
-import "context"
+import (
+	"context"
+
+	"github.com/harpyd/thestis/internal/core/app/service"
+)
 
 type Application struct {
 	Commands Commands
@@ -25,11 +29,11 @@ type (
 	}
 
 	StartPerformanceHandler interface {
-		Handle(ctx context.Context, cmd StartPerformanceCommand) (string, <-chan Message, error)
+		Handle(ctx context.Context, cmd StartPerformanceCommand) (string, <-chan service.Message, error)
 	}
 
 	RestartPerformanceHandler interface {
-		Handle(ctx context.Context, cmd RestartPerformanceCommand) (<-chan Message, error)
+		Handle(ctx context.Context, cmd RestartPerformanceCommand) (<-chan service.Message, error)
 	}
 
 	CancelPerformanceHandler interface {

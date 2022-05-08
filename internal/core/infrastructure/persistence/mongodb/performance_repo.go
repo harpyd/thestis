@@ -7,7 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 )
 
@@ -28,7 +28,7 @@ func NewPerformanceRepository(db *mongo.Database) *PerformanceRepository {
 func (r *PerformanceRepository) GetPerformance(
 	ctx context.Context,
 	perfID string,
-	specGetter app.SpecificationGetter,
+	specGetter service.SpecificationGetter,
 	opts ...performance.Option,
 ) (*performance.Performance, error) {
 	document, err := r.getPerformanceDocument(ctx, bson.M{"_id": perfID})
@@ -51,10 +51,10 @@ func (r *PerformanceRepository) getPerformanceDocument(
 	var document performanceDocument
 	if err := r.performances.FindOne(ctx, filter).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return performanceDocument{}, app.ErrPerformanceNotFound
+			return performanceDocument{}, service.ErrPerformanceNotFound
 		}
 
-		return performanceDocument{}, app.WrapWithDatabaseError(err)
+		return performanceDocument{}, service.WrapWithDatabaseError(err)
 	}
 
 	return document, nil
@@ -63,5 +63,5 @@ func (r *PerformanceRepository) getPerformanceDocument(
 func (r *PerformanceRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
 	_, err := r.performances.InsertOne(ctx, newPerformanceDocument(perf))
 
-	return app.WrapWithDatabaseError(err)
+	return service.WrapWithDatabaseError(err)
 }

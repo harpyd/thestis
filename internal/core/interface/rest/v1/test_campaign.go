@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
@@ -44,7 +44,7 @@ func (h handler) GetTestCampaign(w http.ResponseWriter, r *http.Request, testCam
 		return
 	}
 
-	if errors.Is(err, app.ErrTestCampaignNotFound) {
+	if errors.Is(err, service.ErrTestCampaignNotFound) {
 		rest.NotFound(string(ErrorSlugTestCampaignNotFound), err, w, r)
 
 		return

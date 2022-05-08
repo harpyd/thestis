@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 )
 
@@ -58,10 +59,10 @@ func (r *TestCampaignRepository) getTestCampaignDocument(
 	var document testCampaignDocument
 	if err := r.testCampaigns.FindOne(ctx, filter).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return testCampaignDocument{}, app.ErrTestCampaignNotFound
+			return testCampaignDocument{}, service.ErrTestCampaignNotFound
 		}
 
-		return testCampaignDocument{}, app.WrapWithDatabaseError(err)
+		return testCampaignDocument{}, service.WrapWithDatabaseError(err)
 	}
 
 	return document, nil
@@ -70,13 +71,13 @@ func (r *TestCampaignRepository) getTestCampaignDocument(
 func (r *TestCampaignRepository) AddTestCampaign(ctx context.Context, tc *testcampaign.TestCampaign) error {
 	_, err := r.testCampaigns.InsertOne(ctx, newTestCampaignDocument(tc))
 
-	return app.WrapWithDatabaseError(err)
+	return service.WrapWithDatabaseError(err)
 }
 
 func (r *TestCampaignRepository) UpdateTestCampaign(
 	ctx context.Context,
 	tcID string,
-	updateFn app.TestCampaignUpdater,
+	updateFn service.TestCampaignUpdater,
 ) error {
 	session, err := r.testCampaigns.Database().Client().StartSession()
 	if err != nil {
@@ -89,10 +90,10 @@ func (r *TestCampaignRepository) UpdateTestCampaign(
 		var document testCampaignDocument
 		if err := r.testCampaigns.FindOne(ctx, bson.M{"_id": tcID}).Decode(&document); err != nil {
 			if errors.Is(err, mongo.ErrNoDocuments) {
-				return nil, app.ErrTestCampaignNotFound
+				return nil, service.ErrTestCampaignNotFound
 			}
 
-			return nil, app.WrapWithDatabaseError(err)
+			return nil, service.WrapWithDatabaseError(err)
 		}
 
 		tc := newTestCampaign(document)
@@ -106,7 +107,7 @@ func (r *TestCampaignRepository) UpdateTestCampaign(
 		replaceOpt := options.Replace().SetUpsert(true)
 		filter := bson.M{"_id": updatedDocument.ID}
 		if _, err := r.testCampaigns.ReplaceOne(ctx, filter, updatedDocument, replaceOpt); err != nil {
-			return nil, app.WrapWithDatabaseError(err)
+			return nil, service.WrapWithDatabaseError(err)
 		}
 
 		return nil, nil

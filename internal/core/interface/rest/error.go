@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-chi/render"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 )
 
 func BadRequest(slug string, err error, w http.ResponseWriter, r *http.Request) {
@@ -37,7 +37,7 @@ func InternalServerError(slug string, err error, w http.ResponseWriter, r *http.
 }
 
 func httpRespondWithError(err error, slug string, w http.ResponseWriter, r *http.Request, logMSg string, status int) {
-	logger(r).Warn(logMSg, err, app.StringLogField("errorSlug", slug))
+	logger(r).Warn(logMSg, err, service.StringLogField("errorSlug", slug))
 
 	var details string
 	if err != nil {

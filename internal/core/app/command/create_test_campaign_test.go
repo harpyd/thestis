@@ -8,7 +8,8 @@ import (
 
 	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/command"
-	"github.com/harpyd/thestis/internal/core/app/mock"
+	"github.com/harpyd/thestis/internal/core/app/service"
+	"github.com/harpyd/thestis/internal/core/app/service/mock"
 )
 
 func TestPanickingNewCreateTestCampaignHandler(t *testing.T) {
@@ -16,7 +17,7 @@ func TestPanickingNewCreateTestCampaignHandler(t *testing.T) {
 
 	testCases := []struct {
 		Name                  string
-		GivenTestCampaignRepo app.TestCampaignRepository
+		GivenTestCampaignRepo service.TestCampaignRepository
 		ShouldPanic           bool
 		PanicMessage          string
 	}{

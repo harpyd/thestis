@@ -9,19 +9,20 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/user"
 )
 
 type LoadSpecificationHandler struct {
-	specRepo          app.SpecificationRepository
-	testCampaignRepo  app.TestCampaignRepository
-	specParserService app.SpecificationParser
+	specRepo          service.SpecificationRepository
+	testCampaignRepo  service.TestCampaignRepository
+	specParserService service.SpecificationParser
 }
 
 func NewLoadSpecificationHandler(
-	specRepo app.SpecificationRepository,
-	testCampaignRepo app.TestCampaignRepository,
-	specParser app.SpecificationParser,
+	specRepo service.SpecificationRepository,
+	testCampaignRepo service.TestCampaignRepository,
+	specParser service.SpecificationParser,
 ) LoadSpecificationHandler {
 	if specRepo == nil {
 		panic("specification repository is nil")
@@ -63,10 +64,10 @@ func (h LoadSpecificationHandler) Handle(
 
 	spec, err := h.specParserService.ParseSpecification(
 		bytes.NewReader(cmd.Content),
-		app.WithSpecificationID(specID),
-		app.WithSpecificationTestCampaignID(tc.ID()),
-		app.WithSpecificationOwnerID(tc.OwnerID()),
-		app.WithSpecificationLoadedAt(time.Now().UTC()),
+		service.WithSpecificationID(specID),
+		service.WithSpecificationTestCampaignID(tc.ID()),
+		service.WithSpecificationOwnerID(tc.OwnerID()),
+		service.WithSpecificationLoadedAt(time.Now().UTC()),
 	)
 	if err != nil {
 		return "", err

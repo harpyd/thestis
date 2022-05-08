@@ -1,4 +1,4 @@
-package app_test
+package service_test
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/core/app"
-	"github.com/harpyd/thestis/internal/core/app/mock"
+	"github.com/harpyd/thestis/internal/core/app/service"
+	"github.com/harpyd/thestis/internal/core/app/service/mock"
 	"github.com/harpyd/thestis/internal/core/entity/flow"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
@@ -21,7 +21,7 @@ func TestPanickingNewEveryStepSavingPolicy(t *testing.T) {
 
 	testCases := []struct {
 		Name          string
-		GivenFlowRepo app.FlowRepository
+		GivenFlowRepo service.FlowRepository
 		ShouldPanic   bool
 		PanicMessage  string
 	}{
@@ -45,7 +45,7 @@ func TestPanickingNewEveryStepSavingPolicy(t *testing.T) {
 			t.Parallel()
 
 			init := func() {
-				_ = app.NewEveryStepSavingPolicy(c.GivenFlowRepo, saveTimeout)
+				_ = service.NewEveryStepSavingPolicy(c.GivenFlowRepo, saveTimeout)
 			}
 
 			if !c.ShouldPanic {
@@ -67,7 +67,7 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 		CancelContext     bool
 		GivenInitStatuses []*flow.Status
 		GivenSteps        []performance.Step
-		ExpectedMessages  []app.Message
+		ExpectedMessages  []service.Message
 		ExpectedStatuses  []*flow.Status
 	}{
 		{
@@ -90,15 +90,15 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 					performance.FiredPass,
 				),
 			},
-			ExpectedMessages: []app.Message{
-				app.NewMessageFromStep(
+			ExpectedMessages: []service.Message{
+				service.NewMessageFromStep(
 					performance.NewThesisStep(
 						specification.NewThesisSlug("foo", "bar", "dar"),
 						performance.HTTPPerformer,
 						performance.FiredPass,
 					),
 				),
-				app.NewMessageFromStep(
+				service.NewMessageFromStep(
 					performance.NewScenarioStep(
 						specification.NewScenarioSlug("foo", "bar"),
 						performance.FiredPass,
@@ -129,15 +129,15 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 					performance.FiredCancel,
 				),
 			},
-			ExpectedMessages: []app.Message{
-				app.NewMessageFromStep(
+			ExpectedMessages: []service.Message{
+				service.NewMessageFromStep(
 					performance.NewScenarioStep(
 						specification.NewScenarioSlug("a", "b"),
 						performance.FiredCancel,
 					),
 				),
-				app.NewMessageFromError(
-					app.WrapWithDatabaseError(context.Canceled),
+				service.NewMessageFromError(
+					service.WrapWithDatabaseError(context.Canceled),
 				),
 			},
 			ExpectedStatuses: []*flow.Status{
@@ -160,13 +160,13 @@ func TestHandleEveryStepSavingPolicy(t *testing.T) {
 
 			var (
 				flowRepo = mock.NewFlowRepository()
-				policy   = app.NewEveryStepSavingPolicy(flowRepo, saveTimeout)
+				policy   = service.NewEveryStepSavingPolicy(flowRepo, saveTimeout)
 			)
 
 			var (
 				f        = flow.FromStatuses("flow-id", "perf-id", c.GivenInitStatuses...)
 				steps    = make(chan performance.Step)
-				messages = make(chan app.Message)
+				messages = make(chan service.Message)
 			)
 
 			go func() {

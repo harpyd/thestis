@@ -1,4 +1,4 @@
-package app_test
+package service_test
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/core/app"
-	"github.com/harpyd/thestis/internal/core/app/mock"
+	"github.com/harpyd/thestis/internal/core/app/service"
+	"github.com/harpyd/thestis/internal/core/app/service/mock"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
@@ -19,25 +19,25 @@ func TestMessage(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		Message        app.Message
+		Message        service.Message
 		ExpectedEvent  performance.Event
 		ExpectedErr    error
 		ExpectedString string
 	}{
 		{
-			Message:        app.Message{},
+			Message:        service.Message{},
 			ExpectedEvent:  performance.NoEvent,
 			ExpectedErr:    nil,
 			ExpectedString: "",
 		},
 		{
-			Message:        app.NewMessageFromError(errors.New("foo")),
+			Message:        service.NewMessageFromError(errors.New("foo")),
 			ExpectedEvent:  performance.NoEvent,
 			ExpectedErr:    errors.New("foo"),
 			ExpectedString: "foo",
 		},
 		{
-			Message: app.NewMessageFromStep(performance.NewThesisStep(
+			Message: service.NewMessageFromStep(performance.NewThesisStep(
 				specification.NewThesisSlug("foo", "bar", "baz"),
 				performance.HTTPPerformer,
 				performance.FiredPerform,
@@ -47,7 +47,7 @@ func TestMessage(t *testing.T) {
 			ExpectedString: "foo.bar.baz: event = perform, type = HTTP",
 		},
 		{
-			Message: app.NewMessageFromStep(performance.NewScenarioStepWithErr(
+			Message: service.NewMessageFromStep(performance.NewScenarioStepWithErr(
 				errors.New("something wrong"),
 				specification.NewScenarioSlug("foo", "bar"),
 				performance.FiredCrash,
@@ -97,10 +97,10 @@ func TestPanickingNewPerformanceMaintainer(t *testing.T) {
 
 	testCases := []struct {
 		Name             string
-		GivenGuard       app.PerformanceGuard
-		GivenSubscriber  app.PerformanceCancelSubscriber
-		GivenStepsPolicy app.StepsPolicy
-		GivenEnqueuer    app.Enqueuer
+		GivenGuard       service.PerformanceGuard
+		GivenSubscriber  service.PerformanceCancelSubscriber
+		GivenStepsPolicy service.StepsPolicy
+		GivenEnqueuer    service.Enqueuer
 		ShouldPanic      bool
 		PanicMessage     string
 	}{
@@ -166,7 +166,7 @@ func TestPanickingNewPerformanceMaintainer(t *testing.T) {
 			t.Parallel()
 
 			init := func() {
-				_ = app.NewPerformanceMaintainer(
+				_ = service.NewPerformanceMaintainer(
 					c.GivenGuard,
 					c.GivenSubscriber,
 					c.GivenStepsPolicy,
@@ -195,7 +195,7 @@ func TestMaintainPerformance(t *testing.T) {
 		Guard              *mock.PerformanceGuard
 		ShouldBeErr        bool
 		IsErr              func(err error) bool
-		ExpectedMessages   []app.Message
+		ExpectedMessages   []service.Message
 	}{
 		{
 			Name: "performance_acquire_error",
@@ -233,26 +233,26 @@ func TestMaintainPerformance(t *testing.T) {
 				)
 			},
 			Guard: mock.NewPerformanceGuard(nil, errPerformanceRelease),
-			ExpectedMessages: []app.Message{
-				app.NewMessageFromStep(performance.NewScenarioStep(
+			ExpectedMessages: []service.Message{
+				service.NewMessageFromStep(performance.NewScenarioStep(
 					specification.NewScenarioSlug("foo", "bar"),
 					performance.FiredPerform,
 				)),
-				app.NewMessageFromStep(performance.NewThesisStep(
+				service.NewMessageFromStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "baz"),
 					performance.AssertionPerformer,
 					performance.FiredPerform,
 				)),
-				app.NewMessageFromStep(performance.NewThesisStep(
+				service.NewMessageFromStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "baz"),
 					performance.AssertionPerformer,
 					performance.FiredPass,
 				)),
-				app.NewMessageFromStep(performance.NewScenarioStep(
+				service.NewMessageFromStep(performance.NewScenarioStep(
 					specification.NewScenarioSlug("foo", "bar"),
 					performance.FiredPass,
 				)),
-				app.NewMessageFromError(errPerformanceRelease),
+				service.NewMessageFromError(errPerformanceRelease),
 			},
 			ShouldBeErr: false,
 		},
@@ -306,52 +306,52 @@ func TestMaintainPerformance(t *testing.T) {
 				)
 			},
 			Guard: errlessPerformanceGuard(t),
-			ExpectedMessages: []app.Message{
-				app.NewMessageFromStep(performance.NewScenarioStep(
+			ExpectedMessages: []service.Message{
+				service.NewMessageFromStep(performance.NewScenarioStep(
 					specification.NewScenarioSlug("foo", "bar"),
 					performance.FiredPerform,
 				)),
-				app.NewMessageFromStep(performance.NewThesisStep(
+				service.NewMessageFromStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "gaz"),
 					performance.HTTPPerformer,
 					performance.FiredPerform,
 				)),
-				app.NewMessageFromStep(performance.NewThesisStep(
+				service.NewMessageFromStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "gaz"),
 					performance.HTTPPerformer,
 					performance.FiredPass,
 				)),
-				app.NewMessageFromStep(performance.NewThesisStep(
+				service.NewMessageFromStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "gad"),
 					performance.HTTPPerformer,
 					performance.FiredPerform,
 				)),
-				app.NewMessageFromStep(performance.NewThesisStep(
+				service.NewMessageFromStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "gad"),
 					performance.HTTPPerformer,
 					performance.FiredPass,
 				)),
-				app.NewMessageFromStep(performance.NewThesisStep(
+				service.NewMessageFromStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "waz"),
 					performance.HTTPPerformer,
 					performance.FiredPerform,
 				)),
-				app.NewMessageFromStep(performance.NewThesisStep(
+				service.NewMessageFromStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "waz"),
 					performance.HTTPPerformer,
 					performance.FiredPass,
 				)),
-				app.NewMessageFromStep(performance.NewThesisStep(
+				service.NewMessageFromStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "taz"),
 					performance.AssertionPerformer,
 					performance.FiredPerform,
 				)),
-				app.NewMessageFromStep(performance.NewThesisStep(
+				service.NewMessageFromStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "taz"),
 					performance.AssertionPerformer,
 					performance.FiredPass,
 				)),
-				app.NewMessageFromStep(performance.NewScenarioStep(
+				service.NewMessageFromStep(performance.NewScenarioStep(
 					specification.NewScenarioSlug("foo", "bar"),
 					performance.FiredPass,
 				)),
@@ -374,7 +374,7 @@ func TestMaintainPerformance(t *testing.T) {
 				enqueuer     = mock.NewEnqueuer()
 			)
 
-			maintainer := app.NewPerformanceMaintainer(
+			maintainer := service.NewPerformanceMaintainer(
 				c.Guard,
 				cancelPubsub,
 				stepsPolicy,
@@ -451,15 +451,15 @@ func TestCancelMaintainPerformance(t *testing.T) {
 		CancelContext            bool
 		FlowTimeout              time.Duration
 		PublishCancel            bool
-		ExpectedIncludedMessages []app.Message
+		ExpectedIncludedMessages []service.Message
 	}{
 		{
 			Name:          "context_canceled",
 			CancelContext: true,
 			FlowTimeout:   1 * time.Second,
 			PublishCancel: false,
-			ExpectedIncludedMessages: []app.Message{
-				app.NewMessageFromStep(
+			ExpectedIncludedMessages: []service.Message{
+				service.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
 						performance.WrapWithTerminatedError(
 							context.Canceled,
@@ -476,8 +476,8 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			CancelContext: false,
 			FlowTimeout:   5 * time.Millisecond,
 			PublishCancel: false,
-			ExpectedIncludedMessages: []app.Message{
-				app.NewMessageFromStep(
+			ExpectedIncludedMessages: []service.Message{
+				service.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
 						performance.WrapWithTerminatedError(
 							context.DeadlineExceeded,
@@ -494,8 +494,8 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			CancelContext: false,
 			FlowTimeout:   1 * time.Second,
 			PublishCancel: true,
-			ExpectedIncludedMessages: []app.Message{
-				app.NewMessageFromStep(
+			ExpectedIncludedMessages: []service.Message{
+				service.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
 						performance.WrapWithTerminatedError(
 							context.Canceled,
@@ -522,7 +522,7 @@ func TestCancelMaintainPerformance(t *testing.T) {
 				enqueuer     = mock.NewEnqueuer()
 			)
 
-			maintainer := app.NewPerformanceMaintainer(
+			maintainer := service.NewPerformanceMaintainer(
 				guard,
 				cancelPubsub,
 				stepsPolicy,
@@ -578,16 +578,16 @@ func TestAsPublishCancelError(t *testing.T) {
 			ShouldBeWrapped: false,
 		},
 		{
-			GivenError:      app.WrapWithPublishCancelError(nil),
+			GivenError:      service.WrapWithPublishCancelError(nil),
 			ShouldBeWrapped: false,
 		},
 		{
-			GivenError:        &app.PublishCancelError{},
+			GivenError:        &service.PublishCancelError{},
 			ShouldBeWrapped:   true,
 			ExpectedUnwrapped: nil,
 		},
 		{
-			GivenError:        app.WrapWithPublishCancelError(errors.New("foo")),
+			GivenError:        service.WrapWithPublishCancelError(errors.New("foo")),
 			ShouldBeWrapped:   true,
 			ExpectedUnwrapped: errors.New("foo"),
 		},
@@ -599,7 +599,7 @@ func TestAsPublishCancelError(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var target *app.PublishCancelError
+			var target *service.PublishCancelError
 
 			if !c.ShouldBeWrapped {
 				t.Run("not", func(t *testing.T) {
@@ -634,11 +634,11 @@ func TestFormatPublishCancelError(t *testing.T) {
 		ExpectedErrorString string
 	}{
 		{
-			GivenError:          &app.PublishCancelError{},
+			GivenError:          &service.PublishCancelError{},
 			ExpectedErrorString: "",
 		},
 		{
-			GivenError:          app.WrapWithPublishCancelError(errors.New("failed")),
+			GivenError:          service.WrapWithPublishCancelError(errors.New("failed")),
 			ExpectedErrorString: "publish cancel: failed",
 		},
 	}
@@ -667,16 +667,16 @@ func TestAsSubscribeCancelError(t *testing.T) {
 			ShouldBeWrapped: false,
 		},
 		{
-			GivenError:      app.WrapWithSubscribeCancelError(nil),
+			GivenError:      service.WrapWithSubscribeCancelError(nil),
 			ShouldBeWrapped: false,
 		},
 		{
-			GivenError:        &app.SubscribeCancelError{},
+			GivenError:        &service.SubscribeCancelError{},
 			ShouldBeWrapped:   true,
 			ExpectedUnwrapped: nil,
 		},
 		{
-			GivenError:        app.WrapWithSubscribeCancelError(errors.New("qoo")),
+			GivenError:        service.WrapWithSubscribeCancelError(errors.New("qoo")),
 			ShouldBeWrapped:   true,
 			ExpectedUnwrapped: errors.New("qoo"),
 		},
@@ -688,7 +688,7 @@ func TestAsSubscribeCancelError(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var target *app.SubscribeCancelError
+			var target *service.SubscribeCancelError
 
 			if !c.ShouldBeWrapped {
 				t.Run("not", func(t *testing.T) {
@@ -723,11 +723,11 @@ func TestFormatSubscribeCancelError(t *testing.T) {
 		ExpectedErrorString string
 	}{
 		{
-			GivenError:          &app.SubscribeCancelError{},
+			GivenError:          &service.SubscribeCancelError{},
 			ExpectedErrorString: "",
 		},
 		{
-			GivenError:          app.WrapWithSubscribeCancelError(errors.New("wrong")),
+			GivenError:          service.WrapWithSubscribeCancelError(errors.New("wrong")),
 			ExpectedErrorString: "subscribe cancel: wrong",
 		},
 	}
@@ -767,7 +767,7 @@ func errlessPerformanceGuard(t *testing.T) *mock.PerformanceGuard {
 	return mock.NewPerformanceGuard(nil, nil)
 }
 
-func requireMessagesMatch(t *testing.T, expected []app.Message, actual <-chan app.Message) {
+func requireMessagesMatch(t *testing.T, expected []service.Message, actual <-chan service.Message) {
 	t.Helper()
 
 	require.ElementsMatch(
@@ -777,7 +777,7 @@ func requireMessagesMatch(t *testing.T, expected []app.Message, actual <-chan ap
 	)
 }
 
-func requireMessagesContain(t *testing.T, messages <-chan app.Message, contain ...app.Message) {
+func requireMessagesContain(t *testing.T, messages <-chan service.Message, contain ...service.Message) {
 	t.Helper()
 
 	require.Subset(
@@ -787,7 +787,7 @@ func requireMessagesContain(t *testing.T, messages <-chan app.Message, contain .
 	)
 }
 
-func mapMessagesSliceToStrings(messages []app.Message) []string {
+func mapMessagesSliceToStrings(messages []service.Message) []string {
 	result := make([]string, 0, len(messages))
 	for _, msg := range messages {
 		result = append(result, msg.String())
@@ -796,7 +796,7 @@ func mapMessagesSliceToStrings(messages []app.Message) []string {
 	return result
 }
 
-func mapMessagesChanToStrings(messages <-chan app.Message, capacity int) []string {
+func mapMessagesChanToStrings(messages <-chan service.Message, capacity int) []string {
 	result := make([]string, 0, capacity)
 	for msg := range messages {
 		result = append(result, msg.String())

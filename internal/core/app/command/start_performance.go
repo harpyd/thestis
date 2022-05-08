@@ -7,21 +7,22 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 	"github.com/harpyd/thestis/internal/core/entity/user"
 )
 
 type StartPerformanceHandler struct {
-	specRepo      app.SpecificationRepository
-	perfRepo      app.PerformanceRepository
-	maintainer    app.PerformanceMaintainer
+	specRepo      service.SpecificationRepository
+	perfRepo      service.PerformanceRepository
+	maintainer    service.PerformanceMaintainer
 	performerOpts []performance.Option
 }
 
 func NewStartPerformanceHandler(
-	specRepo app.SpecificationRepository,
-	perfRepo app.PerformanceRepository,
-	maintainer app.PerformanceMaintainer,
+	specRepo service.SpecificationRepository,
+	perfRepo service.PerformanceRepository,
+	maintainer service.PerformanceMaintainer,
 	opts ...performance.Option,
 ) StartPerformanceHandler {
 	if specRepo == nil {
@@ -47,7 +48,7 @@ func NewStartPerformanceHandler(
 func (h StartPerformanceHandler) Handle(
 	ctx context.Context,
 	cmd app.StartPerformanceCommand,
-) (perfID string, messages <-chan app.Message, err error) {
+) (perfID string, messages <-chan service.Message, err error) {
 	defer func() {
 		err = errors.Wrap(err, "new performance starting")
 	}()

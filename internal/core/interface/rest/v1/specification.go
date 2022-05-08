@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 	"github.com/harpyd/thestis/internal/core/entity/user"
 	"github.com/harpyd/thestis/internal/core/interface/rest"
@@ -26,7 +26,7 @@ func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testC
 		return
 	}
 
-	if errors.Is(err, app.ErrTestCampaignNotFound) {
+	if errors.Is(err, service.ErrTestCampaignNotFound) {
 		rest.NotFound(string(ErrorSlugTestCampaignNotFound), err, w, r)
 
 		return
@@ -64,7 +64,7 @@ func (h handler) GetSpecification(w http.ResponseWriter, r *http.Request, specif
 		return
 	}
 
-	if errors.Is(err, app.ErrSpecificationNotFound) {
+	if errors.Is(err, service.ErrSpecificationNotFound) {
 		rest.NotFound(string(ErrorSlugSpecificationNotFound), err, w, r)
 
 		return

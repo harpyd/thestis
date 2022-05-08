@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 	"github.com/harpyd/thestis/internal/core/infrastructure/persistence/mongodb"
@@ -66,7 +66,7 @@ func (s *PerformanceRepositoryTestSuite) TestAddPerformance() {
 			}),
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				var target *app.DatabaseError
+				var target *service.DatabaseError
 
 				return errors.As(err, &target) &&
 					mongo.IsDuplicateKeyError(err)
@@ -103,7 +103,7 @@ func (s *PerformanceRepositoryTestSuite) TestAddPerformance() {
 			persistedPerf, err := s.repo.GetPerformance(
 				context.Background(),
 				c.GivenPerformance.ID(),
-				app.AvailableSpecification(availableSpec),
+				service.AvailableSpecification(availableSpec),
 			)
 			s.Require().NoError(err)
 

@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 )
 
@@ -33,10 +33,10 @@ func (g *PerformanceGuard) AcquirePerformance(ctx context.Context, perfID string
 
 	if err := g.performances.FindOneAndUpdate(ctx, filter, update, opt).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return app.ErrPerformanceNotFound
+			return service.ErrPerformanceNotFound
 		}
 
-		return app.WrapWithDatabaseError(err)
+		return service.WrapWithDatabaseError(err)
 	}
 
 	if document.Started {
@@ -51,8 +51,8 @@ func (g *PerformanceGuard) ReleasePerformance(ctx context.Context, perfID string
 
 	_, err := g.performances.UpdateByID(ctx, perfID, update)
 	if errors.Is(err, mongo.ErrNoDocuments) {
-		return app.ErrPerformanceNotFound
+		return service.ErrPerformanceNotFound
 	}
 
-	return app.WrapWithDatabaseError(err)
+	return service.WrapWithDatabaseError(err)
 }

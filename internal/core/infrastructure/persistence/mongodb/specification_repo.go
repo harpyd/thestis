@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
 
@@ -90,10 +91,10 @@ func (r *SpecificationRepository) getSpecificationDocument(
 	var document specificationDocument
 	if err := r.specifications.FindOne(ctx, filter, opt).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return specificationDocument{}, app.ErrSpecificationNotFound
+			return specificationDocument{}, service.ErrSpecificationNotFound
 		}
 
-		return specificationDocument{}, app.WrapWithDatabaseError(err)
+		return specificationDocument{}, service.WrapWithDatabaseError(err)
 	}
 
 	return document, nil
@@ -102,5 +103,5 @@ func (r *SpecificationRepository) getSpecificationDocument(
 func (r *SpecificationRepository) AddSpecification(ctx context.Context, spec *specification.Specification) error {
 	_, err := r.specifications.InsertOne(ctx, newSpecificationDocument(spec))
 
-	return app.WrapWithDatabaseError(err)
+	return service.WrapWithDatabaseError(err)
 }

@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/flow"
 )
 
@@ -37,10 +37,10 @@ func (r *FlowRepository) getFlowDocument(ctx context.Context, filter bson.M) (fl
 	var document flowDocument
 	if err := r.flows.FindOne(ctx, filter).Decode(&document); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments); err != nil {
-			return flowDocument{}, app.ErrFlowNotFound
+			return flowDocument{}, service.ErrFlowNotFound
 		}
 
-		return flowDocument{}, app.WrapWithDatabaseError(err)
+		return flowDocument{}, service.WrapWithDatabaseError(err)
 	}
 
 	return document, nil
@@ -52,5 +52,5 @@ func (r *FlowRepository) UpsertFlow(ctx context.Context, flow *flow.Flow) error 
 	opt := options.Replace().SetUpsert(true)
 	_, err := r.flows.ReplaceOne(ctx, bson.M{"_id": flow.ID()}, document, opt)
 
-	return app.WrapWithDatabaseError(err)
+	return service.WrapWithDatabaseError(err)
 }

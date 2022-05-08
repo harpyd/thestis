@@ -8,11 +8,15 @@ import (
 	"github.com/harpyd/thestis/internal/core/app"
 )
 
-type SpecificPerformanceHandler struct {
-	readModel app.SpecificPerformanceReadModel
+type SpecificPerformanceReadModel interface {
+	FindPerformance(ctx context.Context, qry app.SpecificPerformanceQuery) (app.SpecificPerformance, error)
 }
 
-func NewSpecificPerformanceHandler(readModel app.SpecificPerformanceReadModel) SpecificPerformanceHandler {
+type SpecificPerformanceHandler struct {
+	readModel SpecificPerformanceReadModel
+}
+
+func NewSpecificPerformanceHandler(readModel SpecificPerformanceReadModel) SpecificPerformanceHandler {
 	if readModel == nil {
 		panic("specific performance read model is nil")
 	}

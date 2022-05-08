@@ -6,21 +6,22 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 	"github.com/harpyd/thestis/internal/core/entity/user"
 )
 
 type RestartPerformanceHandler struct {
-	perfRepo      app.PerformanceRepository
-	specGetter    app.SpecificationGetter
-	maintainer    app.PerformanceMaintainer
+	perfRepo      service.PerformanceRepository
+	specGetter    service.SpecificationGetter
+	maintainer    service.PerformanceMaintainer
 	performerOpts []performance.Option
 }
 
 func NewRestartPerformanceHandler(
-	perfRepo app.PerformanceRepository,
-	specGetter app.SpecificationGetter,
-	maintainer app.PerformanceMaintainer,
+	perfRepo service.PerformanceRepository,
+	specGetter service.SpecificationGetter,
+	maintainer service.PerformanceMaintainer,
 	opts ...performance.Option,
 ) RestartPerformanceHandler {
 	if perfRepo == nil {
@@ -45,7 +46,7 @@ func NewRestartPerformanceHandler(
 func (h RestartPerformanceHandler) Handle(
 	ctx context.Context,
 	cmd app.RestartPerformanceCommand,
-) (messages <-chan app.Message, err error) {
+) (messages <-chan service.Message, err error) {
 	defer func() {
 		err = errors.Wrap(err, "performance restarting")
 	}()

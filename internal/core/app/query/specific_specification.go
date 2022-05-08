@@ -8,11 +8,15 @@ import (
 	"github.com/harpyd/thestis/internal/core/app"
 )
 
-type SpecificSpecificationHandler struct {
-	readModel app.SpecificSpecificationReadModel
+type SpecificSpecificationReadModel interface {
+	FindSpecification(ctx context.Context, qry app.SpecificSpecificationQuery) (app.SpecificSpecification, error)
 }
 
-func NewSpecificSpecificationHandler(readModel app.SpecificSpecificationReadModel) SpecificSpecificationHandler {
+type SpecificSpecificationHandler struct {
+	readModel SpecificSpecificationReadModel
+}
+
+func NewSpecificSpecificationHandler(readModel SpecificSpecificationReadModel) SpecificSpecificationHandler {
 	if readModel == nil {
 		panic("specific specification read model is nil")
 	}

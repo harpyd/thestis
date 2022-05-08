@@ -1,4 +1,4 @@
-package app_test
+package service_test
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 )
 
 func TestAsDatabaseError(t *testing.T) {
@@ -23,16 +23,16 @@ func TestAsDatabaseError(t *testing.T) {
 			ShouldBeWrapped: false,
 		},
 		{
-			GivenError:      app.WrapWithDatabaseError(nil),
+			GivenError:      service.WrapWithDatabaseError(nil),
 			ShouldBeWrapped: false,
 		},
 		{
-			GivenError:        &app.DatabaseError{},
+			GivenError:        &service.DatabaseError{},
 			ShouldBeWrapped:   true,
 			ExpectedUnwrapped: nil,
 		},
 		{
-			GivenError:        app.WrapWithDatabaseError(errors.New("foo")),
+			GivenError:        service.WrapWithDatabaseError(errors.New("foo")),
 			ShouldBeWrapped:   true,
 			ExpectedUnwrapped: errors.New("foo"),
 		},
@@ -44,7 +44,7 @@ func TestAsDatabaseError(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var target *app.DatabaseError
+			var target *service.DatabaseError
 
 			if !c.ShouldBeWrapped {
 				t.Run("not", func(t *testing.T) {
@@ -79,11 +79,11 @@ func TestFormatDatabaseError(t *testing.T) {
 		ExpectedErrorString string
 	}{
 		{
-			GivenError:          &app.DatabaseError{},
+			GivenError:          &service.DatabaseError{},
 			ExpectedErrorString: "",
 		},
 		{
-			GivenError:          app.WrapWithDatabaseError(errors.New("failed")),
+			GivenError:          service.WrapWithDatabaseError(errors.New("failed")),
 			ExpectedErrorString: "database problem: failed",
 		},
 	}

@@ -6,17 +6,18 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/user"
 )
 
 type CancelPerformanceHandler struct {
-	perfRepo  app.PerformanceRepository
-	publisher app.PerformanceCancelPublisher
+	perfRepo  service.PerformanceRepository
+	publisher service.PerformanceCancelPublisher
 }
 
 func NewCancelPerformanceHandler(
-	perfRepo app.PerformanceRepository,
-	cancelPub app.PerformanceCancelPublisher,
+	perfRepo service.PerformanceRepository,
+	cancelPub service.PerformanceCancelPublisher,
 ) CancelPerformanceHandler {
 	if perfRepo == nil {
 		panic("performance repository is nil")
@@ -37,7 +38,7 @@ func (h CancelPerformanceHandler) Handle(ctx context.Context, cmd app.CancelPerf
 		err = errors.Wrap(err, "performance cancellation")
 	}()
 
-	perf, err := h.perfRepo.GetPerformance(ctx, cmd.PerformanceID, app.WithoutSpecification())
+	perf, err := h.perfRepo.GetPerformance(ctx, cmd.PerformanceID, service.WithoutSpecification())
 	if err != nil {
 		return err
 	}

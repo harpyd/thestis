@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 	"github.com/harpyd/thestis/internal/core/infrastructure/persistence/mongodb"
 )
@@ -65,7 +66,7 @@ func (s *TestCampaignRepositoryTestSuite) TestFindTestCampaign() {
 			},
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return errors.Is(err, app.ErrTestCampaignNotFound)
+				return errors.Is(err, service.ErrTestCampaignNotFound)
 			},
 		},
 		{
@@ -76,7 +77,7 @@ func (s *TestCampaignRepositoryTestSuite) TestFindTestCampaign() {
 			},
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return errors.Is(err, app.ErrTestCampaignNotFound)
+				return errors.Is(err, service.ErrTestCampaignNotFound)
 			},
 		},
 		{
@@ -87,7 +88,7 @@ func (s *TestCampaignRepositoryTestSuite) TestFindTestCampaign() {
 			},
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return errors.Is(err, app.ErrTestCampaignNotFound)
+				return errors.Is(err, service.ErrTestCampaignNotFound)
 			},
 		},
 		{
@@ -140,7 +141,7 @@ func (s *TestCampaignRepositoryTestSuite) TestAddTestCampaign() {
 			}),
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				var target *app.DatabaseError
+				var target *service.DatabaseError
 
 				return errors.As(err, &target) &&
 					mongo.IsDuplicateKeyError(err)
@@ -215,7 +216,7 @@ func (s *TestCampaignRepositoryTestSuite) TestUpdateTestCampaign() {
 	testCases := []struct {
 		Name                   string
 		TestCampaignIDToUpdate string
-		Update                 app.TestCampaignUpdater
+		Update                 service.TestCampaignUpdater
 		TestCampaignUpdated    func(tc *testcampaign.TestCampaign) bool
 		ShouldBeErr            bool
 		IsErr                  func(err error) bool
@@ -228,7 +229,7 @@ func (s *TestCampaignRepositoryTestSuite) TestUpdateTestCampaign() {
 			},
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return errors.Is(err, app.ErrTestCampaignNotFound)
+				return errors.Is(err, service.ErrTestCampaignNotFound)
 			},
 		},
 		{

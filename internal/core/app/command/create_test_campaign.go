@@ -8,14 +8,15 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/app"
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 )
 
 type CreateTestCampaignHandler struct {
-	testCampaignRepo app.TestCampaignRepository
+	testCampaignRepo service.TestCampaignRepository
 }
 
-func NewCreateTestCampaignHandler(repo app.TestCampaignRepository) CreateTestCampaignHandler {
+func NewCreateTestCampaignHandler(repo service.TestCampaignRepository) CreateTestCampaignHandler {
 	if repo == nil {
 		panic("test campaign repository is nil")
 	}

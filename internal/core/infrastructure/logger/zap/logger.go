@@ -1,9 +1,8 @@
 package zap
 
 import (
+	"github.com/harpyd/thestis/internal/core/app/service"
 	"go.uber.org/zap"
-
-	"github.com/harpyd/thestis/internal/core/app"
 )
 
 type Logger struct {
@@ -16,33 +15,33 @@ func NewLogger(logger *zap.Logger) *Logger {
 	}
 }
 
-func (l Logger) With(fields ...app.LogField) app.Logger {
+func (l Logger) With(fields ...service.LogField) service.Logger {
 	return &Logger{
 		logger: l.logger.With(mapToZapFields(fields)...),
 	}
 }
 
-func (l Logger) Debug(msg string, fields ...app.LogField) {
+func (l Logger) Debug(msg string, fields ...service.LogField) {
 	l.logger.Debug(msg, mapToZapFields(fields)...)
 }
 
-func (l Logger) Info(msg string, fields ...app.LogField) {
+func (l Logger) Info(msg string, fields ...service.LogField) {
 	l.logger.Info(msg, mapToZapFields(fields)...)
 }
 
-func (l Logger) Warn(msg string, err error, fields ...app.LogField) {
+func (l Logger) Warn(msg string, err error, fields ...service.LogField) {
 	l.logger.Warn(msg, mapToZapFieldsWithErr(err, fields)...)
 }
 
-func (l Logger) Error(msg string, err error, fields ...app.LogField) {
+func (l Logger) Error(msg string, err error, fields ...service.LogField) {
 	l.logger.Error(msg, mapToZapFieldsWithErr(err, fields)...)
 }
 
-func (l Logger) Fatal(msg string, err error, fields ...app.LogField) {
+func (l Logger) Fatal(msg string, err error, fields ...service.LogField) {
 	l.logger.Fatal(msg, mapToZapFieldsWithErr(err, fields)...)
 }
 
-func mapToZapFields(fields []app.LogField) []zap.Field {
+func mapToZapFields(fields []service.LogField) []zap.Field {
 	zapFields := make([]zap.Field, 0, len(fields))
 	for _, f := range fields {
 		zapFields = append(zapFields, zap.String(f.Key(), f.Value()))
@@ -51,7 +50,7 @@ func mapToZapFields(fields []app.LogField) []zap.Field {
 	return zapFields
 }
 
-func mapToZapFieldsWithErr(err error, fields []app.LogField) []zap.Field {
+func mapToZapFieldsWithErr(err error, fields []service.LogField) []zap.Field {
 	zapFields := make([]zap.Field, 0, len(fields)+1)
 	zapFields = append(zapFields, zap.Error(err))
 

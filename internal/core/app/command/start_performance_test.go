@@ -9,7 +9,8 @@ import (
 
 	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/command"
-	"github.com/harpyd/thestis/internal/core/app/mock"
+	"github.com/harpyd/thestis/internal/core/app/service"
+	"github.com/harpyd/thestis/internal/core/app/service/mock"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 	"github.com/harpyd/thestis/internal/core/entity/user"
@@ -20,9 +21,9 @@ func TestPanickingNewStartPerformanceHandler(t *testing.T) {
 
 	testCases := []struct {
 		Name            string
-		GivenSpecRepo   app.SpecificationRepository
-		GivenPerfRepo   app.PerformanceRepository
-		GivenMaintainer app.PerformanceMaintainer
+		GivenSpecRepo   service.SpecificationRepository
+		GivenPerfRepo   service.PerformanceRepository
+		GivenMaintainer service.PerformanceMaintainer
 		ShouldPanic     bool
 		PanicMessage    string
 	}{
@@ -106,7 +107,7 @@ func TestHandleStartPerformance(t *testing.T) {
 				ErrlessBuild(),
 			ShouldBeErr: true,
 			IsErr: func(err error) bool {
-				return errors.Is(err, app.ErrSpecificationNotFound)
+				return errors.Is(err, service.ErrSpecificationNotFound)
 			},
 		},
 		{

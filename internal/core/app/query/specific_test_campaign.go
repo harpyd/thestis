@@ -8,11 +8,15 @@ import (
 	"github.com/harpyd/thestis/internal/core/app"
 )
 
-type SpecificTestCampaignHandler struct {
-	readModel app.SpecificTestCampaignReadModel
+type SpecificTestCampaignReadModel interface {
+	FindTestCampaign(ctx context.Context, qry app.SpecificTestCampaignQuery) (app.SpecificTestCampaign, error)
 }
 
-func NewSpecificTestCampaignHandler(readModel app.SpecificTestCampaignReadModel) SpecificTestCampaignHandler {
+type SpecificTestCampaignHandler struct {
+	readModel SpecificTestCampaignReadModel
+}
+
+func NewSpecificTestCampaignHandler(readModel SpecificTestCampaignReadModel) SpecificTestCampaignHandler {
 	if readModel == nil {
 		panic("specific test campaign read model is nil")
 	}
