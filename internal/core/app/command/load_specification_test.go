@@ -15,7 +15,7 @@ import (
 	"github.com/harpyd/thestis/internal/core/entity/user"
 )
 
-func TestPanickingNewLoadSpecificationHandler(t *testing.T) {
+func TestNewLoadSpecificationHandlerPanics(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {

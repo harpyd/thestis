@@ -11,7 +11,7 @@ import (
 	"github.com/harpyd/thestis/internal/core/app/service/mock"
 )
 
-func TestPanickingNewCreateTestCampaignHandler(t *testing.T) {
+func TestNewCreateTestCampaignHandlerPanics(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
