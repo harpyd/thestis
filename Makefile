@@ -15,12 +15,15 @@ thestis-validate-build:
 	go mod download && CGO_ENABLES=0 go build -o ./.bin/thestis-validate ./cmd/thestis-validate
 
 thestis-build:
+	go mod download && CGO_ENABLED=0 go build -o ./.bin/thestis ./cmd/thestis
+
+thestis-linux-build:
 	go mod download && CGO_ENABLED=0 GOOS=linux go build -o ./.bin/thestis ./cmd/thestis
 
 lint:
 	golangci-lint run
 
-run-dev: thestis-build
+run-dev: thestis-linux-build
 	docker-compose -f ./deployments/dev/docker-compose.yml --project-directory . up --remove-orphans thestis
 
 stop-dev:
