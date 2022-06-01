@@ -128,7 +128,7 @@ func (c *Context) Start() {
 
 	c.logger.Info(
 		"HTTP server started",
-		service.StringLogField("port", fmt.Sprintf(":%s", c.config.HTTP.Port)),
+		"port", fmt.Sprintf(":%s", c.config.HTTP.Port),
 	)
 
 	if err := c.server.Start(); !errors.Is(err, http.ErrServerClosed) {
@@ -172,7 +172,7 @@ func (c *Context) shutdownServer() error {
 
 func (c *Context) zap() *zap.Logger {
 	c.zapSingleton.once.Do(func() {
-		logger, err := zap.NewProduction(zap.AddCallerSkip(1))
+		logger, err := zap.NewProduction()
 		if err != nil {
 			log.Fatalf("Failed to create zap logger: %v", err)
 		}
@@ -243,7 +243,7 @@ func (c *Context) performanceWorkerPool() *workerpool.WorkerPool {
 
 		c.logger.Info(
 			"Performance worker pool initialization completed",
-			service.IntLogField("workers", c.config.Performance.Workers),
+			"workers", c.config.Performance.Workers,
 		)
 	})
 
@@ -286,7 +286,7 @@ func (c *Context) initConfig(configsPath string) {
 
 func (c *Context) initPersistent() {
 	db := c.mongo()
-	logField := service.StringLogField("db", "mongo")
+	args := []interface{}{"db", "mongo"}
 
 	var (
 		testCampaignRepo = mongoAdapter.NewTestCampaignRepository(db)
@@ -296,27 +296,27 @@ func (c *Context) initPersistent() {
 	)
 
 	c.persistent.testCampaignRepo = testCampaignRepo
-	c.logger.Info("Test campaign repository initialization completed", logField)
+	c.logger.Info("Test campaign repository initialization completed", args...)
 
 	c.persistent.specRepo = specRepo
-	c.logger.Info("Specification repository initialization completed", logField)
+	c.logger.Info("Specification repository initialization completed", args...)
 
 	c.persistent.perfRepo = perfRepo
-	c.logger.Info("Performance repository initialization completed", logField)
+	c.logger.Info("Performance repository initialization completed", args...)
 
 	c.persistent.flowRepo = flowRepo
-	c.logger.Info("Flow repository initialization completed", logField)
+	c.logger.Info("Flow repository initialization completed", args...)
 
 	c.persistent.specificTestCampaignRM = testCampaignRepo
-	c.logger.Info("Specific test campaign read model initialization completed", logField)
+	c.logger.Info("Specific test campaign read model initialization completed", args...)
 
 	c.persistent.specificSpecRM = specRepo
-	c.logger.Info("Specific specification read model initialization completed", logField)
+	c.logger.Info("Specific specification read model initialization completed", args...)
 }
 
 func (c *Context) initSpecificationParser() {
 	c.specParser = yaml.NewSpecificationParser()
-	c.logger.Info("Specification parser service initialization completed", service.StringLogField("type", "yaml"))
+	c.logger.Info("Specification parser service initialization completed", "type", "yaml")
 }
 
 func (c *Context) initApplication() {
@@ -357,7 +357,7 @@ func (c *Context) initMetrics() {
 
 	c.metrics.httpMetric = mrs
 
-	c.logger.Info("Metrics registration completed", service.StringLogField("db", "prometheus"))
+	c.logger.Info("Metrics registration completed", "db", "prometheus")
 }
 
 func (c *Context) initSignalBus() {
@@ -370,13 +370,13 @@ func (c *Context) initSignalBus() {
 		c.logger.Fatal(
 			"Invalid performance signal bus",
 			errors.Errorf("%s is not valid signal bus", c.config.Performance.SignalBus),
-			service.StringLogField("allowed", config.Nats),
+			"allowed", config.Nats,
 		)
 	}
 
 	c.logger.Info(
 		"Signal bus initialization completed",
-		service.StringLogField("signalBus", c.config.Performance.SignalBus),
+		"signalBus", c.config.Performance.SignalBus,
 	)
 }
 
@@ -395,7 +395,7 @@ func (c *Context) initPerformance() {
 
 	c.logger.Info(
 		"Performance maintainer initialized",
-		service.StringLogField("policy", c.config.Performance.Policy),
+		"policy", c.config.Performance.Policy,
 	)
 }
 
@@ -416,7 +416,7 @@ func (c *Context) initPerformancePolicy() {
 	c.logger.Fatal(
 		"Invalid performance steps policy",
 		errors.Errorf("%s is not valid steps policy", c.config.Performance.Policy),
-		service.StringLogField("allowed", config.SavePerStepPolicy),
+		"allowed", config.SavePerStepPolicy,
 	)
 }
 
@@ -436,11 +436,11 @@ func (c *Context) initAuthenticationProvider() {
 		c.logger.Fatal(
 			"Invalid auth type",
 			errors.Errorf("%s is not valid auth type", authType),
-			service.StringLogField("allowed", strings.Join([]string{config.FakeAuth, config.FirebaseAuth}, ", ")),
+			"allowed", strings.Join([]string{config.FakeAuth, config.FirebaseAuth}, ", "),
 		)
 	}
 
-	c.logger.Info("Authentication provider initialization completed", service.StringLogField("auth", authType))
+	c.logger.Info("Authentication provider initialization completed", "auth", authType)
 }
 
 func (c *Context) initServer() {

@@ -22,8 +22,8 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 
 	reactor := h.messageReactor(
 		r,
-		service.StringLogField("performanceId", cmd.PerformanceID),
-		service.BoolLogField("restarted", false),
+		"performanceId", cmd.PerformanceID,
+		"restarted", false,
 	)
 
 	err := h.app.Commands.StartPerformance.Handle(r.Context(), cmd, reactor)
@@ -59,8 +59,8 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 
 	reactor := h.messageReactor(
 		r,
-		service.StringLogField("performanceId", performanceID),
-		service.BoolLogField("restarted", true),
+		"performanceId", performanceID,
+		"restarted", true,
 	)
 
 	err := h.app.Commands.RestartPerformance.Handle(r.Context(), cmd, reactor)
@@ -139,19 +139,19 @@ func (h handler) GetPerformance(w http.ResponseWriter, _ *http.Request, _ string
 
 func (h handler) messageReactor(
 	r *http.Request,
-	fields ...service.LogField,
+	args ...interface{},
 ) service.MessageReactor {
 	reqID := middleware.GetReqID(r.Context())
 
-	fields = append(fields, service.StringLogField("requestId", reqID))
+	args = append(args, "requestId", reqID)
 
 	return func(msg service.Message) {
 		if msg.Err() == nil || msg.Event() == performance.FiredFail {
-			h.logger.Info(msg.String(), fields...)
+			h.logger.Info(msg.String(), args...)
 
 			return
 		}
 
-		h.logger.Error(msg.String(), msg.Err(), fields...)
+		h.logger.Error(msg.String(), msg.Err(), args...)
 	}
 }

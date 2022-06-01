@@ -1,62 +1,55 @@
 package zap
 
 import (
-	"github.com/harpyd/thestis/internal/core/app/service"
 	"go.uber.org/zap"
+
+	"github.com/harpyd/thestis/internal/core/app/service"
 )
 
 type Logger struct {
-	logger *zap.Logger
+	base *zap.SugaredLogger
 }
 
-func NewLogger(logger *zap.Logger) *Logger {
-	return &Logger{
-		logger: logger,
+func NewLogger(logger *zap.Logger) Logger {
+	return Logger{
+		base: logger.WithOptions(zap.AddCallerSkip(1)).Sugar(),
 	}
 }
 
-func (l Logger) With(fields ...service.LogField) service.Logger {
-	return &Logger{
-		logger: l.logger.With(mapToZapFields(fields)...),
+func (l Logger) With(args ...interface{}) service.Logger {
+	return Logger{
+		base: l.base.With(args),
 	}
 }
 
-func (l Logger) Debug(msg string, fields ...service.LogField) {
-	l.logger.Debug(msg, mapToZapFields(fields)...)
-}
-
-func (l Logger) Info(msg string, fields ...service.LogField) {
-	l.logger.Info(msg, mapToZapFields(fields)...)
-}
-
-func (l Logger) Warn(msg string, err error, fields ...service.LogField) {
-	l.logger.Warn(msg, mapToZapFieldsWithErr(err, fields)...)
-}
-
-func (l Logger) Error(msg string, err error, fields ...service.LogField) {
-	l.logger.Error(msg, mapToZapFieldsWithErr(err, fields)...)
-}
-
-func (l Logger) Fatal(msg string, err error, fields ...service.LogField) {
-	l.logger.Fatal(msg, mapToZapFieldsWithErr(err, fields)...)
-}
-
-func mapToZapFields(fields []service.LogField) []zap.Field {
-	zapFields := make([]zap.Field, 0, len(fields))
-	for _, f := range fields {
-		zapFields = append(zapFields, zap.String(f.Key(), f.Value()))
+func (l Logger) Named(name string) service.Logger {
+	return Logger{
+		base: l.base.Named(name),
 	}
-
-	return zapFields
 }
 
-func mapToZapFieldsWithErr(err error, fields []service.LogField) []zap.Field {
-	zapFields := make([]zap.Field, 0, len(fields)+1)
-	zapFields = append(zapFields, zap.Error(err))
+func (l Logger) Debug(msg string, args ...interface{}) {
+	l.base.Debugw(msg, args...)
+}
 
-	for _, f := range fields {
-		zapFields = append(zapFields, zap.String(f.Key(), f.Value()))
-	}
+func (l Logger) Info(msg string, args ...interface{}) {
+	l.base.Infow(msg, args...)
+}
 
-	return zapFields
+func (l Logger) Warn(msg string, err error, args ...interface{}) {
+	args = append(args, zap.Error(err))
+
+	l.base.Warnw(msg, args...)
+}
+
+func (l Logger) Error(msg string, err error, args ...interface{}) {
+	args = append(args, zap.Error(err))
+
+	l.base.Errorw(msg, args...)
+}
+
+func (l Logger) Fatal(msg string, err error, args ...interface{}) {
+	args = append(args, zap.Error(err))
+
+	l.base.Fatalw(msg, args...)
 }
