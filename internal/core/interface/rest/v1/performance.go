@@ -141,7 +141,9 @@ func (h handler) messageReactor(
 	r *http.Request,
 	fields ...service.LogField,
 ) service.MessageReactor {
-	fields = append(fields, service.StringLogField("requestId", middleware.GetReqID(r.Context())))
+	reqID := middleware.GetReqID(r.Context())
+
+	fields = append(fields, service.StringLogField("requestId", reqID))
 
 	return func(msg service.Message) {
 		if msg.Err() == nil || msg.Event() == performance.FiredFail {
