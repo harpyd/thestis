@@ -97,6 +97,7 @@ func TestHandleStartPerformance(t *testing.T) {
 		{
 			Name: "specification_with_such_test_campaign_id_not_found",
 			Command: command.StartPerformance{
+				PerformanceID:  "74ff7302-4c99-4729-b1b3-94c03db2e1ba",
 				TestCampaignID: "68baf422-777f-4a0e-b35a-4fff5858af2d",
 				StartedByID:    "d8d1e4ab-8f24-4c79-a1f2-49e24b3f119a",
 			},
@@ -112,6 +113,7 @@ func TestHandleStartPerformance(t *testing.T) {
 		{
 			Name: "user_cannot_see_specification",
 			Command: command.StartPerformance{
+				PerformanceID:  "144ed969-2703-419f-9664-36e40b9c51fa",
 				TestCampaignID: "5ee6228e-5b0b-4d40-b4e5-9a138bef9f84",
 				StartedByID:    "fb883739-2c8c-4a4e-bca2-f96b204f4ac8",
 			},
@@ -129,6 +131,7 @@ func TestHandleStartPerformance(t *testing.T) {
 		{
 			Name: "success_performance_starting",
 			Command: command.StartPerformance{
+				PerformanceID:  "09193738-a34c-4a43-9471-d5c74af9f11e",
 				TestCampaignID: "70c8e87d-395d-4ae6-b53e-3b2f587039a3",
 				StartedByID:    "aa584d3d-c790-4ed3-8bfa-19e1b6fed88e",
 			},
@@ -161,7 +164,7 @@ func TestHandleStartPerformance(t *testing.T) {
 
 			ctx := context.Background()
 
-			perfID, messages, err := handler.Handle(ctx, c.Command)
+			err := handler.Handle(ctx, c.Command, func(msg service.Message) {})
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))
@@ -172,8 +175,6 @@ func TestHandleStartPerformance(t *testing.T) {
 
 			require.NoError(t, err)
 
-			require.NotEmpty(t, perfID)
-			require.NotNil(t, messages)
 			require.Equal(t, 1, perfRepo.PerformancesNumber())
 		})
 	}

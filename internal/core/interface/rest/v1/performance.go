@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/app/service"
@@ -14,22 +15,21 @@ import (
 )
 
 func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCampaignID string) {
-	cmd, ok := decodeStartPerformanceCommand(w, r, testCampaignID)
+	cmd, ok := decodeStartPerformanceCommand(w, r, uuid.New().String(), testCampaignID)
 	if !ok {
 		return
 	}
 
-	perfID, messages, err := h.app.Commands.StartPerformance.Handle(r.Context(), cmd)
-	if err == nil {
-		w.Header().Set("Location", fmt.Sprintf("/performances/%s", perfID))
-		w.WriteHeader(http.StatusAccepted)
+	reactor := h.messageReactor(
+		r,
+		service.StringLogField("performanceId", cmd.PerformanceID),
+		service.BoolLogField("restarted", false),
+	)
 
-		go h.logMessages(
-			r,
-			messages,
-			service.StringLogField("performanceId", perfID),
-			service.BoolLogField("restarted", false),
-		)
+	err := h.app.Commands.StartPerformance.Handle(r.Context(), cmd, reactor)
+	if err == nil {
+		w.Header().Set("Location", fmt.Sprintf("/performances/%s", cmd.PerformanceID))
+		w.WriteHeader(http.StatusAccepted)
 
 		return
 	}
@@ -57,11 +57,15 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 		return
 	}
 
-	messages, err := h.app.Commands.RestartPerformance.Handle(r.Context(), cmd)
+	reactor := h.messageReactor(
+		r,
+		service.StringLogField("performanceId", performanceID),
+		service.BoolLogField("restarted", true),
+	)
+
+	err := h.app.Commands.RestartPerformance.Handle(r.Context(), cmd, reactor)
 	if err == nil {
 		w.WriteHeader(http.StatusNoContent)
-
-		go h.logMessages(r, messages, service.BoolLogField("restarted", true))
 
 		return
 	}
@@ -133,16 +137,19 @@ func (h handler) GetPerformance(w http.ResponseWriter, _ *http.Request, _ string
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-func (h handler) logMessages(r *http.Request, messages <-chan service.Message, extraFields ...service.LogField) {
-	extraFields = append(extraFields, service.StringLogField("requestId", middleware.GetReqID(r.Context())))
+func (h handler) messageReactor(
+	r *http.Request,
+	fields ...service.LogField,
+) service.MessageReactor {
+	fields = append(fields, service.StringLogField("requestId", middleware.GetReqID(r.Context())))
 
-	for msg := range messages {
+	return func(msg service.Message) {
 		if msg.Err() == nil || msg.Event() == performance.FiredFail {
-			h.logger.Info(msg.String(), extraFields...)
+			h.logger.Info(msg.String(), fields...)
 
-			continue
+			return
 		}
 
-		h.logger.Error(msg.String(), msg.Err(), extraFields...)
+		h.logger.Error(msg.String(), msg.Err(), fields...)
 	}
 }

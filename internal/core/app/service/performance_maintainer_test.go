@@ -3,7 +3,6 @@ package service_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -15,147 +14,77 @@ import (
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
 
-func TestMessage(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		Message        service.Message
-		ExpectedEvent  performance.Event
-		ExpectedErr    error
-		ExpectedString string
-	}{
-		{
-			Message:        service.Message{},
-			ExpectedEvent:  performance.NoEvent,
-			ExpectedErr:    nil,
-			ExpectedString: "",
-		},
-		{
-			Message:        service.NewMessageFromError(errors.New("foo")),
-			ExpectedEvent:  performance.NoEvent,
-			ExpectedErr:    errors.New("foo"),
-			ExpectedString: "foo",
-		},
-		{
-			Message: service.NewMessageFromStep(performance.NewThesisStep(
-				specification.NewThesisSlug("foo", "bar", "baz"),
-				performance.HTTPPerformer,
-				performance.FiredPerform,
-			)),
-			ExpectedEvent:  performance.FiredPerform,
-			ExpectedErr:    nil,
-			ExpectedString: "foo.bar.baz: event = perform, type = HTTP",
-		},
-		{
-			Message: service.NewMessageFromStep(performance.NewScenarioStepWithErr(
-				errors.New("something wrong"),
-				specification.NewScenarioSlug("foo", "bar"),
-				performance.FiredCrash,
-			)),
-			ExpectedEvent:  performance.FiredCrash,
-			ExpectedErr:    errors.New("something wrong"),
-			ExpectedString: "foo.bar: event = crash, err = something wrong",
-		},
-	}
-
-	for i := range testCases {
-		c := testCases[i]
-
-		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			t.Parallel()
-
-			t.Run("event", func(t *testing.T) {
-				require.Equal(t, c.ExpectedEvent, c.Message.Event())
-			})
-
-			if c.ExpectedErr != nil {
-				t.Run("err", func(t *testing.T) {
-					require.EqualError(t, c.Message.Err(), c.ExpectedErr.Error())
-				})
-			} else {
-				t.Run("no_err", func(t *testing.T) {
-					require.NoError(t, c.Message.Err())
-				})
-			}
-
-			t.Run("string", func(t *testing.T) {
-				require.Equal(t, c.ExpectedString, c.Message.String())
-			})
-		})
-	}
-}
-
 var (
 	errPerformanceAcquire = errors.New("performance acquire")
 	errPerformanceRelease = errors.New("performance release")
 )
 
-func TestPanickingNewPerformanceMaintainer(t *testing.T) {
+func TestNewPerformanceMaintainerPanics(t *testing.T) {
 	t.Parallel()
 
 	const flowTimeout = 1 * time.Second
 
 	testCases := []struct {
-		Name             string
-		GivenGuard       service.PerformanceGuard
-		GivenSubscriber  service.PerformanceCancelSubscriber
-		GivenStepsPolicy service.StepsPolicy
-		GivenEnqueuer    service.Enqueuer
-		ShouldPanic      bool
-		PanicMessage     string
+		Name                   string
+		GivenGuard             service.PerformanceGuard
+		GivenSubscriber        service.PerformanceCancelSubscriber
+		GivenPerformancePolicy service.PerformancePolicy
+		GivenEnqueuer          service.Enqueuer
+		ShouldPanic            bool
+		PanicMessage           string
 	}{
 		{
-			Name:             "all_dependencies_are_not_nil",
-			GivenGuard:       mock.NewPerformanceGuard(nil, nil),
-			GivenSubscriber:  mock.NewPerformanceCancelPubsub(),
-			GivenStepsPolicy: mock.NewStepsPolicy(),
-			GivenEnqueuer:    mock.NewEnqueuer(),
-			ShouldPanic:      false,
+			Name:                   "all_dependencies_are_not_nil",
+			GivenGuard:             mock.NewPerformanceGuard(nil, nil),
+			GivenSubscriber:        mock.NewPerformanceCancelPubsub(),
+			GivenPerformancePolicy: mock.NewPerformancePolicy(),
+			GivenEnqueuer:          mock.NewEnqueuer(),
+			ShouldPanic:            false,
 		},
 		{
-			Name:             "performance_guard_is_nil",
-			GivenGuard:       nil,
-			GivenSubscriber:  mock.NewPerformanceCancelPubsub(),
-			GivenStepsPolicy: mock.NewStepsPolicy(),
-			GivenEnqueuer:    mock.NewEnqueuer(),
-			ShouldPanic:      true,
-			PanicMessage:     "performance guard is nil",
+			Name:                   "performance_guard_is_nil",
+			GivenGuard:             nil,
+			GivenSubscriber:        mock.NewPerformanceCancelPubsub(),
+			GivenPerformancePolicy: mock.NewPerformancePolicy(),
+			GivenEnqueuer:          mock.NewEnqueuer(),
+			ShouldPanic:            true,
+			PanicMessage:           "performance guard is nil",
 		},
 		{
-			Name:             "performance_cancel_subscriber_is_nil",
-			GivenGuard:       mock.NewPerformanceGuard(nil, nil),
-			GivenSubscriber:  nil,
-			GivenStepsPolicy: mock.NewStepsPolicy(),
-			GivenEnqueuer:    mock.NewEnqueuer(),
-			ShouldPanic:      true,
-			PanicMessage:     "performance cancel subscriber is nil",
+			Name:                   "performance_cancel_subscriber_is_nil",
+			GivenGuard:             mock.NewPerformanceGuard(nil, nil),
+			GivenSubscriber:        nil,
+			GivenPerformancePolicy: mock.NewPerformancePolicy(),
+			GivenEnqueuer:          mock.NewEnqueuer(),
+			ShouldPanic:            true,
+			PanicMessage:           "performance cancel subscriber is nil",
 		},
 		{
-			Name:             "steps_policy_is_nil",
-			GivenGuard:       mock.NewPerformanceGuard(nil, nil),
-			GivenSubscriber:  mock.NewPerformanceCancelPubsub(),
-			GivenStepsPolicy: nil,
-			GivenEnqueuer:    mock.NewEnqueuer(),
-			ShouldPanic:      true,
-			PanicMessage:     "steps policy is nil",
+			Name:                   "steps_policy_is_nil",
+			GivenGuard:             mock.NewPerformanceGuard(nil, nil),
+			GivenSubscriber:        mock.NewPerformanceCancelPubsub(),
+			GivenPerformancePolicy: nil,
+			GivenEnqueuer:          mock.NewEnqueuer(),
+			ShouldPanic:            true,
+			PanicMessage:           "performance policy is nil",
 		},
 		{
-			Name:             "enqueuer_is_nil",
-			GivenGuard:       mock.NewPerformanceGuard(nil, nil),
-			GivenSubscriber:  mock.NewPerformanceCancelPubsub(),
-			GivenStepsPolicy: mock.NewStepsPolicy(),
-			GivenEnqueuer:    nil,
-			ShouldPanic:      true,
-			PanicMessage:     "enqueuer is nil",
+			Name:                   "enqueuer_is_nil",
+			GivenGuard:             mock.NewPerformanceGuard(nil, nil),
+			GivenSubscriber:        mock.NewPerformanceCancelPubsub(),
+			GivenPerformancePolicy: mock.NewPerformancePolicy(),
+			GivenEnqueuer:          nil,
+			ShouldPanic:            true,
+			PanicMessage:           "enqueuer is nil",
 		},
 		{
-			Name:             "all_dependencies_are_nil",
-			GivenGuard:       nil,
-			GivenSubscriber:  nil,
-			GivenStepsPolicy: nil,
-			GivenEnqueuer:    nil,
-			ShouldPanic:      true,
-			PanicMessage:     "performance guard is nil",
+			Name:                   "all_dependencies_are_nil",
+			GivenGuard:             nil,
+			GivenSubscriber:        nil,
+			GivenPerformancePolicy: nil,
+			GivenEnqueuer:          nil,
+			ShouldPanic:            true,
+			PanicMessage:           "performance guard is nil",
 		},
 	}
 
@@ -169,7 +98,7 @@ func TestPanickingNewPerformanceMaintainer(t *testing.T) {
 				_ = service.NewPerformanceMaintainer(
 					c.GivenGuard,
 					c.GivenSubscriber,
-					c.GivenStepsPolicy,
+					c.GivenPerformancePolicy,
 					c.GivenEnqueuer,
 					flowTimeout,
 				)
@@ -369,25 +298,25 @@ func TestMaintainPerformance(t *testing.T) {
 			const flowTimeout = 5 * time.Second
 
 			var (
-				cancelPubsub = mock.NewPerformanceCancelPubsub()
-				stepsPolicy  = mock.NewStepsPolicy()
-				enqueuer     = mock.NewEnqueuer()
+				pubsub   = mock.NewPerformanceCancelPubsub()
+				policy   = mock.NewPerformancePolicy()
+				enqueuer = mock.NewEnqueuer()
 			)
 
 			maintainer := service.NewPerformanceMaintainer(
 				c.Guard,
-				cancelPubsub,
-				stepsPolicy,
+				pubsub,
+				policy,
 				enqueuer,
 				flowTimeout,
 			)
 
 			perf := c.PerformanceFactory()
 
-			messages, err := maintainer.MaintainPerformance(context.Background(), perf)
+			var actualMessages []service.Message
 
-			t.Run("acquire_performance", func(t *testing.T) {
-				require.Equal(t, 1, c.Guard.AcquireCalls())
+			done, err := maintainer.MaintainPerformance(context.Background(), perf, func(msg service.Message) {
+				actualMessages = append(actualMessages, msg)
 			})
 
 			if c.ShouldBeErr {
@@ -398,8 +327,16 @@ func TestMaintainPerformance(t *testing.T) {
 				return
 			}
 
+			require.NoError(t, err)
+
+			<-done
+
+			t.Run("acquire_performance", func(t *testing.T) {
+				require.Equal(t, 1, c.Guard.AcquireCalls())
+			})
+
 			t.Run("subscribe_performance_canceled", func(t *testing.T) {
-				require.Equal(t, 1, cancelPubsub.SubscribeCalls())
+				require.Equal(t, 1, pubsub.SubscribeCalls())
 			})
 
 			t.Run("performing_enqueued", func(t *testing.T) {
@@ -407,19 +344,21 @@ func TestMaintainPerformance(t *testing.T) {
 			})
 
 			t.Run("messages", func(t *testing.T) {
-				require.NoError(t, err)
-
-				requireMessagesMatch(t, c.ExpectedMessages, messages)
+				requireMessagesMatch(t, c.ExpectedMessages, actualMessages)
 			})
 
 			t.Run("release_performance", func(t *testing.T) {
 				require.Equal(t, 1, c.Guard.ReleaseCalls())
 			})
+
+			t.Run("enqueue_performance_maintaining", func(t *testing.T) {
+				require.Equal(t, 1, enqueuer.EnqueueCalls())
+			})
 		})
 	}
 }
 
-func TestCancelMaintainPerformance(t *testing.T) {
+func TestCancelWhilePerformanceIsMaintaining(t *testing.T) {
 	t.Parallel()
 
 	spec := (&specification.Builder{}).
@@ -447,36 +386,16 @@ func TestCancelMaintainPerformance(t *testing.T) {
 		ErrlessBuild()
 
 	testCases := []struct {
-		Name                     string
-		CancelContext            bool
-		FlowTimeout              time.Duration
-		PublishCancel            bool
-		ExpectedIncludedMessages []service.Message
+		Name                      string
+		FlowTimeout               time.Duration
+		PublishCancel             bool
+		ExpectedContainedMessages []service.Message
 	}{
 		{
-			Name:          "context_canceled",
-			CancelContext: true,
-			FlowTimeout:   1 * time.Second,
-			PublishCancel: false,
-			ExpectedIncludedMessages: []service.Message{
-				service.NewMessageFromStep(
-					performance.NewScenarioStepWithErr(
-						performance.WrapWithTerminatedError(
-							context.Canceled,
-							performance.FiredCancel,
-						),
-						specification.NewScenarioSlug("foo", "bar"),
-						performance.FiredCancel,
-					),
-				),
-			},
-		},
-		{
 			Name:          "flow_timeout_exceeded",
-			CancelContext: false,
 			FlowTimeout:   5 * time.Millisecond,
 			PublishCancel: false,
-			ExpectedIncludedMessages: []service.Message{
+			ExpectedContainedMessages: []service.Message{
 				service.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
 						performance.WrapWithTerminatedError(
@@ -491,10 +410,9 @@ func TestCancelMaintainPerformance(t *testing.T) {
 		},
 		{
 			Name:          "cancel_published",
-			CancelContext: false,
 			FlowTimeout:   1 * time.Second,
 			PublishCancel: true,
-			ExpectedIncludedMessages: []service.Message{
+			ExpectedContainedMessages: []service.Message{
 				service.NewMessageFromStep(
 					performance.NewScenarioStepWithErr(
 						performance.WrapWithTerminatedError(
@@ -516,16 +434,16 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			t.Parallel()
 
 			var (
-				guard        = errlessPerformanceGuard(t)
-				cancelPubsub = mock.NewPerformanceCancelPubsub()
-				stepsPolicy  = mock.NewStepsPolicy()
-				enqueuer     = mock.NewEnqueuer()
+				guard    = errlessPerformanceGuard(t)
+				pubsub   = mock.NewPerformanceCancelPubsub()
+				policy   = mock.NewPerformancePolicy()
+				enqueuer = mock.NewEnqueuer()
 			)
 
 			maintainer := service.NewPerformanceMaintainer(
 				guard,
-				cancelPubsub,
-				stepsPolicy,
+				pubsub,
+				policy,
 				enqueuer,
 				c.FlowTimeout,
 			)
@@ -542,203 +460,27 @@ func TestCancelMaintainPerformance(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 
-			messages, err := maintainer.MaintainPerformance(ctx, perf)
+			var actualMessages []service.Message
+
+			done, err := maintainer.MaintainPerformance(ctx, perf, func(msg service.Message) {
+				actualMessages = append(actualMessages, msg)
+			})
 			require.NoError(t, err)
 
-			if c.CancelContext {
-				cancel()
-			}
-
 			if c.PublishCancel {
-				err := cancelPubsub.PublishPerformanceCancel("foo")
+				err := pubsub.PublishPerformanceCancel("foo")
 				require.NoError(t, err)
 			}
 
-			t.Run("cancel_messages", func(t *testing.T) {
-				requireMessagesContain(t, messages, c.ExpectedIncludedMessages...)
+			<-done
+
+			t.Run("messages", func(t *testing.T) {
+				requireMessagesContain(t, actualMessages, c.ExpectedContainedMessages...)
 			})
 
 			t.Run("release_performance", func(t *testing.T) {
 				require.Equal(t, 1, guard.ReleaseCalls())
 			})
-		})
-	}
-}
-
-func TestAsPublishCancelError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		GivenError        error
-		ShouldBeWrapped   bool
-		ExpectedUnwrapped error
-	}{
-		{
-			GivenError:      nil,
-			ShouldBeWrapped: false,
-		},
-		{
-			GivenError:      service.WrapWithPublishCancelError(nil),
-			ShouldBeWrapped: false,
-		},
-		{
-			GivenError:        &service.PublishCancelError{},
-			ShouldBeWrapped:   true,
-			ExpectedUnwrapped: nil,
-		},
-		{
-			GivenError:        service.WrapWithPublishCancelError(errors.New("foo")),
-			ShouldBeWrapped:   true,
-			ExpectedUnwrapped: errors.New("foo"),
-		},
-	}
-
-	for i := range testCases {
-		c := testCases[i]
-
-		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			t.Parallel()
-
-			var target *service.PublishCancelError
-
-			if !c.ShouldBeWrapped {
-				t.Run("not", func(t *testing.T) {
-					require.False(t, errors.As(c.GivenError, &target))
-				})
-
-				return
-			}
-
-			t.Run("as", func(t *testing.T) {
-				require.ErrorAs(t, c.GivenError, &target)
-
-				t.Run("unwrap", func(t *testing.T) {
-					if c.ExpectedUnwrapped != nil {
-						require.EqualError(t, target.Unwrap(), c.ExpectedUnwrapped.Error())
-
-						return
-					}
-
-					require.NoError(t, target.Unwrap())
-				})
-			})
-		})
-	}
-}
-
-func TestFormatPublishCancelError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		GivenError          error
-		ExpectedErrorString string
-	}{
-		{
-			GivenError:          &service.PublishCancelError{},
-			ExpectedErrorString: "",
-		},
-		{
-			GivenError:          service.WrapWithPublishCancelError(errors.New("failed")),
-			ExpectedErrorString: "publish cancel: failed",
-		},
-	}
-
-	for i := range testCases {
-		c := testCases[i]
-
-		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			t.Parallel()
-
-			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
-		})
-	}
-}
-
-func TestAsSubscribeCancelError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		GivenError        error
-		ShouldBeWrapped   bool
-		ExpectedUnwrapped error
-	}{
-		{
-			GivenError:      nil,
-			ShouldBeWrapped: false,
-		},
-		{
-			GivenError:      service.WrapWithSubscribeCancelError(nil),
-			ShouldBeWrapped: false,
-		},
-		{
-			GivenError:        &service.SubscribeCancelError{},
-			ShouldBeWrapped:   true,
-			ExpectedUnwrapped: nil,
-		},
-		{
-			GivenError:        service.WrapWithSubscribeCancelError(errors.New("qoo")),
-			ShouldBeWrapped:   true,
-			ExpectedUnwrapped: errors.New("qoo"),
-		},
-	}
-
-	for i := range testCases {
-		c := testCases[i]
-
-		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			t.Parallel()
-
-			var target *service.SubscribeCancelError
-
-			if !c.ShouldBeWrapped {
-				t.Run("not", func(t *testing.T) {
-					require.False(t, errors.As(c.GivenError, &target))
-				})
-
-				return
-			}
-
-			t.Run("as", func(t *testing.T) {
-				require.ErrorAs(t, c.GivenError, &target)
-
-				t.Run("unwrap", func(t *testing.T) {
-					if c.ExpectedUnwrapped != nil {
-						require.EqualError(t, target.Unwrap(), c.ExpectedUnwrapped.Error())
-
-						return
-					}
-
-					require.NoError(t, target.Unwrap())
-				})
-			})
-		})
-	}
-}
-
-func TestFormatSubscribeCancelError(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		GivenError          error
-		ExpectedErrorString string
-	}{
-		{
-			GivenError:          &service.SubscribeCancelError{},
-			ExpectedErrorString: "",
-		},
-		{
-			GivenError:          service.WrapWithSubscribeCancelError(errors.New("wrong")),
-			ExpectedErrorString: "subscribe cancel: wrong",
-		},
-	}
-
-	for i := range testCases {
-		c := testCases[i]
-
-		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			t.Parallel()
-
-			require.EqualError(t, c.GivenError, c.ExpectedErrorString)
 		})
 	}
 }
@@ -767,38 +509,29 @@ func errlessPerformanceGuard(t *testing.T) *mock.PerformanceGuard {
 	return mock.NewPerformanceGuard(nil, nil)
 }
 
-func requireMessagesMatch(t *testing.T, expected []service.Message, actual <-chan service.Message) {
+func requireMessagesMatch(t *testing.T, expected []service.Message, actual []service.Message) {
 	t.Helper()
 
 	require.ElementsMatch(
 		t,
-		mapMessagesSliceToStrings(expected),
-		mapMessagesChanToStrings(actual, len(expected)),
+		mapMessagesToStrings(expected),
+		mapMessagesToStrings(actual),
 	)
 }
 
-func requireMessagesContain(t *testing.T, messages <-chan service.Message, contain ...service.Message) {
+func requireMessagesContain(t *testing.T, messages []service.Message, contain ...service.Message) {
 	t.Helper()
 
 	require.Subset(
 		t,
-		mapMessagesChanToStrings(messages, len(contain)),
-		mapMessagesSliceToStrings(contain),
+		mapMessagesToStrings(messages),
+		mapMessagesToStrings(contain),
 	)
 }
 
-func mapMessagesSliceToStrings(messages []service.Message) []string {
+func mapMessagesToStrings(messages []service.Message) []string {
 	result := make([]string, 0, len(messages))
 	for _, msg := range messages {
-		result = append(result, msg.String())
-	}
-
-	return result
-}
-
-func mapMessagesChanToStrings(messages <-chan service.Message, capacity int) []string {
-	result := make([]string, 0, capacity)
-	for msg := range messages {
 		result = append(result, msg.String())
 	}
 

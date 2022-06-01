@@ -12,6 +12,7 @@ import (
 func decodeCreateTestCampaignCommand(
 	w http.ResponseWriter,
 	r *http.Request,
+	testCampaignID string,
 ) (cmd command.CreateTestCampaign, ok bool) {
 	user, ok := authorize(w, r)
 	if !ok {
@@ -30,9 +31,10 @@ func decodeCreateTestCampaignCommand(
 	}
 
 	return command.CreateTestCampaign{
-		ViewName: rb.ViewName,
-		Summary:  summary,
-		OwnerID:  user.UUID,
+		TestCampaignID: testCampaignID,
+		ViewName:       rb.ViewName,
+		Summary:        summary,
+		OwnerID:        user.UUID,
 	}, true
 }
 

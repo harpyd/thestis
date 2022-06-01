@@ -15,7 +15,7 @@ import (
 func decodeSpecificationSourceCommand(
 	w http.ResponseWriter,
 	r *http.Request,
-	testCampaignID string,
+	specificationID, testCampaignID string,
 ) (cmd command.LoadSpecification, ok bool) {
 	user, ok := authorize(w, r)
 	if !ok {
@@ -30,9 +30,10 @@ func decodeSpecificationSourceCommand(
 	}
 
 	return command.LoadSpecification{
-		Content:        content,
-		TestCampaignID: testCampaignID,
-		LoadedByID:     user.UUID,
+		SpecificationID: specificationID,
+		TestCampaignID:  testCampaignID,
+		LoadedByID:      user.UUID,
+		Content:         content,
 	}, true
 }
 

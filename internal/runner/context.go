@@ -82,10 +82,10 @@ type performanceWPSingleton struct {
 }
 
 type performanceContext struct {
-	guard       service.PerformanceGuard
-	stepsPolicy service.StepsPolicy
-	maintainer  service.PerformanceMaintainer
-	enqueuer    service.Enqueuer
+	guard      service.PerformanceGuard
+	policy     service.PerformancePolicy
+	maintainer service.PerformanceMaintainer
+	enqueuer   service.Enqueuer
 }
 
 type persistentContext struct {
@@ -382,20 +382,20 @@ func (c *Context) initSignalBus() {
 
 func (c *Context) initPerformance() {
 	c.initPerformanceGuard()
-	c.initStepsPolicy()
+	c.initPerformancePolicy()
 	c.initEnqueuer()
 
 	c.performance.maintainer = service.NewPerformanceMaintainer(
 		c.performance.guard,
 		c.signalBus.subscriber,
-		c.performance.stepsPolicy,
+		c.performance.policy,
 		c.performance.enqueuer,
 		c.config.Performance.FlowTimeout,
 	)
 
 	c.logger.Info(
 		"Performance maintainer initialized",
-		service.StringLogField("stepsPolicy", c.config.Performance.Policy),
+		service.StringLogField("policy", c.config.Performance.Policy),
 	)
 }
 
@@ -403,11 +403,11 @@ func (c *Context) initPerformanceGuard() {
 	c.performance.guard = mongoAdapter.NewPerformanceGuard(c.mongo())
 }
 
-func (c *Context) initStepsPolicy() {
-	if c.config.Performance.Policy == config.EveryStepSavingPolicy {
-		c.performance.stepsPolicy = service.NewEveryStepSavingPolicy(
+func (c *Context) initPerformancePolicy() {
+	if c.config.Performance.Policy == config.SavePerStepPolicy {
+		c.performance.policy = service.NewSavePerStepPolicy(
 			c.persistent.flowRepo,
-			c.config.EveryStepSaving.SaveTimeout,
+			c.config.SavePerStep.SaveTimeout,
 		)
 
 		return
@@ -416,7 +416,7 @@ func (c *Context) initStepsPolicy() {
 	c.logger.Fatal(
 		"Invalid performance steps policy",
 		errors.Errorf("%s is not valid steps policy", c.config.Performance.Policy),
-		service.StringLogField("allowed", config.EveryStepSavingPolicy),
+		service.StringLogField("allowed", config.SavePerStepPolicy),
 	)
 }
 

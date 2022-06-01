@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/app/service"
@@ -12,13 +11,14 @@ import (
 )
 
 type CreateTestCampaign struct {
-	OwnerID  string
-	ViewName string
-	Summary  string
+	TestCampaignID string
+	OwnerID        string
+	ViewName       string
+	Summary        string
 }
 
 type CreateTestCampaignHandler interface {
-	Handle(ctx context.Context, cmd CreateTestCampaign) (string, error)
+	Handle(ctx context.Context, cmd CreateTestCampaign) error
 }
 
 type createTestCampaignHandler struct {
@@ -36,27 +36,21 @@ func NewCreateTestCampaignHandler(repo service.TestCampaignRepository) CreateTes
 func (h createTestCampaignHandler) Handle(
 	ctx context.Context,
 	cmd CreateTestCampaign,
-) (testCampaignID string, err error) {
+) (err error) {
 	defer func() {
 		err = errors.Wrap(err, "test campaign creation")
 	}()
 
-	testCampaignID = uuid.New().String()
-
 	tc, err := testcampaign.New(testcampaign.Params{
-		ID:        testCampaignID,
+		ID:        cmd.TestCampaignID,
 		OwnerID:   cmd.OwnerID,
 		ViewName:  cmd.ViewName,
 		Summary:   cmd.Summary,
 		CreatedAt: time.Now().UTC(),
 	})
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	if err = h.testCampaignRepo.AddTestCampaign(ctx, tc); err != nil {
-		return "", err
-	}
-
-	return
+	return h.testCampaignRepo.AddTestCampaign(ctx, tc)
 }

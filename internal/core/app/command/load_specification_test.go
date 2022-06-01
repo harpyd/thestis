@@ -115,9 +115,10 @@ func TestHandleLoadSpecification(t *testing.T) {
 		{
 			Name: "load_valid_specification",
 			Command: command.LoadSpecification{
-				TestCampaignID: "35474763-28f4-43a6-a184-e8894f50cba8",
-				LoadedByID:     "cb39a8e2-8f79-484b-bc48-51f83a8e8c33",
-				Content:        []byte(spec),
+				SpecificationID: "f469743b-23e2-4e78-a4eb-135cc0c841a2",
+				TestCampaignID:  "35474763-28f4-43a6-a184-e8894f50cba8",
+				LoadedByID:      "cb39a8e2-8f79-484b-bc48-51f83a8e8c33",
+				Content:         []byte(spec),
 			},
 			TestCampaign: testcampaign.MustNew(testcampaign.Params{
 				ID:       "35474763-28f4-43a6-a184-e8894f50cba8",
@@ -131,9 +132,10 @@ func TestHandleLoadSpecification(t *testing.T) {
 		{
 			Name: "load_invalid_specification",
 			Command: command.LoadSpecification{
-				TestCampaignID: "f18fdd19-d69c-4afe-a639-8bcefd6c4af9",
-				LoadedByID:     "dc0479de-33ed-4631-b9a4-2834c3efb7b1",
-				Content:        []byte(spec),
+				SpecificationID: "6eae77b6-0e37-42bc-9b20-461d8bc38c28",
+				TestCampaignID:  "f18fdd19-d69c-4afe-a639-8bcefd6c4af9",
+				LoadedByID:      "dc0479de-33ed-4631-b9a4-2834c3efb7b1",
+				Content:         []byte(spec),
 			},
 			TestCampaign: testcampaign.MustNew(testcampaign.Params{
 				ID:       "f18fdd19-d69c-4afe-a639-8bcefd6c4af9",
@@ -152,9 +154,10 @@ func TestHandleLoadSpecification(t *testing.T) {
 		{
 			Name: "user_cant_see_test_campaign",
 			Command: command.LoadSpecification{
-				TestCampaignID: "e7c57ccf-3bff-402b-ada5-71990e3ab0cd",
-				LoadedByID:     "1dccc358-2f91-427b-b2a8-f46169fc3a04",
-				Content:        []byte(spec),
+				SpecificationID: "4d5a9d3a-0ab5-470d-a6f1-69292acb9f9d",
+				TestCampaignID:  "e7c57ccf-3bff-402b-ada5-71990e3ab0cd",
+				LoadedByID:      "1dccc358-2f91-427b-b2a8-f46169fc3a04",
+				Content:         []byte(spec),
 			},
 			TestCampaign: testcampaign.MustNew(testcampaign.Params{
 				ID:      "e7c57ccf-3bff-402b-ada5-71990e3ab0cd",
@@ -185,7 +188,7 @@ func TestHandleLoadSpecification(t *testing.T) {
 
 			ctx := context.Background()
 
-			specID, err := handler.Handle(ctx, c.Command)
+			err := handler.Handle(ctx, c.Command)
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))
@@ -195,7 +198,6 @@ func TestHandleLoadSpecification(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.NotEmpty(t, specID)
 			require.Equal(t, 1, specRepo.SpecificationsNumber())
 		})
 	}

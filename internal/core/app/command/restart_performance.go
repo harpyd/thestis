@@ -16,7 +16,11 @@ type RestartPerformance struct {
 }
 
 type RestartPerformanceHandler interface {
-	Handle(ctx context.Context, cmd RestartPerformance) (<-chan service.Message, error)
+	Handle(
+		ctx context.Context,
+		cmd RestartPerformance,
+		reactFn service.MessageReactor,
+	) error
 }
 
 type restartPerformanceHandler struct {
@@ -54,24 +58,22 @@ func NewRestartPerformanceHandler(
 func (h restartPerformanceHandler) Handle(
 	ctx context.Context,
 	cmd RestartPerformance,
-) (messages <-chan service.Message, err error) {
+	reactFn service.MessageReactor,
+) (err error) {
 	defer func() {
 		err = errors.Wrap(err, "performance restarting")
 	}()
 
 	perf, err := h.perfRepo.GetPerformance(ctx, cmd.PerformanceID, h.specGetter, h.performerOpts...)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if err = user.CanAccessPerformance(cmd.StartedByID, perf, user.Read); err != nil {
-		return nil, err
+		return err
 	}
 
-	messages, err = h.maintainer.MaintainPerformance(context.Background(), perf)
-	if err != nil {
-		return nil, err
-	}
+	_, err = h.maintainer.MaintainPerformance(ctx, perf, reactFn)
 
-	return messages, nil
+	return err
 }

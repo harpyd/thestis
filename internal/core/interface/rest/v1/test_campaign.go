@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/app/service"
@@ -11,14 +12,17 @@ import (
 )
 
 func (h handler) CreateTestCampaign(w http.ResponseWriter, r *http.Request) {
-	cmd, ok := decodeCreateTestCampaignCommand(w, r)
+	cmd, ok := decodeCreateTestCampaignCommand(w, r, uuid.New().String())
 	if !ok {
 		return
 	}
 
-	createdTestCampaignID, err := h.app.Commands.CreateTestCampaign.Handle(r.Context(), cmd)
+	err := h.app.Commands.CreateTestCampaign.Handle(r.Context(), cmd)
 	if err == nil {
-		w.Header().Set("Location", fmt.Sprintf("/test-campaigns/%s", createdTestCampaignID))
+		w.Header().Set(
+			"Location",
+			fmt.Sprintf("/test-campaigns/%s", cmd.TestCampaignID),
+		)
 		w.WriteHeader(http.StatusCreated)
 
 		return

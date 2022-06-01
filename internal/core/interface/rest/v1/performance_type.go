@@ -8,7 +8,7 @@ import (
 
 func decodeStartPerformanceCommand(
 	w http.ResponseWriter, r *http.Request,
-	testCampaignID string,
+	performanceID, testCampaignID string,
 ) (cmd command.StartPerformance, ok bool) {
 	user, ok := authorize(w, r)
 	if !ok {
@@ -16,6 +16,7 @@ func decodeStartPerformanceCommand(
 	}
 
 	return command.StartPerformance{
+		PerformanceID:  performanceID,
 		TestCampaignID: testCampaignID,
 		StartedByID:    user.UUID,
 	}, true

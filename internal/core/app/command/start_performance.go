@@ -3,7 +3,6 @@ package command
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/app/service"
@@ -12,12 +11,17 @@ import (
 )
 
 type StartPerformance struct {
+	PerformanceID  string
 	TestCampaignID string
 	StartedByID    string
 }
 
 type StartPerformanceHandler interface {
-	Handle(ctx context.Context, cmd StartPerformance) (string, <-chan service.Message, error)
+	Handle(
+		ctx context.Context,
+		cmd StartPerformance,
+		reactFn service.MessageReactor,
+	) error
 }
 
 type startPerformanceHandler struct {
@@ -56,32 +60,28 @@ func NewStartPerformanceHandler(
 func (h startPerformanceHandler) Handle(
 	ctx context.Context,
 	cmd StartPerformance,
-) (perfID string, messages <-chan service.Message, err error) {
+	reactFn service.MessageReactor,
+) (err error) {
 	defer func() {
 		err = errors.Wrap(err, "new performance starting")
 	}()
 
 	spec, err := h.specRepo.GetActiveSpecificationByTestCampaignID(ctx, cmd.TestCampaignID)
 	if err != nil {
-		return "", nil, err
+		return err
 	}
 
 	if err = user.CanAccessSpecification(cmd.StartedByID, spec, user.Read); err != nil {
-		return "", nil, err
+		return err
 	}
 
-	perfID = uuid.New().String()
-
-	perf := performance.FromSpecification(perfID, spec, h.performerOpts...)
+	perf := performance.FromSpecification(cmd.PerformanceID, spec, h.performerOpts...)
 
 	if err = h.perfRepo.AddPerformance(ctx, perf); err != nil {
-		return "", nil, err
+		return err
 	}
 
-	messages, err = h.maintainer.MaintainPerformance(context.Background(), perf)
-	if err != nil {
-		return "", nil, err
-	}
+	_, err = h.maintainer.MaintainPerformance(ctx, perf, reactFn)
 
-	return perfID, messages, nil
+	return err
 }

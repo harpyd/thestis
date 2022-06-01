@@ -18,13 +18,14 @@ func NewPerformanceMaintainer(withErr bool) PerformanceMaintainer {
 func (m PerformanceMaintainer) MaintainPerformance(
 	_ context.Context,
 	_ *performance.Performance,
-) (<-chan service.Message, error) {
+	_ service.MessageReactor,
+) (<-chan service.DoneSignal, error) {
 	if m.withErr {
 		return nil, performance.ErrAlreadyStarted
 	}
 
-	messages := make(chan service.Message)
-	close(messages)
+	done := make(chan service.DoneSignal)
+	close(done)
 
-	return messages, nil
+	return done, nil
 }

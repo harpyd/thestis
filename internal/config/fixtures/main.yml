@@ -16,10 +16,10 @@ firebase:
   serviceAccountFile: ${SERVICE_ACCOUNT_FILE}
 performance:
   flowTimeout: 24h
-  policy: everyStepSaving
+  policy: savePerStep
   signalBus: nats
   workers: 34
-everyStepSaving:
+savePerStep:
   saveTimeout: 30s
 nats:
   url: nats://nats:4222

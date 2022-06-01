@@ -25,7 +25,7 @@ const LocalEnv Env = "local"
 
 type StepsPolicy = string
 
-const EveryStepSavingPolicy StepsPolicy = "everyStepSaving"
+const SavePerStepPolicy StepsPolicy = "savePerStep"
 
 type SignalBus = string
 
@@ -40,14 +40,14 @@ const (
 
 type (
 	Config struct {
-		Environment     Env
-		HTTP            HTTP
-		Mongo           Mongo
-		Auth            Auth
-		Firebase        Firebase
-		Performance     Performance
-		EveryStepSaving EveryStepSaving
-		Nats            NatsServer
+		Environment Env
+		HTTP        HTTP
+		Mongo       Mongo
+		Auth        Auth
+		Firebase    Firebase
+		Performance Performance
+		SavePerStep SavePerStep
+		Nats        NatsServer
 	}
 
 	HTTP struct {
@@ -81,7 +81,7 @@ type (
 		Workers     int
 	}
 
-	EveryStepSaving struct {
+	SavePerStep struct {
 		SaveTimeout time.Duration
 	}
 
@@ -205,7 +205,7 @@ func unmarshal(cfg *Config) error {
 		return err
 	}
 
-	if err := viper.UnmarshalKey("everyStepSaving", &cfg.EveryStepSaving); err != nil {
+	if err := viper.UnmarshalKey("savePerStep", &cfg.SavePerStep); err != nil {
 		return err
 	}
 

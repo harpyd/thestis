@@ -66,8 +66,9 @@ func TestHandleCreateTestCampaign(t *testing.T) {
 		{
 			Name: "create_test_campaign",
 			Command: command.CreateTestCampaign{
-				OwnerID:  "61fcde9c-b729-4ae1-9c86-a80d706eda6c",
-				ViewName: "test campaign",
+				TestCampaignID: "774fcdd9-3b8d-41c6-b7ee-a544a4247e30",
+				OwnerID:        "61fcde9c-b729-4ae1-9c86-a80d706eda6c",
+				ViewName:       "test campaign",
 			},
 			ShouldBeErr: false,
 		},
@@ -84,7 +85,7 @@ func TestHandleCreateTestCampaign(t *testing.T) {
 				handler = command.NewCreateTestCampaignHandler(repo)
 			)
 
-			tcID, err := handler.Handle(context.Background(), c.Command)
+			err := handler.Handle(context.Background(), c.Command)
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))
@@ -94,7 +95,6 @@ func TestHandleCreateTestCampaign(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.NotEmpty(t, tcID)
 			require.Equal(t, 1, repo.TestCampaignsNumber())
 		})
 	}

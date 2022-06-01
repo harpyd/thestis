@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/app/service"
@@ -13,14 +14,14 @@ import (
 )
 
 func (h handler) LoadSpecification(w http.ResponseWriter, r *http.Request, testCampaignID string) {
-	cmd, ok := decodeSpecificationSourceCommand(w, r, testCampaignID)
+	cmd, ok := decodeSpecificationSourceCommand(w, r, uuid.New().String(), testCampaignID)
 	if !ok {
 		return
 	}
 
-	loadedSpecID, err := h.app.Commands.LoadSpecification.Handle(r.Context(), cmd)
+	err := h.app.Commands.LoadSpecification.Handle(r.Context(), cmd)
 	if err == nil {
-		w.Header().Set("Location", fmt.Sprintf("/specifications/%s", loadedSpecID))
+		w.Header().Set("Location", fmt.Sprintf("/specifications/%s", cmd.SpecificationID))
 		w.WriteHeader(http.StatusCreated)
 
 		return

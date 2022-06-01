@@ -142,7 +142,7 @@ func TestHandleCancelPerformance(t *testing.T) {
 			ExpectedPublishCalls: 0,
 		},
 		{
-			Name: "success_performance_cancelation",
+			Name: "success_performance_cancellation",
 			Command: command.CancelPerformance{
 				PerformanceID: "e0c2e511-fc31-4fc4-804b-ceb91de4179f",
 				CanceledByID:  "c73e888a-21f2-42c7-84f7-111c4b155be8",

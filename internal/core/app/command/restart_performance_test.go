@@ -184,7 +184,7 @@ func TestHandleRestartPerformance(t *testing.T) {
 
 			ctx := context.Background()
 
-			messages, err := handler.Handle(ctx, c.Command)
+			err := handler.Handle(ctx, c.Command, func(msg service.Message) {})
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))
@@ -193,8 +193,6 @@ func TestHandleRestartPerformance(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-
-			require.NotNil(t, messages)
 		})
 	}
 }
