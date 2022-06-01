@@ -172,7 +172,7 @@ func (c *Context) shutdownServer() error {
 
 func (c *Context) zap() *zap.Logger {
 	c.zapSingleton.once.Do(func() {
-		logger, err := zap.NewProduction()
+		logger, err := zap.NewProduction(zap.AddCallerSkip(1))
 		if err != nil {
 			log.Fatalf("Failed to create zap logger: %v", err)
 		}
