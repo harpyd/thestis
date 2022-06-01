@@ -23,7 +23,7 @@ type (
 	TestCampaignRepository interface {
 		GetTestCampaign(ctx context.Context, tcID string) (*testcampaign.TestCampaign, error)
 		AddTestCampaign(ctx context.Context, tc *testcampaign.TestCampaign) error
-		UpdateTestCampaign(ctx context.Context, tcID string, updateFn TestCampaignUpdater) error
+		UpdateTestCampaign(ctx context.Context, tcID string, updater TestCampaignUpdater) error
 	}
 
 	TestCampaignUpdater func(

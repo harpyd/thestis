@@ -68,7 +68,7 @@ func (m *TestCampaignRepository) AddTestCampaign(ctx context.Context, tc *testca
 func (m *TestCampaignRepository) UpdateTestCampaign(
 	ctx context.Context,
 	tcID string,
-	updateFn service.TestCampaignUpdater,
+	updater service.TestCampaignUpdater,
 ) error {
 	if ctx.Err() != nil {
 		return service.WrapWithDatabaseError(ctx.Err())
@@ -82,7 +82,7 @@ func (m *TestCampaignRepository) UpdateTestCampaign(
 		return service.ErrTestCampaignNotFound
 	}
 
-	updatedTC, err := updateFn(ctx, &tc)
+	updatedTC, err := updater(ctx, &tc)
 	if err != nil {
 		return err
 	}

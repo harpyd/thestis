@@ -77,7 +77,7 @@ func (r *TestCampaignRepository) AddTestCampaign(ctx context.Context, tc *testca
 func (r *TestCampaignRepository) UpdateTestCampaign(
 	ctx context.Context,
 	tcID string,
-	updateFn service.TestCampaignUpdater,
+	updater service.TestCampaignUpdater,
 ) error {
 	session, err := r.testCampaigns.Database().Client().StartSession()
 	if err != nil {
@@ -97,7 +97,7 @@ func (r *TestCampaignRepository) UpdateTestCampaign(
 		}
 
 		tc := newTestCampaign(document)
-		updatedTestCampaign, err := updateFn(ctx, tc)
+		updatedTestCampaign, err := updater(ctx, tc)
 		if err != nil {
 			return nil, err
 		}
