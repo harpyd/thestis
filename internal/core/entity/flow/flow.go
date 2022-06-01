@@ -210,7 +210,7 @@ func (s *ThesisStatus) OccurredErrs() []string {
 // Fulfill starts a new flow from performance.Performance.
 // The result of the function is a Flow, with which you can
 // collect the steps coming from the performance during its
-// execution.x
+// execution.
 //
 // Each step contains information about the progress of the
 // performance, including performance.Event. The states of
