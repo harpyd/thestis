@@ -213,7 +213,7 @@ func TestFulfilledFlow(t *testing.T) {
 	}{
 		{
 			FlowFactory: func() *flow.Flow {
-				return flow.FromPerformance("", &performance.Performance{})
+				return flow.Fulfill("", &performance.Performance{})
 			},
 			ExpectedFlowID:        "",
 			ExpectedPerformanceID: "",
@@ -222,7 +222,7 @@ func TestFulfilledFlow(t *testing.T) {
 		},
 		{
 			FlowFactory: func() *flow.Flow {
-				return flow.FromPerformance("foo", &performance.Performance{})
+				return flow.Fulfill("foo", &performance.Performance{})
 			},
 			ExpectedFlowID:        "foo",
 			ExpectedPerformanceID: "",
@@ -231,7 +231,7 @@ func TestFulfilledFlow(t *testing.T) {
 		},
 		{
 			FlowFactory: func() *flow.Flow {
-				return flow.FromPerformance("bar", performance.Unmarshal(performance.Params{
+				return flow.Fulfill("bar", performance.Unmarshal(performance.Params{
 					ID: "doo",
 				}))
 			},
@@ -250,7 +250,7 @@ func TestFulfilledFlow(t *testing.T) {
 					}).
 					ErrlessBuild()
 
-				return flow.FromPerformance("rar", performance.FromSpecification("kra", spec))
+				return flow.Fulfill("rar", performance.FromSpecification("kra", spec))
 			},
 			ExpectedFlowID:        "rar",
 			ExpectedPerformanceID: "kra",
@@ -273,7 +273,7 @@ func TestFulfilledFlow(t *testing.T) {
 					}).
 					ErrlessBuild()
 
-				f := flow.FromPerformance("dar", performance.FromSpecification("fla", spec))
+				f := flow.Fulfill("dar", performance.FromSpecification("fla", spec))
 
 				return f.ApplyStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "baz"),
@@ -302,7 +302,7 @@ func TestFulfilledFlow(t *testing.T) {
 					}).
 					ErrlessBuild()
 
-				return flow.FromPerformance("sds", performance.FromSpecification("coo", spec)).
+				return flow.Fulfill("sds", performance.FromSpecification("coo", spec)).
 					ApplyStep(performance.NewScenarioStepWithErr(
 						errors.New("something wrong"),
 						specification.NewScenarioSlug("doo", "zoo"),

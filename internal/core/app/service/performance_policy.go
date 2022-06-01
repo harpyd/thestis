@@ -44,7 +44,7 @@ func (p *savePerStepPolicy) ConsumePerformance(
 ) {
 	var (
 		steps = perf.MustStart(ctx)
-		f     = flow.FromPerformance(uuid.New().String(), perf)
+		f     = flow.Fulfill(uuid.New().String(), perf)
 	)
 
 	defer func() {

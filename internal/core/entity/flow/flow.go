@@ -207,15 +207,16 @@ func (s *ThesisStatus) OccurredErrs() []string {
 	return occurredErrs
 }
 
-// FromPerformance starts a new flow from performance.Performance.
+// Fulfill starts a new flow from performance.Performance.
 // The result of the function is a Flow, with which you can
-// collect the steps coming from the performance during its execution.
+// collect the steps coming from the performance during its
+// execution.x
 //
 // Each step contains information about the progress of the
 // performance, including performance.Event. The states of
 // statuses change under the action of events. The transition
 // rules for the event are described in the State.Next method.
-func FromPerformance(id string, perf *performance.Performance) *Flow {
+func Fulfill(id string, perf *performance.Performance) *Flow {
 	var (
 		scenarios = perf.WorkingScenarios()
 		statuses  = make(map[specification.Slug]*Status, len(scenarios))
