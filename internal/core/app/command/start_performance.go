@@ -75,7 +75,7 @@ func (h startPerformanceHandler) Handle(
 		return err
 	}
 
-	perf := performance.FromSpecification(cmd.PerformanceID, spec, h.performerOpts...)
+	perf := performance.Trigger(cmd.PerformanceID, spec, h.performerOpts...)
 
 	if err = h.perfRepo.AddPerformance(ctx, perf); err != nil {
 		return err

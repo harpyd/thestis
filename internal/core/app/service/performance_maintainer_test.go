@@ -129,7 +129,7 @@ func TestMaintainPerformance(t *testing.T) {
 		{
 			Name: "performance_acquire_error",
 			PerformanceFactory: func() *performance.Performance {
-				return performance.FromSpecification(
+				return performance.Trigger(
 					"que",
 					(&specification.Builder{}).
 						WithID("due").
@@ -143,7 +143,7 @@ func TestMaintainPerformance(t *testing.T) {
 		{
 			Name: "performance_release_error",
 			PerformanceFactory: func() *performance.Performance {
-				return performance.FromSpecification(
+				return performance.Trigger(
 					"suu",
 					(&specification.Builder{}).
 						WithID("quu").
@@ -188,7 +188,7 @@ func TestMaintainPerformance(t *testing.T) {
 		{
 			Name: "successfully_maintain_performance",
 			PerformanceFactory: func() *performance.Performance {
-				return performance.FromSpecification(
+				return performance.Trigger(
 					"perf",
 					(&specification.Builder{}).
 						WithID("spec").
@@ -451,7 +451,7 @@ func TestCancelWhilePerformanceIsMaintaining(t *testing.T) {
 			pass := make(chan struct{})
 			defer close(pass)
 
-			perf := performance.FromSpecification(
+			perf := performance.Trigger(
 				"foo",
 				spec,
 				performance.WithHTTP(pendingPassPerformer(t, pass)),

@@ -83,7 +83,7 @@ func TestConsumePerformanceSavePerStep(t *testing.T) {
 			Name:            "save_timeout_exceeded",
 			CancelContext:   false,
 			InitSaveTimeout: 0,
-			GivenPerformance: performance.FromSpecification(
+			GivenPerformance: performance.Trigger(
 				"id",
 				(&specification.Builder{}).
 					WithStory("a", func(b *specification.StoryBuilder) {
@@ -111,7 +111,7 @@ func TestConsumePerformanceSavePerStep(t *testing.T) {
 			Name:            "context_canceled",
 			CancelContext:   true,
 			InitSaveTimeout: 1 * time.Second,
-			GivenPerformance: performance.FromSpecification(
+			GivenPerformance: performance.Trigger(
 				"id",
 				(&specification.Builder{}).
 					WithStory("foo", func(b *specification.StoryBuilder) {
@@ -151,7 +151,7 @@ func TestConsumePerformanceSavePerStep(t *testing.T) {
 			Name:            "performance_consumed_wo_context_cancellation",
 			CancelContext:   false,
 			InitSaveTimeout: 1 * time.Second,
-			GivenPerformance: performance.FromSpecification(
+			GivenPerformance: performance.Trigger(
 				"id",
 				(&specification.Builder{}).
 					WithStory("a", func(b *specification.StoryBuilder) {

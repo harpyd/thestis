@@ -73,7 +73,7 @@ type (
 const defaultPerformersSize = 2
 
 // Unmarshal transforms Params to Performance.
-// Unmarshal also receives options like FromSpecification.
+// Unmarshal also receives options like Trigger.
 //
 // This function is great for converting
 // from a database or using in tests.
@@ -102,13 +102,13 @@ func newLockState(started bool) lockState {
 	return unlocked
 }
 
-// FromSpecification creates new Performance
+// Trigger creates new Performance
 // from specification.Specification.
 //
-// FromSpecification receives options that you're
+// Trigger receives options that you're
 // free to pass or not. You can pass:
 // WithHTTP, WithAssertion.
-func FromSpecification(
+func Trigger(
 	id string,
 	spec *specification.Specification,
 	opts ...Option,

@@ -250,7 +250,7 @@ func TestFulfilledFlow(t *testing.T) {
 					}).
 					ErrlessBuild()
 
-				return flow.Fulfill("rar", performance.FromSpecification("kra", spec))
+				return flow.Fulfill("rar", performance.Trigger("kra", spec))
 			},
 			ExpectedFlowID:        "rar",
 			ExpectedPerformanceID: "kra",
@@ -273,7 +273,7 @@ func TestFulfilledFlow(t *testing.T) {
 					}).
 					ErrlessBuild()
 
-				f := flow.Fulfill("dar", performance.FromSpecification("fla", spec))
+				f := flow.Fulfill("dar", performance.Trigger("fla", spec))
 
 				return f.ApplyStep(performance.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "baz"),
@@ -302,7 +302,7 @@ func TestFulfilledFlow(t *testing.T) {
 					}).
 					ErrlessBuild()
 
-				return flow.Fulfill("sds", performance.FromSpecification("coo", spec)).
+				return flow.Fulfill("sds", performance.Trigger("coo", spec)).
 					ApplyStep(performance.NewScenarioStepWithErr(
 						errors.New("something wrong"),
 						specification.NewScenarioSlug("doo", "zoo"),

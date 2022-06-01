@@ -25,7 +25,7 @@ func TestPerformance(t *testing.T) {
 		ExpectedWorkingScenarios []specification.Scenario
 	}{
 		{
-			Performance:              performance.FromSpecification("", nil),
+			Performance:              performance.Trigger("", nil),
 			ExpectedID:               "",
 			ExpectedSpecificationID:  "",
 			ExpectedOwnerID:          "",
@@ -33,7 +33,7 @@ func TestPerformance(t *testing.T) {
 			ExpectedWorkingScenarios: nil,
 		},
 		{
-			Performance: performance.FromSpecification(
+			Performance: performance.Trigger(
 				"",
 				(&specification.Builder{}).
 					ErrlessBuild(),
@@ -56,7 +56,7 @@ func TestPerformance(t *testing.T) {
 			ExpectedWorkingScenarios: nil,
 		},
 		{
-			Performance: performance.FromSpecification(
+			Performance: performance.Trigger(
 				"foo",
 				(&specification.Builder{}).
 					WithID("bar").
@@ -160,7 +160,7 @@ func TestStartPerformance(t *testing.T) {
 	}{
 		{
 			PerformanceFactory: func() *performance.Performance {
-				return performance.FromSpecification(
+				return performance.Trigger(
 					"",
 					(&specification.Builder{}).ErrlessBuild(),
 				)
@@ -179,7 +179,7 @@ func TestStartPerformance(t *testing.T) {
 		},
 		{
 			PerformanceFactory: func() *performance.Performance {
-				return performance.FromSpecification(
+				return performance.Trigger(
 					"ddq",
 					(&specification.Builder{}).
 						WithStory("foo", func(b *specification.StoryBuilder) {
@@ -222,7 +222,7 @@ func TestStartPerformance(t *testing.T) {
 		},
 		{
 			PerformanceFactory: func() *performance.Performance {
-				return performance.FromSpecification(
+				return performance.Trigger(
 					"bvs",
 					(&specification.Builder{}).
 						WithStory("que", func(b *specification.StoryBuilder) {
@@ -269,7 +269,7 @@ func TestStartPerformance(t *testing.T) {
 		},
 		{
 			PerformanceFactory: func() *performance.Performance {
-				return performance.FromSpecification(
+				return performance.Trigger(
 					"daq",
 					(&specification.Builder{}).
 						WithStory("foo", func(b *specification.StoryBuilder) {
@@ -319,7 +319,7 @@ func TestStartPerformance(t *testing.T) {
 		},
 		{
 			PerformanceFactory: func() *performance.Performance {
-				return performance.FromSpecification(
+				return performance.Trigger(
 					"hpd",
 					(&specification.Builder{}).
 						WithStory("foo", func(b *specification.StoryBuilder) {
@@ -366,7 +366,7 @@ func TestStartPerformance(t *testing.T) {
 		},
 		{
 			PerformanceFactory: func() *performance.Performance {
-				return performance.FromSpecification(
+				return performance.Trigger(
 					"jqd",
 					(&specification.Builder{}).
 						WithStory("rod", func(b *specification.StoryBuilder) {
@@ -503,7 +503,7 @@ func TestStartPerformance(t *testing.T) {
 func TestOnePerformingAtATime(t *testing.T) {
 	t.Parallel()
 
-	perf := performance.FromSpecification("foo", validSpecification(t))
+	perf := performance.Trigger("foo", validSpecification(t))
 
 	_, err := perf.Start(context.Background())
 	require.NoError(t, err, "Start with error")
@@ -521,7 +521,7 @@ func TestOnePerformingAtATime(t *testing.T) {
 func TestPerformanceStartByStart(t *testing.T) {
 	t.Parallel()
 
-	perf := performance.FromSpecification("bar", validSpecification(t))
+	perf := performance.Trigger("bar", validSpecification(t))
 
 	finish := make(chan bool)
 
@@ -625,7 +625,7 @@ func TestCancelPerformanceContext(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			perf := performance.FromSpecification(
+			perf := performance.Trigger(
 				"foo",
 				spec,
 				performance.WithHTTP(performance.PassingPerformer()),
