@@ -18,13 +18,13 @@ func NewPerformancePolicy() *PerformancePolicy {
 func (p *PerformancePolicy) ConsumePerformance(
 	ctx context.Context,
 	perf *performance.Performance,
-	reactFn service.MessageReactor,
+	reactor service.MessageReactor,
 ) {
 	p.consumeCalls++
 
 	steps := perf.MustStart(ctx)
 
 	for step := range steps {
-		reactFn(service.NewMessageFromStep(step))
+		reactor(service.NewMessageFromStep(step))
 	}
 }

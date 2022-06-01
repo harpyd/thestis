@@ -14,7 +14,7 @@ type PerformancePolicy interface {
 	ConsumePerformance(
 		ctx context.Context,
 		perf *performance.Performance,
-		reactFn MessageReactor,
+		reactor MessageReactor,
 	)
 }
 
@@ -40,7 +40,7 @@ func NewSavePerStepPolicy(
 func (p *savePerStepPolicy) ConsumePerformance(
 	ctx context.Context,
 	perf *performance.Performance,
-	reactFn MessageReactor,
+	reactor MessageReactor,
 ) {
 	var (
 		steps = perf.MustStart(ctx)
@@ -49,15 +49,15 @@ func (p *savePerStepPolicy) ConsumePerformance(
 
 	defer func() {
 		if err := p.flowRepo.UpsertFlow(context.Background(), f); err != nil {
-			reactFn(NewMessageFromError(err))
+			reactor(NewMessageFromError(err))
 		}
 	}()
 
 	for s := range steps {
-		reactFn(NewMessageFromStep(s))
+		reactor(NewMessageFromStep(s))
 
 		if err := p.upsertFlowWithTimeout(ctx, f.ApplyStep(s)); err != nil {
-			reactFn(NewMessageFromError(err))
+			reactor(NewMessageFromError(err))
 		}
 	}
 }

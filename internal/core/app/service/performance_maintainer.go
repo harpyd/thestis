@@ -17,7 +17,7 @@ type (
 		MaintainPerformance(
 			ctx context.Context,
 			perf *performance.Performance,
-			reactFn MessageReactor,
+			reactor MessageReactor,
 		) (<-chan DoneSignal, error)
 	}
 
@@ -67,7 +67,7 @@ func NewPerformanceMaintainer(
 func (m *performanceMaintainer) MaintainPerformance(
 	ctx context.Context,
 	perf *performance.Performance,
-	reactFn MessageReactor,
+	reactor MessageReactor,
 ) (<-chan DoneSignal, error) {
 	if err := m.guard.AcquirePerformance(ctx, perf.ID()); err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func (m *performanceMaintainer) MaintainPerformance(
 
 	done := make(chan DoneSignal)
 
-	m.enqueuer.Enqueue(m.maintainFn(perf, canceled, done, reactFn))
+	m.enqueuer.Enqueue(m.maintainFn(perf, canceled, done, reactor))
 
 	return done, nil
 }
@@ -89,11 +89,11 @@ func (m *performanceMaintainer) maintainFn(
 	perf *performance.Performance,
 	canceled <-chan CancelSignal,
 	done chan<- DoneSignal,
-	reactFn MessageReactor,
+	reactor MessageReactor,
 ) func() {
 	return func() {
 		defer close(done)
-		defer m.releasePerformance(perf, reactFn)
+		defer m.releasePerformance(perf, reactor)
 
 		ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 		defer cancel()
@@ -106,18 +106,18 @@ func (m *performanceMaintainer) maintainFn(
 			}
 		}()
 
-		m.policy.ConsumePerformance(ctx, perf, reactFn)
+		m.policy.ConsumePerformance(ctx, perf, reactor)
 	}
 }
 
 func (m *performanceMaintainer) releasePerformance(
 	perf *performance.Performance,
-	reactFn MessageReactor,
+	reactor MessageReactor,
 ) {
 	if err := m.guard.ReleasePerformance(
 		context.Background(),
 		perf.ID(),
 	); err != nil {
-		reactFn(NewMessageFromError(err))
+		reactor(NewMessageFromError(err))
 	}
 }

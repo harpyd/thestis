@@ -20,7 +20,7 @@ type StartPerformanceHandler interface {
 	Handle(
 		ctx context.Context,
 		cmd StartPerformance,
-		reactFn service.MessageReactor,
+		reactor service.MessageReactor,
 	) error
 }
 
@@ -60,7 +60,7 @@ func NewStartPerformanceHandler(
 func (h startPerformanceHandler) Handle(
 	ctx context.Context,
 	cmd StartPerformance,
-	reactFn service.MessageReactor,
+	reactor service.MessageReactor,
 ) (err error) {
 	defer func() {
 		err = errors.Wrap(err, "new performance starting")
@@ -81,7 +81,7 @@ func (h startPerformanceHandler) Handle(
 		return err
 	}
 
-	_, err = h.maintainer.MaintainPerformance(ctx, perf, reactFn)
+	_, err = h.maintainer.MaintainPerformance(ctx, perf, reactor)
 
 	return err
 }

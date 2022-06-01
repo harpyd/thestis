@@ -19,7 +19,7 @@ type RestartPerformanceHandler interface {
 	Handle(
 		ctx context.Context,
 		cmd RestartPerformance,
-		reactFn service.MessageReactor,
+		reactor service.MessageReactor,
 	) error
 }
 
@@ -58,7 +58,7 @@ func NewRestartPerformanceHandler(
 func (h restartPerformanceHandler) Handle(
 	ctx context.Context,
 	cmd RestartPerformance,
-	reactFn service.MessageReactor,
+	reactor service.MessageReactor,
 ) (err error) {
 	defer func() {
 		err = errors.Wrap(err, "performance restarting")
@@ -73,7 +73,7 @@ func (h restartPerformanceHandler) Handle(
 		return err
 	}
 
-	_, err = h.maintainer.MaintainPerformance(ctx, perf, reactFn)
+	_, err = h.maintainer.MaintainPerformance(ctx, perf, reactor)
 
 	return err
 }
