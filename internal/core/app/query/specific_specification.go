@@ -12,11 +12,11 @@ type SpecificSpecification struct {
 }
 
 type SpecificSpecificationHandler interface {
-	Handle(ctx context.Context, qry SpecificSpecification) (SpecificSpecificationView, error)
+	Handle(ctx context.Context, qry SpecificSpecification) (SpecificSpecificationModel, error)
 }
 
 type SpecificSpecificationReadModel interface {
-	FindSpecification(ctx context.Context, qry SpecificSpecification) (SpecificSpecificationView, error)
+	FindSpecification(ctx context.Context, qry SpecificSpecification) (SpecificSpecificationModel, error)
 }
 
 type specificSpecificationHandler struct {
@@ -36,7 +36,7 @@ func NewSpecificSpecificationHandler(readModel SpecificSpecificationReadModel) S
 func (h specificSpecificationHandler) Handle(
 	ctx context.Context,
 	qry SpecificSpecification,
-) (SpecificSpecificationView, error) {
+) (SpecificSpecificationModel, error) {
 	specs, err := h.readModel.FindSpecification(ctx, qry)
 
 	return specs, errors.Wrap(err, "getting specification")

@@ -12,11 +12,11 @@ type SpecificPerformance struct {
 }
 
 type SpecificPerformanceHandler interface {
-	Handle(ctx context.Context, qry SpecificPerformance) (SpecificPerformanceView, error)
+	Handle(ctx context.Context, qry SpecificPerformance) (SpecificPerformanceModel, error)
 }
 
 type SpecificPerformanceReadModel interface {
-	FindPerformance(ctx context.Context, qry SpecificPerformance) (SpecificPerformanceView, error)
+	FindPerformance(ctx context.Context, qry SpecificPerformance) (SpecificPerformanceModel, error)
 }
 
 type specificPerformanceHandler struct {
@@ -36,7 +36,7 @@ func NewSpecificPerformanceHandler(readModel SpecificPerformanceReadModel) Speci
 func (h specificPerformanceHandler) Handle(
 	ctx context.Context,
 	qry SpecificPerformance,
-) (SpecificPerformanceView, error) {
+) (SpecificPerformanceModel, error) {
 	perf, err := h.readModel.FindPerformance(ctx, qry)
 
 	return perf, errors.Wrap(err, "getting performance")

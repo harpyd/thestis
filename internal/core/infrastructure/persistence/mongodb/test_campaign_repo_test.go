@@ -291,7 +291,7 @@ func (s *TestCampaignRepositoryTestSuite) getTestCampaign(tcID string) *testcamp
 
 func (s *TestCampaignRepositoryTestSuite) requireAppTestCampaignsEqual(
 	expected bson.M,
-	actual query.SpecificTestCampaignView,
+	actual query.SpecificTestCampaignModel,
 ) {
 	s.Require().Equal(expected["_id"], actual.ID)
 	s.Require().Equal(expected["viewName"], actual.ViewName)

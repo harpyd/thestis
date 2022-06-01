@@ -280,15 +280,15 @@ func newAssertionBuildFn(d assertionDocument) func(builder *specification.Assert
 	}
 }
 
-func newSpecificSpecificationView(d specificationDocument) query.SpecificSpecificationView {
-	spec := query.SpecificSpecificationView{
+func newSpecificSpecificationView(d specificationDocument) query.SpecificSpecificationModel {
+	spec := query.SpecificSpecificationModel{
 		ID:             d.ID,
 		TestCampaignID: d.TestCampaignID,
 		LoadedAt:       d.LoadedAt,
 		Author:         d.Author,
 		Title:          d.Title,
 		Description:    d.Description,
-		Stories:        make([]query.StoryView, 0, len(d.Stories)),
+		Stories:        make([]query.StoryModel, 0, len(d.Stories)),
 	}
 
 	for _, s := range d.Stories {
@@ -298,14 +298,14 @@ func newSpecificSpecificationView(d specificationDocument) query.SpecificSpecifi
 	return spec
 }
 
-func newStoryView(d storyDocument) query.StoryView {
-	story := query.StoryView{
+func newStoryView(d storyDocument) query.StoryModel {
+	story := query.StoryModel{
 		Slug:        d.Slug,
 		Description: d.Description,
 		AsA:         d.AsA,
 		InOrderTo:   d.InOrderTo,
 		WantTo:      d.WantTo,
-		Scenarios:   make([]query.ScenarioView, 0, len(d.Scenarios)),
+		Scenarios:   make([]query.ScenarioModel, 0, len(d.Scenarios)),
 	}
 
 	for _, s := range d.Scenarios {
@@ -315,11 +315,11 @@ func newStoryView(d storyDocument) query.StoryView {
 	return story
 }
 
-func newScenarioView(d scenarioDocument) query.ScenarioView {
-	scenario := query.ScenarioView{
+func newScenarioView(d scenarioDocument) query.ScenarioModel {
+	scenario := query.ScenarioModel{
 		Slug:        d.Slug,
 		Description: d.Description,
-		Theses:      make([]query.ThesisView, 0, len(d.Theses)),
+		Theses:      make([]query.ThesisModel, 0, len(d.Theses)),
 	}
 
 	for _, t := range d.Theses {
@@ -329,8 +329,8 @@ func newScenarioView(d scenarioDocument) query.ScenarioView {
 	return scenario
 }
 
-func newThesisView(d thesisDocument) query.ThesisView {
-	return query.ThesisView{
+func newThesisView(d thesisDocument) query.ThesisModel {
+	return query.ThesisModel{
 		Slug:      d.Slug,
 		After:     d.After,
 		Statement: newStatementView(d.Statement),
@@ -339,22 +339,22 @@ func newThesisView(d thesisDocument) query.ThesisView {
 	}
 }
 
-func newStatementView(d statementDocument) query.StatementView {
-	return query.StatementView{
+func newStatementView(d statementDocument) query.StatementModel {
+	return query.StatementModel{
 		Stage:    d.Stage.String(),
 		Behavior: d.Behavior,
 	}
 }
 
-func newHTTPView(d httpDocument) query.HTTPView {
-	return query.HTTPView{
+func newHTTPView(d httpDocument) query.HTTPModel {
+	return query.HTTPModel{
 		Request:  newHTTPRequestView(d.Request),
 		Response: newHTTPResponseView(d.Response),
 	}
 }
 
-func newHTTPRequestView(d httpRequestDocument) query.HTTPRequestView {
-	return query.HTTPRequestView{
+func newHTTPRequestView(d httpRequestDocument) query.HTTPRequestModel {
+	return query.HTTPRequestModel{
 		Method:      d.Method.String(),
 		URL:         d.URL,
 		ContentType: d.ContentType.String(),
@@ -362,17 +362,17 @@ func newHTTPRequestView(d httpRequestDocument) query.HTTPRequestView {
 	}
 }
 
-func newHTTPResponseView(d httpResponseDocument) query.HTTPResponseView {
-	return query.HTTPResponseView{
+func newHTTPResponseView(d httpResponseDocument) query.HTTPResponseModel {
+	return query.HTTPResponseModel{
 		AllowedCodes:       d.AllowedCodes,
 		AllowedContentType: d.AllowedContentType.String(),
 	}
 }
 
-func newAssertionView(d assertionDocument) query.AssertionView {
-	assertion := query.AssertionView{
+func newAssertionView(d assertionDocument) query.AssertionModel {
+	assertion := query.AssertionModel{
 		Method:  d.Method.String(),
-		Asserts: make([]query.AssertView, 0, len(d.Asserts)),
+		Asserts: make([]query.AssertModel, 0, len(d.Asserts)),
 	}
 
 	for _, a := range d.Asserts {
@@ -382,8 +382,8 @@ func newAssertionView(d assertionDocument) query.AssertionView {
 	return assertion
 }
 
-func newAssertView(d assertDocument) query.AssertView {
-	return query.AssertView{
+func newAssertView(d assertDocument) query.AssertModel {
+	return query.AssertModel{
 		Actual:   d.Actual,
 		Expected: d.Expected,
 	}

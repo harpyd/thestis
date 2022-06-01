@@ -2,7 +2,7 @@ package query
 
 import "time"
 
-type SpecificTestCampaignView struct {
+type SpecificTestCampaignModel struct {
 	ID        string
 	ViewName  string
 	Summary   string
@@ -10,117 +10,117 @@ type SpecificTestCampaignView struct {
 }
 
 type (
-	SpecificSpecificationView struct {
+	SpecificSpecificationModel struct {
 		ID             string
 		TestCampaignID string
 		LoadedAt       time.Time
 		Author         string
 		Title          string
 		Description    string
-		Stories        []StoryView
+		Stories        []StoryModel
 	}
 
-	StoryView struct {
+	StoryModel struct {
 		Slug        string
 		Description string
 		AsA         string
 		InOrderTo   string
 		WantTo      string
-		Scenarios   []ScenarioView
+		Scenarios   []ScenarioModel
 	}
 
-	ScenarioView struct {
+	ScenarioModel struct {
 		Slug        string
 		Description string
-		Theses      []ThesisView
+		Theses      []ThesisModel
 	}
 
-	ThesisView struct {
+	ThesisModel struct {
 		Slug      string
 		After     []string
-		Statement StatementView
-		HTTP      HTTPView
-		Assertion AssertionView
+		Statement StatementModel
+		HTTP      HTTPModel
+		Assertion AssertionModel
 	}
 
-	StatementView struct {
+	StatementModel struct {
 		Stage    string
 		Behavior string
 	}
 
-	HTTPView struct {
-		Request  HTTPRequestView
-		Response HTTPResponseView
+	HTTPModel struct {
+		Request  HTTPRequestModel
+		Response HTTPResponseModel
 	}
 
-	HTTPRequestView struct {
+	HTTPRequestModel struct {
 		Method      string
 		URL         string
 		ContentType string
 		Body        map[string]interface{}
 	}
 
-	HTTPResponseView struct {
+	HTTPResponseModel struct {
 		AllowedCodes       []int
 		AllowedContentType string
 	}
 
-	AssertionView struct {
+	AssertionModel struct {
 		Method  string
-		Asserts []AssertView
+		Asserts []AssertModel
 	}
 
-	AssertView struct {
+	AssertModel struct {
 		Actual   string
 		Expected interface{}
 	}
 )
 
-func (h HTTPView) IsZero() bool {
+func (h HTTPModel) IsZero() bool {
 	return h.Request.IsZero() && h.Response.IsZero()
 }
 
-func (r HTTPRequestView) IsZero() bool {
+func (r HTTPRequestModel) IsZero() bool {
 	return r.Method == "" &&
 		r.URL == "" &&
 		r.ContentType == "" &&
 		len(r.Body) == 0
 }
 
-func (r HTTPResponseView) IsZero() bool {
+func (r HTTPResponseModel) IsZero() bool {
 	return r.AllowedContentType == "" && len(r.AllowedCodes) == 0
 }
 
-func (a AssertionView) IsZero() bool {
+func (a AssertionModel) IsZero() bool {
 	return a.Method == "" && len(a.Asserts) == 0
 }
 
 type (
-	SpecificPerformanceView struct {
+	SpecificPerformanceModel struct {
 		ID              string
 		SpecificationID string
 		StartedAt       time.Time
-		Flows           []FlowView
+		Flows           []FlowModel
 	}
 
-	FlowView struct {
+	FlowModel struct {
 		StartedAt    time.Time
 		OverallState string
-		Statuses     []StatusView
+		Statuses     []StatusModel
 	}
 
-	StatusView struct {
-		Slug           ScenarioSlugView
+	StatusModel struct {
+		Slug           ScenarioSlugModel
 		State          string
-		ThesisStatuses []ThesisStatusView
+		ThesisStatuses []ThesisStatusModel
 	}
 
-	ScenarioSlugView struct {
+	ScenarioSlugModel struct {
 		Story    string
 		Scenario string
 	}
 
-	ThesisStatusView struct {
+	ThesisStatusModel struct {
 		ThesisSlug   string
 		State        string
 		OccurredErrs []string

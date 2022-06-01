@@ -56,7 +56,7 @@ func decodeSpecificSpecificationQuery(
 func renderSpecificationResponse(
 	w http.ResponseWriter,
 	r *http.Request,
-	spec query.SpecificSpecificationView,
+	spec query.SpecificSpecificationModel,
 ) {
 	response := SpecificationResponse{
 		Specification: newSpecification(spec),
@@ -66,7 +66,7 @@ func renderSpecificationResponse(
 	render.Respond(w, r, response)
 }
 
-func newSpecification(spec query.SpecificSpecificationView) Specification {
+func newSpecification(spec query.SpecificSpecificationModel) Specification {
 	res := Specification{
 		Id:             spec.ID,
 		TestCampaignId: spec.TestCampaignID,
@@ -84,7 +84,7 @@ func newSpecification(spec query.SpecificSpecificationView) Specification {
 	return res
 }
 
-func newStory(story query.StoryView) Story {
+func newStory(story query.StoryModel) Story {
 	res := Story{
 		Slug:        story.Slug,
 		Description: &story.Description,
@@ -101,7 +101,7 @@ func newStory(story query.StoryView) Story {
 	return res
 }
 
-func newScenario(scenario query.ScenarioView) Scenario {
+func newScenario(scenario query.ScenarioModel) Scenario {
 	res := Scenario{
 		Slug:        scenario.Slug,
 		Description: &scenario.Description,
@@ -115,7 +115,7 @@ func newScenario(scenario query.ScenarioView) Scenario {
 	return res
 }
 
-func newThesis(thesis query.ThesisView) Thesis {
+func newThesis(thesis query.ThesisModel) Thesis {
 	return Thesis{
 		Slug:      thesis.Slug,
 		After:     thesis.After,
@@ -125,14 +125,14 @@ func newThesis(thesis query.ThesisView) Thesis {
 	}
 }
 
-func newStatement(statement query.StatementView) Statement {
+func newStatement(statement query.StatementModel) Statement {
 	return Statement{
 		Stage:    statement.Stage,
 		Behavior: statement.Behavior,
 	}
 }
 
-func newHTTP(http query.HTTPView) *Http {
+func newHTTP(http query.HTTPModel) *Http {
 	if http.IsZero() {
 		return nil
 	}
@@ -143,7 +143,7 @@ func newHTTP(http query.HTTPView) *Http {
 	}
 }
 
-func newHTTPRequest(request query.HTTPRequestView) *HttpRequest {
+func newHTTPRequest(request query.HTTPRequestModel) *HttpRequest {
 	if request.IsZero() {
 		return nil
 	}
@@ -164,7 +164,7 @@ func newBody(body map[string]interface{}) *map[string]interface{} {
 	return &body
 }
 
-func newHTTPResponse(response query.HTTPResponseView) *HttpResponse {
+func newHTTPResponse(response query.HTTPResponseModel) *HttpResponse {
 	if response.IsZero() {
 		return nil
 	}
@@ -175,7 +175,7 @@ func newHTTPResponse(response query.HTTPResponseView) *HttpResponse {
 	}
 }
 
-func newAssertion(assertion query.AssertionView) *Assertion {
+func newAssertion(assertion query.AssertionModel) *Assertion {
 	if assertion.IsZero() {
 		return nil
 	}
@@ -186,7 +186,7 @@ func newAssertion(assertion query.AssertionView) *Assertion {
 	}
 }
 
-func newAsserts(asserts []query.AssertView) []Assert {
+func newAsserts(asserts []query.AssertModel) []Assert {
 	res := make([]Assert, 0, len(asserts))
 
 	for _, a := range asserts {

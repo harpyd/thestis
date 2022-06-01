@@ -324,7 +324,7 @@ func (s *SpecificationRepositoryTestSuite) getSpecification(specID string) *spec
 
 func (s *SpecificationRepositoryTestSuite) requireAppSpecificationEqualRaw(
 	expected bson.M,
-	actual query.SpecificSpecificationView,
+	actual query.SpecificSpecificationModel,
 ) {
 	s.T().Helper()
 
@@ -347,7 +347,7 @@ func (s *SpecificationRepositoryTestSuite) requireAppSpecificationEqualRaw(
 
 func (s *SpecificationRepositoryTestSuite) requireAppStoryEqualRaw(
 	expected bson.M,
-	actual query.StoryView,
+	actual query.StoryModel,
 ) {
 	s.T().Helper()
 
@@ -367,7 +367,7 @@ func (s *SpecificationRepositoryTestSuite) requireAppStoryEqualRaw(
 
 func (s *SpecificationRepositoryTestSuite) requireAppScenarioEqualRaw(
 	expected bson.M,
-	actual query.ScenarioView,
+	actual query.ScenarioModel,
 ) {
 	s.T().Helper()
 
@@ -384,7 +384,7 @@ func (s *SpecificationRepositoryTestSuite) requireAppScenarioEqualRaw(
 
 func (s *SpecificationRepositoryTestSuite) requireAppThesisEqualRaw(
 	expected bson.M,
-	actual query.ThesisView,
+	actual query.ThesisModel,
 ) {
 	s.T().Helper()
 
@@ -422,7 +422,7 @@ func (s *SpecificationRepositoryTestSuite) requireAppThesisEqualRaw(
 
 func (s *SpecificationRepositoryTestSuite) requireAppStatementEqualRaw(
 	expected bson.M,
-	actual query.StatementView,
+	actual query.StatementModel,
 ) {
 	s.T().Helper()
 
@@ -432,7 +432,7 @@ func (s *SpecificationRepositoryTestSuite) requireAppStatementEqualRaw(
 
 func (s *SpecificationRepositoryTestSuite) requireAppHTTPEqualRaw(
 	expected bson.M,
-	actual query.HTTPView,
+	actual query.HTTPModel,
 ) {
 	s.T().Helper()
 
@@ -457,7 +457,7 @@ func (s *SpecificationRepositoryTestSuite) requireAppHTTPEqualRaw(
 
 func (s *SpecificationRepositoryTestSuite) requireAppHTTPRequestEqualRaw(
 	expected bson.M,
-	actual query.HTTPRequestView,
+	actual query.HTTPRequestModel,
 ) {
 	s.T().Helper()
 
@@ -469,7 +469,7 @@ func (s *SpecificationRepositoryTestSuite) requireAppHTTPRequestEqualRaw(
 
 func (s *SpecificationRepositoryTestSuite) requireAppHTTPResponseEqualRaw(
 	expected bson.M,
-	actual query.HTTPResponseView,
+	actual query.HTTPResponseModel,
 ) {
 	s.T().Helper()
 
@@ -482,7 +482,7 @@ func (s *SpecificationRepositoryTestSuite) requireAppHTTPResponseEqualRaw(
 
 func (s *SpecificationRepositoryTestSuite) requireAppAssertionEqualRaw(
 	expected bson.M,
-	actual query.AssertionView,
+	actual query.AssertionModel,
 ) {
 	s.T().Helper()
 
@@ -504,7 +504,7 @@ func (s *SpecificationRepositoryTestSuite) requireAppAssertionEqualRaw(
 
 func (s *SpecificationRepositoryTestSuite) requireAppAssertEqualRaw(
 	expected bson.M,
-	actual query.AssertView,
+	actual query.AssertModel,
 ) {
 	s.T().Helper()
 

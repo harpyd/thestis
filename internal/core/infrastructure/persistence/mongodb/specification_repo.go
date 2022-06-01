@@ -67,7 +67,7 @@ func (r *SpecificationRepository) GetActiveSpecificationByTestCampaignID(
 func (r *SpecificationRepository) FindSpecification(
 	ctx context.Context,
 	qry query.SpecificSpecification,
-) (query.SpecificSpecificationView, error) {
+) (query.SpecificSpecificationModel, error) {
 	filter := bson.M{
 		"id":      qry.SpecificationID,
 		"ownerId": qry.UserID,
@@ -75,7 +75,7 @@ func (r *SpecificationRepository) FindSpecification(
 
 	document, err := r.getSpecificationDocument(ctx, filter, nil)
 	if err != nil {
-		return query.SpecificSpecificationView{}, err
+		return query.SpecificSpecificationModel{}, err
 	}
 
 	return newSpecificSpecificationView(document), nil

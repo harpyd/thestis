@@ -57,7 +57,7 @@ func decodeSpecificTestCampaignQuery(
 func renderTestCampaignResponse(
 	w http.ResponseWriter,
 	r *http.Request,
-	tc query.SpecificTestCampaignView,
+	tc query.SpecificTestCampaignModel,
 ) {
 	response := TestCampaignResponse{
 		Id:        tc.ID,

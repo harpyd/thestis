@@ -12,11 +12,11 @@ type SpecificTestCampaign struct {
 }
 
 type SpecificTestCampaignHandler interface {
-	Handle(ctx context.Context, qry SpecificTestCampaign) (SpecificTestCampaignView, error)
+	Handle(ctx context.Context, qry SpecificTestCampaign) (SpecificTestCampaignModel, error)
 }
 
 type SpecificTestCampaignReadModel interface {
-	FindTestCampaign(ctx context.Context, qry SpecificTestCampaign) (SpecificTestCampaignView, error)
+	FindTestCampaign(ctx context.Context, qry SpecificTestCampaign) (SpecificTestCampaignModel, error)
 }
 
 type specificTestCampaignHandler struct {
@@ -36,7 +36,7 @@ func NewSpecificTestCampaignHandler(readModel SpecificTestCampaignReadModel) Spe
 func (h specificTestCampaignHandler) Handle(
 	ctx context.Context,
 	qry SpecificTestCampaign,
-) (SpecificTestCampaignView, error) {
+) (SpecificTestCampaignModel, error) {
 	tc, err := h.readModel.FindTestCampaign(ctx, qry)
 
 	return tc, errors.Wrap(err, "getting test campaign")
