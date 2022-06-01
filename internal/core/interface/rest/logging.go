@@ -70,15 +70,6 @@ func (e *logEntry) Panic(v interface{}, stack []byte) {
 	)
 }
 
-func logger(r *http.Request) service.Logger {
-	entry, ok := middleware.GetLogEntry(r).(*logEntry)
-	if !ok {
-		panic("LogEntry isn't *logEntry")
-	}
-
-	return entry.logging
-}
-
 func LoggingMiddleware(loggingService service.Logger) Middleware {
 	return middleware.RequestLogger(&Formatter{logging: loggingService})
 }
