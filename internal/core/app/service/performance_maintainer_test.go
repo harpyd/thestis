@@ -347,12 +347,8 @@ func TestMaintainPerformance(t *testing.T) {
 				requireMessagesMatch(t, c.ExpectedMessages, actualMessages)
 			})
 
-			t.Run("release_performance", func(t *testing.T) {
+			t.Run("performance_released", func(t *testing.T) {
 				require.Equal(t, 1, c.Guard.ReleaseCalls())
-			})
-
-			t.Run("enqueue_performance_maintaining", func(t *testing.T) {
-				require.Equal(t, 1, enqueuer.EnqueueCalls())
 			})
 		})
 	}
