@@ -143,7 +143,7 @@ func (h handler) messageReactor(
 ) service.MessageReactor {
 	reqID := middleware.GetReqID(r.Context())
 
-	args = append(args, "requestId", reqID)
+	args = append(args, "correlationId", reqID)
 
 	return func(msg service.Message) {
 		if msg.Err() == nil || msg.Event() == performance.FiredFail {

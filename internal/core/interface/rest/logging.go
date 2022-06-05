@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/harpyd/thestis/internal/core/app/service"
+	"github.com/harpyd/thestis/pkg/correlationid"
 )
 
 type Formatter struct {
@@ -15,27 +16,27 @@ type Formatter struct {
 }
 
 func (l *Formatter) NewLogEntry(r *http.Request) middleware.LogEntry {
-	requestID := middleware.GetReqID(r.Context())
+	correlationID, _ := correlationid.FromCtx(r.Context())
 
 	l.logging.Info(
 		"Request started",
-		"requestId", requestID,
+		"correlationId", correlationID,
 		"httpMethod", r.Method,
 		"remoteAddress", r.RemoteAddr,
 		"uri", r.RequestURI,
 	)
 
 	return &logEntry{
-		logging:   l.logging,
-		uri:       r.RequestURI,
-		requestID: requestID,
+		logging:       l.logging,
+		uri:           r.RequestURI,
+		correlationID: correlationID,
 	}
 }
 
 type logEntry struct {
-	logging   service.Logger
-	uri       string
-	requestID string
+	logging       service.Logger
+	uri           string
+	correlationID string
 }
 
 const responseRounding = 100
@@ -44,7 +45,7 @@ func (e *logEntry) Write(status, bytes int, _ http.Header, elapsed time.Duration
 	e.logging.Info(
 		"Request completed",
 		"uri", e.uri,
-		"requestId", e.requestID,
+		"correlationId", e.correlationID,
 		"responseStatus", status,
 		"responseBytesLength", bytes,
 		"responseElapsed", elapsed.Round(time.Millisecond/responseRounding),

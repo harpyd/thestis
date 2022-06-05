@@ -34,6 +34,7 @@ import (
 	v1 "github.com/harpyd/thestis/internal/core/interface/rest/v1"
 	"github.com/harpyd/thestis/internal/server"
 	"github.com/harpyd/thestis/pkg/auth/firebase"
+	"github.com/harpyd/thestis/pkg/correlationid"
 	"github.com/harpyd/thestis/pkg/database/mongodb"
 )
 
@@ -446,7 +447,7 @@ func (c *Context) initAuthenticationProvider() {
 func (c *Context) initServer() {
 	c.server = server.New(c.config.HTTP, rest.NewHandler(rest.Params{
 		Middlewares: []rest.Middleware{
-			middleware.RequestID,
+			correlationid.Middleware("X-Correlation-Id"),
 			middleware.RealIP,
 			rest.LoggingMiddleware(c.logger),
 			middleware.Recoverer,
