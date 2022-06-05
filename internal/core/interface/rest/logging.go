@@ -16,7 +16,7 @@ type Formatter struct {
 }
 
 func (l *Formatter) NewLogEntry(r *http.Request) middleware.LogEntry {
-	correlationID, _ := correlationid.FromCtx(r.Context())
+	correlationID := correlationid.FromCtx(r.Context())
 
 	l.logging.Info(
 		"Request started",

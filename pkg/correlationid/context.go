@@ -10,12 +10,14 @@ func AssignToCtx(ctx context.Context, correlationID string) context.Context {
 	return context.WithValue(ctx, correlationCtxKey, correlationID)
 }
 
-func FromCtx(ctx context.Context) (string, bool) {
+func FromCtx(ctx context.Context) string {
 	if ctx == nil {
-		return "", false
+		return ""
 	}
 
-	correlationID, ok := ctx.Value(correlationCtxKey).(string)
+	if correlationID, ok := ctx.Value(correlationCtxKey).(string); ok {
+		return correlationID
+	}
 
-	return correlationID, ok
+	return ""
 }
