@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/pipeline"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 	"github.com/harpyd/thestis/internal/core/entity/user"
@@ -129,20 +129,20 @@ func TestCanAccessSpecification(t *testing.T) {
 	}
 }
 
-func TestCanAccessPerformance(t *testing.T) {
+func TestCanAccessPipeline(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
 		Name        string
 		UserID      string
-		Performance *performance.Performance
+		Pipeline    *pipeline.Pipeline
 		Permission  user.Permission
 		ShouldBeErr bool
 	}{
 		{
 			Name:   "can_see",
 			UserID: "e7b9f695-ea8d-4d31-a4ce-cfd5521d52c2",
-			Performance: performance.Unmarshal(performance.Params{
+			Pipeline: pipeline.Unmarshal(pipeline.Params{
 				OwnerID: "e7b9f695-ea8d-4d31-a4ce-cfd5521d52c2",
 			}),
 			Permission:  user.Read,
@@ -151,7 +151,7 @@ func TestCanAccessPerformance(t *testing.T) {
 		{
 			Name:   "cannot_see",
 			UserID: "732563f6-08a3-4b61-bbfc-818225f58b0b",
-			Performance: performance.Unmarshal(performance.Params{
+			Pipeline: pipeline.Unmarshal(pipeline.Params{
 				OwnerID: "f36b38e0-829d-4bdf-af2d-de4e8e43b0c0",
 			}),
 			Permission:  user.Write,
@@ -165,9 +165,9 @@ func TestCanAccessPerformance(t *testing.T) {
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 
-			err := user.CanAccessPerformance(
+			err := user.CanAccessPipeline(
 				c.UserID,
-				c.Performance,
+				c.Pipeline,
 				c.Permission,
 			)
 

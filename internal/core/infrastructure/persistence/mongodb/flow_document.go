@@ -7,10 +7,10 @@ import (
 
 type (
 	flowDocument struct {
-		ID            string           `bson:"_id"`
-		PerformanceID string           `bson:"performanceId"`
-		OverallState  flow.State       `bson:"overallState"`
-		Statuses      []statusDocument `bson:"statuses"`
+		ID           string           `bson:"_id"`
+		PipelineID   string           `bson:"pipelineId"`
+		OverallState flow.State       `bson:"overallState"`
+		Statuses     []statusDocument `bson:"statuses"`
 	}
 
 	statusDocument struct {
@@ -35,10 +35,10 @@ type (
 
 func newFlowDocument(flow *flow.Flow) flowDocument {
 	return flowDocument{
-		ID:            flow.ID(),
-		PerformanceID: flow.PerformanceID(),
-		OverallState:  flow.OverallState(),
-		Statuses:      newStatusDocuments(flow.Statuses()),
+		ID:           flow.ID(),
+		PipelineID:   flow.PipelineID(),
+		OverallState: flow.OverallState(),
+		Statuses:     newStatusDocuments(flow.Statuses()),
 	}
 }
 
@@ -84,7 +84,7 @@ func newThesisStatusDocument(status *flow.ThesisStatus) thesisStatusDocument {
 }
 
 func newFlow(d flowDocument) *flow.Flow {
-	return flow.FromStatuses(d.ID, d.PerformanceID, newStatuses(d.Statuses)...)
+	return flow.FromStatuses(d.ID, d.PipelineID, newStatuses(d.Statuses)...)
 }
 
 func newStatuses(ds []statusDocument) []*flow.Status {

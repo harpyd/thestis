@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/core/entity/flow"
-	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/pipeline"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
 
@@ -205,40 +205,40 @@ func TestFulfilledFlow(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		FlowFactory           func() *flow.Flow
-		ExpectedFlowID        string
-		ExpectedPerformanceID string
-		ExpectedStatuses      []*flow.Status
-		ExpectedOverallState  flow.State
+		FlowFactory          func() *flow.Flow
+		ExpectedFlowID       string
+		ExpectedPipelineID   string
+		ExpectedStatuses     []*flow.Status
+		ExpectedOverallState flow.State
 	}{
 		{
 			FlowFactory: func() *flow.Flow {
-				return flow.Fulfill("", &performance.Performance{})
+				return flow.Fulfill("", &pipeline.Pipeline{})
 			},
-			ExpectedFlowID:        "",
-			ExpectedPerformanceID: "",
-			ExpectedStatuses:      nil,
-			ExpectedOverallState:  flow.NoState,
+			ExpectedFlowID:       "",
+			ExpectedPipelineID:   "",
+			ExpectedStatuses:     nil,
+			ExpectedOverallState: flow.NoState,
 		},
 		{
 			FlowFactory: func() *flow.Flow {
-				return flow.Fulfill("foo", &performance.Performance{})
+				return flow.Fulfill("foo", &pipeline.Pipeline{})
 			},
-			ExpectedFlowID:        "foo",
-			ExpectedPerformanceID: "",
-			ExpectedStatuses:      nil,
-			ExpectedOverallState:  flow.NoState,
+			ExpectedFlowID:       "foo",
+			ExpectedPipelineID:   "",
+			ExpectedStatuses:     nil,
+			ExpectedOverallState: flow.NoState,
 		},
 		{
 			FlowFactory: func() *flow.Flow {
-				return flow.Fulfill("bar", performance.Unmarshal(performance.Params{
+				return flow.Fulfill("bar", pipeline.Unmarshal(pipeline.Params{
 					ID: "doo",
 				}))
 			},
-			ExpectedFlowID:        "bar",
-			ExpectedPerformanceID: "doo",
-			ExpectedStatuses:      nil,
-			ExpectedOverallState:  flow.NoState,
+			ExpectedFlowID:       "bar",
+			ExpectedPipelineID:   "doo",
+			ExpectedStatuses:     nil,
+			ExpectedOverallState: flow.NoState,
 		},
 		{
 			FlowFactory: func() *flow.Flow {
@@ -250,18 +250,18 @@ func TestFulfilledFlow(t *testing.T) {
 					}).
 					ErrlessBuild()
 
-				return flow.Fulfill("rar", performance.Trigger("kra", spec))
+				return flow.Fulfill("rar", pipeline.Trigger("kra", spec))
 			},
-			ExpectedFlowID:        "rar",
-			ExpectedPerformanceID: "kra",
+			ExpectedFlowID:     "rar",
+			ExpectedPipelineID: "kra",
 			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("foo", "koo"),
-					flow.NotPerformed,
-					flow.NewThesisStatus("too", flow.NotPerformed),
+					flow.NotExecuted,
+					flow.NewThesisStatus("too", flow.NotExecuted),
 				),
 			},
-			ExpectedOverallState: flow.NotPerformed,
+			ExpectedOverallState: flow.NotExecuted,
 		},
 		{
 			FlowFactory: func() *flow.Flow {
@@ -273,24 +273,24 @@ func TestFulfilledFlow(t *testing.T) {
 					}).
 					ErrlessBuild()
 
-				f := flow.Fulfill("dar", performance.Trigger("fla", spec))
+				f := flow.Fulfill("dar", pipeline.Trigger("fla", spec))
 
-				return f.ApplyStep(performance.NewThesisStep(
+				return f.ApplyStep(pipeline.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "baz"),
-					performance.HTTPPerformer,
-					performance.FiredPass,
+					pipeline.HTTPExecutor,
+					pipeline.FiredPass,
 				))
 			},
-			ExpectedFlowID:        "dar",
-			ExpectedPerformanceID: "fla",
+			ExpectedFlowID:     "dar",
+			ExpectedPipelineID: "fla",
 			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("foo", "bar"),
-					flow.NotPerformed,
+					flow.NotExecuted,
 					flow.NewThesisStatus("baz", flow.Passed),
 				),
 			},
-			ExpectedOverallState: flow.NotPerformed,
+			ExpectedOverallState: flow.NotExecuted,
 		},
 		{
 			FlowFactory: func() *flow.Flow {
@@ -302,20 +302,20 @@ func TestFulfilledFlow(t *testing.T) {
 					}).
 					ErrlessBuild()
 
-				return flow.Fulfill("sds", performance.Trigger("coo", spec)).
-					ApplyStep(performance.NewScenarioStepWithErr(
+				return flow.Fulfill("sds", pipeline.Trigger("coo", spec)).
+					ApplyStep(pipeline.NewScenarioStepWithErr(
 						errors.New("something wrong"),
 						specification.NewScenarioSlug("doo", "zoo"),
-						performance.FiredCrash,
+						pipeline.FiredCrash,
 					))
 			},
-			ExpectedFlowID:        "sds",
-			ExpectedPerformanceID: "coo",
+			ExpectedFlowID:     "sds",
+			ExpectedPipelineID: "coo",
 			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("doo", "zoo"),
 					flow.Crashed,
-					flow.NewThesisStatus("moo", flow.NotPerformed),
+					flow.NewThesisStatus("moo", flow.NotExecuted),
 				),
 			},
 			ExpectedOverallState: flow.Crashed,
@@ -327,33 +327,33 @@ func TestFulfilledFlow(t *testing.T) {
 					"oba",
 					flow.NewStatus(
 						specification.NewScenarioSlug("foo", "bar"),
-						flow.Performing,
+						flow.Executing,
 						flow.NewThesisStatus("baz", flow.Passed),
-						flow.NewThesisStatus("ban", flow.Performing),
+						flow.NewThesisStatus("ban", flow.Executing),
 					),
-				).ApplyStep(performance.NewThesisStep(
+				).ApplyStep(pipeline.NewThesisStep(
 					specification.NewThesisSlug("foo", "bar", "NOP"),
-					performance.HTTPPerformer,
-					performance.FiredFail,
+					pipeline.HTTPExecutor,
+					pipeline.FiredFail,
 				))
 			},
-			ExpectedFlowID:        "aba",
-			ExpectedPerformanceID: "oba",
+			ExpectedFlowID:     "aba",
+			ExpectedPipelineID: "oba",
 			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("foo", "bar"),
-					flow.Performing,
+					flow.Executing,
 					flow.NewThesisStatus("baz", flow.Passed),
-					flow.NewThesisStatus("ban", flow.Performing),
+					flow.NewThesisStatus("ban", flow.Executing),
 				),
 			},
-			ExpectedOverallState: flow.Performing,
+			ExpectedOverallState: flow.Executing,
 		},
 		{
 			FlowFactory: func() *flow.Flow {
 				return flow.FromStatuses(
 					"flow-id",
-					"some-perf-id",
+					"some-pipe-id",
 					flow.NewStatus(
 						specification.NewScenarioSlug("foo", "bar"),
 						flow.Passed,
@@ -364,8 +364,8 @@ func TestFulfilledFlow(t *testing.T) {
 					),
 				)
 			},
-			ExpectedFlowID:        "flow-id",
-			ExpectedPerformanceID: "some-perf-id",
+			ExpectedFlowID:     "flow-id",
+			ExpectedPipelineID: "some-pipe-id",
 			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("foo", "bar"),
@@ -382,10 +382,10 @@ func TestFulfilledFlow(t *testing.T) {
 			FlowFactory: func() *flow.Flow {
 				return flow.FromStatuses(
 					"id",
-					"perf-id",
+					"pipe-id",
 					flow.NewStatus(
 						specification.NewScenarioSlug("a", "b"),
-						flow.Performing,
+						flow.Executing,
 					),
 					flow.NewStatus(
 						specification.NewScenarioSlug("a", "d"),
@@ -401,12 +401,12 @@ func TestFulfilledFlow(t *testing.T) {
 					),
 				)
 			},
-			ExpectedFlowID:        "id",
-			ExpectedPerformanceID: "perf-id",
+			ExpectedFlowID:     "id",
+			ExpectedPipelineID: "pipe-id",
 			ExpectedStatuses: []*flow.Status{
 				flow.NewStatus(
 					specification.NewScenarioSlug("a", "b"),
-					flow.Performing,
+					flow.Executing,
 				),
 				flow.NewStatus(
 					specification.NewScenarioSlug("a", "d"),
@@ -421,7 +421,7 @@ func TestFulfilledFlow(t *testing.T) {
 					flow.Crashed,
 				),
 			},
-			ExpectedOverallState: flow.Performing,
+			ExpectedOverallState: flow.Executing,
 		},
 	}
 
@@ -437,8 +437,8 @@ func TestFulfilledFlow(t *testing.T) {
 				require.Equal(t, c.ExpectedFlowID, f.ID())
 			})
 
-			t.Run("performance_id", func(t *testing.T) {
-				require.Equal(t, c.ExpectedPerformanceID, f.PerformanceID())
+			t.Run("pipeline_id", func(t *testing.T) {
+				require.Equal(t, c.ExpectedPipelineID, f.PipelineID())
 			})
 
 			t.Run("statuses", func(t *testing.T) {

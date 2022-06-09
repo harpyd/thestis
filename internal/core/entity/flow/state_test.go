@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/harpyd/thestis/internal/core/entity/flow"
-	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/pipeline"
 )
 
 func TestNextState(t *testing.T) {
@@ -16,199 +16,199 @@ func TestNextState(t *testing.T) {
 	testCases := []struct {
 		Name          string
 		GivenState    flow.State
-		GivenEvent    performance.Event
+		GivenEvent    pipeline.Event
 		ExpectedState flow.State
 	}{
 		{
-			Name:          "no_state-(perform)->no_state",
+			Name:          "no_state-(execute)->no_state",
 			GivenState:    flow.NoState,
-			GivenEvent:    performance.FiredPerform,
+			GivenEvent:    pipeline.FiredExecute,
 			ExpectedState: flow.NoState,
 		},
 		{
-			Name:          "performing-(no_event)->performing",
-			GivenState:    flow.Performing,
-			GivenEvent:    performance.NoEvent,
-			ExpectedState: flow.Performing,
+			Name:          "executing-(no_event)->executing",
+			GivenState:    flow.Executing,
+			GivenEvent:    pipeline.NoEvent,
+			ExpectedState: flow.Executing,
 		},
 		{
-			Name:          "not_performed-(perform)->performing",
-			GivenState:    flow.NotPerformed,
-			GivenEvent:    performance.FiredPerform,
-			ExpectedState: flow.Performing,
+			Name:          "not_executed-(execute)->executing",
+			GivenState:    flow.NotExecuted,
+			GivenEvent:    pipeline.FiredExecute,
+			ExpectedState: flow.Executing,
 		},
 		{
-			Name:          "not_performed-(pass)->passed",
-			GivenState:    flow.NotPerformed,
-			GivenEvent:    performance.FiredPass,
+			Name:          "not_executed-(pass)->passed",
+			GivenState:    flow.NotExecuted,
+			GivenEvent:    pipeline.FiredPass,
 			ExpectedState: flow.Passed,
 		},
 		{
-			Name:          "not_performed-(fail)->failed",
-			GivenState:    flow.NotPerformed,
-			GivenEvent:    performance.FiredFail,
+			Name:          "not_executed-(fail)->failed",
+			GivenState:    flow.NotExecuted,
+			GivenEvent:    pipeline.FiredFail,
 			ExpectedState: flow.Failed,
 		},
 		{
-			Name:          "not_performed-(crash)->crashed",
-			GivenState:    flow.NotPerformed,
-			GivenEvent:    performance.FiredCrash,
+			Name:          "not_executed-(crash)->crashed",
+			GivenState:    flow.NotExecuted,
+			GivenEvent:    pipeline.FiredCrash,
 			ExpectedState: flow.Crashed,
 		},
 		{
-			Name:          "not_performed-(cancel)->canceled",
-			GivenState:    flow.NotPerformed,
-			GivenEvent:    performance.FiredCancel,
+			Name:          "not_executed-(cancel)->canceled",
+			GivenState:    flow.NotExecuted,
+			GivenEvent:    pipeline.FiredCancel,
 			ExpectedState: flow.Canceled,
 		},
 		{
-			Name:          "performing-(perform)->performing",
-			GivenState:    flow.Performing,
-			GivenEvent:    performance.FiredPerform,
-			ExpectedState: flow.Performing,
+			Name:          "executing-(execute)->executing",
+			GivenState:    flow.Executing,
+			GivenEvent:    pipeline.FiredExecute,
+			ExpectedState: flow.Executing,
 		},
 		{
-			Name:          "performing-(pass)->passed",
-			GivenState:    flow.Performing,
-			GivenEvent:    performance.FiredPass,
+			Name:          "executing-(pass)->passed",
+			GivenState:    flow.Executing,
+			GivenEvent:    pipeline.FiredPass,
 			ExpectedState: flow.Passed,
 		},
 		{
-			Name:          "performing-(fail)->failed",
-			GivenState:    flow.Performing,
-			GivenEvent:    performance.FiredFail,
+			Name:          "executing-(fail)->failed",
+			GivenState:    flow.Executing,
+			GivenEvent:    pipeline.FiredFail,
 			ExpectedState: flow.Failed,
 		},
 		{
-			Name:          "performing-(crash)->crashed",
-			GivenState:    flow.Performing,
-			GivenEvent:    performance.FiredCrash,
+			Name:          "executing-(crash)->crashed",
+			GivenState:    flow.Executing,
+			GivenEvent:    pipeline.FiredCrash,
 			ExpectedState: flow.Crashed,
 		},
 		{
-			Name:          "performing-(cancel)->canceled",
-			GivenState:    flow.Performing,
-			GivenEvent:    performance.FiredCancel,
+			Name:          "executing-(cancel)->canceled",
+			GivenState:    flow.Executing,
+			GivenEvent:    pipeline.FiredCancel,
 			ExpectedState: flow.Canceled,
 		},
 		{
-			Name:          "passed-(perform)->passed",
+			Name:          "passed-(execute)->passed",
 			GivenState:    flow.Passed,
-			GivenEvent:    performance.FiredPerform,
+			GivenEvent:    pipeline.FiredExecute,
 			ExpectedState: flow.Passed,
 		},
 		{
 			Name:          "passed-(pass)->passed",
 			GivenState:    flow.Passed,
-			GivenEvent:    performance.FiredPass,
+			GivenEvent:    pipeline.FiredPass,
 			ExpectedState: flow.Passed,
 		},
 		{
 			Name:          "passed-(fail)->failed",
 			GivenState:    flow.Passed,
-			GivenEvent:    performance.FiredFail,
+			GivenEvent:    pipeline.FiredFail,
 			ExpectedState: flow.Failed,
 		},
 		{
 			Name:          "passed-(crash)->crashed",
 			GivenState:    flow.Passed,
-			GivenEvent:    performance.FiredCrash,
+			GivenEvent:    pipeline.FiredCrash,
 			ExpectedState: flow.Crashed,
 		},
 		{
 			Name:          "passed-(cancel)->canceled",
 			GivenState:    flow.Passed,
-			GivenEvent:    performance.FiredCancel,
+			GivenEvent:    pipeline.FiredCancel,
 			ExpectedState: flow.Passed,
 		},
 		{
-			Name:          "failed-(perform)->failed",
+			Name:          "failed-(execute)->failed",
 			GivenState:    flow.Failed,
-			GivenEvent:    performance.FiredPerform,
+			GivenEvent:    pipeline.FiredExecute,
 			ExpectedState: flow.Failed,
 		},
 		{
 			Name:          "failed-(pass)->failed",
 			GivenState:    flow.Failed,
-			GivenEvent:    performance.FiredPass,
+			GivenEvent:    pipeline.FiredPass,
 			ExpectedState: flow.Failed,
 		},
 		{
 			Name:          "failed-(fail)->failed",
 			GivenState:    flow.Failed,
-			GivenEvent:    performance.FiredFail,
+			GivenEvent:    pipeline.FiredFail,
 			ExpectedState: flow.Failed,
 		},
 		{
 			Name:          "failed-(crash)->crashed",
 			GivenState:    flow.Failed,
-			GivenEvent:    performance.FiredCrash,
+			GivenEvent:    pipeline.FiredCrash,
 			ExpectedState: flow.Crashed,
 		},
 		{
 			Name:          "failed-(cancel)->canceled",
 			GivenState:    flow.Failed,
-			GivenEvent:    performance.FiredCancel,
+			GivenEvent:    pipeline.FiredCancel,
 			ExpectedState: flow.Failed,
 		},
 		{
-			Name:          "crashed-(perform)->crashed",
+			Name:          "crashed-(execute)->crashed",
 			GivenState:    flow.Crashed,
-			GivenEvent:    performance.FiredPerform,
+			GivenEvent:    pipeline.FiredExecute,
 			ExpectedState: flow.Crashed,
 		},
 		{
 			Name:          "crashed-(pass)->crashed",
 			GivenState:    flow.Crashed,
-			GivenEvent:    performance.FiredPass,
+			GivenEvent:    pipeline.FiredPass,
 			ExpectedState: flow.Crashed,
 		},
 		{
 			Name:          "crashed-(fail)->crashed",
 			GivenState:    flow.Crashed,
-			GivenEvent:    performance.FiredFail,
+			GivenEvent:    pipeline.FiredFail,
 			ExpectedState: flow.Crashed,
 		},
 		{
 			Name:          "crashed-(crash)->crashed",
 			GivenState:    flow.Crashed,
-			GivenEvent:    performance.FiredCrash,
+			GivenEvent:    pipeline.FiredCrash,
 			ExpectedState: flow.Crashed,
 		},
 		{
 			Name:          "crashed-(cancel)->crashed",
 			GivenState:    flow.Crashed,
-			GivenEvent:    performance.FiredCancel,
+			GivenEvent:    pipeline.FiredCancel,
 			ExpectedState: flow.Crashed,
 		},
 		{
-			Name:          "canceled-(perform)->canceled",
+			Name:          "canceled-(execute)->canceled",
 			GivenState:    flow.Canceled,
-			GivenEvent:    performance.FiredPerform,
+			GivenEvent:    pipeline.FiredExecute,
 			ExpectedState: flow.Canceled,
 		},
 		{
 			Name:          "canceled-(pass)->canceled",
 			GivenState:    flow.Canceled,
-			GivenEvent:    performance.FiredPass,
+			GivenEvent:    pipeline.FiredPass,
 			ExpectedState: flow.Canceled,
 		},
 		{
 			Name:          "canceled-(fail)->canceled",
 			GivenState:    flow.Canceled,
-			GivenEvent:    performance.FiredFail,
+			GivenEvent:    pipeline.FiredFail,
 			ExpectedState: flow.Canceled,
 		},
 		{
 			Name:          "canceled-(crash)->canceled",
 			GivenState:    flow.Canceled,
-			GivenEvent:    performance.FiredCrash,
+			GivenEvent:    pipeline.FiredCrash,
 			ExpectedState: flow.Canceled,
 		},
 		{
 			Name:          "canceled-(cancel)->canceled",
 			GivenState:    flow.Canceled,
-			GivenEvent:    performance.FiredCancel,
+			GivenEvent:    pipeline.FiredCancel,
 			ExpectedState: flow.Canceled,
 		},
 	}
@@ -244,12 +244,12 @@ func TestStatePrecedenceOrder(t *testing.T) {
 
 	sortedStates := states{
 		flow.NoState,
-		flow.Performing,
+		flow.Executing,
 		flow.Passed,
 		flow.Failed,
 		flow.Crashed,
 		flow.Canceled,
-		flow.NotPerformed,
+		flow.NotExecuted,
 	}
 
 	sort.Sort(sortedStates)
@@ -257,11 +257,11 @@ func TestStatePrecedenceOrder(t *testing.T) {
 	expectedStates := states{
 		flow.NoState,
 		flow.Passed,
-		flow.NotPerformed,
+		flow.NotExecuted,
 		flow.Canceled,
 		flow.Failed,
 		flow.Crashed,
-		flow.Performing,
+		flow.Executing,
 	}
 
 	require.Equal(t, expectedStates, sortedStates)

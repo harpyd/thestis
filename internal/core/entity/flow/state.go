@@ -1,57 +1,57 @@
 package flow
 
 import (
-	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/pipeline"
 )
 
 type State string
 
 const (
-	NoState      State = ""
-	NotPerformed State = "not performed"
-	Performing   State = "performing"
-	Passed       State = "passed"
-	Failed       State = "failed"
-	Crashed      State = "crashed"
-	Canceled     State = "canceled"
+	NoState     State = ""
+	NotExecuted State = "not executed"
+	Executing   State = "executing"
+	Passed      State = "passed"
+	Failed      State = "failed"
+	Crashed     State = "crashed"
+	Canceled    State = "canceled"
 )
 
-type stateTransitionRules map[State]map[performance.Event]State
+type stateTransitionRules map[State]map[pipeline.Event]State
 
 func rules() stateTransitionRules {
 	return stateTransitionRules{
-		NotPerformed: {
-			performance.FiredPerform: Performing,
-			performance.FiredPass:    Passed,
-			performance.FiredFail:    Failed,
-			performance.FiredCrash:   Crashed,
-			performance.FiredCancel:  Canceled,
+		NotExecuted: {
+			pipeline.FiredExecute: Executing,
+			pipeline.FiredPass:    Passed,
+			pipeline.FiredFail:    Failed,
+			pipeline.FiredCrash:   Crashed,
+			pipeline.FiredCancel:  Canceled,
 		},
-		Performing: {
-			performance.FiredPass:   Passed,
-			performance.FiredFail:   Failed,
-			performance.FiredCrash:  Crashed,
-			performance.FiredCancel: Canceled,
+		Executing: {
+			pipeline.FiredPass:   Passed,
+			pipeline.FiredFail:   Failed,
+			pipeline.FiredCrash:  Crashed,
+			pipeline.FiredCancel: Canceled,
 		},
 		Passed: {
-			performance.FiredFail:   Failed,
-			performance.FiredCrash:  Crashed,
-			performance.FiredCancel: Passed,
+			pipeline.FiredFail:   Failed,
+			pipeline.FiredCrash:  Crashed,
+			pipeline.FiredCancel: Passed,
 		},
 		Failed: {
-			performance.FiredCrash:  Crashed,
-			performance.FiredCancel: Failed,
+			pipeline.FiredCrash:  Crashed,
+			pipeline.FiredCancel: Failed,
 		},
 	}
 }
 
 // Next returns the next state depending on the
-// received performance.Event.
+// received pipeline.Event.
 //
 // State transition rules are defined for a finite
 // automaton, then this function is a transition
 // function for this automaton.
-func (s State) Next(with performance.Event) State {
+func (s State) Next(with pipeline.Event) State {
 	ss, ok := rules()[s]
 	if !ok {
 		return s
@@ -78,7 +78,7 @@ func (s State) Precedence() int {
 		return 0
 	case Passed:
 		return 1
-	case NotPerformed:
+	case NotExecuted:
 		return 2
 	case Canceled:
 		return 3
@@ -86,7 +86,7 @@ func (s State) Precedence() int {
 		return 4
 	case Crashed:
 		return 5
-	case Performing:
+	case Executing:
 		return 6
 	default:
 		return 0

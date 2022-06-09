@@ -1,18 +1,18 @@
 package flow
 
 import (
-	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/pipeline"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 )
 
 type (
-	// Flow represents the progress of a single performance.Performance
+	// Flow represents the progress of a single pipeline.Pipeline
 	// run. The flow consists of working specification.Scenario and
 	// specification.Thesis statuses. Each ApplyStep call moves the
 	// progress forward.
 	Flow struct {
-		id            string
-		performanceID string
+		id         string
+		pipelineID string
 
 		statuses map[specification.Slug]*Status
 	}
@@ -38,10 +38,10 @@ func (f *Flow) ID() string {
 	return f.id
 }
 
-// PerformanceID returns associated with
-// Flow performance identifier.
-func (f *Flow) PerformanceID() string {
-	return f.performanceID
+// PipelineID returns associated with
+// Flow pipeline identifier.
+func (f *Flow) PipelineID() string {
+	return f.pipelineID
 }
 
 // OverallState returns general Flow status
@@ -74,12 +74,12 @@ func (f *Flow) Statuses() []*Status {
 }
 
 // ApplyStep is method for step by step collecting
-// performance.Performance steps to move the progress
-// of the performance by changing status states.
+// pipeline.Pipeline steps to move the progress
+// of the pipeline by changing status states.
 //
 // Flow state changes from call to call relying on the
 // state transition rules in State.Next method.
-func (f *Flow) ApplyStep(step performance.Step) *Flow {
+func (f *Flow) ApplyStep(step pipeline.Step) *Flow {
 	slug := step.Slug()
 
 	status, ok := f.statuses[slug.ToScenarioKind()]
@@ -195,7 +195,7 @@ func (s *ThesisStatus) State() State {
 }
 
 // OccurredErrs returns errors that occurred
-// during performing of theses.
+// during executing of theses.
 func (s *ThesisStatus) OccurredErrs() []string {
 	if len(s.occurredErrs) == 0 {
 		return nil
@@ -207,33 +207,32 @@ func (s *ThesisStatus) OccurredErrs() []string {
 	return occurredErrs
 }
 
-// Fulfill starts a new flow from performance.Performance.
+// Fulfill starts a new flow from pipeline.Pipeline.
 // The result of the function is a Flow, with which you can
-// collect the steps coming from the performance during its
-// execution.
+// collect the steps during pipeline execution.
 //
 // Each step contains information about the progress of the
-// performance, including performance.Event. The states of
+// pipeline, including pipeline.Event. The states of
 // statuses change under the action of events. The transition
 // rules for the event are described in the State.Next method.
-func Fulfill(id string, perf *performance.Performance) *Flow {
+func Fulfill(id string, pipe *pipeline.Pipeline) *Flow {
 	var (
-		scenarios = perf.WorkingScenarios()
+		scenarios = pipe.WorkingScenarios()
 		statuses  = make(map[specification.Slug]*Status, len(scenarios))
 	)
 
 	for _, scenario := range scenarios {
 		statuses[scenario.Slug()] = &Status{
 			slug:           scenario.Slug(),
-			state:          NotPerformed,
+			state:          NotExecuted,
 			thesisStatuses: fromTheses(scenario.Theses()),
 		}
 	}
 
 	return &Flow{
-		id:            id,
-		performanceID: perf.ID(),
-		statuses:      statuses,
+		id:         id,
+		pipelineID: pipe.ID(),
+		statuses:   statuses,
 	}
 }
 
@@ -243,7 +242,7 @@ func fromTheses(theses []specification.Thesis) map[string]*ThesisStatus {
 	for _, thesis := range theses {
 		slug := thesis.Slug().Partial()
 
-		statuses[slug] = NewThesisStatus(slug, NotPerformed)
+		statuses[slug] = NewThesisStatus(slug, NotExecuted)
 	}
 
 	return statuses
@@ -253,11 +252,11 @@ func fromTheses(theses []specification.Thesis) map[string]*ThesisStatus {
 //
 // This method is similar to the other, but this method is
 // intended solely for testing purposes.
-func FromStatuses(id, performanceID string, statuses ...*Status) *Flow {
+func FromStatuses(id, pipeID string, statuses ...*Status) *Flow {
 	return &Flow{
-		id:            id,
-		performanceID: performanceID,
-		statuses:      statusesOrNil(statuses),
+		id:         id,
+		pipelineID: pipeID,
+		statuses:   statusesOrNil(statuses),
 	}
 }
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/pipeline"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 )
@@ -25,7 +25,7 @@ const (
 	NoResource    Resource = ""
 	TestCampaign  Resource = "test campaign"
 	Specification Resource = "specification"
-	Performance   Resource = "performance"
+	Pipeline      Resource = "pipeline"
 )
 
 type AccessError struct {
@@ -117,14 +117,14 @@ func CanAccessSpecification(
 	return NewAccessError(userID, spec.OwnerID(), Specification, perm)
 }
 
-func CanAccessPerformance(
+func CanAccessPipeline(
 	userID string,
-	perf *performance.Performance,
+	pipe *pipeline.Pipeline,
 	perm Permission,
 ) error {
-	if userID == perf.OwnerID() {
+	if userID == pipe.OwnerID() {
 		return nil
 	}
 
-	return NewAccessError(userID, perf.OwnerID(), Performance, perm)
+	return NewAccessError(userID, pipe.OwnerID(), Pipeline, perm)
 }

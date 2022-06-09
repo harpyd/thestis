@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/harpyd/thestis/internal/core/entity/flow"
-	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/pipeline"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 )
@@ -15,7 +15,7 @@ import (
 var (
 	ErrTestCampaignNotFound  = errors.New("test campaign not found")
 	ErrSpecificationNotFound = errors.New("specification not found")
-	ErrPerformanceNotFound   = errors.New("performance not found")
+	ErrPipelineNotFound      = errors.New("pipeline not found")
 	ErrFlowNotFound          = errors.New("flow not found")
 )
 
@@ -44,14 +44,14 @@ type (
 )
 
 type (
-	PerformanceRepository interface {
-		GetPerformance(
+	PipelineRepository interface {
+		GetPipeline(
 			ctx context.Context,
-			perfID string,
+			pipeID string,
 			specGetter SpecificationGetter,
-			opts ...performance.Option,
-		) (*performance.Performance, error)
-		AddPerformance(ctx context.Context, perf *performance.Performance) error
+			opts ...pipeline.Option,
+		) (*pipeline.Pipeline, error)
+		AddPipeline(ctx context.Context, pipe *pipeline.Pipeline) error
 	}
 
 	SpecificationGetter interface {

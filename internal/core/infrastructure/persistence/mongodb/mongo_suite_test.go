@@ -49,13 +49,13 @@ func (s *MongoSuite) insertFlows(flows ...interface{}) {
 	}
 }
 
-func (s *MongoSuite) insertPerformances(perfs ...interface{}) {
+func (s *MongoSuite) insertPipelines(pipes ...interface{}) {
 	s.T().Helper()
 
 	ctx := context.Background()
 
-	for _, perf := range perfs {
-		_, err := s.db.Collection("performances").InsertOne(ctx, perf)
+	for _, pipe := range pipes {
+		_, err := s.db.Collection("pipelines").InsertOne(ctx, pipe)
 		s.Require().NoError(err)
 	}
 }

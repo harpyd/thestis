@@ -43,14 +43,14 @@ type Context struct {
 	mongoSingleton
 	natsSingleton
 	firebaseSingleton
-	performanceWPSingleton
+	pipelineWPSingleton
 
 	logger       service.Logger
 	config       *config.Config
 	persistent   persistentContext
 	specParser   service.SpecificationParser
 	metrics      metricsContext
-	performance  performanceContext
+	pipeline     pipelineContext
 	signalBus    signalBusContext
 	app          *app.Application
 	authProvider rest.AuthProvider
@@ -77,30 +77,30 @@ type zapSingleton struct {
 	logger *zap.Logger
 }
 
-type performanceWPSingleton struct {
+type pipelineWPSingleton struct {
 	once sync.Once
 	wp   *workerpool.WorkerPool
 }
 
-type performanceContext struct {
-	guard      service.PerformanceGuard
-	policy     service.PerformancePolicy
-	maintainer service.PerformanceMaintainer
+type pipelineContext struct {
+	guard      service.PipelineGuard
+	policy     service.PipelinePolicy
+	maintainer service.PipelineMaintainer
 	enqueuer   service.Enqueuer
 }
 
 type persistentContext struct {
 	testCampaignRepo       service.TestCampaignRepository
 	specRepo               service.SpecificationRepository
-	perfRepo               service.PerformanceRepository
+	pipeRepo               service.PipelineRepository
 	flowRepo               service.FlowRepository
 	specificTestCampaignRM query.SpecificTestCampaignReadModel
 	specificSpecRM         query.SpecificSpecificationReadModel
 }
 
 type signalBusContext struct {
-	publisher  service.PerformanceCancelPublisher
-	subscriber service.PerformanceCancelSubscriber
+	publisher  service.PipelineCancelPublisher
+	subscriber service.PipelineCancelSubscriber
 }
 
 type metricsContext struct {
@@ -116,7 +116,7 @@ func New(configsPath string) *Context {
 	c.initSpecificationParser()
 	c.initMetrics()
 	c.initSignalBus()
-	c.initPerformance()
+	c.initPipeline()
 	c.initApplication()
 	c.initAuthenticationProvider()
 	c.initServer()
@@ -140,8 +140,8 @@ func (c *Context) Start() {
 func (c *Context) Stop() {
 	defer c.syncZap()
 
-	c.stopPerformanceWorkerPool()
-	c.logger.Info("Performance worker pool stopped")
+	c.stopPipelineWorkerPool()
+	c.logger.Info("Pipeline worker pool stopped")
 
 	err := multierr.Append(
 		c.shutdownServer(),
@@ -238,21 +238,21 @@ func (c *Context) disconnectNATS() {
 	c.nats().Close()
 }
 
-func (c *Context) performanceWorkerPool() *workerpool.WorkerPool {
-	c.performanceWPSingleton.once.Do(func() {
-		c.performanceWPSingleton.wp = workerpool.New(10)
+func (c *Context) pipelineWorkerPool() *workerpool.WorkerPool {
+	c.pipelineWPSingleton.once.Do(func() {
+		c.pipelineWPSingleton.wp = workerpool.New(10)
 
 		c.logger.Info(
-			"Performance worker pool initialization completed",
-			"workers", c.config.Performance.Workers,
+			"Pipeline worker pool initialization completed",
+			"workers", c.config.Pipeline.Workers,
 		)
 	})
 
-	return c.performanceWPSingleton.wp
+	return c.pipelineWPSingleton.wp
 }
 
-func (c *Context) stopPerformanceWorkerPool() {
-	c.performanceWorkerPool().StopWait()
+func (c *Context) stopPipelineWorkerPool() {
+	c.pipelineWorkerPool().StopWait()
 }
 
 func (c *Context) firebaseAuth() *fireauth.Client {
@@ -292,7 +292,7 @@ func (c *Context) initPersistent() {
 	var (
 		testCampaignRepo = mongoAdapter.NewTestCampaignRepository(db)
 		specRepo         = mongoAdapter.NewSpecificationRepository(db)
-		perfRepo         = mongoAdapter.NewPerformanceRepository(db)
+		pipeRepo         = mongoAdapter.NewPipelineRepository(db)
 		flowRepo         = mongoAdapter.NewFlowRepository(db)
 	)
 
@@ -302,8 +302,8 @@ func (c *Context) initPersistent() {
 	c.persistent.specRepo = specRepo
 	c.logger.Info("Specification repository initialization completed", args...)
 
-	c.persistent.perfRepo = perfRepo
-	c.logger.Info("Performance repository initialization completed", args...)
+	c.persistent.pipeRepo = pipeRepo
+	c.logger.Info("Pipeline repository initialization completed", args...)
 
 	c.persistent.flowRepo = flowRepo
 	c.logger.Info("Flow repository initialization completed", args...)
@@ -329,17 +329,17 @@ func (c *Context) initApplication() {
 				c.persistent.testCampaignRepo,
 				c.specParser,
 			),
-			StartPerformance: command.NewStartPerformanceHandler(
+			StartPipeline: command.NewStartPipelineHandler(
 				c.persistent.specRepo,
-				c.persistent.perfRepo,
-				c.performance.maintainer,
+				c.persistent.pipeRepo,
+				c.pipeline.maintainer,
 			),
-			RestartPerformance: command.NewRestartPerformanceHandler(
-				c.persistent.perfRepo,
+			RestartPipeline: command.NewRestartPipelineHandler(
+				c.persistent.pipeRepo,
 				c.persistent.specRepo,
-				c.performance.maintainer,
+				c.pipeline.maintainer,
 			),
-			CancelPerformance: command.NewCancelPerformanceHandler(c.persistent.perfRepo, c.signalBus.publisher),
+			CancelPipeline: command.NewCancelPipelineHandler(c.persistent.pipeRepo, c.signalBus.publisher),
 		},
 		Queries: app.Queries{
 			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(c.persistent.specificTestCampaignRM),
@@ -362,54 +362,54 @@ func (c *Context) initMetrics() {
 }
 
 func (c *Context) initSignalBus() {
-	if c.config.Performance.SignalBus == config.Nats {
-		bus := natsio.NewPerformanceCancelSignalBus(c.nats())
+	if c.config.Pipeline.SignalBus == config.Nats {
+		bus := natsio.NewPipelineCancelSignalBus(c.nats())
 
 		c.signalBus.publisher = bus
 		c.signalBus.subscriber = bus
 	} else {
 		c.logger.Fatal(
-			"Invalid performance signal bus",
-			errors.Errorf("%s is not valid signal bus", c.config.Performance.SignalBus),
+			"Invalid pipeline signal bus",
+			errors.Errorf("%s is not valid signal bus", c.config.Pipeline.SignalBus),
 			"allowed", config.Nats,
 		)
 	}
 
 	c.logger.Info(
 		"Signal bus initialization completed",
-		"signalBus", c.config.Performance.SignalBus,
+		"signalBus", c.config.Pipeline.SignalBus,
 	)
 }
 
-func (c *Context) initPerformance() {
-	c.initPerformanceGuard()
-	c.initPerformancePolicy()
+func (c *Context) initPipeline() {
+	c.initPipelineGuard()
+	c.initPipelinePolicy()
 	c.initEnqueuer()
 
-	c.performance.maintainer = service.NewPerformanceMaintainer(
-		c.performance.guard,
+	c.pipeline.maintainer = service.NewPipelineMaintainer(
+		c.pipeline.guard,
 		c.signalBus.subscriber,
-		c.performance.policy,
-		c.performance.enqueuer,
-		c.logger,
-		c.config.Performance.FlowTimeout,
+		c.pipeline.policy,
+		c.pipeline.enqueuer,
+		c.logger.Named("PipelineMaintainer"),
+		c.config.Pipeline.FlowTimeout,
 	)
 
 	c.logger.Info(
-		"Performance maintainer initialized",
-		"policy", c.config.Performance.Policy,
+		"Pipeline maintainer initialized",
+		"policy", c.config.Pipeline.Policy,
 	)
 }
 
-func (c *Context) initPerformanceGuard() {
-	c.performance.guard = mongoAdapter.NewPerformanceGuard(c.mongo())
+func (c *Context) initPipelineGuard() {
+	c.pipeline.guard = mongoAdapter.NewPipelineGuard(c.mongo())
 }
 
-func (c *Context) initPerformancePolicy() {
-	if c.config.Performance.Policy == config.SavePerStepPolicy {
-		c.performance.policy = service.NewSavePerStepPolicy(
+func (c *Context) initPipelinePolicy() {
+	if c.config.Pipeline.Policy == config.SavePerStepPolicy {
+		c.pipeline.policy = service.NewSavePerStepPolicy(
 			c.persistent.flowRepo,
-			c.logger,
+			c.logger.Named("SavePerStepPolicy"),
 			c.config.SavePerStep.SaveTimeout,
 		)
 
@@ -417,14 +417,14 @@ func (c *Context) initPerformancePolicy() {
 	}
 
 	c.logger.Fatal(
-		"Invalid performance steps policy",
-		errors.Errorf("%s is not valid steps policy", c.config.Performance.Policy),
+		"Invalid pipeline steps policy",
+		errors.Errorf("%s is not valid steps policy", c.config.Pipeline.Policy),
 		"allowed", config.SavePerStepPolicy,
 	)
 }
 
 func (c *Context) initEnqueuer() {
-	c.performance.enqueuer = service.EnqueueFunc(c.performanceWorkerPool().Submit)
+	c.pipeline.enqueuer = service.EnqueueFunc(c.pipelineWorkerPool().Submit)
 }
 
 func (c *Context) initAuthenticationProvider() {

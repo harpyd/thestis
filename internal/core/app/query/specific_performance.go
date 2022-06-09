@@ -6,38 +6,38 @@ import (
 	"github.com/pkg/errors"
 )
 
-type SpecificPerformance struct {
-	PerformanceID string
-	UserID        string
+type SpecificPipeline struct {
+	PipelineID string
+	UserID     string
 }
 
-type SpecificPerformanceHandler interface {
-	Handle(ctx context.Context, qry SpecificPerformance) (SpecificPerformanceModel, error)
+type SpecificPipelineHandler interface {
+	Handle(ctx context.Context, qry SpecificPipeline) (SpecificPipelineModel, error)
 }
 
-type SpecificPerformanceReadModel interface {
-	FindPerformance(ctx context.Context, qry SpecificPerformance) (SpecificPerformanceModel, error)
+type SpecificPipelineReadModel interface {
+	FindPipeline(ctx context.Context, qry SpecificPipeline) (SpecificPipelineModel, error)
 }
 
-type specificPerformanceHandler struct {
-	readModel SpecificPerformanceReadModel
+type specificPipelineHandler struct {
+	readModel SpecificPipelineReadModel
 }
 
-func NewSpecificPerformanceHandler(readModel SpecificPerformanceReadModel) SpecificPerformanceHandler {
+func NewSpecificPipelineHandler(readModel SpecificPipelineReadModel) SpecificPipelineHandler {
 	if readModel == nil {
-		panic("specific performance read model is nil")
+		panic("specific pipeline read model is nil")
 	}
 
-	return specificPerformanceHandler{
+	return specificPipelineHandler{
 		readModel: readModel,
 	}
 }
 
-func (h specificPerformanceHandler) Handle(
+func (h specificPipelineHandler) Handle(
 	ctx context.Context,
-	qry SpecificPerformance,
-) (SpecificPerformanceModel, error) {
-	perf, err := h.readModel.FindPerformance(ctx, qry)
+	qry SpecificPipeline,
+) (SpecificPipelineModel, error) {
+	pipe, err := h.readModel.FindPipeline(ctx, qry)
 
-	return perf, errors.Wrap(err, "getting performance")
+	return pipe, errors.Wrap(err, "getting pipeline")
 }

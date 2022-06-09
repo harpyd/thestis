@@ -14,14 +14,14 @@ type (
 	Commands struct {
 		CreateTestCampaign command.CreateTestCampaignHandler
 		LoadSpecification  command.LoadSpecificationHandler
-		StartPerformance   command.StartPerformanceHandler
-		RestartPerformance command.RestartPerformanceHandler
-		CancelPerformance  command.CancelPerformanceHandler
+		StartPipeline      command.StartPipelineHandler
+		RestartPipeline    command.RestartPipelineHandler
+		CancelPipeline     command.CancelPipelineHandler
 	}
 
 	Queries struct {
 		SpecificTestCampaign  query.SpecificTestCampaignHandler
 		SpecificSpecification query.SpecificSpecificationHandler
-		SpecificPerformance   query.SpecificPerformanceHandler
+		SpecificPipeline      query.SpecificPipelineHandler
 	}
 )

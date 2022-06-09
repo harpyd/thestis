@@ -183,12 +183,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /test-campaigns/{testCampaignId}/performance:
+  /test-campaigns/{testCampaignId}/pipeline:
     post:
       tags:
-        - performance
-      operationId: startPerformance
-      summary: Asynchronously starts performing of test campaign active specification performance.
+        - pipeline
+      operationId: startPipeline
+      summary: Asynchronously starts pipeline of test campaign's active specification.
       parameters:
         - in: path
           name: testCampaignId
@@ -196,21 +196,21 @@ paths:
             type: string
             format: uuid
           required: true
-          description: Test campaign ID to start performance.
+          description: Test campaign ID to start pipeline.
       requestBody:
         description: >
-          Scenario slugs of performance to start.
-          Only the passed scenarios will be performed.
+          Scenario slugs of pipeline to start.
+          Only the passed scenarios will be executed.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StartPerformanceRequest"
+              $ref: "#/components/schemas/StartPipelineRequest"
       responses:
         202:
-          description: Performance of active test campaign active specification is created.
+          description: Pipeline from active specification is created.
           headers:
             Location:
-              description: Performance URI.
+              description: Pipeline URI.
               schema:
                 type: string
         400:
@@ -220,7 +220,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         403:
-          description: User cannot see test campaign and start performance.
+          description: User cannot see test campaign and start pipeline.
           content:
             application/json:
               schema:
@@ -232,12 +232,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /test-campaigns/{testCampaignId}/performances:
+  /test-campaigns/{testCampaignId}/pipelines:
     get:
       tags:
-        - performance
-      operationId: getPerformanceHistory
-      summary: Returns performance history.
+        - pipeline
+      operationId: getPipelineHistory
+      summary: Returns pipeline history.
       parameters:
         - in: path
           name: testCampaignId
@@ -245,15 +245,15 @@ paths:
             type: string
             format: uuid
           required: true
-          description: Test campaign ID to return performances.
+          description: Test campaign ID to return pipelines.
       responses:
         200:
-          description: Found previously started performances.
+          description: Found previously started pipelines.
           content:
             application/json:
               schema:
                 items:
-                  $ref: "#/components/schemas/GeneralPerformanceResponse"
+                  $ref: "#/components/schemas/GeneralPipelineResponse"
         404:
           description: Test campaign with such ID not found.
           content:
@@ -261,49 +261,49 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /performances/{performanceId}:
+  /pipelines/{pipelineId}:
     get:
       tags:
-        - performance
-      operationId: getPerformance
-      summary: Returns performance with such ID.
+        - pipeline
+      operationId: getPipeline
+      summary: Returns pipeline with such ID.
       parameters:
         - in: path
-          name: performanceId
+          name: pipelineId
           schema:
             type: string
             format: uuid
           required: true
-          description: Performance ID to return performance.
+          description: Pipeline ID to return pipeline.
       responses:
         200:
-          description: Found previously started performance.
+          description: Found previously started pipeline.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SpecificPerformanceResponse"
+                $ref: "#/components/schemas/SpecificPipelineResponse"
         404:
-          description: Performance with such ID not found.
+          description: Pipeline with such ID not found.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
     put:
       tags:
-        - performance
-      operationId: restartPerformance
-      summary: Restart performance with such ID.
+        - pipeline
+      operationId: restartPipeline
+      summary: Restart pipeline with such ID.
       parameters:
         - in: path
-          name: performanceId
+          name: pipelineId
           schema:
             type: string
             format: uuid
           required: true
-          description: Performance ID to restart.
+          description: Pipeline ID to restart.
       responses:
         204:
-          description: Performance restarted.
+          description: Pipeline restarted.
         400:
           description: Bad request.
           content:
@@ -311,52 +311,52 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         404:
-          description: Performance with such ID not found.
+          description: Pipeline with such ID not found.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
         409:
-          description: Performance in progress, cannot restart.
+          description: Pipeline in progress, cannot restart.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /performances/{performanceId}/canceled:
+  /pipelines/{pipelineId}/canceled:
     put:
       tags:
-        - performance
-      operationId: cancelPerformance
-      summary: Cancels performance with such ID.
+        - pipeline
+      operationId: cancelPipeline
+      summary: Cancels pipeline with such ID.
       parameters:
         - in: path
-          name: performanceId
+          name: pipelineId
           schema:
             type: string
             format: uuid
           required: true
-          description: Performance ID to cancel performance.
+          description: Pipeline ID to cancel pipeline.
       responses:
         204:
-          description: Performance canceled if it was in process.
+          description: Pipeline canceled if it was in process.
 
         403:
-          description: "User cannot see performance to cancel it."
+          description: "User cannot see pipeline to cancel it."
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
 
         404:
-          description: Performance with such ID not found.
+          description: Pipeline with such ID not found.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
 
         409:
-          description: Performance has not started yet, cannot cancel.
+          description: Pipeline has not started yet, cannot cancel.
           content:
             application/json:
               schema:
@@ -380,7 +380,7 @@ components:
       enum:
         - test-campaign-not-found
         - specification-not-found
-        - performance-not-found
+        - pipeline-not-found
         - invalid-specification-source
         - invalid-json
         - bad-request
@@ -389,9 +389,9 @@ components:
         - unable-to-verify-jwt
         - unauthorized-user
         - user-cant-see-test-campaign
-        - user-cant-see-performance
-        - performance-already-started
-        - performance-not-started
+        - user-cant-see-pipeline
+        - pipeline-already-started
+        - pipeline-not-started
 
     CreateTestCampaignRequest:
       type: object
@@ -420,7 +420,7 @@ components:
         createdAt:
           type: string
           format: date-time
-        lastPerformanceId:
+        lastPipelineId:
           type: string
           format: uuid
 
@@ -523,7 +523,7 @@ components:
                           - actual: getSoldProducts.response.body.products..itemsCount
                             expected: [ 103, 21 ]
 
-    StartPerformanceRequest:
+    StartPipelineRequest:
       type: object
       properties:
         scenarioSlugs:
@@ -710,7 +710,7 @@ components:
         expected:
           type: string
 
-    GeneralPerformanceResponse:
+    GeneralPipelineResponse:
       type: object
       required:
         - id
@@ -728,13 +728,13 @@ components:
           type: string
           format: date-time
         lastState:
-          $ref: "#/components/schemas/PerformanceState"
+          $ref: "#/components/schemas/PipelineState"
       example:
         specificationId: 43dc4b25-1be1-49eb-a58b-77bfed79cd4c
         startedAt: 2021-11-12T00:00:00
         lastState: CRASHED
 
-    SpecificPerformanceResponse:
+    SpecificPipelineResponse:
       type: object
       required:
         - id
@@ -788,7 +788,7 @@ components:
         - statuses
       properties:
         overallState:
-          $ref: "#/components/schemas/PerformanceState"
+          $ref: "#/components/schemas/PipelineState"
         statuses:
           type: array
           items:
@@ -804,7 +804,7 @@ components:
         slug:
           $ref: "#/components/schemas/SpecificationSlug"
         state:
-          $ref: "#/components/schemas/PerformanceState"
+          $ref: "#/components/schemas/PipelineState"
         thesisStatuses:
           items:
             $ref: "#/components/schemas/ThesisStatus"
@@ -819,7 +819,7 @@ components:
         thesisSlug:
           type: string
         state:
-          $ref: "#/components/schemas/PerformanceState"
+          $ref: "#/components/schemas/PipelineState"
         occurredErrors:
           items:
             type: string
@@ -834,13 +834,13 @@ components:
         thesis:
           type: string
 
-    PerformanceState:
+    PipelineState:
       type: string
       enum:
         - NO_STATE
         - QUEUED
-        - NOT_PERFORMED
-        - PERFORMING
+        - NOT_EXECUTED
+        - EXECUTING
         - PASSED
         - FAILED
         - CRASHED

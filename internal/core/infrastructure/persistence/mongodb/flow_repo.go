@@ -16,11 +16,11 @@ type FlowRepository struct {
 	flows *mongo.Collection
 }
 
-const flows = "flows"
+const flowCollection = "flows"
 
 func NewFlowRepository(db *mongo.Database) *FlowRepository {
 	return &FlowRepository{
-		flows: db.Collection(flows),
+		flows: db.Collection(flowCollection),
 	}
 }
 
