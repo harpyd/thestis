@@ -15,8 +15,8 @@ const (
 	defaultHTTPRWTimeout          = 10 * time.Second
 	defaultHTTPShutdownTimeout    = 10 * time.Second
 	defaultMongoDisconnectTimeout = 10 * time.Second
-	defaultPerformanceFlowTimeout = 24 * time.Hour
-	defaultPerformanceWorkers     = 100
+	defaultPipelineFlowTimeout    = 24 * time.Hour
+	defaultPipelineWorkers        = 100
 )
 
 type Env = string
@@ -45,7 +45,7 @@ type (
 		Mongo       Mongo
 		Auth        Auth
 		Firebase    Firebase
-		Performance Performance
+		Pipeline    Pipeline
 		SavePerStep SavePerStep
 		Nats        NatsServer
 	}
@@ -74,7 +74,7 @@ type (
 		ServiceAccountFile string
 	}
 
-	Performance struct {
+	Pipeline struct {
 		FlowTimeout time.Duration
 		Policy      StepsPolicy
 		SignalBus   SignalBus
@@ -118,8 +118,8 @@ func setDefaults() {
 	viper.SetDefault("http.writeTimeout", defaultHTTPRWTimeout)
 	viper.SetDefault("http.shutdownTimeout", defaultHTTPShutdownTimeout)
 	viper.SetDefault("mongo.disconnectTimeout", defaultMongoDisconnectTimeout)
-	viper.SetDefault("performance.flowTimeout", defaultPerformanceFlowTimeout)
-	viper.SetDefault("performance.workers", defaultPerformanceWorkers)
+	viper.SetDefault("pipeline.flowTimeout", defaultPipelineFlowTimeout)
+	viper.SetDefault("pipeline.workers", defaultPipelineWorkers)
 }
 
 func parseConfig(configsPath, env string) error {
@@ -201,7 +201,7 @@ func unmarshal(cfg *Config) error {
 		return err
 	}
 
-	if err := viper.UnmarshalKey("performance", &cfg.Performance); err != nil {
+	if err := viper.UnmarshalKey("pipeline", &cfg.Pipeline); err != nil {
 		return err
 	}
 

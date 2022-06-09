@@ -13,15 +13,15 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Returns performance with such ID.
-	// (GET /performances/{performanceId})
-	GetPerformance(w http.ResponseWriter, r *http.Request, performanceId string)
-	// Restart performance with such ID.
-	// (PUT /performances/{performanceId})
-	RestartPerformance(w http.ResponseWriter, r *http.Request, performanceId string)
-	// Cancels performance with such ID.
-	// (PUT /performances/{performanceId}/canceled)
-	CancelPerformance(w http.ResponseWriter, r *http.Request, performanceId string)
+	// Returns pipeline with such ID.
+	// (GET /pipelines/{pipelineId})
+	GetPipeline(w http.ResponseWriter, r *http.Request, pipelineId string)
+	// Restart pipeline with such ID.
+	// (PUT /pipelines/{pipelineId})
+	RestartPipeline(w http.ResponseWriter, r *http.Request, pipelineId string)
+	// Cancels pipeline with such ID.
+	// (PUT /pipelines/{pipelineId}/canceled)
+	CancelPipeline(w http.ResponseWriter, r *http.Request, pipelineId string)
 	// Returns specification with such ID.
 	// (GET /specifications/{specificationId})
 	GetSpecification(w http.ResponseWriter, r *http.Request, specificationId string)
@@ -37,12 +37,12 @@ type ServerInterface interface {
 	// Returns test campaign with such ID.
 	// (GET /test-campaigns/{testCampaignId})
 	GetTestCampaign(w http.ResponseWriter, r *http.Request, testCampaignId string)
-	// Asynchronously starts performing of test campaign active specification performance.
-	// (POST /test-campaigns/{testCampaignId}/performance)
-	StartPerformance(w http.ResponseWriter, r *http.Request, testCampaignId string)
-	// Returns performance history.
-	// (GET /test-campaigns/{testCampaignId}/performances)
-	GetPerformanceHistory(w http.ResponseWriter, r *http.Request, testCampaignId string)
+	// Asynchronously starts pipeline of test campaign's active specification.
+	// (POST /test-campaigns/{testCampaignId}/pipeline)
+	StartPipeline(w http.ResponseWriter, r *http.Request, testCampaignId string)
+	// Returns pipeline history.
+	// (GET /test-campaigns/{testCampaignId}/pipelines)
+	GetPipelineHistory(w http.ResponseWriter, r *http.Request, testCampaignId string)
 	// Loads specification to test campaign.
 	// (POST /test-campaigns/{testCampaignId}/specification)
 	LoadSpecification(w http.ResponseWriter, r *http.Request, testCampaignId string)
@@ -57,23 +57,23 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
 
-// GetPerformance operation middleware
-func (siw *ServerInterfaceWrapper) GetPerformance(w http.ResponseWriter, r *http.Request) {
+// GetPipeline operation middleware
+func (siw *ServerInterfaceWrapper) GetPipeline(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
-	// ------------- Path parameter "performanceId" -------------
-	var performanceId string
+	// ------------- Path parameter "pipelineId" -------------
+	var pipelineId string
 
-	err = runtime.BindStyledParameter("simple", false, "performanceId", chi.URLParam(r, "performanceId"), &performanceId)
+	err = runtime.BindStyledParameter("simple", false, "pipelineId", chi.URLParam(r, "pipelineId"), &pipelineId)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "performanceId", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "pipelineId", Err: err})
 		return
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetPerformance(w, r, performanceId)
+		siw.Handler.GetPipeline(w, r, pipelineId)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -83,23 +83,23 @@ func (siw *ServerInterfaceWrapper) GetPerformance(w http.ResponseWriter, r *http
 	handler(w, r.WithContext(ctx))
 }
 
-// RestartPerformance operation middleware
-func (siw *ServerInterfaceWrapper) RestartPerformance(w http.ResponseWriter, r *http.Request) {
+// RestartPipeline operation middleware
+func (siw *ServerInterfaceWrapper) RestartPipeline(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
-	// ------------- Path parameter "performanceId" -------------
-	var performanceId string
+	// ------------- Path parameter "pipelineId" -------------
+	var pipelineId string
 
-	err = runtime.BindStyledParameter("simple", false, "performanceId", chi.URLParam(r, "performanceId"), &performanceId)
+	err = runtime.BindStyledParameter("simple", false, "pipelineId", chi.URLParam(r, "pipelineId"), &pipelineId)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "performanceId", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "pipelineId", Err: err})
 		return
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.RestartPerformance(w, r, performanceId)
+		siw.Handler.RestartPipeline(w, r, pipelineId)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -109,23 +109,23 @@ func (siw *ServerInterfaceWrapper) RestartPerformance(w http.ResponseWriter, r *
 	handler(w, r.WithContext(ctx))
 }
 
-// CancelPerformance operation middleware
-func (siw *ServerInterfaceWrapper) CancelPerformance(w http.ResponseWriter, r *http.Request) {
+// CancelPipeline operation middleware
+func (siw *ServerInterfaceWrapper) CancelPipeline(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
 
-	// ------------- Path parameter "performanceId" -------------
-	var performanceId string
+	// ------------- Path parameter "pipelineId" -------------
+	var pipelineId string
 
-	err = runtime.BindStyledParameter("simple", false, "performanceId", chi.URLParam(r, "performanceId"), &performanceId)
+	err = runtime.BindStyledParameter("simple", false, "pipelineId", chi.URLParam(r, "pipelineId"), &pipelineId)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "performanceId", Err: err})
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "pipelineId", Err: err})
 		return
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.CancelPerformance(w, r, performanceId)
+		siw.Handler.CancelPipeline(w, r, pipelineId)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -243,8 +243,8 @@ func (siw *ServerInterfaceWrapper) GetTestCampaign(w http.ResponseWriter, r *htt
 	handler(w, r.WithContext(ctx))
 }
 
-// StartPerformance operation middleware
-func (siw *ServerInterfaceWrapper) StartPerformance(w http.ResponseWriter, r *http.Request) {
+// StartPipeline operation middleware
+func (siw *ServerInterfaceWrapper) StartPipeline(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
@@ -259,7 +259,7 @@ func (siw *ServerInterfaceWrapper) StartPerformance(w http.ResponseWriter, r *ht
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.StartPerformance(w, r, testCampaignId)
+		siw.Handler.StartPipeline(w, r, testCampaignId)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -269,8 +269,8 @@ func (siw *ServerInterfaceWrapper) StartPerformance(w http.ResponseWriter, r *ht
 	handler(w, r.WithContext(ctx))
 }
 
-// GetPerformanceHistory operation middleware
-func (siw *ServerInterfaceWrapper) GetPerformanceHistory(w http.ResponseWriter, r *http.Request) {
+// GetPipelineHistory operation middleware
+func (siw *ServerInterfaceWrapper) GetPipelineHistory(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var err error
@@ -285,7 +285,7 @@ func (siw *ServerInterfaceWrapper) GetPerformanceHistory(w http.ResponseWriter, 
 	}
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetPerformanceHistory(w, r, testCampaignId)
+		siw.Handler.GetPipelineHistory(w, r, testCampaignId)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -435,13 +435,13 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/performances/{performanceId}", wrapper.GetPerformance)
+		r.Get(options.BaseURL+"/pipelines/{pipelineId}", wrapper.GetPipeline)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/performances/{performanceId}", wrapper.RestartPerformance)
+		r.Put(options.BaseURL+"/pipelines/{pipelineId}", wrapper.RestartPipeline)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/performances/{performanceId}/canceled", wrapper.CancelPerformance)
+		r.Put(options.BaseURL+"/pipelines/{pipelineId}/canceled", wrapper.CancelPipeline)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/specifications/{specificationId}", wrapper.GetSpecification)
@@ -459,10 +459,10 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/test-campaigns/{testCampaignId}", wrapper.GetTestCampaign)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/test-campaigns/{testCampaignId}/performance", wrapper.StartPerformance)
+		r.Post(options.BaseURL+"/test-campaigns/{testCampaignId}/pipeline", wrapper.StartPipeline)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/test-campaigns/{testCampaignId}/performances", wrapper.GetPerformanceHistory)
+		r.Get(options.BaseURL+"/test-campaigns/{testCampaignId}/pipelines", wrapper.GetPipelineHistory)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/test-campaigns/{testCampaignId}/specification", wrapper.LoadSpecification)

@@ -61,8 +61,8 @@ func (s *FlowRepositoryTestSuite) TestUpsertFlow() {
 		{
 			Name: "success_updating_flow",
 			InsertedBeforeFlow: bson.M{
-				"_id":           "07e3468b-a195-4b30-81df-8e3e8d389da9",
-				"performanceId": "37a5f844-25db-4aad-a3e2-628674e7e1e5",
+				"_id":        "07e3468b-a195-4b30-81df-8e3e8d389da9",
+				"pipelineId": "37a5f844-25db-4aad-a3e2-628674e7e1e5",
 			},
 			GivenFlow: flow.FromStatuses(
 				"07e3468b-a195-4b30-81df-8e3e8d389da9",

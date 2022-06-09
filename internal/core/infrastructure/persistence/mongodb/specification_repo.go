@@ -17,10 +17,10 @@ type SpecificationRepository struct {
 	specifications *mongo.Collection
 }
 
-const specificationsCollection = "specifications"
+const specificationCollection = "specifications"
 
 func NewSpecificationRepository(db *mongo.Database) *SpecificationRepository {
-	col := db.Collection(specificationsCollection)
+	col := db.Collection(specificationCollection)
 
 	_, err := col.Indexes().CreateOne(context.Background(), mongo.IndexModel{
 		Keys:    bson.M{"id": 1},

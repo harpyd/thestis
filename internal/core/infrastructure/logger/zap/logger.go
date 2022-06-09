@@ -18,7 +18,7 @@ func NewLogger(logger *zap.Logger) Logger {
 
 func (l Logger) With(args ...interface{}) service.Logger {
 	return Logger{
-		base: l.base.With(args),
+		base: l.base.With(args...),
 	}
 }
 

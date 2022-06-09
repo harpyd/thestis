@@ -16,7 +16,7 @@ auth:
 firebase:
   serviceAccountFile: ${SERVICE_ACCOUNT_FILE}
 
-performance:
+pipeline:
   flowTimeout: 24h
   policy: savePerStep
   signalBus: nats

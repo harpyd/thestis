@@ -96,7 +96,7 @@ func (a AssertionModel) IsZero() bool {
 }
 
 type (
-	SpecificPerformanceModel struct {
+	SpecificPipelineModel struct {
 		ID              string
 		SpecificationID string
 		StartedAt       time.Time

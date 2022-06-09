@@ -8,7 +8,7 @@ import (
 
 	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/flow"
-	"github.com/harpyd/thestis/internal/core/entity/performance"
+	"github.com/harpyd/thestis/internal/core/entity/pipeline"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
 	"github.com/harpyd/thestis/internal/core/entity/testcampaign"
 )
@@ -183,30 +183,30 @@ func (m *SpecificationRepository) SpecificationsNumber() int {
 }
 
 type (
-	PerformanceRepository struct {
-		mu           sync.RWMutex
-		performances map[string]performance.Performance
+	PipelineRepository struct {
+		mu        sync.RWMutex
+		pipelines map[string]pipeline.Pipeline
 	}
 )
 
-func NewPerformanceRepository(perfs ...*performance.Performance) *PerformanceRepository {
-	m := &PerformanceRepository{
-		performances: make(map[string]performance.Performance, len(perfs)),
+func NewPipelineRepository(pipes ...*pipeline.Pipeline) *PipelineRepository {
+	m := &PipelineRepository{
+		pipelines: make(map[string]pipeline.Pipeline, len(pipes)),
 	}
 
-	for _, p := range perfs {
-		m.performances[p.ID()] = *p
+	for _, p := range pipes {
+		m.pipelines[p.ID()] = *p
 	}
 
 	return m
 }
 
-func (m *PerformanceRepository) GetPerformance(
+func (m *PipelineRepository) GetPipeline(
 	ctx context.Context,
-	perfID string,
+	pipeID string,
 	_ service.SpecificationGetter,
-	_ ...performance.Option,
-) (*performance.Performance, error) {
+	_ ...pipeline.Option,
+) (*pipeline.Pipeline, error) {
 	if ctx.Err() != nil {
 		return nil, service.WrapWithDatabaseError(ctx.Err())
 	}
@@ -214,15 +214,15 @@ func (m *PerformanceRepository) GetPerformance(
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	perf, ok := m.performances[perfID]
+	pipe, ok := m.pipelines[pipeID]
 	if !ok {
-		return nil, service.ErrPerformanceNotFound
+		return nil, service.ErrPipelineNotFound
 	}
 
-	return &perf, nil
+	return &pipe, nil
 }
 
-func (m *PerformanceRepository) AddPerformance(ctx context.Context, perf *performance.Performance) error {
+func (m *PipelineRepository) AddPipeline(ctx context.Context, pipe *pipeline.Pipeline) error {
 	if ctx.Err() != nil {
 		return service.WrapWithDatabaseError(ctx.Err())
 	}
@@ -230,20 +230,20 @@ func (m *PerformanceRepository) AddPerformance(ctx context.Context, perf *perfor
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if _, ok := m.performances[perf.ID()]; ok {
+	if _, ok := m.pipelines[pipe.ID()]; ok {
 		return service.WrapWithDatabaseError(errDuplicateID)
 	}
 
-	m.performances[perf.ID()] = *perf
+	m.pipelines[pipe.ID()] = *pipe
 
 	return nil
 }
 
-func (m *PerformanceRepository) PerformancesNumber() int {
+func (m *PipelineRepository) PipelinesNumber() int {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return len(m.performances)
+	return len(m.pipelines)
 }
 
 type FlowRepository struct {

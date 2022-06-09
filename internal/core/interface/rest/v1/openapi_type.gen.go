@@ -22,11 +22,11 @@ const (
 
 	ErrorSlugInvalidSpecificationSource ErrorSlug = "invalid-specification-source"
 
-	ErrorSlugPerformanceAlreadyStarted ErrorSlug = "performance-already-started"
+	ErrorSlugPipelineAlreadyStarted ErrorSlug = "pipeline-already-started"
 
-	ErrorSlugPerformanceNotFound ErrorSlug = "performance-not-found"
+	ErrorSlugPipelineNotFound ErrorSlug = "pipeline-not-found"
 
-	ErrorSlugPerformanceNotStarted ErrorSlug = "performance-not-started"
+	ErrorSlugPipelineNotStarted ErrorSlug = "pipeline-not-started"
 
 	ErrorSlugSpecificationNotFound ErrorSlug = "specification-not-found"
 
@@ -38,7 +38,7 @@ const (
 
 	ErrorSlugUnexpectedError ErrorSlug = "unexpected-error"
 
-	ErrorSlugUserCantSeePerformance ErrorSlug = "user-cant-see-performance"
+	ErrorSlugUserCantSeePipeline ErrorSlug = "user-cant-see-pipeline"
 
 	ErrorSlugUserCantSeeTestCampaign ErrorSlug = "user-cant-see-test-campaign"
 )
@@ -64,23 +64,23 @@ const (
 	HttpMethodTRACE HttpMethod = "TRACE"
 )
 
-// Defines values for PerformanceState.
+// Defines values for PipelineState.
 const (
-	PerformanceStateCANCELED PerformanceState = "CANCELED"
+	PipelineStateCANCELED PipelineState = "CANCELED"
 
-	PerformanceStateCRASHED PerformanceState = "CRASHED"
+	PipelineStateCRASHED PipelineState = "CRASHED"
 
-	PerformanceStateFAILED PerformanceState = "FAILED"
+	PipelineStateEXECUTING PipelineState = "EXECUTING"
 
-	PerformanceStateNOSTATE PerformanceState = "NO_STATE"
+	PipelineStateFAILED PipelineState = "FAILED"
 
-	PerformanceStateNOTPERFORMED PerformanceState = "NOT_PERFORMED"
+	PipelineStateNOSTATE PipelineState = "NO_STATE"
 
-	PerformanceStatePASSED PerformanceState = "PASSED"
+	PipelineStateNOTEXECUTED PipelineState = "NOT_EXECUTED"
 
-	PerformanceStatePERFORMING PerformanceState = "PERFORMING"
+	PipelineStatePASSED PipelineState = "PASSED"
 
-	PerformanceStateQUEUED PerformanceState = "QUEUED"
+	PipelineStateQUEUED PipelineState = "QUEUED"
 )
 
 // Assert defines model for Assert.
@@ -115,16 +115,16 @@ type ErrorSlug string
 
 // Flow defines model for Flow.
 type Flow struct {
-	OverallState PerformanceState `json:"overallState"`
-	Statuses     []Status         `json:"statuses"`
+	OverallState PipelineState `json:"overallState"`
+	Statuses     []Status      `json:"statuses"`
 }
 
-// GeneralPerformanceResponse defines model for GeneralPerformanceResponse.
-type GeneralPerformanceResponse struct {
-	Id              string           `json:"id"`
-	LastState       PerformanceState `json:"lastState"`
-	SpecificationId string           `json:"specificationId"`
-	StartedAt       time.Time        `json:"startedAt"`
+// GeneralPipelineResponse defines model for GeneralPipelineResponse.
+type GeneralPipelineResponse struct {
+	Id              string        `json:"id"`
+	LastState       PipelineState `json:"lastState"`
+	SpecificationId string        `json:"specificationId"`
+	StartedAt       time.Time     `json:"startedAt"`
 }
 
 // Http defines model for Http.
@@ -150,8 +150,8 @@ type HttpResponse struct {
 	AllowedContentType *string `json:"allowedContentType,omitempty"`
 }
 
-// PerformanceState defines model for PerformanceState.
-type PerformanceState string
+// PipelineState defines model for PipelineState.
+type PipelineState string
 
 // Scenario defines model for Scenario.
 type Scenario struct {
@@ -160,8 +160,8 @@ type Scenario struct {
 	Theses      []Thesis `json:"theses"`
 }
 
-// SpecificPerformanceResponse defines model for SpecificPerformanceResponse.
-type SpecificPerformanceResponse struct {
+// SpecificPipelineResponse defines model for SpecificPipelineResponse.
+type SpecificPipelineResponse struct {
 	Flows           interface{} `json:"flows"`
 	Id              string      `json:"id"`
 	SpecificationId string      `json:"specificationId"`
@@ -194,8 +194,8 @@ type SpecificationSlug struct {
 // SpecificationSource defines model for SpecificationSource.
 type SpecificationSource string
 
-// StartPerformanceRequest defines model for StartPerformanceRequest.
-type StartPerformanceRequest struct {
+// StartPipelineRequest defines model for StartPipelineRequest.
+type StartPipelineRequest struct {
 	ScenarioSlugs *interface{} `json:"scenarioSlugs,omitempty"`
 }
 
@@ -208,7 +208,7 @@ type Statement struct {
 // Status defines model for Status.
 type Status struct {
 	Slug           SpecificationSlug `json:"slug"`
-	State          PerformanceState  `json:"state"`
+	State          PipelineState     `json:"state"`
 	ThesisStatuses interface{}       `json:"thesisStatuses"`
 }
 
@@ -224,11 +224,11 @@ type Story struct {
 
 // TestCampaignResponse defines model for TestCampaignResponse.
 type TestCampaignResponse struct {
-	CreatedAt         time.Time `json:"createdAt"`
-	Id                string    `json:"id"`
-	LastPerformanceId *string   `json:"lastPerformanceId,omitempty"`
-	Summary           *string   `json:"summary,omitempty"`
-	ViewName          string    `json:"viewName"`
+	CreatedAt      time.Time `json:"createdAt"`
+	Id             string    `json:"id"`
+	LastPipelineId *string   `json:"lastPipelineId,omitempty"`
+	Summary        *string   `json:"summary,omitempty"`
+	ViewName       string    `json:"viewName"`
 }
 
 // Thesis defines model for Thesis.
@@ -242,19 +242,19 @@ type Thesis struct {
 
 // ThesisStatus defines model for ThesisStatus.
 type ThesisStatus struct {
-	OccurredErrors interface{}      `json:"occurredErrors"`
-	State          PerformanceState `json:"state"`
-	ThesisSlug     string           `json:"thesisSlug"`
+	OccurredErrors interface{}   `json:"occurredErrors"`
+	State          PipelineState `json:"state"`
+	ThesisSlug     string        `json:"thesisSlug"`
 }
 
 // CreateTestCampaignJSONBody defines parameters for CreateTestCampaign.
 type CreateTestCampaignJSONBody CreateTestCampaignRequest
 
-// StartPerformanceJSONBody defines parameters for StartPerformance.
-type StartPerformanceJSONBody StartPerformanceRequest
+// StartPipelineJSONBody defines parameters for StartPipeline.
+type StartPipelineJSONBody StartPipelineRequest
 
 // CreateTestCampaignJSONRequestBody defines body for CreateTestCampaign for application/json ContentType.
 type CreateTestCampaignJSONRequestBody CreateTestCampaignJSONBody
 
-// StartPerformanceJSONRequestBody defines body for StartPerformance for application/json ContentType.
-type StartPerformanceJSONRequestBody StartPerformanceJSONBody
+// StartPipelineJSONRequestBody defines body for StartPipeline for application/json ContentType.
+type StartPipelineJSONRequestBody StartPipelineJSONBody

@@ -17,11 +17,11 @@ type TestCampaignRepository struct {
 	testCampaigns *mongo.Collection
 }
 
-const testCampaignsCollection = "testCampaigns"
+const testCampaignCollection = "testCampaigns"
 
 func NewTestCampaignRepository(db *mongo.Database) *TestCampaignRepository {
 	return &TestCampaignRepository{
-		testCampaigns: db.Collection(testCampaignsCollection),
+		testCampaigns: db.Collection(testCampaignCollection),
 	}
 }
 
