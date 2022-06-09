@@ -21,17 +21,34 @@ func TestNewSavePerStepPolicyPanics(t *testing.T) {
 	testCases := []struct {
 		Name                string
 		GivenFlowRepository service.FlowRepository
+		GivenLogger         service.Logger
 		ShouldPanic         bool
 		PanicMessage        string
 	}{
 		{
 			Name:                "all_dependencies_are_not_nil",
 			GivenFlowRepository: mock.NewFlowRepository(),
+			GivenLogger:         mock.NewMemoryLogger(),
 			ShouldPanic:         false,
+		},
+		{
+			Name:                "flow_repository_is_nil",
+			GivenFlowRepository: nil,
+			GivenLogger:         mock.NewMemoryLogger(),
+			ShouldPanic:         true,
+			PanicMessage:        "flow repository is nil",
+		},
+		{
+			Name:                "logger_is_nil",
+			GivenFlowRepository: mock.NewFlowRepository(),
+			GivenLogger:         nil,
+			ShouldPanic:         true,
+			PanicMessage:        "logger is nil",
 		},
 		{
 			Name:                "all_dependencies_are_nil",
 			GivenFlowRepository: nil,
+			GivenLogger:         nil,
 			ShouldPanic:         true,
 			PanicMessage:        "flow repository is nil",
 		},
@@ -46,6 +63,7 @@ func TestNewSavePerStepPolicyPanics(t *testing.T) {
 			init := func() {
 				_ = service.NewSavePerStepPolicy(
 					c.GivenFlowRepository,
+					c.GivenLogger,
 					saveTimeout,
 				)
 			}
@@ -64,20 +82,11 @@ func TestNewSavePerStepPolicyPanics(t *testing.T) {
 func TestConsumePerformanceSavePerStep(t *testing.T) {
 	t.Parallel()
 
-	type operationType int
-
-	const (
-		match operationType = iota + 1
-		contain
-	)
-
 	testCases := []struct {
-		Name                string
-		CancelContext       bool
-		InitSaveTimeout     time.Duration
-		GivenPerformance    *performance.Performance
-		ExpectedMessages    []service.Message
-		AssertOperationType operationType
+		Name             string
+		CancelContext    bool
+		InitSaveTimeout  time.Duration
+		GivenPerformance *performance.Performance
 	}{
 		{
 			Name:            "save_timeout_exceeded",
@@ -100,12 +109,6 @@ func TestConsumePerformanceSavePerStep(t *testing.T) {
 					ErrlessBuild(),
 				performance.WithHTTP(performance.PassingPerformer()),
 			),
-			ExpectedMessages: []service.Message{
-				service.NewMessageFromError(
-					service.WrapWithDatabaseError(context.DeadlineExceeded),
-				),
-			},
-			AssertOperationType: contain,
 		},
 		{
 			Name:            "context_canceled",
@@ -126,26 +129,6 @@ func TestConsumePerformanceSavePerStep(t *testing.T) {
 					ErrlessBuild(),
 				performance.WithAssertion(performance.PassingPerformer()),
 			),
-			ExpectedMessages: []service.Message{
-				service.NewMessageFromStep(
-					performance.NewScenarioStepWithErr(
-						performance.WrapWithTerminatedError(context.Canceled, performance.FiredCancel),
-						specification.NewScenarioSlug("foo", "bar"),
-						performance.FiredCancel,
-					),
-				),
-				service.NewMessageFromStep(
-					performance.NewThesisStepWithErr(
-						performance.WrapWithTerminatedError(context.Canceled, performance.FiredCancel),
-						specification.NewThesisSlug("foo", "bar", "baz"),
-						performance.AssertionPerformer,
-						performance.FiredCancel,
-					)),
-				service.NewMessageFromError(
-					service.WrapWithDatabaseError(context.Canceled),
-				),
-			},
-			AssertOperationType: contain,
 		},
 		{
 			Name:            "performance_consumed_wo_context_cancellation",
@@ -166,35 +149,6 @@ func TestConsumePerformanceSavePerStep(t *testing.T) {
 					ErrlessBuild(),
 				performance.WithAssertion(performance.PassingPerformer()),
 			),
-			ExpectedMessages: []service.Message{
-				service.NewMessageFromStep(
-					performance.NewScenarioStep(
-						specification.NewScenarioSlug("a", "b"),
-						performance.FiredPerform,
-					),
-				),
-				service.NewMessageFromStep(
-					performance.NewThesisStep(
-						specification.NewThesisSlug("a", "b", "c"),
-						performance.AssertionPerformer,
-						performance.FiredPerform,
-					),
-				),
-				service.NewMessageFromStep(
-					performance.NewThesisStep(
-						specification.NewThesisSlug("a", "b", "c"),
-						performance.AssertionPerformer,
-						performance.FiredPass,
-					),
-				),
-				service.NewMessageFromStep(
-					performance.NewScenarioStep(
-						specification.NewScenarioSlug("a", "b"),
-						performance.FiredPass,
-					),
-				),
-			},
-			AssertOperationType: match,
 		},
 	}
 
@@ -206,7 +160,12 @@ func TestConsumePerformanceSavePerStep(t *testing.T) {
 
 			var (
 				flowRepo = mock.NewFlowRepository()
-				policy   = service.NewSavePerStepPolicy(flowRepo, c.InitSaveTimeout)
+				logger   = mock.NewMemoryLogger()
+				policy   = service.NewSavePerStepPolicy(
+					flowRepo,
+					logger,
+					c.InitSaveTimeout,
+				)
 			)
 
 			ctx, cancel := context.WithCancel(context.Background())
@@ -216,20 +175,7 @@ func TestConsumePerformanceSavePerStep(t *testing.T) {
 				cancel()
 			}
 
-			var actualMessages []service.Message
-
-			policy.ConsumePerformance(ctx, c.GivenPerformance, func(msg service.Message) {
-				actualMessages = append(actualMessages, msg)
-			})
-
-			switch c.AssertOperationType {
-			case match:
-				requireMessagesMatch(t, c.ExpectedMessages, actualMessages)
-			case contain:
-				requireMessagesContain(t, actualMessages, c.ExpectedMessages...)
-			default:
-				require.Fail(t, "unexpected assert operation type value")
-			}
+			policy.ConsumePerformance(ctx, c.GivenPerformance)
 		})
 	}
 }

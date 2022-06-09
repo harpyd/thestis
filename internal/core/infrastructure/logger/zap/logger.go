@@ -36,20 +36,14 @@ func (l Logger) Info(msg string, args ...interface{}) {
 	l.base.Infow(msg, args...)
 }
 
-func (l Logger) Warn(msg string, err error, args ...interface{}) {
-	args = append(args, zap.Error(err))
-
+func (l Logger) Warn(msg string, args ...interface{}) {
 	l.base.Warnw(msg, args...)
 }
 
-func (l Logger) Error(msg string, err error, args ...interface{}) {
-	args = append(args, zap.Error(err))
-
+func (l Logger) Error(msg string, args ...interface{}) {
 	l.base.Errorw(msg, args...)
 }
 
-func (l Logger) Fatal(msg string, err error, args ...interface{}) {
-	args = append(args, zap.Error(err))
-
+func (l Logger) Fatal(msg string, args ...interface{}) {
 	l.base.Fatalw(msg, args...)
 }

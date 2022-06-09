@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
@@ -20,13 +19,7 @@ func (h handler) StartPerformance(w http.ResponseWriter, r *http.Request, testCa
 		return
 	}
 
-	reactor := h.messageReactor(
-		r,
-		"performanceId", cmd.PerformanceID,
-		"restarted", false,
-	)
-
-	err := h.app.Commands.StartPerformance.Handle(r.Context(), cmd, reactor)
+	err := h.app.Commands.StartPerformance.Handle(r.Context(), cmd)
 	if err == nil {
 		w.Header().Set("Location", fmt.Sprintf("/performances/%s", cmd.PerformanceID))
 		w.WriteHeader(http.StatusAccepted)
@@ -57,13 +50,7 @@ func (h handler) RestartPerformance(w http.ResponseWriter, r *http.Request, perf
 		return
 	}
 
-	reactor := h.messageReactor(
-		r,
-		"performanceId", performanceID,
-		"restarted", true,
-	)
-
-	err := h.app.Commands.RestartPerformance.Handle(r.Context(), cmd, reactor)
+	err := h.app.Commands.RestartPerformance.Handle(r.Context(), cmd)
 	if err == nil {
 		w.WriteHeader(http.StatusNoContent)
 
@@ -135,23 +122,4 @@ func (h handler) GetPerformanceHistory(w http.ResponseWriter, _ *http.Request, _
 
 func (h handler) GetPerformance(w http.ResponseWriter, _ *http.Request, _ string) {
 	w.WriteHeader(http.StatusNotImplemented)
-}
-
-func (h handler) messageReactor(
-	r *http.Request,
-	args ...interface{},
-) service.MessageReactor {
-	reqID := middleware.GetReqID(r.Context())
-
-	args = append(args, "correlationId", reqID)
-
-	return func(msg service.Message) {
-		if msg.Err() == nil || msg.Event() == performance.FiredFail {
-			h.logger.Info(msg.String(), args...)
-
-			return
-		}
-
-		h.logger.Error(msg.String(), msg.Err(), args...)
-	}
 }

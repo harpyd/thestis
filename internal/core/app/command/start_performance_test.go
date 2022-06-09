@@ -164,7 +164,7 @@ func TestHandleStartPerformance(t *testing.T) {
 
 			ctx := context.Background()
 
-			err := handler.Handle(ctx, c.Command, func(msg service.Message) {})
+			err := handler.Handle(ctx, c.Command)
 
 			if c.ShouldBeErr {
 				require.True(t, c.IsErr(err))

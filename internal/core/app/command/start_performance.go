@@ -17,11 +17,7 @@ type StartPerformance struct {
 }
 
 type StartPerformanceHandler interface {
-	Handle(
-		ctx context.Context,
-		cmd StartPerformance,
-		reactor service.MessageReactor,
-	) error
+	Handle(ctx context.Context, cmd StartPerformance) error
 }
 
 type startPerformanceHandler struct {
@@ -57,11 +53,7 @@ func NewStartPerformanceHandler(
 	}
 }
 
-func (h startPerformanceHandler) Handle(
-	ctx context.Context,
-	cmd StartPerformance,
-	reactor service.MessageReactor,
-) (err error) {
+func (h startPerformanceHandler) Handle(ctx context.Context, cmd StartPerformance) (err error) {
 	defer func() {
 		err = errors.Wrap(err, "new performance starting")
 	}()
@@ -71,17 +63,17 @@ func (h startPerformanceHandler) Handle(
 		return err
 	}
 
-	if err = user.CanAccessSpecification(cmd.StartedByID, spec, user.Read); err != nil {
+	if err := user.CanAccessSpecification(cmd.StartedByID, spec, user.Read); err != nil {
 		return err
 	}
 
 	perf := performance.Trigger(cmd.PerformanceID, spec, h.performerOpts...)
 
-	if err = h.perfRepo.AddPerformance(ctx, perf); err != nil {
+	if err := h.perfRepo.AddPerformance(ctx, perf); err != nil {
 		return err
 	}
 
-	_, err = h.maintainer.MaintainPerformance(ctx, perf, reactor)
+	_, err = h.maintainer.MaintainPerformance(ctx, perf)
 
 	return err
 }

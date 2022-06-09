@@ -12,6 +12,7 @@ import (
 	"github.com/harpyd/thestis/internal/core/app/service/mock"
 	"github.com/harpyd/thestis/internal/core/entity/performance"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
+	"github.com/harpyd/thestis/pkg/correlationid"
 )
 
 var (
@@ -30,6 +31,7 @@ func TestNewPerformanceMaintainerPanics(t *testing.T) {
 		GivenSubscriber        service.PerformanceCancelSubscriber
 		GivenPerformancePolicy service.PerformancePolicy
 		GivenEnqueuer          service.Enqueuer
+		GivenLogger            service.Logger
 		ShouldPanic            bool
 		PanicMessage           string
 	}{
@@ -39,6 +41,7 @@ func TestNewPerformanceMaintainerPanics(t *testing.T) {
 			GivenSubscriber:        mock.NewPerformanceCancelPubsub(),
 			GivenPerformancePolicy: mock.NewPerformancePolicy(),
 			GivenEnqueuer:          mock.NewEnqueuer(),
+			GivenLogger:            mock.NewMemoryLogger(),
 			ShouldPanic:            false,
 		},
 		{
@@ -47,6 +50,7 @@ func TestNewPerformanceMaintainerPanics(t *testing.T) {
 			GivenSubscriber:        mock.NewPerformanceCancelPubsub(),
 			GivenPerformancePolicy: mock.NewPerformancePolicy(),
 			GivenEnqueuer:          mock.NewEnqueuer(),
+			GivenLogger:            mock.NewMemoryLogger(),
 			ShouldPanic:            true,
 			PanicMessage:           "performance guard is nil",
 		},
@@ -56,6 +60,7 @@ func TestNewPerformanceMaintainerPanics(t *testing.T) {
 			GivenSubscriber:        nil,
 			GivenPerformancePolicy: mock.NewPerformancePolicy(),
 			GivenEnqueuer:          mock.NewEnqueuer(),
+			GivenLogger:            mock.NewMemoryLogger(),
 			ShouldPanic:            true,
 			PanicMessage:           "performance cancel subscriber is nil",
 		},
@@ -65,6 +70,7 @@ func TestNewPerformanceMaintainerPanics(t *testing.T) {
 			GivenSubscriber:        mock.NewPerformanceCancelPubsub(),
 			GivenPerformancePolicy: nil,
 			GivenEnqueuer:          mock.NewEnqueuer(),
+			GivenLogger:            mock.NewMemoryLogger(),
 			ShouldPanic:            true,
 			PanicMessage:           "performance policy is nil",
 		},
@@ -74,8 +80,19 @@ func TestNewPerformanceMaintainerPanics(t *testing.T) {
 			GivenSubscriber:        mock.NewPerformanceCancelPubsub(),
 			GivenPerformancePolicy: mock.NewPerformancePolicy(),
 			GivenEnqueuer:          nil,
+			GivenLogger:            mock.NewMemoryLogger(),
 			ShouldPanic:            true,
 			PanicMessage:           "enqueuer is nil",
+		},
+		{
+			Name:                   "logger_is_nil",
+			GivenGuard:             mock.NewPerformanceGuard(nil, nil),
+			GivenSubscriber:        mock.NewPerformanceCancelPubsub(),
+			GivenPerformancePolicy: mock.NewPerformancePolicy(),
+			GivenEnqueuer:          mock.NewEnqueuer(),
+			GivenLogger:            nil,
+			ShouldPanic:            true,
+			PanicMessage:           "logger is nil",
 		},
 		{
 			Name:                   "all_dependencies_are_nil",
@@ -100,6 +117,7 @@ func TestNewPerformanceMaintainerPanics(t *testing.T) {
 					c.GivenSubscriber,
 					c.GivenPerformancePolicy,
 					c.GivenEnqueuer,
+					c.GivenLogger,
 					flowTimeout,
 				)
 			}
@@ -118,13 +136,17 @@ func TestNewPerformanceMaintainerPanics(t *testing.T) {
 func TestMaintainPerformance(t *testing.T) {
 	t.Parallel()
 
+	const correlationID = "corr"
+
 	testCases := []struct {
-		Name               string
-		PerformanceFactory func() *performance.Performance
-		Guard              *mock.PerformanceGuard
-		ShouldBeErr        bool
-		IsErr              func(err error) bool
-		ExpectedMessages   []service.Message
+		Name                   string
+		PerformanceFactory     func() *performance.Performance
+		Guard                  *mock.PerformanceGuard
+		ShouldBeErr            bool
+		IsErr                  func(err error) bool
+		ExpectedAcquireCalls   int
+		ExpectedSubscribeCalls int
+		ExpectedReleaseCalls   int
 	}{
 		{
 			Name: "performance_acquire_error",
@@ -136,12 +158,13 @@ func TestMaintainPerformance(t *testing.T) {
 						ErrlessBuild(),
 				)
 			},
-			Guard:       mock.NewPerformanceGuard(errPerformanceAcquire, nil),
-			ShouldBeErr: true,
-			IsErr:       func(err error) bool { return errors.Is(err, errPerformanceAcquire) },
+			Guard:                mock.NewPerformanceGuard(errPerformanceAcquire, nil),
+			ShouldBeErr:          true,
+			IsErr:                func(err error) bool { return errors.Is(err, errPerformanceAcquire) },
+			ExpectedAcquireCalls: 1,
 		},
 		{
-			Name: "performance_release_error",
+			Name: "performance_is_not_released",
 			PerformanceFactory: func() *performance.Performance {
 				return performance.Trigger(
 					"suu",
@@ -161,29 +184,11 @@ func TestMaintainPerformance(t *testing.T) {
 					performance.WithAssertion(performance.PassingPerformer()),
 				)
 			},
-			Guard: mock.NewPerformanceGuard(nil, errPerformanceRelease),
-			ExpectedMessages: []service.Message{
-				service.NewMessageFromStep(performance.NewScenarioStep(
-					specification.NewScenarioSlug("foo", "bar"),
-					performance.FiredPerform,
-				)),
-				service.NewMessageFromStep(performance.NewThesisStep(
-					specification.NewThesisSlug("foo", "bar", "baz"),
-					performance.AssertionPerformer,
-					performance.FiredPerform,
-				)),
-				service.NewMessageFromStep(performance.NewThesisStep(
-					specification.NewThesisSlug("foo", "bar", "baz"),
-					performance.AssertionPerformer,
-					performance.FiredPass,
-				)),
-				service.NewMessageFromStep(performance.NewScenarioStep(
-					specification.NewScenarioSlug("foo", "bar"),
-					performance.FiredPass,
-				)),
-				service.NewMessageFromError(errPerformanceRelease),
-			},
-			ShouldBeErr: false,
+			Guard:                  mock.NewPerformanceGuard(nil, errPerformanceRelease),
+			ShouldBeErr:            false,
+			ExpectedAcquireCalls:   1,
+			ExpectedReleaseCalls:   1,
+			ExpectedSubscribeCalls: 1,
 		},
 		{
 			Name: "successfully_maintain_performance",
@@ -234,58 +239,11 @@ func TestMaintainPerformance(t *testing.T) {
 					performance.WithAssertion(performance.PassingPerformer()),
 				)
 			},
-			Guard: errlessPerformanceGuard(t),
-			ExpectedMessages: []service.Message{
-				service.NewMessageFromStep(performance.NewScenarioStep(
-					specification.NewScenarioSlug("foo", "bar"),
-					performance.FiredPerform,
-				)),
-				service.NewMessageFromStep(performance.NewThesisStep(
-					specification.NewThesisSlug("foo", "bar", "gaz"),
-					performance.HTTPPerformer,
-					performance.FiredPerform,
-				)),
-				service.NewMessageFromStep(performance.NewThesisStep(
-					specification.NewThesisSlug("foo", "bar", "gaz"),
-					performance.HTTPPerformer,
-					performance.FiredPass,
-				)),
-				service.NewMessageFromStep(performance.NewThesisStep(
-					specification.NewThesisSlug("foo", "bar", "gad"),
-					performance.HTTPPerformer,
-					performance.FiredPerform,
-				)),
-				service.NewMessageFromStep(performance.NewThesisStep(
-					specification.NewThesisSlug("foo", "bar", "gad"),
-					performance.HTTPPerformer,
-					performance.FiredPass,
-				)),
-				service.NewMessageFromStep(performance.NewThesisStep(
-					specification.NewThesisSlug("foo", "bar", "waz"),
-					performance.HTTPPerformer,
-					performance.FiredPerform,
-				)),
-				service.NewMessageFromStep(performance.NewThesisStep(
-					specification.NewThesisSlug("foo", "bar", "waz"),
-					performance.HTTPPerformer,
-					performance.FiredPass,
-				)),
-				service.NewMessageFromStep(performance.NewThesisStep(
-					specification.NewThesisSlug("foo", "bar", "taz"),
-					performance.AssertionPerformer,
-					performance.FiredPerform,
-				)),
-				service.NewMessageFromStep(performance.NewThesisStep(
-					specification.NewThesisSlug("foo", "bar", "taz"),
-					performance.AssertionPerformer,
-					performance.FiredPass,
-				)),
-				service.NewMessageFromStep(performance.NewScenarioStep(
-					specification.NewScenarioSlug("foo", "bar"),
-					performance.FiredPass,
-				)),
-			},
-			ShouldBeErr: false,
+			Guard:                  errlessPerformanceGuard(t),
+			ShouldBeErr:            false,
+			ExpectedAcquireCalls:   1,
+			ExpectedSubscribeCalls: 1,
+			ExpectedReleaseCalls:   1,
 		},
 	}
 
@@ -301,22 +259,27 @@ func TestMaintainPerformance(t *testing.T) {
 				pubsub   = mock.NewPerformanceCancelPubsub()
 				policy   = mock.NewPerformancePolicy()
 				enqueuer = mock.NewEnqueuer()
+				logger   = mock.NewMemoryLogger()
 			)
 
 			maintainer := service.NewPerformanceMaintainer(
-				c.Guard,
-				pubsub,
-				policy,
-				enqueuer,
-				flowTimeout,
+				c.Guard, pubsub,
+				policy, enqueuer,
+				logger, flowTimeout,
 			)
 
 			perf := c.PerformanceFactory()
 
-			var actualMessages []service.Message
+			ctx := correlationid.AssignToCtx(context.Background(), correlationID)
 
-			done, err := maintainer.MaintainPerformance(context.Background(), perf, func(msg service.Message) {
-				actualMessages = append(actualMessages, msg)
+			done, err := maintainer.MaintainPerformance(ctx, perf)
+
+			t.Run("performance_acquired", func(t *testing.T) {
+				require.Equal(t, c.ExpectedAcquireCalls, c.Guard.AcquireCalls())
+			})
+
+			t.Run("performance_cancellation_subscribed", func(t *testing.T) {
+				require.Equal(t, c.ExpectedSubscribeCalls, pubsub.SubscribeCalls())
 			})
 
 			if c.ShouldBeErr {
@@ -331,24 +294,12 @@ func TestMaintainPerformance(t *testing.T) {
 
 			<-done
 
-			t.Run("acquire_performance", func(t *testing.T) {
-				require.Equal(t, 1, c.Guard.AcquireCalls())
-			})
-
-			t.Run("subscribe_performance_canceled", func(t *testing.T) {
-				require.Equal(t, 1, pubsub.SubscribeCalls())
-			})
-
-			t.Run("performing_enqueued", func(t *testing.T) {
+			t.Run("performance_enqueued", func(t *testing.T) {
 				require.Equal(t, 1, enqueuer.EnqueueCalls())
 			})
 
-			t.Run("messages", func(t *testing.T) {
-				requireMessagesMatch(t, c.ExpectedMessages, actualMessages)
-			})
-
 			t.Run("performance_released", func(t *testing.T) {
-				require.Equal(t, 1, c.Guard.ReleaseCalls())
+				require.Equal(t, c.ExpectedReleaseCalls, c.Guard.ReleaseCalls())
 			})
 		})
 	}
@@ -356,6 +307,11 @@ func TestMaintainPerformance(t *testing.T) {
 
 func TestCancelWhilePerformanceIsMaintaining(t *testing.T) {
 	t.Parallel()
+
+	const (
+		correlationID = "corr"
+		performanceID = "perf"
+	)
 
 	spec := (&specification.Builder{}).
 		WithID("perf").
@@ -382,44 +338,19 @@ func TestCancelWhilePerformanceIsMaintaining(t *testing.T) {
 		ErrlessBuild()
 
 	testCases := []struct {
-		Name                      string
-		FlowTimeout               time.Duration
-		PublishCancel             bool
-		ExpectedContainedMessages []service.Message
+		Name          string
+		FlowTimeout   time.Duration
+		PublishCancel bool
 	}{
 		{
 			Name:          "flow_timeout_exceeded",
 			FlowTimeout:   5 * time.Millisecond,
 			PublishCancel: false,
-			ExpectedContainedMessages: []service.Message{
-				service.NewMessageFromStep(
-					performance.NewScenarioStepWithErr(
-						performance.WrapWithTerminatedError(
-							context.DeadlineExceeded,
-							performance.FiredCancel,
-						),
-						specification.NewScenarioSlug("foo", "bar"),
-						performance.FiredCancel,
-					),
-				),
-			},
 		},
 		{
 			Name:          "cancel_published",
 			FlowTimeout:   1 * time.Second,
 			PublishCancel: true,
-			ExpectedContainedMessages: []service.Message{
-				service.NewMessageFromStep(
-					performance.NewScenarioStepWithErr(
-						performance.WrapWithTerminatedError(
-							context.Canceled,
-							performance.FiredCancel,
-						),
-						specification.NewScenarioSlug("foo", "bar"),
-						performance.FiredCancel,
-					),
-				),
-			},
 		},
 	}
 
@@ -434,45 +365,38 @@ func TestCancelWhilePerformanceIsMaintaining(t *testing.T) {
 				pubsub   = mock.NewPerformanceCancelPubsub()
 				policy   = mock.NewPerformancePolicy()
 				enqueuer = mock.NewEnqueuer()
+				logger   = mock.NewMemoryLogger()
 			)
 
 			maintainer := service.NewPerformanceMaintainer(
-				guard,
-				pubsub,
-				policy,
-				enqueuer,
-				c.FlowTimeout,
+				guard, pubsub,
+				policy, enqueuer,
+				logger, c.FlowTimeout,
 			)
 
 			pass := make(chan struct{})
 			defer close(pass)
 
 			perf := performance.Trigger(
-				"foo",
+				performanceID,
 				spec,
 				performance.WithHTTP(pendingPassPerformer(t, pass)),
 			)
 
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx := correlationid.AssignToCtx(context.Background(), correlationID)
+
+			ctx, cancel := context.WithCancel(ctx)
 			defer cancel()
 
-			var actualMessages []service.Message
-
-			done, err := maintainer.MaintainPerformance(ctx, perf, func(msg service.Message) {
-				actualMessages = append(actualMessages, msg)
-			})
+			done, err := maintainer.MaintainPerformance(ctx, perf)
 			require.NoError(t, err)
 
 			if c.PublishCancel {
-				err := pubsub.PublishPerformanceCancel("foo")
+				err := pubsub.PublishPerformanceCancel(performanceID)
 				require.NoError(t, err)
 			}
 
 			<-done
-
-			t.Run("messages", func(t *testing.T) {
-				requireMessagesContain(t, actualMessages, c.ExpectedContainedMessages...)
-			})
 
 			t.Run("release_performance", func(t *testing.T) {
 				require.Equal(t, 1, guard.ReleaseCalls())
@@ -503,33 +427,4 @@ func errlessPerformanceGuard(t *testing.T) *mock.PerformanceGuard {
 	t.Helper()
 
 	return mock.NewPerformanceGuard(nil, nil)
-}
-
-func requireMessagesMatch(t *testing.T, expected []service.Message, actual []service.Message) {
-	t.Helper()
-
-	require.ElementsMatch(
-		t,
-		mapMessagesToStrings(expected),
-		mapMessagesToStrings(actual),
-	)
-}
-
-func requireMessagesContain(t *testing.T, messages []service.Message, contain ...service.Message) {
-	t.Helper()
-
-	require.Subset(
-		t,
-		mapMessagesToStrings(messages),
-		mapMessagesToStrings(contain),
-	)
-}
-
-func mapMessagesToStrings(messages []service.Message) []string {
-	result := make([]string, 0, len(messages))
-	for _, msg := range messages {
-		result = append(result, msg.String())
-	}
-
-	return result
 }

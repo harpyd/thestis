@@ -18,7 +18,6 @@ func NewPerformanceMaintainer(withErr bool) PerformanceMaintainer {
 func (m PerformanceMaintainer) MaintainPerformance(
 	_ context.Context,
 	_ *performance.Performance,
-	_ service.MessageReactor,
 ) (<-chan service.DoneSignal, error) {
 	if m.withErr {
 		return nil, performance.ErrAlreadyStarted

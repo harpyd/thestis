@@ -391,6 +391,7 @@ func (c *Context) initPerformance() {
 		c.signalBus.subscriber,
 		c.performance.policy,
 		c.performance.enqueuer,
+		c.logger,
 		c.config.Performance.FlowTimeout,
 	)
 
@@ -408,6 +409,7 @@ func (c *Context) initPerformancePolicy() {
 	if c.config.Performance.Policy == config.SavePerStepPolicy {
 		c.performance.policy = service.NewSavePerStepPolicy(
 			c.persistent.flowRepo,
+			c.logger,
 			c.config.SavePerStep.SaveTimeout,
 		)
 
