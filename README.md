@@ -19,20 +19,20 @@ sequenceDiagram
     Thestis-->>-User: Return specification id in Location HTTP header
     User->>+Thestis: Get specification by id GET /v1/specifications/{id}
     Thestis-->>-User: Return specification data
-    User->>+Thestis: Start performance by test campaign id POST /v1/test-campaigns/{id}/performances
-    Thestis-->>-User: Return performance id in Location HTTP header
-    Thestis->>+Thestis: Acquire performance and start it as parallel task
+    User->>+Thestis: Start pipeline by test campaign id POST /v1/test-campaigns/{id}/pipelines
+    Thestis-->>-User: Return pipeline id in Location HTTP header
+    Thestis->>+Thestis: Acquire pipeline and start it as parallel task
     loop Restart tries
-        User->>+Thestis: Restart performance by id PUT /v1/performances/{id}
-        Thestis-->>-User: Already started performance 409 Conflict
+        User->>+Thestis: Restart pipeline by id PUT /v1/pipelines/{id}
+        Thestis-->>-User: Already started pipeline 409 Conflict
     end
-    Thestis-->>-Thestis: Release performance and complete parallel task
-    User->>+Thestis: Restart performance by id PUT /v1/performances/{id}
-    Thestis-->>-User: Performance restarted
-    Thestis->>+Thestis: Acquire performance and start it as parallel task
-    User-->>+Thestis: Cancel performance by id PUT /v1/performances/{id}/canceled
-    Thestis-->>-User: Performance canceled
-    Thestis-->>-Thestis: Release performance and cancel parallel task
+    Thestis-->>-Thestis: Release pipeline and complete parallel task
+    User->>+Thestis: Restart pipeline by id PUT /v1/pipelines/{id}
+    Thestis-->>-User: Pipeline restarted
+    Thestis->>+Thestis: Acquire pipeline and start it as parallel task
+    User-->>+Thestis: Cancel pipeline by id PUT /v1/pipelines/{id}/canceled
+    Thestis-->>-User: Pipeline canceled
+    Thestis-->>-Thestis: Release pipeline and cancel parallel task
 ```
 
 ## Description
@@ -63,7 +63,7 @@ In general, there were enough problems. That's how the idea of a pipeline for e2
 need to create a `TestCampaign`.
 
 In fact, a `TestCampaign` is the name of your test, information about it, and the history of all
-uploaded `Specifications` and completed `Performances`.
+uploaded `Specifications` and completed `Pipelines`.
 
 `Specification` is a declarative description of the test in BDD style, each test consists of _stories_, each `Story`
 of _scenarios_, each `Scenario` of _theses_. The `Thesis` contains a description of the work of part of the test.
@@ -87,14 +87,13 @@ The thesis can be either `given`, or `when`, or `then`:
 You can see an example of the `Specification` at the
 link [here](https://github.com/harpyd/thestis/tree/main/examples/specification).
 
-When you trigger the pipeline launch in some way, a `Performance` is created. We can say that `Performance` looks like a
-program compiled from a `Specification`. The `Performance` is a kind of collected context about the test at the time of
-launch from the active `Specification` of `TestCampaign`. Somewhat similar to Github Action.`Performance` collects the
+When you trigger the pipeline launch in some way, a `Pipeline` is created. The `Pipeline` is a kind of collected context about the test at the time of
+launch from the active `Specification` of `TestCampaign`. Somewhat similar to Github Action.`Pipeline` collects the
 entire dynamic context and the state of the current startup in the `Flow`.
 
-`Flow` is an analog of an attempt at Github Action. Stores information about the launch of `Performance`. `Performance`
-will always have at least one `Flow`. `Performance` can be restarted (for example, if a test fails), each time
-the `Performance` is restarted, the number of `Flows` will increase.
+`Flow` is an analog of an attempt at Github Action. Stores information about the launch of `Pipeline`. `Pipeline`
+will always have at least one `Flow`. `Pipeline` can be restarted (for example, if a test fails), each time
+the `Pipeline` is restarted, the number of `Flows` will increase.
 
 During the test run, each individual thesis execution status may end up in one of the states:
 
@@ -121,9 +120,9 @@ See below.
 `TestCampaign` is your test, its whole history. You can compare it with a test campaign of some brand like Coca-Cola, a
 series of successful and not very successful tests.
 
-Contains general information about the test and user information. Each `Specification` update and `Performance` launch
+Contains general information about the test and user information. Each `Specification` update and `Pipeline` launch
 is associated with this entity. A `TestCampaign` can have only one active `Specification`, the rest are archived. You
-can also get a list of all `Performances` launched within the campaign.
+can also get a list of all `Pipelines` launched within the campaign.
 
 ### Specification
 
@@ -152,14 +151,14 @@ flowchart LR
 But theses within one stage will be executed in parallel by default. To specify a dependency, specify the name of the
 thesis in the `after` field. Then this thesis will be fulfilled after the specified one.
 
-### Performance
+### Pipeline
 
-`Performance` is the pipeline of your tests built from `Specification`. It starts automatically when it is created. It
+`Pipeline` is the pipeline of your tests built from `Specification`. It starts automatically when it is created. It
 can also be restarted. For example, you can see that the test fell through no fault of your own, for example, there was
-some kind of network failure, you can restart the previously created `Performance`.
+some kind of network failure, you can restart the previously created `Pipeline`.
 
-When creating a performance for specification, _performers_ for each type of thesis are registered. `Performer` receives
-the thesis, performs an action with it and returns `Result` with `Event` generated inside it for this thesis.
+When creating a pipeline for specification, _executors_ for each type of thesis are registered. `Executor` receives
+the thesis, executes an action with it and returns `Result` with `Event` generated inside it for this thesis.
 
 There may be several events:
 
@@ -169,13 +168,13 @@ There may be several events:
 * __`FiredCrash`__
 * __`FiredCancel`__
 
-`Performance` cannot be run more than once at any given time. That is, `Performance` will never have more than one
+`Pipeline` cannot be run more than once at any given time. That is, `Pipeline` will never have more than one
 active `Flow`.
 
-During `Performance`, each `Scenario` is executed in parallel with `Environment` isolated from other scenarios, and for
+During `Pipeline`, each `Scenario` is executed in parallel with `Environment` isolated from other scenarios, and for
 each scenario its own `ScenarioSyncGroup` is created to manage the dependencies of each thesis.
 
-View of `Performance`'
+View of `Pipeline`'
 s [example](https://github.com/harpyd/thestis/blob/main/examples/specification/horns-and-hooves-test.yml) flow:
 
 ```mermaid
@@ -188,22 +187,22 @@ flowchart TD
     sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.sellHornsAndHooves --> sellHornsAndHoovesOnTheMarket.sellExistingHornsAndHooves.checkSoldProducts
 ```
 
-At each launch, `Performance` gives information about the execution step by step. Then, from the __steps__ received from
-the performance, a flow is collected, showing the current state of the active performance's flow.
+At each launch, `Pipeline` gives information about the execution step by step. Then, from the __steps__ received from
+the pipeline, a flow is collected, showing the current state of the active pipeline's flow.
 
 ### Flow
 
-`Flow` is unit of `Performance` work. Every working performance's parallel task accumulates information about the
-progress of the performance and the context in this entity. Each run of `Performance` corresponds to one `Flow`.
+`Flow` is unit of `Pipeline` work. Every working pipeline's parallel task accumulates information about the
+progress of the pipeline and the context in this entity. Each run of `Pipeline` corresponds to one `Flow`.
 
-`Flow` reduced from _steps_ received during the execution of `Performance`.
+`Flow` reduced from _steps_ received during the execution of `Pipeline`.
 
 `Flow` consists of _statuses_ (each with `Slug`, `State` and occurred errors). Every `Status` has state that
-represents __slugged__ `Specification` objects performance progress.
+represents __slugged__ `Specification` objects pipeline progress.
 
-`State` changes under the action of an `Event` and _events_ are generated during the operation of `Performance`. For
-example, if the thesis is passed, then the performance creates a step for this thesis with an event, and if all the
-theses of the scenario are passed, then the performance creates a step for the scenario with the same event.
+`State` changes under the action of an `Event` and _events_ are generated during the operation of `Pipeline`. For
+example, if the thesis is passed, then the pipeline creates a step for this thesis with an event, and if all the
+theses of the scenario are passed, then the pipeline creates a step for the scenario with the same event.
 
 From each state, you can go to a certain set of states:
 
@@ -241,7 +240,7 @@ stateDiagram-v2
 
 This project is written using the approaches described in Clean Architecture of Uncle Bob.
 
-The __entity__ contains entities for creating tests, loading specification, creating and starting pipeline with access rights differentiation: `TestCampaign`, `Specification`, `Performance`, `Flow`, `User`,
+The __entity__ contains entities for creating tests, loading specification, creating and starting pipeline with access rights differentiation: `TestCampaign`, `Specification`, `Pipeline`, `Flow`, `User`,
 etc.
 
 The __application__ has everything you need for the overall operation of the application. In this level you can find:
@@ -296,8 +295,8 @@ specific Application method on an endpoint call. Or a scheduler.
             * `mock` — application level interfaces mocks
             * `query` — read operation use cases
         * `entity` — domain logic of **Thestis** divided by main entities
-            * `flow` - flow, state and reducer from performance's steps
-            * `performance` — pipeline that can run tests flow from specification using concurrent running goroutines
+            * `flow` - flow, state and reducer from pipeline's steps
+            * `pipeline` — pipeline that can run tests flow from specification using concurrent running goroutines
             * `specification` — tests description in declarative BDD style
             * `testcampaign` — data about testing project, loaded specifications history and active specification
             * `user` — access rights differentiation
