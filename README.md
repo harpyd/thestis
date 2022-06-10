@@ -87,7 +87,8 @@ The thesis can be either `given`, or `when`, or `then`:
 You can see an example of the `Specification` at the
 link [here](https://github.com/harpyd/thestis/tree/main/examples/specification).
 
-When you trigger the pipeline launch in some way, a `Pipeline` is created. The `Pipeline` is a kind of collected context about the test at the time of
+When you trigger the pipeline launch in some way, a `Pipeline` is created. The `Pipeline` is a kind of collected context
+about the test at the time of
 launch from the active `Specification` of `TestCampaign`. Somewhat similar to Github Action.`Pipeline` collects the
 entire dynamic context and the state of the current startup in the `Flow`.
 
@@ -97,14 +98,14 @@ the `Pipeline` is restarted, the number of `Flows` will increase.
 
 During the test run, each individual thesis execution status may end up in one of the states:
 
-* __`NotPerformed`__
-* __`Performing`__
+* __`NotExecuted`__
+* __`Executing`__
 * __`Passed`__
 * __`Failed`__
 * __`Crashed`__
 * __`Canceled`__
 
-If the test is __`NotPerformed`__, the test has not started yet for some reason. If the test is in __`Performing`__,
+If the test is __`NotExecuted`__, the test has not started yet for some reason. If the test is in __`Executing`__,
 then you should expect it to end. If you are in __`Passed`__, you can relax, because the test is passed! If the test is
 in __`Failed`__ state, it is worth looking at either the test or the system under the tests. If something went wrong
 in __`Crashed`__, perhaps from the network, or maybe from our side. If it is __`Canceled`__, then the test was canceled,
@@ -162,7 +163,7 @@ the thesis, executes an action with it and returns `Result` with `Event` generat
 
 There may be several events:
 
-* __`FiredPerform`__
+* __`FiredExecute`__
 * __`FiredPass`__
 * __`FiredFail`__
 * __`FiredCrash`__
@@ -219,17 +220,17 @@ stateDiagram-v2
     Passed --> Failed
     Passed --> Crashed
 
-    Performing --> Performing
-    Performing --> Passed
-    Performing --> Failed
-    Performing --> Crashed
-    Performing --> Canceled
+    Executing --> Executing
+    Executing --> Passed
+    Executing --> Failed
+    Executing --> Crashed
+    Executing --> Canceled
 
-    NotPerformed --> Performing
-    NotPerformed --> Passed
-    NotPerformed --> Failed
-    NotPerformed --> Crashed
-    NotPerformed --> Canceled
+    NotExecuted --> Executing
+    NotExecuted --> Passed
+    NotExecuted --> Failed
+    NotExecuted --> Crashed
+    NotExecuted --> Canceled
 ```
 
 ### User
@@ -240,7 +241,8 @@ stateDiagram-v2
 
 This project is written using the approaches described in Clean Architecture of Uncle Bob.
 
-The __entity__ contains entities for creating tests, loading specification, creating and starting pipeline with access rights differentiation: `TestCampaign`, `Specification`, `Pipeline`, `Flow`, `User`,
+The __entity__ contains entities for creating tests, loading specification, creating and starting pipeline with access
+rights differentiation: `TestCampaign`, `Specification`, `Pipeline`, `Flow`, `User`,
 etc.
 
 The __application__ has everything you need for the overall operation of the application. In this level you can find:
