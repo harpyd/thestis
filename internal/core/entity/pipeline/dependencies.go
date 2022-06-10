@@ -13,7 +13,7 @@ type (
 	//
 	// Each performing thesis goroutine receives a ScenarioSyncGroup
 	// and calls WaitThesisDependencies at the beginning thesis
-	// performing. Then each thesis goroutine calls ThesisDone
+	// executing. Then each thesis goroutine calls ThesisDone
 	// when finished.
 	ScenarioSyncGroup struct {
 		scenarioSlug specification.Slug
@@ -28,12 +28,12 @@ type (
 
 // SyncDependencies collects dependencies within specification.Scenario
 // into one ScenarioSyncGroup, with which will be possible to manage and
-// synchronize the performing of theses, taking into account the
+// synchronize the executing of theses, taking into account the
 // dependencies of each thesis.
 //
 // This can be used inside the pipeline to control the execution of
 // theses, preventing the thesis from being executed if the theses
-// dependent on it are not executed.
+// dependent on it are not performed.
 func SyncDependencies(scenario specification.Scenario) ScenarioSyncGroup {
 	theses := scenario.Theses()
 
