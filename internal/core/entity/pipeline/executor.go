@@ -33,7 +33,7 @@ func (e Event) String() string {
 // specification.Scenario that needs to be
 // executed. To perform the scenario, you need
 // to run each specification.Thesis and get
-// the Result of performing this thesis.
+// the Result of executing this thesis.
 // But Pipeline does not know how to execute
 // the thesis, so it delegates this task to
 // the Executor.
