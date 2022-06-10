@@ -38,7 +38,7 @@ import (
 	"github.com/harpyd/thestis/pkg/database/mongodb"
 )
 
-type Context struct {
+type Manager struct {
 	zapSingleton
 	mongoSingleton
 	natsSingleton
@@ -107,8 +107,8 @@ type metricsContext struct {
 	httpMetric rest.MetricCollector
 }
 
-func New(configsPath string) *Context {
-	c := &Context{}
+func New(configsPath string) *Manager {
+	c := &Manager{}
 
 	c.initLogger()
 	c.initConfig(configsPath)
@@ -124,7 +124,7 @@ func New(configsPath string) *Context {
 	return c
 }
 
-func (c *Context) Start() {
+func (c *Manager) Start() {
 	c.logger.Info("Runner started")
 
 	c.logger.Info(
@@ -137,7 +137,7 @@ func (c *Context) Start() {
 	}
 }
 
-func (c *Context) Stop() {
+func (c *Manager) Stop() {
 	defer c.syncZap()
 
 	c.stopPipelineWorkerPool()
@@ -161,7 +161,7 @@ func (c *Context) Stop() {
 	c.logger.Info("Runner stopped")
 }
 
-func (c *Context) shutdownServer() error {
+func (c *Manager) shutdownServer() error {
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		c.config.HTTP.ShutdownTimeout,
@@ -171,7 +171,7 @@ func (c *Context) shutdownServer() error {
 	return c.server.Shutdown(ctx)
 }
 
-func (c *Context) zap() *zap.Logger {
+func (c *Manager) zap() *zap.Logger {
 	c.zapSingleton.once.Do(func() {
 		logger, err := zap.NewProduction()
 		if err != nil {
@@ -184,13 +184,13 @@ func (c *Context) zap() *zap.Logger {
 	return c.zapSingleton.logger
 }
 
-func (c *Context) syncZap() {
+func (c *Manager) syncZap() {
 	if err := c.zap().Sync(); err != nil {
 		log.Fatalf("Failed to sync zap logger: %v", err)
 	}
 }
 
-func (c *Context) mongo() *mongo.Database {
+func (c *Manager) mongo() *mongo.Database {
 	c.mongoSingleton.once.Do(func() {
 		client, err := mongodb.NewClient(
 			c.config.Mongo.URI,
@@ -209,7 +209,7 @@ func (c *Context) mongo() *mongo.Database {
 	return c.mongoSingleton.db
 }
 
-func (c *Context) disconnectMongo() error {
+func (c *Manager) disconnectMongo() error {
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
 		c.config.Mongo.DisconnectTimeout,
@@ -219,7 +219,7 @@ func (c *Context) disconnectMongo() error {
 	return c.mongo().Client().Disconnect(ctx)
 }
 
-func (c *Context) nats() *nats.Conn {
+func (c *Manager) nats() *nats.Conn {
 	c.natsSingleton.once.Do(func() {
 		conn, err := nats.Connect(c.config.Nats.URL)
 		if err != nil {
@@ -234,11 +234,11 @@ func (c *Context) nats() *nats.Conn {
 	return c.natsSingleton.conn
 }
 
-func (c *Context) disconnectNATS() {
+func (c *Manager) disconnectNATS() {
 	c.nats().Close()
 }
 
-func (c *Context) pipelineWorkerPool() *workerpool.WorkerPool {
+func (c *Manager) pipelineWorkerPool() *workerpool.WorkerPool {
 	c.pipelineWPSingleton.once.Do(func() {
 		c.pipelineWPSingleton.wp = workerpool.New(10)
 
@@ -251,11 +251,11 @@ func (c *Context) pipelineWorkerPool() *workerpool.WorkerPool {
 	return c.pipelineWPSingleton.wp
 }
 
-func (c *Context) stopPipelineWorkerPool() {
+func (c *Manager) stopPipelineWorkerPool() {
 	c.pipelineWorkerPool().StopWait()
 }
 
-func (c *Context) firebaseAuth() *fireauth.Client {
+func (c *Manager) firebaseAuth() *fireauth.Client {
 	c.firebaseSingleton.once.Do(func() {
 		client, err := firebase.NewClient(c.config.Firebase.ServiceAccountFile)
 		if err != nil {
@@ -270,11 +270,11 @@ func (c *Context) firebaseAuth() *fireauth.Client {
 	return c.firebaseSingleton.client
 }
 
-func (c *Context) initLogger() {
+func (c *Manager) initLogger() {
 	c.logger = zapAdapter.NewLogger(c.zap())
 }
 
-func (c *Context) initConfig(configsPath string) {
+func (c *Manager) initConfig(configsPath string) {
 	cfg, err := config.FromPath(configsPath)
 	if err != nil {
 		c.logger.Fatal("Failed to parse config", err)
@@ -285,7 +285,7 @@ func (c *Context) initConfig(configsPath string) {
 	c.logger.Info("Config parsing completed")
 }
 
-func (c *Context) initPersistent() {
+func (c *Manager) initPersistent() {
 	db := c.mongo()
 	args := []interface{}{"db", "mongo"}
 
@@ -315,12 +315,12 @@ func (c *Context) initPersistent() {
 	c.logger.Info("Specification read model initialization completed", args...)
 }
 
-func (c *Context) initSpecificationParser() {
+func (c *Manager) initSpecificationParser() {
 	c.specParser = yaml.NewSpecificationParser()
 	c.logger.Info("Specification parser service initialization completed", "type", "yaml")
 }
 
-func (c *Context) initApplication() {
+func (c *Manager) initApplication() {
 	c.app = &app.Application{
 		Commands: app.Commands{
 			CreateTestCampaign: command.NewCreateTestCampaignHandler(c.persistent.testCampaignRepo),
@@ -350,7 +350,7 @@ func (c *Context) initApplication() {
 	c.logger.Info("Application context initialization completed")
 }
 
-func (c *Context) initMetrics() {
+func (c *Manager) initMetrics() {
 	mrs, err := prometheus.NewMetricCollector()
 	if err != nil {
 		c.logger.Fatal("Failed to register metrics", err)
@@ -361,7 +361,7 @@ func (c *Context) initMetrics() {
 	c.logger.Info("Metrics registration completed", "db", "prometheus")
 }
 
-func (c *Context) initSignalBus() {
+func (c *Manager) initSignalBus() {
 	if c.config.Pipeline.SignalBus == config.Nats {
 		bus := natsio.NewPipelineCancelSignalBus(c.nats())
 
@@ -381,7 +381,7 @@ func (c *Context) initSignalBus() {
 	)
 }
 
-func (c *Context) initPipeline() {
+func (c *Manager) initPipeline() {
 	c.initPipelineGuard()
 	c.initPipelinePolicy()
 	c.initEnqueuer()
@@ -401,11 +401,11 @@ func (c *Context) initPipeline() {
 	)
 }
 
-func (c *Context) initPipelineGuard() {
+func (c *Manager) initPipelineGuard() {
 	c.pipeline.guard = mongoAdapter.NewPipelineGuard(c.mongo())
 }
 
-func (c *Context) initPipelinePolicy() {
+func (c *Manager) initPipelinePolicy() {
 	if c.config.Pipeline.Policy == config.SavePerStepPolicy {
 		c.pipeline.policy = service.NewSavePerStepPolicy(
 			c.persistent.flowRepo,
@@ -423,11 +423,11 @@ func (c *Context) initPipelinePolicy() {
 	)
 }
 
-func (c *Context) initEnqueuer() {
+func (c *Manager) initEnqueuer() {
 	c.pipeline.enqueuer = service.EnqueueFunc(c.pipelineWorkerPool().Submit)
 }
 
-func (c *Context) initAuthenticationProvider() {
+func (c *Manager) initAuthenticationProvider() {
 	authType := c.config.Auth.With
 
 	switch authType {
@@ -446,7 +446,7 @@ func (c *Context) initAuthenticationProvider() {
 	c.logger.Info("Authentication provider initialization completed", "auth", authType)
 }
 
-func (c *Context) initServer() {
+func (c *Manager) initServer() {
 	c.server = server.New(c.config.HTTP, rest.NewHandler(rest.Params{
 		Middlewares: []rest.Middleware{
 			correlationid.Middleware("X-Correlation-Id"),
