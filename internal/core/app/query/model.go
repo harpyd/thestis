@@ -2,7 +2,7 @@ package query
 
 import "time"
 
-type SpecificTestCampaignModel struct {
+type TestCampaignModel struct {
 	ID        string
 	ViewName  string
 	Summary   string
@@ -10,7 +10,7 @@ type SpecificTestCampaignModel struct {
 }
 
 type (
-	SpecificSpecificationModel struct {
+	SpecificationModel struct {
 		ID             string
 		TestCampaignID string
 		LoadedAt       time.Time
@@ -96,7 +96,7 @@ func (a AssertionModel) IsZero() bool {
 }
 
 type (
-	SpecificPipelineModel struct {
+	PipelineModel struct {
 		ID              string
 		SpecificationID string
 		StartedAt       time.Time

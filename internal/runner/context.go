@@ -90,12 +90,12 @@ type pipelineContext struct {
 }
 
 type persistentContext struct {
-	testCampaignRepo       service.TestCampaignRepository
-	specRepo               service.SpecificationRepository
-	pipeRepo               service.PipelineRepository
-	flowRepo               service.FlowRepository
-	specificTestCampaignRM query.SpecificTestCampaignReadModel
-	specificSpecRM         query.SpecificSpecificationReadModel
+	testCampaignRepo service.TestCampaignRepository
+	specRepo         service.SpecificationRepository
+	pipeRepo         service.PipelineRepository
+	flowRepo         service.FlowRepository
+	testCampaignRM   query.TestCampaignReadModel
+	specificationRM  query.SpecificationReadModel
 }
 
 type signalBusContext struct {
@@ -308,11 +308,11 @@ func (c *Context) initPersistent() {
 	c.persistent.flowRepo = flowRepo
 	c.logger.Info("Flow repository initialization completed", args...)
 
-	c.persistent.specificTestCampaignRM = testCampaignRepo
-	c.logger.Info("Specific test campaign read model initialization completed", args...)
+	c.persistent.testCampaignRM = testCampaignRepo
+	c.logger.Info("Test campaign read model initialization completed", args...)
 
-	c.persistent.specificSpecRM = specRepo
-	c.logger.Info("Specific specification read model initialization completed", args...)
+	c.persistent.specificationRM = specRepo
+	c.logger.Info("Specification read model initialization completed", args...)
 }
 
 func (c *Context) initSpecificationParser() {
@@ -342,8 +342,8 @@ func (c *Context) initApplication() {
 			CancelPipeline: command.NewCancelPipelineHandler(c.persistent.pipeRepo, c.signalBus.publisher),
 		},
 		Queries: app.Queries{
-			SpecificTestCampaign:  query.NewSpecificTestCampaignHandler(c.persistent.specificTestCampaignRM),
-			SpecificSpecification: query.NewSpecificSpecificationHandler(c.persistent.specificSpecRM),
+			TestCampaign:  query.NewTestCampaignHandler(c.persistent.testCampaignRM),
+			Specification: query.NewSpecificationHandler(c.persistent.specificationRM),
 		},
 	}
 

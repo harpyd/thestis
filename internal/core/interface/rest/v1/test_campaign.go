@@ -41,7 +41,7 @@ func (h handler) GetTestCampaign(w http.ResponseWriter, r *http.Request, testCam
 		return
 	}
 
-	tc, err := h.app.Queries.SpecificTestCampaign.Handle(r.Context(), qry)
+	tc, err := h.app.Queries.TestCampaign.Handle(r.Context(), qry)
 	if err == nil {
 		renderTestCampaignResponse(w, r, tc)
 

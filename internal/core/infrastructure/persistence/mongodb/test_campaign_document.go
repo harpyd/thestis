@@ -37,8 +37,8 @@ func newTestCampaign(d testCampaignDocument) *testcampaign.TestCampaign {
 	return tc
 }
 
-func newSpecificTestCampaignView(d testCampaignDocument) query.SpecificTestCampaignModel {
-	return query.SpecificTestCampaignModel{
+func newSpecificTestCampaignView(d testCampaignDocument) query.TestCampaignModel {
+	return query.TestCampaignModel{
 		ID:        d.ID,
 		ViewName:  d.ViewName,
 		Summary:   d.Summary,

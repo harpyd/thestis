@@ -280,8 +280,8 @@ func newAssertionBuildFn(d assertionDocument) func(builder *specification.Assert
 	}
 }
 
-func newSpecificSpecificationView(d specificationDocument) query.SpecificSpecificationModel {
-	spec := query.SpecificSpecificationModel{
+func newSpecificSpecificationView(d specificationDocument) query.SpecificationModel {
+	spec := query.SpecificationModel{
 		ID:             d.ID,
 		TestCampaignID: d.TestCampaignID,
 		LoadedAt:       d.LoadedAt,

@@ -260,7 +260,7 @@ context is assembled from a configuration file with the necessary environment se
 code associated with the database in _persistence_, implementation of _pubsub_ with _NATS_, and so on.
 
 The __interface__ layer contains the code that controls the application. A good example is an HTTP server that invokes a
-specific Application method on an endpoint call. Or a scheduler.
+sspecific Application method on an endpoint call. Or a scheduler.
 
 ## Project structure
 

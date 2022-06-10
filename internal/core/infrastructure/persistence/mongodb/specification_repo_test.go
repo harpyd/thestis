@@ -49,13 +49,13 @@ func (s *SpecificationRepositoryTestSuite) TestFindSpecification() {
 
 	testCases := []struct {
 		Name        string
-		Query       query.SpecificSpecification
+		Query       query.Specification
 		ShouldBeErr bool
 		IsErr       func(err error) bool
 	}{
 		{
 			Name: "by_non_existing_specification_id_and_non_existing_owner_id",
-			Query: query.SpecificSpecification{
+			Query: query.Specification{
 				SpecificationID: "34eff819-c14b-4d89-98a9-8e21d9f3cf21",
 				UserID:          "b5f0e13d-ca3a-41f9-b297-53a2440c6080",
 			},
@@ -66,7 +66,7 @@ func (s *SpecificationRepositoryTestSuite) TestFindSpecification() {
 		},
 		{
 			Name: "by_existing_specification_id_and_non_existing_owner_id",
-			Query: query.SpecificSpecification{
+			Query: query.Specification{
 				SpecificationID: "64825e35-7fa7-44a4-9ca2-81cfc7b0f0d8",
 				UserID:          "4699c306-ba54-4a5d-916e-92c40646faca",
 			},
@@ -77,7 +77,7 @@ func (s *SpecificationRepositoryTestSuite) TestFindSpecification() {
 		},
 		{
 			Name: "by_non_existing_specification_id_and_existing_owner_id",
-			Query: query.SpecificSpecification{
+			Query: query.Specification{
 				SpecificationID: "75d48408-e86a-427b-9f22-a77a22f13348",
 				UserID:          "52d9af60-26be-46ea-90a6-efec5fbb4ccd",
 			},
@@ -88,7 +88,7 @@ func (s *SpecificationRepositoryTestSuite) TestFindSpecification() {
 		},
 		{
 			Name: "by_existing_specification_id_and_existing_owner_id",
-			Query: query.SpecificSpecification{
+			Query: query.Specification{
 				SpecificationID: "64825e35-7fa7-44a4-9ca2-81cfc7b0f0d8",
 				UserID:          "52d9af60-26be-46ea-90a6-efec5fbb4ccd",
 			},
@@ -324,7 +324,7 @@ func (s *SpecificationRepositoryTestSuite) getSpecification(specID string) *spec
 
 func (s *SpecificationRepositoryTestSuite) requireAppSpecificationEqualRaw(
 	expected bson.M,
-	actual query.SpecificSpecificationModel,
+	actual query.SpecificationModel,
 ) {
 	s.T().Helper()
 

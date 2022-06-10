@@ -41,13 +41,13 @@ func decodeSpecificSpecificationQuery(
 	w http.ResponseWriter,
 	r *http.Request,
 	specificationID string,
-) (qry query.SpecificSpecification, ok bool) {
+) (qry query.Specification, ok bool) {
 	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
 
-	return query.SpecificSpecification{
+	return query.Specification{
 		SpecificationID: specificationID,
 		UserID:          user.UUID,
 	}, true
@@ -56,7 +56,7 @@ func decodeSpecificSpecificationQuery(
 func renderSpecificationResponse(
 	w http.ResponseWriter,
 	r *http.Request,
-	spec query.SpecificSpecificationModel,
+	spec query.SpecificationModel,
 ) {
 	response := SpecificationResponse{
 		Specification: newSpecification(spec),
@@ -66,7 +66,7 @@ func renderSpecificationResponse(
 	render.Respond(w, r, response)
 }
 
-func newSpecification(spec query.SpecificSpecificationModel) Specification {
+func newSpecification(spec query.SpecificationModel) Specification {
 	res := Specification{
 		Id:             spec.ID,
 		TestCampaignId: spec.TestCampaignID,

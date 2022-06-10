@@ -58,7 +58,7 @@ func (h handler) GetSpecification(w http.ResponseWriter, r *http.Request, specif
 		return
 	}
 
-	spec, err := h.app.Queries.SpecificSpecification.Handle(r.Context(), qry)
+	spec, err := h.app.Queries.Specification.Handle(r.Context(), qry)
 	if err == nil {
 		renderSpecificationResponse(w, r, spec)
 

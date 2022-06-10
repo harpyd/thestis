@@ -39,14 +39,14 @@ func (r *TestCampaignRepository) GetTestCampaign(
 
 func (r *TestCampaignRepository) FindTestCampaign(
 	ctx context.Context,
-	qry query.SpecificTestCampaign,
-) (query.SpecificTestCampaignModel, error) {
+	qry query.TestCampaign,
+) (query.TestCampaignModel, error) {
 	document, err := r.getTestCampaignDocument(ctx, bson.M{
 		"_id":     qry.TestCampaignID,
 		"ownerId": qry.UserID,
 	})
 	if err != nil {
-		return query.SpecificTestCampaignModel{}, err
+		return query.TestCampaignModel{}, err
 	}
 
 	return newSpecificTestCampaignView(document), nil

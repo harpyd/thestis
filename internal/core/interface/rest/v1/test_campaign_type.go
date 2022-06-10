@@ -42,13 +42,13 @@ func decodeSpecificTestCampaignQuery(
 	w http.ResponseWriter,
 	r *http.Request,
 	testCampaignID string,
-) (qry query.SpecificTestCampaign, ok bool) {
+) (qry query.TestCampaign, ok bool) {
 	user, ok := authorize(w, r)
 	if !ok {
 		return
 	}
 
-	return query.SpecificTestCampaign{
+	return query.TestCampaign{
 		TestCampaignID: testCampaignID,
 		UserID:         user.UUID,
 	}, true
@@ -57,7 +57,7 @@ func decodeSpecificTestCampaignQuery(
 func renderTestCampaignResponse(
 	w http.ResponseWriter,
 	r *http.Request,
-	tc query.SpecificTestCampaignModel,
+	tc query.TestCampaignModel,
 ) {
 	response := TestCampaignResponse{
 		Id:        tc.ID,

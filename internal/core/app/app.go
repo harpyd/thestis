@@ -20,8 +20,8 @@ type (
 	}
 
 	Queries struct {
-		SpecificTestCampaign  query.SpecificTestCampaignHandler
-		SpecificSpecification query.SpecificSpecificationHandler
-		SpecificPipeline      query.SpecificPipelineHandler
+		TestCampaign  query.TestCampaignHandler
+		Specification query.SpecificationHandler
+		Pipeline      query.PipelineHandler
 	}
 )

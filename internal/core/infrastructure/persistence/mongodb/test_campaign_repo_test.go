@@ -54,13 +54,13 @@ func (s *TestCampaignRepositoryTestSuite) TestFindTestCampaign() {
 
 	testCases := []struct {
 		Name        string
-		Query       query.SpecificTestCampaign
+		Query       query.TestCampaign
 		ShouldBeErr bool
 		IsErr       func(err error) bool
 	}{
 		{
 			Name: "by_non_existing_test_campaign_id_and_non_existing_owner_id",
-			Query: query.SpecificTestCampaign{
+			Query: query.TestCampaign{
 				TestCampaignID: "145337c9-ef1b-4dfd-a227-24805d25b52e",
 				UserID:         "52d308aa-5a8a-4931-b558-73962e55d443",
 			},
@@ -71,7 +71,7 @@ func (s *TestCampaignRepositoryTestSuite) TestFindTestCampaign() {
 		},
 		{
 			Name: "by_non_existing_test_campaign_id_and_existing_owner_id",
-			Query: query.SpecificTestCampaign{
+			Query: query.TestCampaign{
 				TestCampaignID: "53a7f280-247a-410f-b6ee-c336fe9c643f",
 				UserID:         "54112816-3a55-4a28-82df-3c8e082fa0f8",
 			},
@@ -82,7 +82,7 @@ func (s *TestCampaignRepositoryTestSuite) TestFindTestCampaign() {
 		},
 		{
 			Name: "by_existing_test_campaign_id_and_non_existing_owner_id",
-			Query: query.SpecificTestCampaign{
+			Query: query.TestCampaign{
 				TestCampaignID: "c0b28d44-d603-4756-bd25-8b3034e1dc77",
 				UserID:         "0c972872-b033-4fb1-a29b-2e14a8eb56f4",
 			},
@@ -93,7 +93,7 @@ func (s *TestCampaignRepositoryTestSuite) TestFindTestCampaign() {
 		},
 		{
 			Name: "by_existing_test_campaign_id_and_existing_owner_id",
-			Query: query.SpecificTestCampaign{
+			Query: query.TestCampaign{
 				TestCampaignID: "c0b28d44-d603-4756-bd25-8b3034e1dc77",
 				UserID:         "54112816-3a55-4a28-82df-3c8e082fa0f8",
 			},
@@ -291,7 +291,7 @@ func (s *TestCampaignRepositoryTestSuite) getTestCampaign(tcID string) *testcamp
 
 func (s *TestCampaignRepositoryTestSuite) requireAppTestCampaignsEqual(
 	expected bson.M,
-	actual query.SpecificTestCampaignModel,
+	actual query.TestCampaignModel,
 ) {
 	s.Require().Equal(expected["_id"], actual.ID)
 	s.Require().Equal(expected["viewName"], actual.ViewName)
