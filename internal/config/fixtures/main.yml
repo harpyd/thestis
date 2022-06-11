@@ -23,3 +23,6 @@ savePerStep:
   saveTimeout: 30s
 nats:
   url: nats://nats:4222
+logger:
+  lib: zap
+  level: error

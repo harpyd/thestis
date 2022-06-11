@@ -10,15 +10,6 @@ import (
 	"go.uber.org/multierr"
 )
 
-const (
-	defaultHTTPPort               = 8080
-	defaultHTTPRWTimeout          = 10 * time.Second
-	defaultHTTPShutdownTimeout    = 10 * time.Second
-	defaultMongoDisconnectTimeout = 10 * time.Second
-	defaultPipelineFlowTimeout    = 24 * time.Hour
-	defaultPipelineWorkers        = 100
-)
-
 type Env = string
 
 const LocalEnv Env = "local"
@@ -32,6 +23,20 @@ type SignalBus = string
 const Nats SignalBus = "nats"
 
 type AuthType = string
+
+type LoggerLib = string
+
+const Zap LoggerLib = "zap"
+
+type LoggerLevel = string
+
+const (
+	DebugLevel LoggerLevel = "DEBUG"
+	InfoLevel  LoggerLevel = "INFO"
+	WarnLevel  LoggerLevel = "WARN"
+	ErrorLevel LoggerLevel = "ERROR"
+	FatalLevel LoggerLevel = "FATAL"
+)
 
 const (
 	FakeAuth     AuthType = "fake"
@@ -48,6 +53,7 @@ type (
 		Pipeline    Pipeline
 		SavePerStep SavePerStep
 		Nats        NatsServer
+		Logger      Logger
 	}
 
 	HTTP struct {
@@ -88,6 +94,29 @@ type (
 	NatsServer struct {
 		URL string
 	}
+
+	Logger struct {
+		Lib   LoggerLib
+		Level LoggerLevel
+	}
+)
+
+const (
+	defaultHTTPPort            = 8080
+	defaultHTTPRWTimeout       = 10 * time.Second
+	defaultHTTPShutdownTimeout = 10 * time.Second
+)
+
+const defaultMongoDisconnectTimeout = 10 * time.Second
+
+const (
+	defaultPipelineFlowTimeout = 24 * time.Hour
+	defaultPipelineWorkers     = 100
+)
+
+const (
+	defaultLoggerLib   = Zap
+	defaultLoggerLevel = "INFO"
 )
 
 func FromPath(configsPath string) (*Config, error) {
@@ -120,6 +149,8 @@ func setDefaults() {
 	viper.SetDefault("mongo.disconnectTimeout", defaultMongoDisconnectTimeout)
 	viper.SetDefault("pipeline.flowTimeout", defaultPipelineFlowTimeout)
 	viper.SetDefault("pipeline.workers", defaultPipelineWorkers)
+	viper.SetDefault("logger.lib", defaultLoggerLib)
+	viper.SetDefault("logger.level", defaultLoggerLevel)
 }
 
 func parseConfig(configsPath, env string) error {
@@ -213,7 +244,17 @@ func unmarshal(cfg *Config) error {
 		return err
 	}
 
-	return viper.UnmarshalKey("firebase", &cfg.Firebase)
+	if err := viper.UnmarshalKey("firebase", &cfg.Firebase); err != nil {
+		return err
+	}
+
+	if err := viper.UnmarshalKey("logger", &cfg.Logger); err != nil {
+		return err
+	}
+
+	cfg.Logger.Level = strings.ToUpper(cfg.Logger.Level)
+
+	return nil
 }
 
 type noEnvError struct {

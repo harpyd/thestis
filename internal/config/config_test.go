@@ -82,6 +82,10 @@ func TestFromPath(t *testing.T) {
 				Nats: config.NatsServer{
 					URL: "nats://nats:4222",
 				},
+				Logger: config.Logger{
+					Lib:   config.Zap,
+					Level: config.ErrorLevel,
+				},
 			},
 			ShouldBeErr: false,
 		},

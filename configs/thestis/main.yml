@@ -11,6 +11,10 @@ mongo:
   password: ${MONGO_PASSWORD:qwerty}
   disconnectTimeout: 10s
 
+logger:
+  lib: zap
+  level: debug
+
 auth:
   with: ${AUTH_TYPE:firebase}
 firebase:

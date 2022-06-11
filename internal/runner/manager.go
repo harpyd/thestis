@@ -17,6 +17,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/harpyd/thestis/internal/config"
 	"github.com/harpyd/thestis/internal/core/app"
@@ -110,8 +111,8 @@ type metricsContext struct {
 func New(configsPath string) *Manager {
 	c := &Manager{}
 
-	c.initLogger()
 	c.initConfig(configsPath)
+	c.initLogger()
 	c.initPersistent()
 	c.initSpecificationParser()
 	c.initMetrics()
@@ -173,7 +174,10 @@ func (c *Manager) shutdownServer() error {
 
 func (c *Manager) zap() *zap.Logger {
 	c.zapSingleton.once.Do(func() {
-		logger, err := zap.NewProduction()
+		cfg := zap.NewProductionConfig()
+		cfg.Level = zap.NewAtomicLevelAt(c.zapLoggerLevel())
+
+		logger, err := cfg.Build()
 		if err != nil {
 			log.Fatalf("Failed to create zap logger: %v", err)
 		}
@@ -182,6 +186,23 @@ func (c *Manager) zap() *zap.Logger {
 	})
 
 	return c.zapSingleton.logger
+}
+
+func (c *Manager) zapLoggerLevel() zapcore.Level {
+	switch c.config.Logger.Level {
+	case config.DebugLevel:
+		return zapcore.DebugLevel
+	case config.InfoLevel:
+		return zapcore.InfoLevel
+	case config.WarnLevel:
+		return zapcore.WarnLevel
+	case config.ErrorLevel:
+		return zapcore.ErrorLevel
+	case config.FatalLevel:
+		return zapcore.FatalLevel
+	}
+
+	return zapcore.InfoLevel
 }
 
 func (c *Manager) syncZap() {
@@ -270,19 +291,27 @@ func (c *Manager) firebaseAuth() *fireauth.Client {
 	return c.firebaseSingleton.client
 }
 
-func (c *Manager) initLogger() {
-	c.logger = zapAdapter.NewLogger(c.zap())
-}
-
 func (c *Manager) initConfig(configsPath string) {
 	cfg, err := config.FromPath(configsPath)
 	if err != nil {
-		c.logger.Fatal("Failed to parse config", err)
+		log.Fatal("Failed to parse config", err)
 	}
 
 	c.config = cfg
 
-	c.logger.Info("Config parsing completed")
+	log.Print("Config parsing completed")
+}
+
+func (c *Manager) initLogger() {
+	if c.config.Logger.Lib == config.Zap {
+		c.logger = zapAdapter.NewLogger(c.zap())
+	}
+
+	c.logger.Info(
+		"Logger library selected",
+		"lib", c.config.Logger.Lib,
+		"level", c.config.Logger.Level,
+	)
 }
 
 func (c *Manager) initPersistent() {
