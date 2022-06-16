@@ -342,7 +342,7 @@ func TestStartPipeline(t *testing.T) {
 				),
 				pipeline.NewThesisStepWithErr(
 					pipeline.WrapWithTerminatedError(
-						pipeline.NewRejectedError(
+						pipeline.NewUndefinedExecutorError(
 							pipeline.UnknownExecutor,
 						),
 						pipeline.FiredCrash,
@@ -353,7 +353,7 @@ func TestStartPipeline(t *testing.T) {
 				),
 				pipeline.NewScenarioStepWithErr(
 					pipeline.WrapWithTerminatedError(
-						pipeline.NewRejectedError(
+						pipeline.NewUndefinedExecutorError(
 							pipeline.UnknownExecutor,
 						),
 						pipeline.FiredCrash,
@@ -856,7 +856,7 @@ func TestFormatTerminatedError(t *testing.T) {
 	}
 }
 
-func TestAsRejectedError(t *testing.T) {
+func TestAsUndefinedExecutorError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -869,12 +869,12 @@ func TestAsRejectedError(t *testing.T) {
 			ShouldBeWrapped: false,
 		},
 		{
-			GivenError:           &pipeline.RejectedError{},
+			GivenError:           &pipeline.UndefinedExecutorError{},
 			ShouldBeWrapped:      true,
 			ExpectedExecutorType: pipeline.NoExecutor,
 		},
 		{
-			GivenError:           pipeline.NewRejectedError(pipeline.HTTPExecutor),
+			GivenError:           pipeline.NewUndefinedExecutorError(pipeline.HTTPExecutor),
 			ShouldBeWrapped:      true,
 			ExpectedExecutorType: pipeline.HTTPExecutor,
 		},
@@ -886,7 +886,7 @@ func TestAsRejectedError(t *testing.T) {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			t.Parallel()
 
-			var rerr *pipeline.RejectedError
+			var rerr *pipeline.UndefinedExecutorError
 
 			if !c.ShouldBeWrapped {
 				t.Run("not", func(t *testing.T) {
@@ -907,7 +907,7 @@ func TestAsRejectedError(t *testing.T) {
 	}
 }
 
-func TestFormatRejectedError(t *testing.T) {
+func TestFormatUndefinedExecutorError(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
@@ -915,14 +915,14 @@ func TestFormatRejectedError(t *testing.T) {
 		ExpectedErrorString string
 	}{
 		{
-			GivenError: pipeline.NewRejectedError(
+			GivenError: pipeline.NewUndefinedExecutorError(
 				pipeline.UnknownExecutor,
 			),
-			ExpectedErrorString: "rejected executor with `!` type",
+			ExpectedErrorString: "undefined executor with `!` type",
 		},
 		{
-			GivenError:          pipeline.NewRejectedError("foo"),
-			ExpectedErrorString: "rejected executor with `foo` type",
+			GivenError:          pipeline.NewUndefinedExecutorError("foo"),
+			ExpectedErrorString: "undefined executor with `foo` type",
 		},
 	}
 

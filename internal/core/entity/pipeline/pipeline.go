@@ -325,7 +325,7 @@ func (p *Pipeline) executeThesis(
 
 	exec, ok := p.executors[pt]
 	if !ok {
-		return Crash(NewRejectedError(pt))
+		return Crash(NewUndefinedExecutorError(pt))
 	}
 
 	return exec.Execute(ctx, env, thesis)
@@ -395,24 +395,24 @@ func (e *TerminatedError) Unwrap() error {
 	return e.err
 }
 
-type RejectedError struct {
+type UndefinedExecutorError struct {
 	pt ExecutorType
 }
 
-func NewRejectedError(executorType ExecutorType) error {
-	return errors.WithStack(&RejectedError{
+func NewUndefinedExecutorError(executorType ExecutorType) error {
+	return errors.WithStack(&UndefinedExecutorError{
 		pt: executorType,
 	})
 }
 
-func (e *RejectedError) ExecutorType() ExecutorType {
+func (e *UndefinedExecutorError) ExecutorType() ExecutorType {
 	return e.pt
 }
 
-func (e *RejectedError) Error() string {
+func (e *UndefinedExecutorError) Error() string {
 	if e == nil {
 		return ""
 	}
 
-	return fmt.Sprintf("rejected executor with `%s` type", e.pt)
+	return fmt.Sprintf("undefined executor with `%s` type", e.pt)
 }
