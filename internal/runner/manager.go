@@ -298,8 +298,6 @@ func (c *Manager) initConfig(configsPath string) {
 	}
 
 	c.config = cfg
-
-	log.Print("Config parsing completed")
 }
 
 func (c *Manager) initLogger() {
