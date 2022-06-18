@@ -75,28 +75,18 @@ func (m *pipelineMaintainer) MaintainPipeline(
 	ctx context.Context,
 	pipe *pipeline.Pipeline,
 ) (<-chan DoneSignal, error) {
-	correlationID := correlationid.FromCtx(ctx)
-
-	l := m.enrichedLogger(pipe, correlationID)
-
 	if err := m.guard.AcquirePipeline(ctx, pipe.ID()); err != nil {
 		return nil, err
 	}
-
-	l.Debug("Pipeline acquired")
 
 	canceled, err := m.subscriber.SubscribePipelineCancel(pipe.ID())
 	if err != nil {
 		return nil, err
 	}
 
-	l.Debug("Subscription to the pipeline cancellation signal has been issued")
-
 	done := make(chan DoneSignal)
 
 	m.enqueuer.Enqueue(m.maintainFn(pipe, canceled, done, correlationid.FromCtx(ctx)))
-
-	l.Debug("Pipeline enqueued")
 
 	return done, nil
 }
@@ -116,21 +106,17 @@ func (m *pipelineMaintainer) maintainFn(
 
 		ctx = correlationid.AssignToCtx(ctx, correlationID)
 
-		l := m.enrichedLogger(pipe, correlationID)
-
 		go func() {
 			select {
 			case <-ctx.Done():
 			case <-canceled:
-				l.Debug("Cancel signal received")
+				m.enrichedLogger(pipe, correlationID).Info("Cancel signal received")
 
 				cancel()
 			}
 		}()
 
 		m.policy.ConsumePipeline(ctx, pipe)
-
-		l.Debug("Pipeline consumed")
 	}
 }
 
@@ -159,5 +145,5 @@ func (m *pipelineMaintainer) releasePipeline(
 		l.Error("Attempt to release pipeline failed", "error", err)
 	}
 
-	l.Debug("Pipeline released")
+	l.Info("Pipeline released")
 }

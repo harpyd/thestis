@@ -57,18 +57,14 @@ func (p *savePerStepPolicy) ConsumePipeline(
 
 	defer func() {
 		if err := p.flowRepo.UpsertFlow(context.Background(), f); err != nil {
-			p.logger.Error("Last attempt to upsert flow failed", "error", err)
+			l.Error("Last attempt to upsert flow failed", "error", err)
 		}
-
-		l.Debug("Flow upserted for last")
 	}()
 
 	for s := range steps {
 		if err := p.upsertFlowWithTimeout(ctx, f.ApplyStep(s)); err != nil {
 			l.Warn("Attempt to upsert flow failed", "error", err)
 		}
-
-		l.Debug("Flow with new step upserted", "step", s)
 	}
 }
 
