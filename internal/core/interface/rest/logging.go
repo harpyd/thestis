@@ -60,5 +60,5 @@ func (e *logEntry) Panic(v interface{}, stack []byte) {
 }
 
 func LoggingMiddleware(logger service.Logger) Middleware {
-	return middleware.RequestLogger(&Formatter{logging: logger.Named("API")})
+	return middleware.RequestLogger(&Formatter{logging: logger.Named("HTTP")})
 }
