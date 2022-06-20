@@ -11,10 +11,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
+	"github.com/harpyd/thestis/internal/core/adapter/driven/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/core/app/query"
 	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/specification"
-	"github.com/harpyd/thestis/internal/core/infrastructure/persistence/mongodb"
 )
 
 type SpecificationRepositoryTestSuite struct {

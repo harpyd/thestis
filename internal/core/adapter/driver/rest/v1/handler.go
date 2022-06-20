@@ -5,9 +5,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/harpyd/thestis/internal/core/adapter/driver/rest"
 	"github.com/harpyd/thestis/internal/core/app"
 	"github.com/harpyd/thestis/internal/core/app/service"
-	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
 type handler struct {

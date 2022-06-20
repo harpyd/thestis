@@ -7,10 +7,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/harpyd/thestis/internal/core/adapter/driver/rest"
 	"github.com/harpyd/thestis/internal/core/app/service"
 	"github.com/harpyd/thestis/internal/core/entity/pipeline"
 	"github.com/harpyd/thestis/internal/core/entity/user"
-	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
 func (h handler) StartPipeline(w http.ResponseWriter, r *http.Request, testCampaignID string) {

@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/harpyd/thestis/internal/core/adapter/driver/rest"
 	"github.com/harpyd/thestis/internal/core/app/service"
-	"github.com/harpyd/thestis/internal/core/interface/rest"
 )
 
 func (h handler) CreateTestCampaign(w http.ResponseWriter, r *http.Request) {

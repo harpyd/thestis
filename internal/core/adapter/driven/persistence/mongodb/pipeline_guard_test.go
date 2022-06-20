@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.mongodb.org/mongo-driver/bson"
 
+	"github.com/harpyd/thestis/internal/core/adapter/driven/persistence/mongodb"
 	"github.com/harpyd/thestis/internal/core/entity/pipeline"
-	"github.com/harpyd/thestis/internal/core/infrastructure/persistence/mongodb"
 )
 
 type PipelineGuardTestSuite struct {

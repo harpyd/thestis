@@ -38,7 +38,7 @@ test-integration:
 	make run-test-db
 	make run-test-nats
 	MallocNanoZone=0 go test -v -race -coverpkg=./... \
- 		-coverprofile=integration.out ./internal/core/infrastructure/... ./internal/config/... \
+ 		-coverprofile=integration.out ./internal/core/adapter/driven/... ./internal/config/... \
  	  	|| (make stop-test-nats && make stop-test-db && exit 1)
 	make stop-test-db
 	make stop-test-nats

@@ -3,7 +3,7 @@ package v1
 import (
 	"net/http"
 
-	"github.com/harpyd/thestis/internal/core/interface/rest"
+	"github.com/harpyd/thestis/internal/core/adapter/driver/rest"
 )
 
 func authorize(w http.ResponseWriter, r *http.Request) (rest.User, bool) {
