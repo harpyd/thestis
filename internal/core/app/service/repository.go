@@ -49,7 +49,7 @@ type (
 			ctx context.Context,
 			pipeID string,
 			specGetter SpecificationGetter,
-			opts ...pipeline.Option,
+			registrars ...pipeline.ExecutorRegistrar,
 		) (*pipeline.Pipeline, error)
 		AddPipeline(ctx context.Context, pipe *pipeline.Pipeline) error
 	}

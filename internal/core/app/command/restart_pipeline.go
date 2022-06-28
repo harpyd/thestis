@@ -23,14 +23,14 @@ type restartPipelineHandler struct {
 	pipeRepo   service.PipelineRepository
 	specGetter service.SpecificationGetter
 	maintainer service.PipelineMaintainer
-	opts       []pipeline.Option
+	registrars []pipeline.ExecutorRegistrar
 }
 
 func NewRestartPipelineHandler(
 	pipeRepo service.PipelineRepository,
 	specGetter service.SpecificationGetter,
 	maintainer service.PipelineMaintainer,
-	opts ...pipeline.Option,
+	registrars ...pipeline.ExecutorRegistrar,
 ) RestartPipelineHandler {
 	if pipeRepo == nil {
 		panic("pipeline repository is nil")
@@ -47,7 +47,7 @@ func NewRestartPipelineHandler(
 	return restartPipelineHandler{
 		pipeRepo:   pipeRepo,
 		maintainer: maintainer,
-		opts:       opts,
+		registrars: registrars,
 	}
 }
 
@@ -59,7 +59,7 @@ func (h restartPipelineHandler) Handle(
 		err = errors.Wrap(err, "pipeline restarting")
 	}()
 
-	pipe, err := h.pipeRepo.GetPipeline(ctx, cmd.PipelineID, h.specGetter, h.opts...)
+	pipe, err := h.pipeRepo.GetPipeline(ctx, cmd.PipelineID, h.specGetter, h.registrars...)
 	if err != nil {
 		return err
 	}

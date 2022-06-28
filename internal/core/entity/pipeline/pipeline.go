@@ -28,7 +28,7 @@ type (
 		state lockState
 	}
 
-	Option func(p *Pipeline)
+	ExecutorRegistrar func(p *Pipeline)
 )
 
 type lockState = uint32
@@ -48,14 +48,14 @@ const (
 )
 
 // WithHTTP registers given Executor as HTTP.
-func WithHTTP(executor Executor) Option {
+func WithHTTP(executor Executor) ExecutorRegistrar {
 	return func(p *Pipeline) {
 		p.executors[HTTPExecutor] = executor
 	}
 }
 
 // WithAssertion registers given Executor as assertion.
-func WithAssertion(executor Executor) Option {
+func WithAssertion(executor Executor) ExecutorRegistrar {
 	return func(p *Pipeline) {
 		p.executors[AssertionExecutor] = executor
 	}
@@ -80,7 +80,7 @@ const defaultExecutorsSize = 2
 //
 // You must not use this method in
 // business code of domain and app layers.
-func Unmarshal(params Params, opts ...Option) *Pipeline {
+func Unmarshal(params Params, registrars ...ExecutorRegistrar) *Pipeline {
 	p := &Pipeline{
 		id:        params.ID,
 		ownerID:   params.OwnerID,
@@ -89,7 +89,7 @@ func Unmarshal(params Params, opts ...Option) *Pipeline {
 		state:     newLockState(params.Started),
 	}
 
-	p.applyOpts(opts)
+	p.applyOpts(registrars)
 
 	return p
 }
@@ -111,7 +111,7 @@ func newLockState(started bool) lockState {
 func Trigger(
 	id string,
 	spec *specification.Specification,
-	opts ...Option,
+	registrars ...ExecutorRegistrar,
 ) *Pipeline {
 	p := &Pipeline{
 		id:        id,
@@ -125,12 +125,12 @@ func Trigger(
 		p.ownerID = spec.OwnerID()
 	}
 
-	p.applyOpts(opts)
+	p.applyOpts(registrars)
 
 	return p
 }
 
-func (p *Pipeline) applyOpts(opts []Option) {
+func (p *Pipeline) applyOpts(opts []ExecutorRegistrar) {
 	for _, opt := range opts {
 		opt(p)
 	}

@@ -24,12 +24,12 @@ func newPipelineDocument(pipe *pipeline.Pipeline) pipelineDocument {
 func newPipeline(
 	d pipelineDocument,
 	spec *specification.Specification,
-	opts []pipeline.Option,
+	registrars []pipeline.ExecutorRegistrar,
 ) *pipeline.Pipeline {
 	return pipeline.Unmarshal(pipeline.Params{
 		ID:            d.ID,
 		Specification: spec,
 		OwnerID:       d.OwnerID,
 		Started:       d.Started,
-	}, opts...)
+	}, registrars...)
 }

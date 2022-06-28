@@ -29,7 +29,7 @@ func (r *PipelineRepository) GetPipeline(
 	ctx context.Context,
 	pipeID string,
 	specGetter service.SpecificationGetter,
-	opts ...pipeline.Option,
+	registrars ...pipeline.ExecutorRegistrar,
 ) (*pipeline.Pipeline, error) {
 	document, err := r.getPipelineDocument(ctx, bson.M{"_id": pipeID})
 	if err != nil {
@@ -41,7 +41,7 @@ func (r *PipelineRepository) GetPipeline(
 		return nil, err
 	}
 
-	return newPipeline(document, spec, opts), nil
+	return newPipeline(document, spec, registrars), nil
 }
 
 func (r *PipelineRepository) getPipelineDocument(

@@ -205,7 +205,7 @@ func (m *PipelineRepository) GetPipeline(
 	ctx context.Context,
 	pipeID string,
 	_ service.SpecificationGetter,
-	_ ...pipeline.Option,
+	_ ...pipeline.ExecutorRegistrar,
 ) (*pipeline.Pipeline, error) {
 	if ctx.Err() != nil {
 		return nil, service.WrapWithDatabaseError(ctx.Err())
